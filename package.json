@@ -17,7 +17,7 @@
     "typecheck": "turbo run typecheck",
     "check": "biome ci . && pnpm check:boundaries && pnpm typecheck && pnpm check:python && pnpm check:deploy && pnpm check:auth:cli",
     "check:fix": "biome check --write .",
-    "check:boundaries": "depcruise apps/dms-api/src apps/turnstile-api/src apps/turnstile-web/src packages/dms-client/src packages/dms-contracts/src packages/turnstile-contracts/src --config tooling/dependency-rules/config.cjs",
+    "check:boundaries": "turbo run build --filter=@thaarei/dms-contracts --filter=@thaarei/turnstile-contracts --filter=@thaarei/dms-client && depcruise apps/dms-api/src apps/turnstile-api/src apps/turnstile-web/src packages/dms-client/src packages/dms-contracts/src packages/turnstile-contracts/src --config tooling/dependency-rules/config.cjs",
     "check:python": "pnpm --filter @thaarei/dms-processing run check",
     "check:deploy": "node scripts/check-deploy.mjs",
     "test": "turbo run test",

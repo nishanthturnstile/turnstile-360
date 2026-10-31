@@ -1629,6 +1629,9 @@ The `.mjs` files in `scripts` are directly executable Node ESM checks, with no e
 TypeScript runtime/build. Neither directory is an application service. `check-deploy.mjs`
 parses YAML and checks Dockerfile paths, while `smoke-runtime.mjs` starts compiled API
 entry points on temporary ports, checks identity/liveness over HTTP, then stops them.
+`pnpm check:boundaries` first builds the contracts and DMS client through Turborepo's
+dependency graph, then resolves their public `dist` exports for dependency validation.
+The same command therefore works before a full application build on a fresh checkout.
 
 The [CI workflow](.github/workflows/workspace.yml) installs pinned tools/locked dependencies,
 runs Biome/boundary/TypeScript/Python/deployment checks, builds all seven projects, runs

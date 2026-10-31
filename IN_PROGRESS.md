@@ -50,8 +50,14 @@ Protected requests overlapping an in-progress or committed refresh now return re
 503 while logout and idle/absolute expiry retain their 401 fences. The final session
 check, real-HTTP/PostgreSQL regression coverage, and architecture reference are updated.
 The owner explicitly authorized publication to the configured public GitHub repository
-on 2026-10-31. Next action: push `fix/auth-refresh-session-race`, open the PR targeting
-`main`, and inspect CI. Local verification is complete; remote CI remains pending.
+on 2026-10-31. [PR #1](https://github.com/nishanthturnstile/turnstile-360/pull/1) is open
+from `fix/auth-refresh-session-race` to `main`. Remote CI exposed a fresh-checkout failure:
+dependency-boundary validation ran before internal packages' public `dist` exports existed.
+The boundary command now builds its workspace prerequisites first; validation with all
+three package output directories removed passed. Required local checks passed again.
+All four image jobs passed for the initial PR head; the updated checks still need remote
+verification. Next action: monitor the updated PR checks and address any failures.
+No deployed readiness is claimed.
 AUTH-07 code and its earlier local verification are complete.
 Real customer/client provisioning, target Mailpit deployment and Dokploy ingress/container
 DNS/TLS verification remain pending; local evidence does not establish deployed readiness.
@@ -126,7 +132,13 @@ against the original code with 401 instead of 503, then passed after the fix.
 isolation), `pnpm test:smoke`, and Git whitespace checks passed. Unchanged tasks used
 Turbo cache; affected product type checking, build, unit tests and integration tests ran.
 No new image builds, deployed checks or real customer provisioning were performed.
-Publication is now owner-authorized; GitHub CI remains unverified until the PR runs.
+CI follow-up (2026-10-31, Codex): PR #1's initial head `2f11d74` passed all four image
+builds, but `checks` failed on 26 unresolved workspace imports before package exports
+were built. Reproduced with the three package `dist` directories removed, then verified
+that the updated `check:boundaries` command rebuilt the outputs and passed. Repeated
+`pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` (65 cases), and
+`pnpm test:smoke` successfully. The manifest script and architecture reference are updated;
+updated-head GitHub checks remain pending. See [PR #1](https://github.com/nishanthturnstile/turnstile-360/pull/1).
 
 The following results were observed on 2026-10-31, including the AUTH-07 final recheck. They
 cover the authority, BFF, DMS enrollment, real typed cross-service request and login/recovery UI.
