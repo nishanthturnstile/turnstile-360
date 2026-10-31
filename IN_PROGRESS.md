@@ -45,7 +45,15 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
-No implementation task is active. AUTH-07 code and local verification are complete.
+AUTH-FIX-001 implementation and local verification are complete (owner: Codex).
+Protected requests overlapping an in-progress or committed refresh now return retryable
+503 while logout and idle/absolute expiry retain their 401 fences. The final session
+check, real-HTTP/PostgreSQL regression coverage, and architecture reference are updated.
+Publication is blocked pending owner direction: the configured GitHub repository is
+public, while AGENTS.md marks the source confidential/proprietary. Next action: confirm
+public publication or a private destination, push the prepared branch, open the PR
+targeting `main`, and inspect CI. No push or PR creation has occurred for this work.
+AUTH-07 code and its earlier local verification are complete.
 Real customer/client provisioning, target Mailpit deployment and Dokploy ingress/container
 DNS/TLS verification remain pending; local evidence does not establish deployed readiness.
 
@@ -111,6 +119,15 @@ DOC-TEST-001 completed on 2026-10-31 (Codex): added one focused testing guidelin
 for this documentation-only change. No blockers or remaining work.
 
 ## Latest recorded verification
+
+AUTH-FIX-001 local verification (2026-10-31, Codex): both new overlap regressions failed
+against the original code with 401 instead of 503, then passed after the fix.
+`pnpm check`, `pnpm build`, `pnpm test` (43 API cases plus the Python entry point),
+`pnpm test:integration` (13 Fastify plus 52 PostgreSQL cases, 65 total, including role/DDL
+isolation), `pnpm test:smoke`, and Git whitespace checks passed. Unchanged tasks used
+Turbo cache; affected product type checking, build, unit tests and integration tests ran.
+No new image builds, deployed checks or real customer provisioning were performed.
+GitHub CI remains unverified until publication is authorized and the PR exists.
 
 The following results were observed on 2026-10-31, including the AUTH-07 final recheck. They
 cover the authority, BFF, DMS enrollment, real typed cross-service request and login/recovery UI.

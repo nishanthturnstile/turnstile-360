@@ -261,17 +261,20 @@ export class BrowserAuthService {
       const state = session.bff;
       if (
         state?.kind !== 'user' ||
-        state.refresh ||
-        state.identity.accessToken !== identity.accessToken ||
         Math.min(state.identity.absoluteExpiresAt, state.identity.idleExpiresAt) <= Date.now()
       )
         return undefined;
+      // A concurrent refresh can start or commit while introspection is in flight.
+      // Retry with the current token before authorizing; logout and expiry still deny above.
+      if (state.refresh || state.identity.accessToken !== identity.accessToken)
+        return 'changed' as const;
       state.identity.idleExpiresAt = Math.min(
         Date.now() + IDLE_MS,
         state.identity.absoluteExpiresAt,
       );
       return { identity: state.identity, csrf: state.csrf };
     });
+    if (current === 'changed') return authError(503, 'REFRESH_IN_PROGRESS');
     if (!current) return authError(401, 'IDENTITY_REQUIRED');
     request.productUser = current;
     return current;

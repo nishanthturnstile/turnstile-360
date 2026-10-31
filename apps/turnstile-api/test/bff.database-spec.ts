@@ -45,6 +45,9 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
   let mismatch = 'sub';
   let releaseRefresh: (() => void) | undefined;
   let refreshEntered: (() => void) | undefined;
+  let blockNextIntrospection = false;
+  let introspectionEntered: (() => void) | undefined;
+  let releaseIntrospection: (() => void) | undefined;
   let refreshCalls = 0;
   let machineCalls = 0;
   let dmsCalls = 0;
@@ -125,6 +128,13 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
       });
       const received: Buffer[] = [];
       for await (const chunk of upstream) received.push(Buffer.from(chunk));
+      if (request.url?.endsWith('/introspect') && blockNextIntrospection) {
+        blockNextIntrospection = false;
+        introspectionEntered?.();
+        await new Promise<void>((resolve) => {
+          releaseIntrospection = resolve;
+        });
+      }
       if (refresh && fault === 'refresh-block') {
         refreshEntered?.();
         await new Promise<void>((resolve) => {
@@ -328,6 +338,10 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
   });
   afterEach(() => {
     fault = 'none';
+    blockNextIntrospection = false;
+    releaseIntrospection?.();
+    releaseIntrospection = undefined;
+    introspectionEntered = undefined;
     releaseRefresh?.();
     releaseRefresh = undefined;
     refreshEntered = undefined;
@@ -646,6 +660,43 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
     await second.close();
     second = undefined;
   });
+
+  it.each(['in progress', 'committed'])(
+    'preserves a live session when an overlapping refresh is %s',
+    async (phase) => {
+      const signed = await login();
+      const entered = new Promise<void>((resolve) => {
+        introspectionEntered = resolve;
+      });
+      blockNextIntrospection = true;
+      const overlapping = session(signed.cookie);
+      await entered;
+      // The first request has already checked its original token's refresh threshold.
+      await edit(signed.cookie, (state) => {
+        if (state.kind === 'user') state.identity.accessExpiresAt = 1;
+      });
+      fault = 'refresh-block';
+      const refreshingEntered = new Promise<void>((resolve) => {
+        refreshEntered = resolve;
+      });
+      const refreshing = session(signed.cookie);
+      await refreshingEntered;
+      if (phase === 'committed') {
+        fault = 'none';
+        releaseRefresh?.();
+        expect((await refreshing).statusCode).toBe(200);
+      }
+      releaseIntrospection?.();
+      const response = await overlapping;
+      expect(response.statusCode).toBe(503);
+      expect(response.json().code).toBe('REFRESH_IN_PROGRESS');
+      expect(setCookies(response).some((cookie) => cookie.startsWith('turnstile=;'))).toBe(false);
+      fault = 'none';
+      releaseRefresh?.();
+      expect((await refreshing).statusCode).toBe(200);
+      expect((await session(signed.cookie)).statusCode).toBe(200);
+    },
+  );
 
   it('ends access after a lost refresh response, an abandoned claim or idle/absolute expiry', async () => {
     for (const mode of ['lost-response', 'reused', 'abandoned', 'idle', 'absolute']) {

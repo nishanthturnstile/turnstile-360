@@ -772,7 +772,10 @@ random fifteen-second ownership claim; the network grant runs after commit. The 
 accepted only while that claim, current session generation and idle/absolute bounds remain
 valid. Competing instances return 503 `REFRESH_IN_PROGRESS`. A lost response, invalid/reused
 refresh token or abandoned claim ends local access with 401 `LOGIN_REQUIRED`; there is no
-unbounded grant retry. A late result after logout is rejected and its returned refresh token
+unbounded grant retry. Requests already introspecting an older token also return the retryable
+503 when another request starts or commits refresh before their final session check. They
+must revalidate the current token on a subsequent request; logout and idle/absolute expiry
+continue to return 401. A late result after logout is rejected and its returned refresh token
 is revoked. Refresh never extends the original absolute limit.
 
 Logout first replaces authenticated state with a five-minute unauthenticated receipt, clears
