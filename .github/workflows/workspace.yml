@@ -1,0 +1,48 @@
+name: Workspace
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TURBO_TELEMETRY_DISABLED: "1"
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+      - run: npm install --global pnpm@12.16.1
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          version: "0.13.6"
+          python-version: "3.13.18"
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --locked --project apps/dms-processing
+      - run: pnpm check
+      - run: pnpm build
+      - run: pnpm test
+      - run: pnpm test:integration
+      - run: pnpm test:smoke
+      - run: docker compose --env-file .env.example -f deploy/compose.local.yaml config --quiet
+      - run: docker compose -f deploy/compose.dokploy.yaml config --quiet
+
+  containers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [dms-api, turnstile-api, turnstile-web, dms-processing]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Build application image
+        run: docker build -f apps/${{ matrix.app }}/Dockerfile -t turnstile-workspace/${{ matrix.app }}:ci .

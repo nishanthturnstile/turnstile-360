@@ -1,0 +1,28 @@
+{
+  "type": "module",
+  "name": "@thaarei/dms-client",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "@thaarei/dms-contracts": "workspace:*"
+  },
+  "description": "Server-side HTTP client for the Thaarei Document Management System",
+  "author": "Thaarei"
+}

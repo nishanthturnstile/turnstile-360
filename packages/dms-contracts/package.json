@@ -1,0 +1,25 @@
+{
+  "type": "module",
+  "name": "@thaarei/dms-contracts",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  },
+  "description": "Shared API, job, event, and artifact contracts for the Thaarei Document Management System",
+  "author": "Thaarei"
+}

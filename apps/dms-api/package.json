@@ -1,0 +1,39 @@
+{
+  "name": "@thaarei/dms-api",
+  "version": "0.0.0",
+  "description": "Control API for the Thaarei Document Management System",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "start": "node dist/main.api.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.config.e2e.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "12.3.2",
+    "@nestjs/core": "12.3.2",
+    "@nestjs/platform-fastify": "12.3.2",
+    "@thaarei/dms-contracts": "workspace:*",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "12.0.11",
+    "@nestjs/schematics": "12.0.12",
+    "@nestjs/testing": "12.3.2",
+    "@swc/core": "1.16.21",
+    "@types/node": "24.0.0",
+    "typescript": "catalog:",
+    "vite": "8.0.0",
+    "vitest": "4.1.2"
+  },
+  "files": [
+    "dist"
+  ],
+  "author": "Thaarei"
+}

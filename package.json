@@ -1,0 +1,39 @@
+{
+  "name": "@thaarei/workspace",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=24.21.0 <25",
+    "pnpm": "12.16.1"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:turnstile": "turbo run dev --filter=@thaarei/turnstile-api --filter=@thaarei/turnstile-web",
+    "dev:dms": "turbo run dev --filter=@thaarei/dms-api",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "check": "biome ci . && pnpm check:boundaries && pnpm typecheck && pnpm check:python && pnpm check:deploy",
+    "check:fix": "biome check --write .",
+    "check:boundaries": "depcruise apps/dms-api/src apps/turnstile-api/src apps/turnstile-web/src packages/dms-client/src packages/dms-contracts/src packages/turnstile-contracts/src --config tooling/dependency-rules/config.cjs",
+    "check:python": "pnpm --filter @thaarei/dms-processing run check",
+    "check:deploy": "node scripts/check-deploy.mjs",
+    "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
+    "test:smoke": "node scripts/smoke-runtime.mjs",
+    "infra:up": "docker compose --env-file .env -f deploy/compose.local.yaml up -d",
+    "infra:down": "docker compose --env-file .env -f deploy/compose.local.yaml down"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.4",
+    "@types/node": "24.19.2",
+    "dependency-cruiser": "18.7.0",
+    "turbo": "2.11.10",
+    "typescript": "6.0.3",
+    "yaml": "2.9.1"
+  },
+  "description": "Private Thaarei workspace for Turnstile 360 and the Document Management System",
+  "author": "Thaarei"
+}

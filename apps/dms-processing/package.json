@@ -1,0 +1,15 @@
+{
+  "type": "module",
+  "name": "@thaarei/dms-processing",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "uv lock --check && uv build",
+    "typecheck": "uv run --locked mypy src",
+    "check": "uv run --locked ruff check . && uv run --locked ruff format --check . && uv run --locked mypy src",
+    "test": "uv run --locked turnstile-processing"
+  },
+  "description": "Document processing runtime for the Thaarei Document Management System",
+  "author": "Thaarei"
+}

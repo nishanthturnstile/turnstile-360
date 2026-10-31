@@ -1,0 +1,62 @@
+name: turnstile-workspace
+
+# Turnstile 360 and DMS application services. Stateful services and processing
+# roles are added as their capabilities are implemented.
+services:
+  dms-api:
+    build:
+      context: ..
+      dockerfile: apps/dms-api/Dockerfile
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3001"
+    expose: ["3001"]
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3001/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  turnstile-api:
+    build:
+      context: ..
+      dockerfile: apps/turnstile-api/Dockerfile
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3002"
+    expose: ["3002"]
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3002/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  turnstile-web:
+    build:
+      context: ..
+      dockerfile: apps/turnstile-web/Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    expose: ["8080"]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1:8080/health/live]
+      interval: 15s
+      timeout: 5s
+      retries: 3

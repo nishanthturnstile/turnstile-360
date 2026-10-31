@@ -1,0 +1,16 @@
+.git
+.agents
+node_modules
+**/node_modules
+**/dist
+**/.venv
+**/.turbo
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+.env
+**/.env
+**/.env.*
+!**/.env.example
+**/*.tsbuildinfo
