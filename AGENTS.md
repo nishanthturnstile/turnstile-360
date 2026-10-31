@@ -5,6 +5,18 @@ Thaarei owns this confidential, proprietary software. Preserve the root LICENSE 
 third-party notices. Business functionality and source/data migration follow their
 respective specifications and authorized scope.
 
+Read `IN_PROGRESS.md` before starting any task. Record the active task and owner when
+work begins, update it after meaningful milestones, and leave a current handoff before
+ending the task. Track completed features/fixes, actual verification, blockers, and
+remaining work; preserve other agents' entries. Planned entries do not authorize work.
+Follow the maintenance rules in that file and keep it consistent with the implementation.
+
+Read `architecture.md` for the accepted technical design and relevant component boundaries
+before implementation. Maintain architecture decisions, stack, contracts, configured limits,
+and deployment topology there; reference it from other docs rather than duplicating the
+design. Keep product scope/requirement IDs in their specifications and actual completion
+in `IN_PROGRESS.md`. Update affected references when the architecture changes.
+
 - Use pnpm 12.16.1, Node 24.21.0, and the pinned Python/uv versions.
 - Use the installed library/framework CLI to generate scaffolds when one exists.
 - Both backends use NestJS with Fastify. Use Fastify-compatible integrations.
@@ -23,4 +35,4 @@ respective specifications and authorized scope.
 - Run `pnpm check`, `pnpm build`, `pnpm test`, and `pnpm test:integration` for workspace changes.
 - Report unavailable container/runtime verification separately from static checks.
 
-See `docs/workspace_implementation_plan.md` and `docs/standards/workspace.md`.
+See `architecture.md`, `docs/workspace_implementation_plan.md`, and `docs/standards/workspace.md`.

@@ -1,5 +1,7 @@
 # Thaarei DMS client
 
+Architecture and component boundaries: [architecture.md](../../architecture.md).
+
 Private server-side HTTP integration package for trusted applications, including
 `turnstile-api`, to call the reusable DMS without importing its NestJS implementation.
 

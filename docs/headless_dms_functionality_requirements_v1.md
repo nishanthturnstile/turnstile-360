@@ -1,8 +1,11 @@
 # Headless DMS: Sequenced Functionality and Requirements
 
-**Version:** 1.1  
-**Updated:** 2026-10-31  
-**Status:** Product requirements aligned with the accepted [architecture blueprint v1.4](headless_dms_product_blueprint_v1.md).  
+**Version:** 1.2
+
+**Updated:** 2026-10-31
+
+**Status:** Product requirements aligned with [architecture.md](../architecture.md) and the accepted [product blueprint v1.5](headless_dms_product_blueprint_v1.md).
+
 **Approach:** Direct implementation of the actual solution.
 
 ## Purpose and reading rules
@@ -11,7 +14,7 @@ This document identifies the functionality the product must provide and a depend
 
 Each numbered group describes required product behavior, its prerequisites, and the capability it makes available. Requirement IDs identify individual behaviors for future discussion and tracking. The numbers are dependency order, not release phases, sprint assignments, estimates, engineering tasks, or a prescribed code structure. A partially built sequence is not automatically a complete release.
 
-The blueprint owns architecture, technical contracts, and configured numeric defaults. This document owns the functionality inventory and ordering. If a numeric policy changes, update the blueprint and the affected requirement references together. Every functional requirement below belongs to v1 unless it appears in the explicitly deferred section.
+[architecture.md](../architecture.md) owns architecture, technical contracts, and configured numeric defaults. The [product blueprint](headless_dms_product_blueprint_v1.md) owns product scope. This document owns the functionality inventory and ordering. If a numeric policy changes, update architecture.md and the affected requirement references together. Every functional requirement below belongs to v1 unless it appears in the explicitly deferred section.
 
 The structured-extraction capability is an included opt-in profile: its installation, model artifacts, resource allocation, and advertised formats are required when enabled. It is not an architecture trial or an automatic processing step for every file. Existing requirement IDs remain stable; newly accepted behavior is appended within the relevant groups.
 
@@ -23,7 +26,7 @@ Security, tenant isolation, audit capture, safe retries, bounded resources, and 
 - **Identity:** One shared authority per deployment, Better Auth by default; supported login/session/recovery and machine-client administration. DMS operations use machine access tokens, with one-time Thaarei enrollment for initial consumer activation.
 - **Access:** One owning application per document, explicit same-tenant application grants, and no cross-tenant sharing. Browser sessions do not authorize DMS machine operations.
 - **Deployment:** Self-hosted, one tenant with multiple applications by default; tenant-aware isolation is required throughout.
-- **Files:** PDF; JPEG/PNG/TIFF/BMP/static WebP; UTF-8 text/Markdown/CSV/TSV; the approved Word/PowerPoint/OpenDocument/RTF, spreadsheet, and EML/MSG families in blueprint section 9. English OCR is included. Additional industrial formats require explicit storage-only policy and complete required assessment; universal extraction is not promised.
+- **Files:** PDF; JPEG/PNG/TIFF/BMP/static WebP; UTF-8 text/Markdown/CSV/TSV; the approved Word/PowerPoint/OpenDocument/RTF, spreadsheet, and EML/MSG families in the [architecture format matrix](../architecture.md#supported-format-and-capability-matrix). English OCR is included. Additional industrial formats require explicit storage-only policy and complete required assessment; universal extraction is not promised.
 - **Storage:** SeaweedFS. Normal file bytes transfer directly between clients/workers and storage, outside the control API.
 - **Processing:** A security requirement precedes every original publication. Native/Office text, spreadsheet data, OCR, optional structured artifacts, and search have explicit capabilities and independent outcomes. The selected Python/Celery/RabbitMQ runtime implements the durable-work behavior; these requirements do not prescribe engineering tasks.
 - **Demand:** Up to 200,000 documents/month, with declared file/page mix, OCR/structured share, processing window, and bursts used for capacity sizing.
@@ -388,7 +391,7 @@ Follow this order for the initial product. The prerequisite column names the mai
 
 ## Shared quality requirements
 
-These requirements accompany the relevant functionality from its introduction and its ordinary quality checks. Numeric values and detailed operating rules are owned by blueprint sections 5, 9, 12, 13, 15–19.
+These requirements accompany the relevant functionality from its introduction and its ordinary quality checks. Numeric values and detailed operating rules are owned by [architecture.md](../architecture.md), including identity, format/processing contracts, durable jobs, limits, security, deployment, recovery, and distribution.
 
 | ID | Requirement |
 |---|---|
@@ -407,7 +410,7 @@ These requirements accompany the relevant functionality from its introduction an
 | NFR-13 | Run the required commercial/self-hosted product without mandatory paid licenses or hosted subscriptions; meet applicable open-source distribution conditions for code, containers, native dependencies, fonts/codecs, signatures, language data, and models. |
 | NFR-14 | Support the demand target of up to 200,000 documents/month under a declared format/page/size mix, OCR/structured share, processing window, arrival bursts, and resourced deployment; report API latency, original availability, queue age, processing delay, and search lag separately. |
 
-Default file/page/output limits, capability lifetimes, scanner freshness, logical restore time, physical-disposal timing, and history retention remain as specified in the blueprint. A deployment configuration is not a measured capacity guarantee. Legal holds and regulated immutable retention remain outside v1.
+Default file/page/output limits, capability lifetimes, scanner freshness, logical restore time, physical-disposal timing, and history retention remain as specified in [architecture.md](../architecture.md). A deployment configuration is not a measured capacity guarantee. Legal holds and regulated immutable retention remain outside v1.
 
 ## Deferred functionality and its dependencies
 
@@ -469,3 +472,4 @@ Security assessments, ordinary tests, and backup/restore correctness in these re
 |---|---|
 | v1.0, 2026-10-30 | Initial sequenced inventory aligned with blueprint v1.2 |
 | v1.1, 2026-10-31 | Aligned with blueprint v1.3: shared identity, Thaarei enrollment, batch uploads, expanded text/data/OCR/optional-structure behavior, durable-work ownership, monthly demand, and commercial OSS distribution; retained existing IDs |
+| v1.2, 2026-10-31 | Updated architecture ownership/references after consolidation into root architecture.md; requirement IDs, functionality and ordering unchanged |

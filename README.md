@@ -8,9 +8,9 @@ pipelines, and deployment configuration are in place. The APIs expose applicatio
 identity and process liveness. Authentication, document workflows, processing jobs,
 and Turnstile business functionality follow the implementation plans.
 
-The Turnstile API is shared by the web application and a future Expo/React Native client.
-Authoritative business logic stays in backend services; clients own presentation and
-interaction. Mobile development is future scope. See the [client architecture standards](docs/standards/workspace.md#web-and-future-mobile-clients).
+See [architecture.md](architecture.md) for the complete system design, component boundaries,
+installed and selected stack, DMS flows, deployment picture, and shared web/future-mobile
+backend architecture.
 
 ## Start locally
 
@@ -66,24 +66,17 @@ interaction, processor, database, or end-to-end business tests exist yet.
 
 ## Repository ownership
 
-| Path                           | Responsibility                                                                               |
-| ------------------------------ | -------------------------------------------------------------------------------------------- |
-| `apps/dms-api`                 | DMS control plane, empty feature modules, future authority/coordinator/operator entry points |
-| `apps/dms-processing`          | Python package and reserved processing boundaries                                            |
-| `apps/turnstile-api`           | Separate Turnstile backend, integration and database ownership                               |
-| `apps/turnstile-web`           | Vite/React/TypeScript application                                                            |
-| `packages/dms-contracts`       | DMS contract package boundary                                                                |
-| `packages/turnstile-contracts` | Turnstile contract package boundary                                                          |
-| `packages/dms-client`          | Internal server-side HTTP integration package boundary                                       |
-| `tooling`                      | TypeScript configuration and dependency rules                                                |
-| `deploy`                       | Local infrastructure and Dokploy application deployment                                      |
+The [repository layout and package dependencies](architecture.md#repository-and-package-dependencies)
+define application, contract/client, tooling, and deployment ownership.
 
 ## Documentation
 
+- [Architecture](architecture.md): single technical reference for DMS and Turnstile components, data/work flows, stack, security, configured defaults, and deployment/recovery design.
+- [Project progress](IN_PROGRESS.md): shared agent handoff, completed milestones, current work, verification, and pending items. Read and update this when working on the repository.
 - [Workspace implementation plan](docs/workspace_implementation_plan.md): ordered workspace tasks, CLI provenance, scope, and verification limits.
 - [Workspace standards](docs/standards/workspace.md): ownership, toolchain, code, configuration, and testing rules.
 - [Dokploy runbook](docs/runbooks/dokploy.md): container build contexts, ingress, environment, and installation boundaries.
-- [DMS product blueprint](docs/headless_dms_product_blueprint_v1.md): accepted architecture and product policies.
+- [DMS product blueprint](docs/headless_dms_product_blueprint_v1.md): product promise, included/deferred scope, correctness requirements, and decision history.
 - [DMS functionality requirements](docs/headless_dms_functionality_requirements_v1.md): feature dependency order after workspace setup.
 
 ## Ownership

@@ -1,5 +1,7 @@
 # Turnstile 360 contracts
 
+Architecture and component boundaries: [architecture.md](../../architecture.md).
+
 Private package for requests, responses, validation schemas, error codes, and pagination
 shared between `turnstile-web`, `turnstile-api`, and a future Expo/React Native client.
 Clients and backend consume the same contract definitions. Clients own presentation and

@@ -1,5 +1,7 @@
 # Thaarei DMS contracts
 
+Architecture and component boundaries: [architecture.md](../../architecture.md).
+
 Private package for language-independent DMS payload definitions: public requests and
 responses, private job messages, durable events, processing artifacts, statuses, and
 error codes. Define Zod schemas here and infer TypeScript types from those schemas.

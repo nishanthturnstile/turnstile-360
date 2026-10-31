@@ -1,5 +1,8 @@
 # Workspace implementation plan
 
+Current task status, completed milestones, verification, and handoffs are maintained in
+[IN_PROGRESS.md](../IN_PROGRESS.md). Update that record as implementation progresses.
+
 Prepare the monorepo for subsequent application implementation and migration. This scope
 establishes folders, application projects, package boundaries, build tooling,
 basic checks, and deployment configuration. It does not implement DMS capabilities,
@@ -8,18 +11,10 @@ of existing source/data. Turnstile functionality will be specified separately.
 
 ## Accepted decisions
 
-- pnpm workspaces and Turborepo for TypeScript packages and task orchestration.
-- NestJS with Fastify for both APIs; Vite/React/TypeScript for Turnstile's frontend.
-- Biome for JavaScript/TypeScript; uv, Ruff, mypy, and pytest for Python.
-- Linux with Dokploy-managed Compose and Traefik ingress/TLS.
-- Separate Turnstile and DMS application/data ownership. Turnstile's backend consumes
-  the DMS over HTTP with its own machine identity.
-- The same Turnstile API will serve web and future Expo/React Native clients. Business
-  logic and authoritative validation stay in the backend; shared Turnstile contracts
-  remain platform-independent. Mobile implementation is future scope.
-- Preserve the selected DMS stack: Better Auth/OAuth Provider, PostgreSQL/Drizzle,
-  SeaweedFS, Celery/RabbitMQ, ClamAV, and the approved isolated processors. Their
-  feature-specific dependencies and configuration are introduced with implementation.
+The accepted component architecture, stack, ownership boundaries, web/future-mobile design,
+and deployment topology are maintained in [architecture.md](../architecture.md). This plan
+records the workspace setup sequence and CLI provenance; it does not redefine that design.
+Feature-specific dependencies are introduced with their corresponding implementation.
 
 ## Ordered workspace tasks
 
@@ -93,8 +88,10 @@ Workspace verification completed locally on 2026-10-31:
 - Dependency-rule verification rejected temporary forbidden browser/server and cross-app imports; temporary files were removed.
 - DMS production dependency packaging with `pnpm deploy --prod` passed.
 
-Docker Engine is unavailable in this WSL environment. Container image builds, actual
-infrastructure startup, and Dokploy deployment/routing were not executed locally.
+Docker Engine was unavailable during initial workspace validation. It subsequently
+became available (29.9.2), and both Compose files passed validation using the installed
+Docker Compose CLI. Container image builds, actual infrastructure startup, and Dokploy
+deployment/routing still have no verification recorded. See the progress file for updates.
 
 ## Subsequent implementation
 

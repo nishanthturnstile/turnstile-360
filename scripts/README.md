@@ -4,6 +4,9 @@ These Node.js commands support development and CI. They are not deployed as appl
 services. `.mjs` explicitly selects ECMAScript modules, allowing Node to run them directly
 without a separate TypeScript build or runtime loader.
 
+See [architecture.md](../architecture.md#engineering-and-verification-architecture) for
+how these checks fit the workspace build and verification design.
+
 - `check-deploy.mjs`, invoked by `pnpm check:deploy`, validates Compose YAML and confirms
   that declared build contexts contain their Dockerfiles. Full Compose semantics are
   checked separately with `docker compose config`; container execution needs Docker Engine.

@@ -1,5 +1,7 @@
 # Thaarei DMS API
 
+Architecture and component boundaries: [architecture.md](../../architecture.md).
+
 NestJS/Fastify control API for the Thaarei Document Management System. Feature modules
 follow the accepted DMS requirements. The shared identity authority, document operations,
 and processing coordination are implemented in their respective modules as work proceeds.

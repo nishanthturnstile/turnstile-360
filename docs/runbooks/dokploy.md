@@ -1,5 +1,9 @@
 # Turnstile 360 deployment with Dokploy
 
+The target topology, component ownership, and current packaging limits are maintained in
+[architecture.md](../../architecture.md#development-and-current-deployment). This runbook
+owns deployment steps; update it when an architecture change alters those steps.
+
 Deploy Turnstile 360 and the DMS application services on a Linux server managed by
 Dokploy. The current API routes provide application identity and process liveness;
 authentication, document handling, and processing must be implemented before customer

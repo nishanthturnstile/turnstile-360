@@ -1,5 +1,7 @@
 # Frontend HTTP server
 
+See [architecture.md](../../architecture.md#linux-dokploy-traefik-and-nginx) for the deployment topology.
+
 Dokploy manages deployment, domains, and TLS through Traefik. Traefik routes browser
 requests to the frontend container, where Nginx serves Vite's built HTML, JavaScript,
 and CSS. These responsibilities are distinct: routing a request does not serve files

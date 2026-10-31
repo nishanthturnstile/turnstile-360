@@ -1,5 +1,7 @@
 # Turnstile 360 web
 
+Architecture and component boundaries: [architecture.md](../../architecture.md).
+
 Vite/React/TypeScript frontend for Turnstile 360, using workspace Biome and TypeScript
 standards. Route, feature, and component folders own the application interface. Current
 rendering shows the application name; business screens follow the product specification.
