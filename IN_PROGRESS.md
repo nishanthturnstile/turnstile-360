@@ -45,7 +45,7 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
-AUTH-FIX-001 implementation and local verification are complete (owner: Codex).
+AUTH-FIX-001 is completed (owner: Codex): implementation, local verification and remote CI.
 Protected requests overlapping an in-progress or committed refresh now return retryable
 503 while logout and idle/absolute expiry retain their 401 fences. The final session
 check, real-HTTP/PostgreSQL regression coverage, and architecture reference are updated.
@@ -55,8 +55,9 @@ from `fix/auth-refresh-session-race` to `main`. Remote CI exposed a fresh-checko
 dependency-boundary validation ran before internal packages' public `dist` exports existed.
 The boundary command now builds its workspace prerequisites first; validation with all
 three package output directories removed passed. Required local checks passed again.
-All four image jobs passed for the initial PR head; the updated checks still need remote
-verification. Next action: monitor the updated PR checks and address any failures.
+On implementation commit `c70f294`, all five checks passed for both push and PR workflows:
+the workspace checks job and all four image builds. No review findings or merge conflicts
+are present. Handoff: PR #1 remains open for owner review and merge; merging was not requested.
 No deployed readiness is claimed.
 AUTH-07 code and its earlier local verification are complete.
 Real customer/client provisioning, target Mailpit deployment and Dokploy ingress/container
@@ -67,6 +68,7 @@ DNS/TLS verification remain pending; local evidence does not establish deployed 
 | AUTH-05 | Completed | Codex | DMS machine authorization and guarded enrollment    | Handoff recorded below                         | Required workspace checks, 40 API unit cases, 61 integration cases, role/DDL matrix, compiled smoke and contract consistency passed; fixture provisioning only                                                                        | 2026-10-31 |
 | AUTH-06 | Completed | Codex | Typed machine client and real cross-service request | Handoff recorded below                         | Required workspace checks, 43 API unit cases, 63 integration cases, role/DDL matrix, compiled smoke and generated-contract consistency passed; fixture provisioning only                                                              | 2026-10-31 |
 | AUTH-07 | Completed | Codex | Login/recovery UI and operational verification      | Handoff recorded below; target rollout pending | Required checks, 43 API unit cases, 63 integration cases, three production-profile HTTPS/STARTTLS browser journeys, four image builds and isolated runtime checks passed; canonical-container probe unavailable on Docker Desktop/WSL | 2026-10-31 |
+| AUTH-FIX-001 | Completed | Codex | Preserve valid sessions during refresh overlap and fix fresh-checkout CI | PR #1 open for owner review | 65 local integration cases and required workspace checks passed; all five remote checks passed on implementation commit c70f294 | 2026-10-31 |
 
 ## Completed milestones
 
@@ -138,7 +140,10 @@ were built. Reproduced with the three package `dist` directories removed, then v
 that the updated `check:boundaries` command rebuilt the outputs and passed. Repeated
 `pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` (65 cases), and
 `pnpm test:smoke` successfully. The manifest script and architecture reference are updated;
-updated-head GitHub checks remain pending. See [PR #1](https://github.com/nishanthturnstile/turnstile-360/pull/1).
+GitHub verified implementation commit `c70f294`: the workspace checks and all four image
+builds passed in both push and pull-request workflows. No review comments or conflicts were
+present at handoff. This documentation-only update records that result; no implementation
+changed. See [PR #1](https://github.com/nishanthturnstile/turnstile-360/pull/1).
 
 The following results were observed on 2026-10-31, including the AUTH-07 final recheck. They
 cover the authority, BFF, DMS enrollment, real typed cross-service request and login/recovery UI.
@@ -162,7 +167,8 @@ Re-run affected checks when implementation changes.
 | Container image builds / infrastructure startup | All four images built; API non-root startup/liveness, Nginx headers/log privacy, Python entry and disposable PostgreSQL/Mailpit verified. Full broker/storage compatibility and remote deployment remain unverified |
 | Browser authentication journeys                 | Passed: three real HTTPS/STARTTLS journeys with Mailpit and production Nginx assets/CSP; mobile layout and bounded/redacted event assertions included                                                               |
 | Canonical issuer from application container     | Unavailable: Docker Desktop host-network routing cannot reach the WSL HTTPS fixture. Target container DNS/TLS must be verified during rollout                                                                       |
-| Remote CI / Dokploy deployment and routing      | Workflow/configuration added; execution not verified                                                                                                                                                                |
+| Remote CI                                       | Passed on implementation commit c70f294 in PR #1: workspace checks and all four image builds, for both push and pull-request workflows |
+| Dokploy deployment and routing                   | Execution not verified; remote CI does not establish target deployment readiness |
 
 Documentation consolidation verified on 2026-10-31 (DOC-002, Codex): configured Biome
 checks passed for 17 Markdown files (the two DMS specifications are excluded by the
