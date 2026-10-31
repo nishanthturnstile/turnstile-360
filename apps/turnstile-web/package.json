@@ -10,7 +10,9 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@better-auth/oauth-provider": "1.7.14",
     "@thaarei/turnstile-contracts": "workspace:*",
+    "better-auth": "1.7.14",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },

@@ -22,7 +22,18 @@ module.exports = {
       name: 'contracts-are-framework-independent',
       severity: 'error',
       from: { path: '^packages/(dms-contracts|turnstile-contracts)/' },
-      to: { path: '(^apps/|^packages/dms-client/|node_modules/(@nestjs|pg|drizzle-orm)/)' },
+      to: {
+        path: '(^apps/|^packages/dms-client/|node_modules/(@nestjs|pg|drizzle-orm|better-auth|@better-auth|openid-client|@fastify)/)',
+      },
+    },
+    {
+      name: 'browser-auth-imports-are-client-only',
+      severity: 'error',
+      from: { path: '^apps/turnstile-web/' },
+      to: {
+        path: 'node_modules/(better-auth|@better-auth/oauth-provider)/',
+        pathNot: '/dist/client(/|\\.)',
+      },
     },
     {
       name: 'browser-must-not-import-node-builtins',

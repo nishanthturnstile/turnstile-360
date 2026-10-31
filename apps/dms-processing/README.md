@@ -1,5 +1,7 @@
 # Thaarei DMS processing
 
+Architecture and component boundaries: [architecture.md](../../architecture.md).
+
 Python processing project for the Thaarei Document Management System. Publisher, tasks,
 job API, transfers, processors, and sandbox folders define its execution boundaries.
 Worker execution, parsers, and broker connections follow their processing requirements;

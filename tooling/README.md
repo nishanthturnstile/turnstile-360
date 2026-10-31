@@ -3,6 +3,9 @@
 This directory holds repository-wide development configuration. It is not included in
 the application runtime as a service.
 
+See [architecture.md](../architecture.md#engineering-and-verification-architecture) for
+the toolchain's place in the overall design and the canonical stack inventory.
+
 ## TypeScript
 
 `typescript/base.json` defines common compiler checks inherited by applications and

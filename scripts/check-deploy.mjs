@@ -3,7 +3,11 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { parseDocument } from 'yaml';
 
-for (const file of ['deploy/compose.local.yaml', 'deploy/compose.dokploy.yaml']) {
+for (const file of [
+  'deploy/compose.local.yaml',
+  'deploy/compose.dokploy.yaml',
+  'deploy/compose.mailpit.yaml',
+]) {
   const document = parseDocument(readFileSync(file, 'utf8'), { uniqueKeys: true });
   assert.equal(document.errors.length, 0, `${file}: invalid YAML`);
   const configuration = document.toJS();
