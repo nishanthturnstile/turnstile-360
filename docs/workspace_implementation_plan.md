@@ -97,7 +97,34 @@ deployment/routing still have no verification recorded. See the progress file fo
 
 Define Turnstile's business functionality and migration source before creating its domain
 modules or data migrations. Implement the DMS in the accepted requirement dependency
-order, beginning with shared identity/provisioning. Add real contract schemas, JSON Schema/
+order, beginning with shared identity/provisioning for the installation's one customer
+tenant, as defined in the [customer deployment model](../architecture.md#customer-deployment-and-application-model).
+Add real contract schemas, JSON Schema/
 OpenAPI generation, and cross-language fixtures with those capabilities. Add coordinator,
 publisher, scanner, extraction, and heavy-worker runtime roles as their functionality is
 implemented; reserved folders do not imply those roles run today.
+
+### DMS-001 tenant bootstrap acceptance
+
+Bootstrap the configured customer (for example MRR) and its administrator once. A repeated
+bootstrap must preserve the same tenant; a second customer tenant or tenant switch must
+be rejected. Provision Turnstile and each independent customer system as separate
+applications under that tenant, pending group 02's guarded activation. Web and future
+mobile use Turnstile's shared backend registration. Preserve tenant integrity and
+application access isolation; no SaaS signup, tenant selector, or cross-customer
+provisioning is included. Verify these cases during implementation. This clarification
+changes the next feature's acceptance criteria without starting feature/schema work.
+
+### Next feature: complete authentication chain
+
+Use the [authentication implementation plan](authentication_implementation_plan.md) for
+the next implementation proposal. Email/password accounts are administrator-provisioned.
+AUTH-01–AUTH-07 cover authority setup, the product session, separate DMS machine access,
+guarded enrollment and real end-to-end verification. Their design is maintained in
+[architecture.md](../architecture.md#authentication-chain-implementation-proposal).
+
+Configuration and tests can precede real customer onboarding. Complete verification still
+requires one tenant, provisioned accounts/clients, product access and an enrolled DMS
+application; isolated fixtures establish that context without bypassing production
+provisioning. Do not mark identity/provisioning or auth complete from empty modules or
+workspace checks. This task created the implementation plan, not those capabilities.

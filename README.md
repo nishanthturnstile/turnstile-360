@@ -12,6 +12,9 @@ See [architecture.md](architecture.md) for the complete system design, component
 installed and selected stack, DMS flows, deployment picture, and shared web/future-mobile
 backend architecture.
 
+Each customer receives an installation with one tenant and multiple registered applications.
+See the [customer deployment model](architecture.md#customer-deployment-and-application-model).
+
 ## Start locally
 
 Prerequisites: Node 24.21.0, pnpm 12.16.1, uv 0.13.6. uv can install the pinned Python
@@ -72,6 +75,7 @@ define application, contract/client, tooling, and deployment ownership.
 ## Documentation
 
 - [Architecture](architecture.md): single technical reference for DMS and Turnstile components, data/work flows, stack, security, configured defaults, and deployment/recovery design.
+- [Authentication implementation plan](docs/authentication_implementation_plan.md): current-code audit, official-source research, proposed complete auth chain, ordered tasks and acceptance tests. Email/password is the confirmed first login method; implementation is pending.
 - [Project progress](IN_PROGRESS.md): shared agent handoff, completed milestones, current work, verification, and pending items. Read and update this when working on the repository.
 - [Workspace implementation plan](docs/workspace_implementation_plan.md): ordered workspace tasks, CLI provenance, scope, and verification limits.
 - [Workspace standards](docs/standards/workspace.md): ownership, toolchain, code, configuration, and testing rules.

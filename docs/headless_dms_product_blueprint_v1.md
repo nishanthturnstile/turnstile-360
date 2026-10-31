@@ -1,12 +1,12 @@
 # Headless Document Management Platform
 
-## Product Blueprint v1.5
+## Product Blueprint v1.7
 
 **Updated:** 2026-10-31
 
 **Status:** Accepted product baseline. Technical architecture is maintained in [architecture.md](../architecture.md).
 
-**Scope of this update:** Technical architecture, stack, contracts, limits, security, deployment, and recovery design moved into the root architecture reference. Product promise, scope, correctness requirements, and decision history remain here. No functionality or selected policy changes.
+**Scope of this update:** Confirmed administrator-provisioned email/password for the first authentication release, with controlled recovery. Linked the researched complete-chain implementation proposal; concrete BFF/OIDC integration details are recommendations and no authentication is implemented. The single-customer deployment and application-access model is unchanged.
 
 **Product:** A headless, reusable, self-hostable Document Management System (DMS) API.
 
@@ -38,6 +38,12 @@ Consumer applications own business records, their screens, and end-user business
 A business reference is a pointer, not proof of access. Linking an invoice, employee, or case does not grant rights to its document or cause the DMS to fetch the referenced system.
 
 The initial product targets trusted registered application backends receiving potentially hostile files. Independent repositories and frameworks are supported without code changes to the DMS.
+
+Each installation belongs to one customer tenant (for example MRR). Turnstile 360 and
+other customer systems are separate registered applications using that customer's DMS.
+The product is delivered per customer/use case; another customer receives a separate
+installation. There is no SaaS tenant selection or provisioning of multiple customers
+in one installation. See the [customer deployment model](../architecture.md#customer-deployment-and-application-model).
 
 ## 2. Frozen v1 scope
 
@@ -90,6 +96,11 @@ The technical design is maintained in [architecture.md — Module and contract b
 ## 5. Tenancy, identity, and authorization
 
 The technical design is maintained in [architecture.md — Tenancy, identity, and authorization](../architecture.md#tenancy-identity-and-authorization).
+
+The first authentication release uses administrator-provisioned email/password accounts
+and controlled recovery. Company-directory SSO is later scope. The [authentication plan](authentication_implementation_plan.md)
+records research, proposed integration and acceptance; its existence does not establish
+that authentication or customer provisioning is implemented.
 
 ## 6. SeaweedFS storage and upload protocol
 
@@ -177,7 +188,7 @@ policy is maintained in [architecture.md — Ownership and distribution](../arch
 These inputs configure deployment and future scope without reopening the selected defaults or blocking the start of actual implementation:
 
 1. Consumer-specific format restrictions and future extensions beyond the accepted matrix, non-English OCR, or additional structured/business fields.
-2. The file/page/size mix, OCR/structured share, processing window, peak arrivals/transfers, tenants/applications, retention/growth, and acceptable processing delay for the known 200,000-document monthly target.
+2. The file/page/size mix, OCR/structured share, processing window, peak arrivals/transfers, registered applications within the customer tenant, retention/growth, and acceptable processing delay for the known 200,000-document monthly target.
 3. Host/storage/network resources, default Better Auth or configured external issuer, backup destination, and actual recovery/availability budget.
 4. Customer/support terms, residency, and governance constraints; Thaarei's application source is proprietary, and dependency/model packaging follows the no-mandatory-paid-license policy above.
 
@@ -191,6 +202,8 @@ Use this product scope and the [architecture defaults](../architecture.md#limits
 | v1.3, 2026-10-31 | Owner accepted Celery/RabbitMQ, Better Auth/OAuth Provider, expanded format/batch/structured requirements, 200,000 documents/month demand, commercial OSS distribution policy, and the corrected company name Thaarei; supersedes earlier scope/stack defaults where changed |
 | v1.4, 2026-10-31 | Owner selected NestJS/Fastify, Biome, Linux/Dokploy, and separate Turnstile Vite/React frontend/backend in the monorepo; recorded bounded workspace setup before feature implementation |
 | v1.5, 2026-10-31 | Consolidated technical architecture in root architecture.md; retained product scope, stable numbered navigation, correctness, and decision history without changing selected behavior |
+| v1.6, 2026-10-31 | Owner clarified one customer tenant per installation with multiple registered systems; separate installations per customer and no SaaS tenant provisioning; application access remains isolated by default |
+| v1.7, 2026-10-31 | Owner selected administrator-provisioned email/password for the first authentication release; linked complete-chain research/proposed implementation plan without changing the single-customer model or marking capabilities implemented |
 
 ## 20. Official implementation references
 

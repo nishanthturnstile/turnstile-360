@@ -63,6 +63,37 @@ Turnstile 360 is one consumer of a reusable DMS. It has its own frontend, backen
 business data. Other trusted application backends can consume the same DMS through its
 public HTTP contract without using this repository or its TypeScript packages.
 
+### Customer deployment and application model
+
+Each customer installation serves **exactly one customer tenant**. For example, MRR is
+the tenant; Turnstile 360 is one registered application under MRR. MRR may register other
+systems with the same DMS, each with its own application identity, credentials, scope
+ceiling, and document ownership. Applications may live in other repositories and use
+different frameworks. Their deployment location does not grant DMS access.
+
+```text
+MRR customer installation — one tenant: MRR
+  Shared DMS
+    Registered application: Turnstile 360 backend
+      Clients: Turnstile web and future mobile
+    Registered application: another MRR system backend
+    Registered application: additional MRR systems as provisioned
+```
+
+Turnstile has one configured customer context per installation. Its web and future mobile
+clients use the same product backend and DMS application registration; a new frontend
+client does not by itself require another DMS application registration. Another independent
+system requires its own registration and guarded activation. Shared tenant membership
+does not grant access to another application's documents; explicit grants are required.
+
+Another customer receives a separate installation with its own tenant configuration,
+application credentials, database state, and storage namespace. Reuse the product code
+and deployment definitions across customers without sharing customer data or credentials.
+This product has no SaaS tenant selection, customer self-onboarding, or provisioning of
+multiple customer tenants in one installation. Shared multi-customer hosting would require
+an explicit future scope/architecture decision. Tenant IDs remain internal ownership,
+integrity, audit, and recovery boundaries; they do not imply a multi-tenant SaaS runtime.
+
 This diagram shows the target architecture. Arrows beyond current identity/liveness and
 web entry-point behavior represent planned integrations.
 
@@ -70,7 +101,7 @@ web entry-point behavior represent planned integrations.
 flowchart TB
   Web["Turnstile web: Vite / React"]
   Mobile["Future Expo / React Native client"]
-  Other["Other registered application backend"]
+  Other["Another registered backend for the same customer"]
   subgraph Product["Turnstile 360 boundary"]
     API["Turnstile API: business rules and user authorization"]
     ProductDB[("Turnstile-owned data")]
@@ -411,17 +442,217 @@ Job orchestration is deterministic code over a fixed stage registry. Tenant/appl
 
 ### Deployment and principals
 
-- The default self-hosted deployment serves one tenant with multiple applications. The schema and query boundaries remain tenant-aware from the start.
-- The code and data model enforce tenant isolation from the start. Shared multi-tenant hosting is outside the initial single-tenant deployment profile and is an operational expansion, not a preliminary implementation stage.
-- A registered application belongs to one tenant. A service operating for multiple tenants has separate registrations/credentials for each tenant in v1.
+- Every supported customer installation serves exactly one configured customer tenant with multiple independently registered applications. See the [customer deployment model](#customer-deployment-and-application-model).
+- Bootstrap creates that installation's customer tenant once. Repeating bootstrap for the same tenant is safe; attempting to add or switch to a different customer tenant through normal bootstrap/configuration must fail. No public tenant creation, tenant switcher, or multi-customer provisioning is provided.
+- Preserve tenant ownership and isolation checks in records, queries, tokens, and recovery. Registrations and tenant-owned records must belong to the configured installation tenant; reject a mismatched tenant rather than selecting it from request input.
+- Each registered application belongs to the installation's one tenant. Deployments for different customers have separate registrations and credentials; no service registration spans customer installations.
 - Validate the token signature, allowed issuer/algorithm, audience, expiry, and configured client-identity claim. Map the verified issuer/client identity to an active registration; never authorize from caller-supplied tenant/application IDs.
 - Better Auth is the selected shared authority for this product deployment. Use its OAuth Provider plugin for client credentials and resource-bound access tokens, with JWT/JWKS signing; disable the standalone session-JWT issuance endpoint for this authority. Administrators provision confidential DMS machine clients limited to the client-credentials grant and their machine-scope ceilings. User-login OAuth clients are separate and are not mapped as DMS machine registrations. Disable open signup and unauthenticated dynamic client registration.
-- The authority issues and rotates client credentials. Local DMS registration supplies activation, immediate disablement, tenant/application mapping, and allowed-scope ceilings. Give each application and internal worker role a separate client; multi-tenant consumers use separate registrations. A DMS resource server needs verification keys, not an issuer-wide signing secret.
+- The authority issues and rotates client credentials. Local DMS registration supplies activation, immediate disablement, tenant/application mapping, and allowed-scope ceilings. Give each application and internal worker role a separate client within the customer installation. A DMS resource server needs verification keys, not an issuer-wide signing secret.
 - User login uses secure, HttpOnly session cookies through the application backend; separately deployed OAuth login clients use authorization code with PKCE. Enforce trusted origins, CSRF protection, expiry, login/recovery rate limits, operator-controlled account recovery, and session revocation. Client secrets never enter browser code. Persist signing keys and coordinate rotation across API instances; do not depend on process-local sessions or rate-limit counters in a replicated deployment.
 - A client backend checks its user's business permissions, then uses a cached short-lived client-credentials access token for the DMS audience. This token represents the application, not delegated end-user rights. Direct end-user tokens, arbitrary multi-issuer federation, and user token exchange are outside the v1 DMS contract. Reported end-user identifiers are bounded audit context asserted by the application, not authorization input.
 - An operator may configure a supported external OAuth/OIDC issuer, including an existing Keycloak installation, instead of running the embedded authority. Use one selected authority per deployment by default; do not deploy both systems merely because they share a repository. Keycloak is Apache 2.0, so replacement is an application/operations choice rather than a mandatory-license saving.
 
 [Better Auth OAuth Provider](https://better-auth.com/docs/plugins/oauth-provider), [Drizzle/auth schema integration](https://better-auth.com/docs/adapters/drizzle), [Keycloak administration](https://www.keycloak.org/docs/latest/server_admin/index.html)
+
+### Authentication chain implementation proposal
+
+**Planning status, 2026-10-31:** Email/password with administrator-provisioned accounts
+is confirmed for the first authentication release. The concrete integration below is
+the researched implementation recommendation; no authentication code is implemented.
+The ordered tasks, research evidence, dependency candidates, acceptance tests, and
+remaining operator inputs are in the [authentication implementation plan](docs/authentication_implementation_plan.md).
+Existing one-customer/one-tenant and application-isolation requirements remain in force.
+
+#### Authority, browser session, and machine access
+
+Keep one Better Auth authority in DMS `platform-auth`; keep document resource authorization
+in DMS `access`. Use Turnstile API as a backend for frontend (BFF): the browser has an
+opaque HttpOnly product-session cookie, while OAuth credentials/tokens stay server-side.
+Better Auth owns passwords and its own authority session. Turnstile owns a separate
+product-session record and user/application access decisions, without copying password
+records or querying the authority's tables.
+
+Recommend an authorization-code/OpenID Connect handoff with S256 PKCE between the authority
+and the Turnstile backend. The user still signs in with email/password to Better Auth;
+this internal protocol is not company-directory SSO or a password-grant flow. It gives
+other independently developed applications the same standard login integration without
+sharing browser cookies, signing secrets, database tables, or machine credentials.
+The BFF is part of the existing Turnstile API, not another deployed service.
+
+| Credential / context                                      | Holder / verifier                                                              | Authority                                                                                 |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| Email/password and Better Auth session                    | Authority login UI / Better Auth                                               | Establishes the user's identity; no automatic Turnstile or DMS permission                 |
+| User authorization code, ID/access/refresh tokens         | Turnstile backend / selected OIDC client                                       | Establishes its own user session; not a credential for DMS document APIs                  |
+| Opaque Turnstile session cookie                           | Browser / Turnstile API with its persistent session store                      | Authenticates product requests, subject to current user/application permissions           |
+| Turnstile DMS machine client and short-lived access token | Turnstile backend / DMS issuer-JWKS verification plus live registration checks | Application access to the DMS under scopes, ownership/grants, and the installation tenant |
+| One-time Thaarei enrollment key                           | Private provisioning / enrollment endpoint                                     | Activates one bound pending application; absent from ordinary requests and browser code   |
+
+Provision separate OAuth clients for the Turnstile web login and Turnstile's DMS machine
+access. The login client permits code/refresh grants and exact callbacks; it receives
+no DMS machine scopes or DMS application registration. The machine client permits only
+client credentials, receives an administrator-assigned scope ceiling, and maps to the
+one local DMS application registration. A future mobile login would use its own public
+PKCE client while retaining this same Turnstile backend and DMS machine registration.
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant Web as Turnstile web / login UI
+  participant API as Turnstile API (BFF)
+  participant Auth as DMS platform-auth (Better Auth)
+  participant DMS as DMS access / public API
+  User->>Web: Open application
+  Web->>API: Start login
+  API-->>Web: Redirect to authority with state, nonce and PKCE
+  Web->>Auth: Email/password sign-in on authority login page
+  Auth-->>Web: Authority cookie, then authorization-code redirect
+  Web->>API: Exact registered callback with code
+  API->>Auth: Exchange code using verifier and confidential login client
+  Auth-->>API: User tokens and verified identity
+  API-->>Web: Opaque product-session cookie; no OAuth tokens
+  Web->>API: Product request with cookie and CSRF protection
+  API->>Auth: Check current user-token/session activity
+  API->>API: Check current product access and action permission
+  API->>Auth: Obtain/cache separate client-credentials DMS token
+  API->>DMS: DMS operation with machine token and bounded actor context
+  DMS->>DMS: Verify JWT, active registration, tenant, scopes and resource policy
+  DMS-->>API: Authorized result
+  API-->>Web: Product response
+```
+
+The UI for credential entry is supplied by the frontend, but passwords go to the authority
+handler rather than a second password implementation in Turnstile API. A valid authority
+account without Turnstile access must be denied by the product. An end-user identifier
+passed to DMS is audit context asserted by Turnstile, never delegated user authority.
+
+#### Proposed routes and deployment boundary
+
+Prefer a single public application origin initially, with a stable authority issuer under
+`/identity`. Example URLs below are configuration examples, not assigned customer domains.
+This lets the existing frontend serve the login/recovery screens without cross-origin
+credential requests or an extra frontend deployment. Independent applications can use
+the same issuer with their own callback origins later.
+
+| Surface                                          | Proposed public path                                                              | Owning service / policy                                                                       |
+| ------------------------------------------------ | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Product frontend / login and recovery UI         | `/`, `/sign-in`, `/forgot-password`, `/reset-password`                            | Vite assets served by Nginx; UI does not issue or validate credentials                        |
+| Product login start, callback, session, logout   | `/api/auth/login`, `/api/auth/callback`, `/api/auth/session`, `/api/auth/logout`  | Turnstile API; explicit session/CSRF/OIDC handling                                            |
+| Better Auth protocol/session endpoints           | `/identity/*`                                                                     | DMS Fastify-mounted authority handler, outside Nest's `/v1` domain prefix                     |
+| Issuer discovery / keys                          | `/identity/.well-known/*`, `/identity/jwks` and required root OAuth metadata path | DMS authority; explicit ingress/handler mappings verified against the pinned release          |
+| Document resource API                            | Existing controlled DMS domain, `/v1/*`                                           | Machine bearer authentication and live DMS authorization                                      |
+| Operator/client administration and worker routes | Private interfaces only                                                           | Authenticated operator/role plus network restrictions; never a public catch-all admin surface |
+
+Production issuer example: `https://platform.customer.example/identity`. DMS resource
+audience example: `https://dms.customer.example/v1`. A server's private DMS transport URL
+may differ from that audience, but must not change token identity or audience checks.
+Canonical discovery/token/JWKS URLs must be reachable from application containers; do
+not replace their issuer with Docker hostnames. Keep the actual issuer/configuration
+source unique and validate expected origins, algorithms, resources and callback URLs.
+
+Traefik routes `/identity` and the required metadata paths to DMS with priority over the
+SPA; `/api` continues to route to Turnstile API. Route login UI paths to the frontend.
+Nginx remains the static-file server. The native Fastify handler needs an explicit public
+auth-path allowlist and private administration boundary: Nest controller guards do not
+automatically protect raw Fastify routes. Preserve form-encoded token requests, JSON
+login requests, response statuses/redirects and every `Set-Cookie` header separately.
+
+Local development uses one hostname consistently: `http://localhost:5173` as public
+origin, `/identity` and required metadata proxied to DMS on 3001, and `/api` proxied to
+Turnstile API on 3002. The complete auth development command must run all three apps plus
+PostgreSQL. Local HTTP cookie settings are explicit development settings; production uses
+TLS and secure cookies. Different ports do not isolate cookies, so use distinct authority
+and product cookie names. No wildcard origins or global proxy trust are enabled.
+
+#### Session, revocation, and application authorization
+
+Persist Better Auth sessions, verification values, signing keys and rate-limit state in
+its `auth` schema. Disable its cookie session cache initially. Persist product sessions
+and OAuth transaction/refresh state in Turnstile-owned persistence, with a PostgreSQL
+store for the Fastify session plugin, encrypted recoverable user tokens, bounded TTLs,
+and no production memory-only session store. Do not introduce Redis for this slice.
+
+Use different host-only HttpOnly session cookies; production cookies are Secure and
+SameSite=Lax, with a `__Host-` product-cookie name when its requirements are satisfied.
+Use state/nonce/PKCE for login callbacks and explicit CSRF protection for cookie-authenticated
+product mutations, including logout. Better Auth's origin/CSRF protection only covers
+its own routes. Product responses expose a safe user/session DTO, never OAuth tokens,
+session credentials, client secrets, or enrollment keys. Regenerate the product session
+after login and privilege changes; enforce idle and absolute expiration server-side.
+
+Audit native authority response shapes as well as product DTOs. Do not expose raw session
+credentials in public sign-in/session JSON simply because an SDK returns them: apply a
+protocol-aware response projection and verify the selected client/authorization continuation
+still works. OAuth token endpoint responses remain available to their authenticated server
+clients; this is not a blanket filter that removes protocol token responses.
+
+Normal Turnstile logout destroys the local product session, revokes its server-held user
+refresh authority and ends the current Better Auth login session. Prefer a supported
+same-origin authority sign-out request from the login client, rather than putting an ID
+token into a browser-visible logout URL. End-session invalidation may also affect other
+apps linked to that same authority session; it never revokes the application's machine
+client. Distinguish completed local logout from a failed/pending authority sign-out,
+always clear local access, and provide a controlled retry instead of reporting both
+steps successful during an authority outage. Verify the exact cookie-clear and refresh
+revocation sequence, including direct API clients, in browser/API tests.
+
+Initially check the authority's current session-bound user-token activity for protected
+product requests using authenticated introspection. Also check local product access.
+An authority outage must not become successful authentication; return a controlled
+availability error. Verify logout, password reset, suspension and token refresh against
+the exact installed release. An optimization that caches this result must first define
+and test its revocation delay; it must not silently change immediate revocation claims.
+
+DMS machine JWTs are locally verified using pinned issuer/JWKS, audience, supported
+asymmetric algorithm, lifetime, access-token type and verified `client_id`. Load the
+current application registration and scope ceiling on each authorized request; require
+the installation tenant and current resource rights. This blocks a disabled application
+even when its signed token has not expired. No browser cookie, ID token, user access
+token, arbitrary tenant header, or caller-chosen storage URL substitutes for this path.
+
+Individual machine JWTs remain valid cryptographically until expiry; credential rotation
+does not retract them. Emergency response disables the local registration as well as
+the issuer client. Keep token lifetime at most five minutes, key rotation overlap bounded
+by token validity, and signing-key recovery documented. A cache never bypasses registration
+checks. Client/secret rotation must preserve the DMS application identity and document
+ownership. Logout ends user authority without globally disabling the application's
+machine identity; every user-triggered DMS call still requires the product's user check.
+
+The authority needs its own schema/migration/runtime role; Turnstile cannot read it via
+SQL. DMS registration/enrollment state stays in DMS-owned persistence; product sessions
+and user access stay in Turnstile-owned persistence. Preserve transaction-local tenant
+context on tenant-owned tables without applying DMS RLS blindly to authority tables.
+
+Recommended starting values for this proposal are below. New user-session limits remain
+proposed policy; the existing five-minute machine-token ceiling is retained. Enforce the
+absolute product expiry against the verified login time, not by extending it on refresh.
+
+| Setting                                               | Proposed initial value                                                                    |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Authority user session                                | 8 hours; no automatic sliding refresh initially                                           |
+| Product session                                       | 30-minute idle limit and 8-hour absolute limit, never beyond its parent authority session |
+| User OAuth access token / DMS machine access token    | At most 5 minutes each; distinct clients/audiences                                        |
+| Authorization transaction / password-reset link       | At most 5 minutes / 30 minutes; one-time consumption                                      |
+| Fresh authentication for sensitive account operations | At most 10 minutes since authentication                                                   |
+| Password policy                                       | 15–128 characters, no silent truncation; authority-controlled hashing and validation      |
+| Persistent session cache                              | Authority cookie cache off; no positive user-introspection cache initially                |
+
+Because the authority and DMS routes initially share one process, an outage of that
+process affects both. A DMS-domain failure with a healthy authority need not log the user
+out; an unavailable authority prevents a fresh user check and returns an availability
+error. Retain the browser's session cookie for retry where safe instead of converting
+an infrastructure failure into invalid credentials or promising independent availability.
+
+#### Prerequisites and completion boundary
+
+Configuration and tests can be built before onboarding a real customer. A working chain
+still requires a provisioned account, one configured tenant, two distinct OAuth clients,
+a Turnstile access mapping, and an enrolled DMS application. Test fixtures may establish
+that context in isolated databases; production must use supported private provisioning.
+Do not bypass enrollment, publish self-signup, add a second tenant, or call auth complete
+merely because the handler starts. Full document-operation authorization is tested with
+each later capability; this slice establishes authentication and a real protected DMS
+capability-read integration without inventing Turnstile business roles or screens.
 
 ### Thaarei enrollment and activation
 
@@ -718,7 +949,7 @@ Reserve declared staging and candidate-copy bytes transactionally before signing
 
 Gate uploads and processing on free storage, scratch-disk space, worker capacity, and maximum pending work. Rate-limit transfer ingress as well as metadata APIs. Never rely only on a post-upload HEAD check to enforce size. A tenant's queued-work cap applies to reprocessing too.
 
-Use round-robin tenant/application selection and a per-tenant running-work cap when more than one tenant is enabled. Separate scanning capacity from enrichment so long OCR jobs cannot prevent otherwise valid originals from becoming available. Limit broker prefetch and native-library threads to the available CPU/memory budget.
+Use fair bounded selection across registered applications within the installation's one tenant, subject to application and tenant-wide admission/running-work limits. No cross-customer scheduler is needed. Separate scanning capacity from enrichment so long OCR jobs cannot prevent otherwise valid originals from becoming available. Limit broker prefetch and native-library threads to the available CPU/memory budget.
 
 Measure API p50/p95, database plans/connection saturation, upload completion-to-availability, queue age, extraction/index lag, CPU-seconds/page, peak RSS, scratch usage, artifact bytes, and error/timeout rates by document class. Queue age is more useful for user experience than queue depth alone.
 
@@ -761,7 +992,7 @@ Build replacement index generations without clearing active results; switch only
 | Optional structured profile    | Add pinned Docling/model artifacts and a bounded heavy-worker resource allocation; disabled capabilities are not advertised                                                                         |
 | Expanded deployment            | Same application images/contracts; separate durable services and worker hosts, distributed storage/HA configured for the required recovery/availability budget                                      |
 
-The default small profile is one host with 8 vCPU, 16 GiB RAM, and SSD-backed persistent volumes. Explicitly allocate memory/CPU to PostgreSQL, storage, scanner, Tika JVM, API, and worker roles; optional model processing needs additional budget or lower concurrent work. The profile is not an HA or guaranteed 200,000-documents/month promise. Persistent capacity includes historical versions, temporary snapshot duplication, retained deletes, artifacts, and backup headroom. Backups must survive loss of this host. No Docker Desktop subscription, commercial broker/storage edition, hosted auth platform, or paid monitoring service is required.
+The default small profile is one host with 8 vCPU, 16 GiB RAM, and SSD-backed persistent volumes. Every profile serves the same single customer tenant; expanding workers, hosts, or durable-service availability does not add customer tenants. Explicitly allocate memory/CPU to PostgreSQL, storage, scanner, Tika JVM, API, and worker roles; optional model processing needs additional budget or lower concurrent work. The profile is not an HA or guaranteed 200,000-documents/month promise. Persistent capacity includes historical versions, temporary snapshot duplication, retained deletes, artifacts, and backup headroom. Backups must survive loss of this host. No Docker Desktop subscription, commercial broker/storage edition, hosted auth platform, or paid monitoring service is required.
 
 Provide separate liveness, API readiness, and processing-readiness checks. Database or authorization failures block affected requests; a stale scanner or stopped extraction worker reports degraded processing and blocks its unsafe transitions without unnecessarily hiding already available originals. Alert on signature age, oldest pending job/outbox item, dead letters, backup lag, free capacity, repeated reconciliation failures, and authentication errors. Metrics endpoints are private or authenticated.
 
@@ -914,9 +1145,11 @@ This consolidation preserves the selected architecture and does not add business
 database changes, mobile code or migration. Actual completion/verification stays in
 [IN_PROGRESS.md](IN_PROGRESS.md); product requirements retain their stable IDs.
 
-| Date       | Architecture record                                                                                                                                                                                                                |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-31 | Consolidated blueprint v1.4 technical sections, workspace boundaries, selected/installed stack, Turnstile web/future-mobile design, and deployment picture into this file; prior product decisions remain in the blueprint history |
+| Date       | Architecture record                                                                                                                                                                                                                                  |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-31 | Consolidated blueprint v1.4 technical sections, workspace boundaries, selected/installed stack, Turnstile web/future-mobile design, and deployment picture into this file; prior product decisions remain in the blueprint history                   |
+| 2026-10-31 | Owner clarified exactly one customer tenant per installation, multiple independent application registrations, separate customer installations, and no SaaS/multi-customer provisioning; retained tenant integrity and application isolation          |
+| 2026-10-31 | Owner selected email/password first; added researched authentication-chain implementation proposal with separate browser/user and machine trust, BFF/OIDC sessions, provisioning prerequisites and verification plan; implementation remains pending |
 
 ## Ownership and distribution
 

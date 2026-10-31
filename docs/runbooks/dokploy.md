@@ -4,6 +4,11 @@ The target topology, component ownership, and current packaging limits are maint
 [architecture.md](../../architecture.md#development-and-current-deployment). This runbook
 owns deployment steps; update it when an architecture change alters those steps.
 
+Each installation is scoped to one customer tenant. Use the [customer deployment
+model](../../architecture.md#customer-deployment-and-application-model) when provisioning
+its configuration, data, credentials, and registered applications; scaling services does
+not introduce additional customer tenants.
+
 Deploy Turnstile 360 and the DMS application services on a Linux server managed by
 Dokploy. The current API routes provide application identity and process liveness;
 authentication, document handling, and processing must be implemented before customer
