@@ -1,0 +1,31 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "dev": {
+      "passThroughEnv": [
+        "HOST",
+        "PORT",
+        "AUTH_PROFILE",
+        "AUTH_PUBLIC_ORIGIN",
+        "AUTH_ISSUER_URL",
+        "AUTH_LOGIN_CALLBACK_URL",
+        "AUTH_LOGIN_CLIENT_ID",
+        "DMS_MACHINE_CLIENT_ID",
+        "INSTALLATION_TENANT_ID",
+        "INSTALLATION_CUSTOMER_KEY",
+        "AUTH_SECRET",
+        "AUTH_DATABASE_URL",
+        "DMS_DATABASE_URL",
+        "DMS_RESOURCE_URL",
+        "AUTH_SIGNING_ALGORITHM",
+        "AUTH_DATABASE_POOL_MAX",
+        "AUTH_SMTP_HOST",
+        "AUTH_SMTP_PORT",
+        "AUTH_SMTP_MODE",
+        "AUTH_SMTP_USER",
+        "AUTH_SMTP_PASSWORD",
+        "AUTH_MAIL_FROM"
+      ]
+    }
+  }
+}

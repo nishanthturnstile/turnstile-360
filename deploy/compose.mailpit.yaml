@@ -1,0 +1,41 @@
+# Explicit pilot-only overlay. Dokploy owns public ingress/TLS; this SMTP hop requires STARTTLS.
+services:
+  mailpit:
+    image: axllent/mailpit:v1.33.0@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231
+    environment:
+      MP_SMTP_TLS_CERT: /run/mailpit/server.crt
+      MP_SMTP_TLS_KEY: /run/mailpit/server.key
+      MP_SMTP_REQUIRE_STARTTLS: "true"
+      MP_MAX_MESSAGES: "200"
+      MP_MAX_AGE: 24h
+      MP_MAX_MESSAGE_SIZE: "1"
+      MP_DISABLE_VERSION_CHECK: "true"
+      MP_QUIET: "true"
+    volumes:
+      - type: bind
+        source: ${MAILPIT_TLS_CERT_FILE:?Set the pilot SMTP certificate file}
+        target: /run/mailpit/server.crt
+        read_only: true
+      - type: bind
+        source: ${MAILPIT_TLS_KEY_FILE:?Set the private pilot SMTP key file}
+        target: /run/mailpit/server.key
+        read_only: true
+    ports: [127.0.0.1:8025:8025]
+    expose: ["1025"]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, /mailpit, readyz]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  dms-api:
+    environment:
+      AUTH_SMTP_HOST: mailpit
+      AUTH_SMTP_PORT: "1025"
+      AUTH_SMTP_MODE: starttls
+      NODE_EXTRA_CA_CERTS: /run/mailpit/ca.crt
+    volumes:
+      - type: bind
+        source: ${MAILPIT_CA_CERT_FILE:?Set the trusted pilot SMTP CA certificate file}
+        target: /run/mailpit/ca.crt
+        read_only: true

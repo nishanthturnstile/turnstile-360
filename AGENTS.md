@@ -35,6 +35,9 @@ in `IN_PROGRESS.md`. Update affected references when the architecture changes.
 - Define database schemas and migrations only when the relevant feature is implemented.
 - Never put service credentials in Vite configuration or browser code.
 - Dokploy owns ingress/TLS. Keep Compose build contexts at the monorepo root.
+- Add focused tests only for critical behavior, likely failure points, or meaningful regressions;
+  use integration tests when the risk crosses component boundaries. Skip exhaustive scenarios,
+  implementation-mirroring tests, and new tests for routine low-risk or documentation changes.
 - Run `pnpm check`, `pnpm build`, `pnpm test`, and `pnpm test:integration` for workspace changes.
 - Report unavailable container/runtime verification separately from static checks.
 

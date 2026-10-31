@@ -1,0 +1,210 @@
+{
+  "id": "fac96b08-0209-4614-b28f-eeec9b936de6",
+  "prevId": "93a40591-5835-4932-a73d-6e355e6983cc",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "turnstile.installation": {
+      "name": "installation",
+      "schema": "turnstile",
+      "columns": {
+        "singleton": {
+          "name": "singleton",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_key": {
+          "name": "customer_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "installation_tenant_id_unique": {
+          "name": "installation_tenant_id_unique",
+          "columns": ["tenant_id"],
+          "nullsNotDistinct": false
+        },
+        "installation_customer_key_unique": {
+          "name": "installation_customer_key_unique",
+          "columns": ["customer_key"],
+          "nullsNotDistinct": false
+        },
+        "installation_application_id_unique": {
+          "name": "installation_application_id_unique",
+          "columns": ["application_id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "one_installation": {
+          "name": "one_installation",
+          "value": "\"turnstile\".\"installation\".\"singleton\" = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "turnstile.session": {
+      "name": "session",
+      "schema": "turnstile",
+      "columns": {
+        "id_hash": {
+          "name": "id_hash",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ciphertext": {
+          "name": "ciphertext",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "session_expiry_idx": {
+          "name": "session_expiry_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "session_tenant_id_installation_tenant_id_fk": {
+          "name": "session_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "session",
+          "columnsFrom": ["tenant_id"],
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsTo": ["tenant_id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"session\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"session\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "turnstile.user_access": {
+      "name": "user_access",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_access_tenant_id_installation_tenant_id_fk": {
+          "name": "user_access_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "user_access",
+          "columnsFrom": ["tenant_id"],
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsTo": ["tenant_id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_access_tenant_id_user_id_pk": {
+          "name": "user_access_tenant_id_user_id_pk",
+          "columns": ["tenant_id", "user_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"user_access\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"user_access\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "turnstile": "turnstile"
+  },
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

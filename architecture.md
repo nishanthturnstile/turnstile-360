@@ -39,23 +39,26 @@ Navigation: [status](#implementation-status), [system picture](#system-context),
 
 ## Implementation status
 
-| Area                 | Current state                                                                                                   | Accepted target / remaining work                                                                      |
-| -------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| DMS API              | Nest/Fastify entry point, `/v1` identity, `/health/live`, eleven empty feature modules                          | Identity, document capabilities, coordinator, private operator/job APIs, database/storage integration |
-| Turnstile API        | Separate Nest/Fastify entry point, `/api` identity, `/health/live`                                              | Product rules, user authorization, persistence, authenticated DMS consumption                         |
-| Turnstile web        | Vite/React application name, local `/api` proxy                                                                 | Product screens and user interactions after requirements are agreed                                   |
-| Python processing    | Installable package, identification command, reserved execution folders                                         | Publisher, Celery tasks, job/transfer clients, scanner/parser supervision and sandbox enforcement     |
-| Shared packages      | Three buildable packages with empty exports                                                                     | Payload schemas, generated contracts/fixtures, typed HTTP operations                                  |
-| Local infrastructure | PostgreSQL, RabbitMQ, SeaweedFS Compose definitions                                                             | Startup/persistence and storage/security compatibility verification; applications are not connected   |
-| Production packaging | Four Dockerfiles and three-service Dokploy application Compose                                                  | Image/runtime checks, production stateful/processing services, deployed domains/TLS verification      |
-| Quality              | Build, type, boundary, formatting, API identity/injection/runtime smoke checks configured and previously passed | Business/security/processor/recovery tests as capabilities are implemented                            |
-| Mobile               | Architecture boundary only                                                                                      | Expo/React Native project is deferred; no mobile application or dependencies exist                    |
+| Area                 | Current state                                                                                                                          | Accepted target / remaining work                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| DMS API              | Nest/Fastify, persisted authority, managed clients, machine guard, transactional enrollment, local-first disablement and bounded audit | Real client/customer provisioning, document/resource grants, storage and private job APIs                     |
+| Turnstile API        | Nest/Fastify, persisted OIDC BFF, live user permissions, fenced refresh/logout and typed authenticated DMS capability integration      | Product rules, document workflows and real deployment setup                                                   |
+| Turnstile web        | Login/recovery/reset and authenticated entry, safe session/logout states, same-origin auth proxies                                     | Product screens and user interactions after requirements are agreed                                           |
+| Python processing    | Installable package, identification command, reserved execution folders                                                                | Publisher, Celery tasks, job/transfer clients, scanner/parser supervision and sandbox enforcement             |
+| Shared packages      | Typed DMS HTTP client/token provider, shared auth/capability DTOs and generated DMS OpenAPI                                            | Remaining feature contracts and cross-language fixtures                                                       |
+| Local infrastructure | PostgreSQL, bounded Mailpit capture, RabbitMQ and SeaweedFS Compose definitions                                                        | API PostgreSQL integration verified with disposable fixtures; broker/storage compatibility remains unverified |
+| Production packaging | Four built images, isolated runtime checks and three-service Dokploy application Compose                                               | Production stateful/processing services and actual container DNS, deployed domains/TLS verification           |
+| Quality              | Build, type, boundary, formatting, API identity/injection/runtime smoke checks configured and previously passed                        | Business/security/processor/recovery tests as capabilities are implemented                                    |
+| Mobile               | Architecture boundary only                                                                                                             | Expo/React Native project is deferred; no mobile application or dependencies exist                            |
 
-The current APIs have no authentication, document endpoints, database migrations, or
-processing operations. A module name, folder, dependency declaration, or Compose file
+AUTH-01–07 implement authentication foundations, the persisted authority, managed distinct
+OAuth clients, the Turnstile BFF/user boundary, DMS machine enrollment and the typed
+cross-service capability request, login/recovery UI and local operational verification.
+Real deployment client registrations, document endpoints
+and processing operations remain pending. A module name, folder, dependency declaration, or Compose file
 does not establish a working feature. See [progress](IN_PROGRESS.md) for dated evidence;
-container builds, infrastructure startup, remote CI, and Dokploy deployment remain
-unverified at this revision. No source/data migration has started.
+PostgreSQL migrations, role isolation and authority/session persistence are verified for AUTH-02; application image builds and isolated runtime checks are verified in AUTH-07. Full
+infrastructure compatibility, remote CI and actual Dokploy deployment remain unverified. No source/data migration has started.
 
 ## System context
 
@@ -249,7 +252,7 @@ The subsequent selected-technology section covers feature dependencies not yet i
 | TypeScript                 | 6.0.3, shared catalog                                                                            | Strict application/library compilation; compatibility pin for the installed Nest generator/compiler API   |
 | API framework              | `@nestjs/common`, `core`, `platform-fastify` 12.3.2                                              | Both control/product APIs with Fastify; compatible plugins required                                       |
 | Nest runtime support       | `reflect-metadata` 0.2.2; `rxjs` 7.8.1                                                           | Decorator metadata, dependency injection, framework reactive support                                      |
-| Validation                 | Zod 4.6.7 in both APIs                                                                           | Current host/port validation; selected future shared payload schemas                                      |
+| Validation                 | Zod 4.6.7 in both APIs                                                                           | Host/port and authentication environment validation; future shared payload schemas                        |
 | Web UI                     | React / React DOM 19.3.1                                                                         | Product presentation and interaction                                                                      |
 | Web build                  | Vite 8.3.5; `@vitejs/plugin-react` 6.1.2                                                         | Frontend development server, React integration, production asset build                                    |
 | API generation             | Nest CLI 12.0.11; schematics 12.0.12                                                             | CLI-generated modules/controllers/providers; no hand-built replacement for available scaffolding commands |
@@ -260,14 +263,22 @@ The subsequent selected-technology section covers feature dependencies not yet i
 | Repository YAML checks     | `yaml` 2.9.1                                                                                     | Parse deployment YAML and check build-context/Dockerfile paths                                            |
 | Python runtime/build       | Python 3.13.18; uv / `uv_build` 0.13.6                                                           | Locked environment and Python source/wheel packaging                                                      |
 | Python quality/tests       | Ruff 0.17.3; mypy 2.4.1; pytest 9.2.0, resolved in `uv.lock`                                     | Python format/lint/type checks; pytest available for future behavior tests                                |
-| Infrastructure definitions | PostgreSQL 18.6-bookworm; RabbitMQ 4.3.7-management-alpine; SeaweedFS 4.51                       | Local Compose images pinned by digest; not connected to application code                                  |
+| Infrastructure definitions | PostgreSQL 18.6-bookworm; Mailpit 1.33.0; RabbitMQ 4.3.7-management-alpine; SeaweedFS 4.51       | Pinned images; PostgreSQL connects through owned roles, broker/storage integration pending                |
 | Application images         | Node 24.21.0-bookworm-slim; Python 3.13.18-slim; Nginx 1.30.2-alpine                             | Digest-pinned runtime/build bases in Dockerfiles; frontend uses an unprivileged Nginx process             |
 | Delivery                   | Docker Compose; Linux server with Dokploy/Traefik; GitHub Actions workflow                       | Container deployment target, ingress/TLS, configured CI checks/image builds                               |
 
-Python currently has no runtime dependencies. Better Auth/plugins, Drizzle/database
-drivers, the S3 SDK, Celery and processing engines, OpenAPI generation, and OpenTelemetry
-remain selected additions for their features. Do not describe them as installed or
-operational. React Testing Library and Playwright are planned for real UI flows. No
+AUTH-01 adds exact pins for `better-auth`, `@better-auth/oauth-provider`,
+`@better-auth/drizzle-adapter`, and the development `auth` CLI at 1.7.14;
+`drizzle-orm` 0.45.4, `pg` 8.23.1, development `drizzle-kit` 0.31.11 and
+`@types/pg` 8.20.0 in both APIs; `jose` 6.2.14 in DMS; `openid-client` 6.8.8,
+`@fastify/cookie` 11.1.5 and `@fastify/session` 11.1.6 in Turnstile API;
+client-only Better Auth/OAuth Provider 1.7.14 in web; and development `@playwright/test` 1.64.1
+at root. AUTH-02 also installs `nodemailer` 10.3.1 with development `@types/nodemailer` 8.0.2,
+explicit Fastify 5.12.7 in both APIs and root development `pg` 8.23.1 for isolated database
+tooling. Authority/BFF and real browser-to-DMS evidence are recorded in progress; actual
+deployment and customer provisioning remain separate. Python currently has no runtime dependencies.
+The S3 SDK, Celery/processing engines, OpenAPI generation, OpenTelemetry and
+React Testing Library remain later additions. No
 additional UI component system, router, client-state/form library, mobile library, or
 Turnstile domain dependency has been selected by this workspace.
 
@@ -459,10 +470,513 @@ Job orchestration is deterministic code over a fixed stage registry. Tenant/appl
 
 **Planning status, 2026-10-31:** Email/password with administrator-provisioned accounts
 is confirmed for the first authentication release. The concrete integration below is
-the researched implementation recommendation; no authentication code is implemented.
+the researched implementation recommendation. AUTH-01–07 implement foundations, owned
+persistence/native authority, managed OAuth clients, the Turnstile BFF and DMS machine
+authorization/enrollment, typed cross-service capabilities and login/recovery UI. Actual deployed
+operational verification remains pending; see the progress record for verification.
 The ordered tasks, research evidence, dependency candidates, acceptance tests, and
 remaining operator inputs are in the [authentication implementation plan](docs/authentication_implementation_plan.md).
 Existing one-customer/one-tenant and application-isolation requirements remain in force.
+
+#### Authentication configuration foundations
+
+The pure [authority options factory](apps/dms-api/src/modules/platform-auth/authority-options.ts)
+is separate from Nest wiring and enables email/password, administrator, JWT and OAuth
+plugin metadata. The CLI [entry point](apps/dms-api/src/modules/platform-auth/auth.ts)
+uses the owned Drizzle schema/adapter with `schemaName: 'auth'` and `transaction: true`.
+It creates a lazy pool without starting Nest or an HTTP listener. `pnpm check:auth:cli`
+generates all 13 plugin/core tables in a temporary folder and runs the official schema
+check against the committed Drizzle definitions without contacting PostgreSQL. Retained
+schemas are generated only with the installed exact-version CLI; Drizzle produces the
+reviewed SQL migrations. Runtime startup never generates, pushes or applies schemas.
+
+Each API validates its own configuration with Zod. Explicit `AUTH_PROFILE` values are
+`local`, `test`, and `production` (default `local`). `NODE_ENV=production` requires the
+production profile. Local/test public URLs are loopback-only; production public issuer,
+origin, callback and DMS resource use HTTPS. URL credentials, wildcards, queries,
+fragments, noncanonical forms and wrong paths are rejected. `DMS_API_URL` is the product's
+separate server transport and may use private HTTP in production. Public identity remains
+pinned to `AUTH_PUBLIC_ORIGIN` plus `/identity`, with the exact product callback at
+`/api/auth/callback`; the resource path is `/v1`. No request headers select these URLs.
+
+| Owner                     | Required configuration                                                                                                                          |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Both APIs                 | `AUTH_PROFILE`, `AUTH_PUBLIC_ORIGIN`, `AUTH_ISSUER_URL`, `AUTH_LOGIN_CALLBACK_URL`, separate `AUTH_LOGIN_CLIENT_ID` and `DMS_MACHINE_CLIENT_ID` |
+| DMS authority/access      | `AUTH_SECRET`, `AUTH_DATABASE_URL`, `DMS_DATABASE_URL`, `DMS_RESOURCE_URL`; `AUTH_SIGNING_ALGORITHM` is pinned to `RS256`                       |
+| Turnstile login/session   | `AUTH_LOGIN_CLIENT_SECRET`, `TURNSTILE_DATABASE_URL`, `TURNSTILE_COOKIE_SECRET`, `TURNSTILE_TOKEN_ENCRYPTION_KEY`                               |
+| Installation              | Both APIs require `INSTALLATION_TENANT_ID` and `INSTALLATION_CUSTOMER_KEY`; Turnstile also requires `TURNSTILE_APPLICATION_ID`                  |
+| Recovery delivery         | DMS requires `AUTH_SMTP_HOST`, `AUTH_SMTP_PORT`, `AUTH_SMTP_MODE`, `AUTH_MAIL_FROM`; optional SMTP user/password must be supplied together      |
+| Turnstile DMS integration | `DMS_MACHINE_CLIENT_SECRET`, `DMS_RESOURCE_URL`, `DMS_API_URL`                                                                                  |
+
+Connection URLs require PostgreSQL, credentials and a named database; authority and DMS
+runtime usernames must differ. Local dev preflight also checks the product role differs.
+Readiness verifies the actual dedicated runtime role, its capabilities and schema boundary,
+plus the configured installation record. Migration URLs are confined to private operator
+processes as described below. Secret validation requires independent generated values, at least 32 characters,
+16 distinct characters and no example/placeholder markers; the product token-encryption
+key is 32 random bytes encoded as 64 hex characters. `AUTH_SECRET` protects authority
+cookies and persisted encrypted signing material; Better Auth generates and persists
+asymmetric signing keys in its owned schema. No inline signing private key or static test
+client is configured. Client names in examples are not provisioned registrations.
+
+Cookie policy is fixed to host-only HttpOnly, SameSite=Lax, path `/`; Secure follows the
+validated HTTPS origin. Product cookies use `__Host-turnstile` under HTTPS and `turnstile`
+on local HTTP; authority cookies use a distinct `thaarei-identity` prefix. No configurable
+cookie domain, SameSite weakening, wildcard origins or global proxy trust is introduced.
+Authority cookie clearing, origin/CSRF checks and safe session responses run through the
+native handler. Product cookie/session routes are implemented in AUTH-04 below.
+
+Both APIs expose `GET /health/ready/auth` outside their domain prefixes. Missing/invalid
+configuration returns 503 `invalid_configuration`. DMS returns 200 after its authority
+and DMS runtime-role/installation checks succeed; failed connections, role capabilities
+or installation identity return 503 `database_unavailable`. Turnstile returns 200 after
+its persistence check and live authenticated login-client probe succeed, or 503
+`database_unavailable` / `authority_unavailable` for the relevant dependency failure.
+This does not claim DMS machine enrollment or deployed login UI. SMTP is checked when requesting recovery
+or verification; ordinary authority readiness does not promise mail delivery availability.
+No secrets or raw validation details are returned. Identity and `/health/live` remain
+available. No memory fallback, automatic accounts/clients or startup migrations are used.
+
+Nonsecret local examples live in each API's `.env.example`, with credentials deliberately
+blank. For tests, use `AUTH_PROFILE=test` with isolated, generated secrets/client IDs and
+loopback URLs. For production, set `AUTH_PROFILE=production`, `NODE_ENV=production`, the
+canonical HTTPS origin/issuer/callback/resource, separate backend-only credentials and
+owned database URLs; private transport may differ from the resource identity. Environment
+files load only in the owning API process; shell values take precedence. Runtime `.env`
+files contain no migration credentials. `.env.migrate` belongs only to the owning operator
+process. Turbo development tasks pass explicit owned runtime variables; Compose maps only
+runtime settings to the corresponding API and never maps migration URLs to either API.
+
+#### Owned persistence and authority handler
+
+AUTH-02 uses one dedicated PostgreSQL installation database with separately owned `auth`,
+`dms` and `turnstile` schemas. Each has its own `thaarei_<owner>_migrator` and
+`thaarei_<owner>_runtime` login role with independent credentials. The explicit private
+provisioning command creates these roles, revokes PUBLIC database/schema privileges and
+grants CONNECT to all six roles and database CREATE only to the migrators. It refuses
+existing roles and never silently rotates their passwords. Migrators have no superuser,
+role-creation, database-creation or RLS-bypass attributes. Each migration history uses its
+own `<owner>_migrations` schema and advisory lock. Runtime roles have no DDL, TEMP,
+TRUNCATE, schema ownership, migrator membership or cross-owner schema access. Auth runtime
+has CRUD on its generated tables; DMS runtime reads registration/installation identity
+and updates only registration status/timestamp, with enrollment/audit privileges detailed
+below; product runtime has CRUD on sessions and read-only access/identity.
+No blanket default grants extend to future tables.
+
+Auth's generated schema lives under
+`src/modules/platform-auth/persistence/auth.generated.ts`; the DMS and product declarations
+live in their owning feature modules. This keeps runtime schema imports within each
+application's existing `src` compilation root and preserves compiled entry points.
+Reviewed SQL/history lives in the reserved `database/auth/migrations`,
+`database/dms/migrations` and product `database/migrations` folders. Runtime distributions
+include those migrations for explicit one-off operator commands, never automatic startup.
+
+DMS installation bootstrap inserts the configured UUID/customer key into a singleton slot
+once. Repeating the same bootstrap is safe; replacing either value fails. Product bootstrap
+likewise fixes its tenant/customer/application identity. Runtime roles cannot write these
+records. Registrations and product access/sessions reference their local installation's
+unique tenant UUID, with no cross-application SQL foreign keys. DMS registrations have
+unique tenant/application and issuer/client identities and default to `pending`; AUTH-05
+adds explicit enrollment/activation below. Product access defaults to disabled and is operator-owned;
+no product business roles or permissions are invented. Tenant-owned tables use forced RLS
+with explicit runtime/migrator policies and transaction-local `app.tenant_id`; absent or
+mismatched context sees no rows. Auth tables retain Better Auth's global semantics and do
+not inherit DMS RLS. Bootstrap does not provision accounts, OAuth clients or applications.
+
+Each API owns its pools and closes them on shutdown. Pool limits default to five per pool
+(maximum configured 20), with 1.5-second connection, five-second query/statement and
+10-second idle timeouts. DMS uses separate auth/DMS pools; Turnstile uses only its product
+pool. The product PostgreSQL store hashes session IDs and encrypts the serialized payload
+with AES-256-GCM, a fresh 12-byte nonce and tenant/ID-bound authenticated data. Stored
+expiry is bounded to at most eight hours; AUTH-04 below enforces idle/parent-session policy.
+The store implements the pinned Fastify plugin's atomic `compareAndSet` generation contract:
+a locked, live record is required for updates, and stale saves cannot recreate a destroyed
+session. Expired entries are removed when read; broader retention cleanup remains an
+operator follow-up. No product session middleware or public login route is activated yet.
+
+The DMS Fastify handler mounts `/identity/*` plus the exact root OAuth metadata alias,
+outside `/v1`. An explicit GET/POST allowlist covers credential/session/recovery, discovery,
+JWKS and OAuth protocol endpoints. All raw operator/client-management paths, public signup
+and standalone `/token` issuance return 404, including for an administrator cookie. Nest
+guards are not relied upon for raw routes. Canonical configured origins construct request
+URLs; request Host/forwarded headers cannot select the issuer. Untrusted forwarding headers
+are replaced with Fastify's derived client IP while proxy trust remains off. Auth bodies
+are limited to 16 KiB; JSON and URL-encoded requests work and duplicate form parameters
+are rejected. Redirect/status/content headers and every Set-Cookie value are preserved;
+auth responses use no-store and no-referrer. Server/SQL/SMTP exceptions return controlled
+availability responses without raw details. Request logging for DMS and Better Auth/SMTP
+debug logging are disabled to avoid recording credentials or token-bearing recovery URLs.
+Frontend Nginx uses a URL-free access-log format, suppresses credential-page access/error
+logging and sends no-referrer; the deployed ingress must preserve the same boundary.
+
+Public sign-in/get-session/list-sessions/email-verification success payloads use explicit
+safe field projections: session tokens, account credentials and internal authority fields
+are absent. Signed OAuth continuation retains its redirect fields and verifies its signed
+query. Authenticated OAuth token/introspection responses keep their protocol credentials.
+The official client SDK, continuation, form-encoded code exchange and duplicate-cookie
+clearing are exercised against the actual handler in integration fixtures.
+
+The pinned OAuth Provider requires HTTPS non-loopback redirects for metadata marked
+`web`; local/test confidential loopback fixtures therefore use `application_type: native`
+with HTTP localhost callbacks, client authentication and PKCE. Exact registered redirect
+matching is enforced even for loopback metadata, disabling implicit alternate-port matching.
+This is local protocol metadata, not a mobile app or a production client registration.
+AUTH-03's private provisioning uses HTTPS web metadata in production and implements the
+distinct-client policy below; no real deployment client has been provisioned.
+
+The private local account command uses Better Auth's supported server API and a bounded
+JSON input stream. It permits only administrator/user roles, keeps addresses unverified,
+and validates supplied passwords at 15–128 characters. Password omission supports an
+invitation followed by verification and recovery. No password or token is accepted in
+command arguments or printed. If delivery fails after creation, the unverified record
+remains; supported verification resend can retry without bypassing verification.
+
+SMTP uses fixed configured transport/from values and plain-text templates. Production
+requires implicit TLS or STARTTLS; plain SMTP is loopback-only for local/test profiles.
+Transport connections/greetings are bounded to five seconds and sockets to 10 seconds;
+file/URL attachment access and SMTP debug logging are disabled. Verification and reset
+links expire in 30 minutes; callback paths are fixed to `/sign-in` and `/reset-password`.
+Mail availability is checked before account lookup for known/unknown recovery addresses,
+after rate limiting. Request-local delivery tracking also detects the pinned library's
+caught background callback failures; failed sends return controlled unavailability.
+Passwords remain authority-hashed, public signup is disabled, the authority cookie cache
+is off, and verification/rate limits/sessions/signing keys persist in PostgreSQL. Reset-token
+consumption, session revocation and password writes use the adapter's real transaction;
+failure injection verifies all three roll back together before one successful retry.
+
+[Mailpit](https://mailpit.axllent.org/) is the owner's selected SMTP email catcher for
+development and controlled pilot testing. Verification/recovery messages are inspected
+in its web inbox; external recipient delivery requires an explicitly configured upstream
+SMTP relay. Mailpit defaults to SMTP port 1025 and web UI port 8025 and supports
+STARTTLS/implicit TLS. The existing DMS SMTP transport can connect without a new provider
+adapter. Plain SMTP remains restricted to local/test loopback; a container-network or
+production-profile pilot connection must use TLS/STARTTLS with a trusted certificate.
+AUTH-07 configures development Compose and a pilot STARTTLS overlay and verifies disposable
+Mailpit capture through browser flows. No persistent target inbox is deployed; the
+production delivery provider remains undecided. Operator setup and command timing are
+described in the authentication runbook below.
+
+Operator commands and credential-file separation are documented in the
+[authentication persistence runbook](docs/runbooks/authentication.md). This increment has
+no real customer/account/client onboarding. AUTH-04 adds the BFF below; product login UI,
+enrolled applications and DMS bearer authorization remain later work.
+
+#### Managed OAuth provider and distinct clients
+
+AUTH-03 keeps the pinned JWT plugin before OAuth Provider, with persisted RS256 keys,
+`at+jwt` access-token headers and no standalone `/token` or `set-auth-jwt` output. User
+access tokens target `${AUTH_ISSUER_URL}/oauth2/userinfo`; ID tokens target the login
+client ID. Machine access tokens target `DMS_RESOURCE_URL`. Both access-token lifetimes,
+ID-token lifetime and authorization-code lifetime are at most 300 seconds. Refresh tokens
+expire after eight hours, rotate without reuse overlap and require a live parent authority
+session for renewal. This adds an explicit parent-session gate because the pinned
+provider's `offline_access` refresh behavior alone does not enforce that boundary.
+
+Two managed client purposes are supported:
+
+| Purpose                 | Grants and policy                                                                                                                                                             | Audience / scope ceiling                                                                                    |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Turnstile login         | Confidential `client_secret_basic`; code/refresh only; required S256 PKCE; exact configured callback and `/sign-in` logout destination; explicit first-party consent skipping | UserInfo resource only; `openid profile email offline_access`; no DMS machine scopes                        |
+| DMS machine application | Confidential `client_secret_basic`; client credentials only; explicit operator-assigned scopes and persisted client-resource link; no login callback                          | Exact DMS resource; current catalog is `dms:capabilities:read`, enforced by the AUTH-05 capability endpoint |
+
+Every authorize/token request validates a server-owned approval record, installation
+ownership, purpose and resource in addition to the provider's grant, scope, secret and
+redirect checks. Scope catalog growth accompanies implementation of its capability; a
+scope string alone never implements an endpoint or grants document access. Explicit
+resource parameters prevent audience-free token issuance. The provider additionally
+enforces persisted per-client resource links. No resource/client seed runs at startup.
+Local/test registrations use confidential loopback `native` metadata with exact port
+matching; production uses HTTPS `web` metadata. This is protocol metadata, not a mobile app.
+
+Client/resource administration is private. The local compiled `auth:manage-client` command
+requires a verified administrator's fresh email/password authentication from bounded JSON
+stdin, validates the DMS installation and uses the supported provider APIs. Public raw
+management and dynamic-registration routes stay closed even to administrator cookies.
+Provider privilege callbacks require both an admin identity and a private process-local
+operator context; request headers cannot enable it. Client ownership is the configured
+installation tenant rather than the individual operator, allowing another authorized
+administrator to rotate the same application identity.
+
+The command supports issuance, inspection, rotation, suspension/resumption and machine
+scope assignment. Issuance creates the DMS resource through the provider's API when absent;
+an existing incompatible resource requires review. Credentials are provider-generated and
+hashed at rest. Issuance/rotation require a new exclusive mode-0600 output file, reserved
+before mutation. Stdout is an explicitly projected nonsecret JSON operator record containing
+client/tenant/application identity, resource, grants, scopes and state. Caller-chosen IDs
+allow multiple separately managed machine applications; configured login and machine IDs
+cannot exchange purposes. Stable application UUID metadata binds the separate DMS enrollment
+mapping but does not create or activate a DMS registration or grant product access.
+
+The pinned provider invalidates the previous client secret immediately on rotation; no
+grace period is assumed. Stop new token/refresh requests for that client, rotate once,
+install the new backend-only credential and resume requests. A failed credential-file write
+after mutation requires inspecting state and another controlled rotation. Existing signed
+machine JWTs remain cryptographically valid until expiry. Suspension blocks new issuance;
+immediate DMS disconnection also requires the live registration check implemented in AUTH-05.
+Login/logout never globally disable an application's machine identity.
+
+The native boundary permits POST `/identity/oauth2/end-session` for exact registered logout
+destinations and keeps its GET variant closed so ID-token hints need not enter URLs.
+Product logout uses server-side POST end-session with its retained signed hint, then the
+supported same-origin sign-out to clear a matching or ended browser login. AUTH-05 adds DMS guards/enrollment
+below; AUTH-07 implements login/recovery UI and local operational evidence. Operator commands and cutover instructions are
+in the authentication runbook.
+
+#### Turnstile BFF and user authorization boundary
+
+AUTH-04 implements `/api/auth/login`, `/api/auth/callback`, `/api/auth/session` and
+POST `/api/auth/logout` in Turnstile's auth module. Its platform-independent DTOs and
+permission catalog live in `@thaarei/turnstile-contracts`; the HTTP contract is
+[OpenAPI 3.1](docs/api/turnstile-auth.openapi.yaml). Login creates an encrypted five-minute
+transaction bound to the signed opaque browser cookie, exact issuer/callback, state,
+nonce and S256 verifier. Return paths are literal local paths without queries/encoding;
+`/api` and `/identity` destinations are rejected. Callback consumes the transaction under
+a row lock before the code exchange. `openid-client` 6.8.8 verifies identity, including
+RS256 signatures through canonical JWKS. Discovery endpoints are pinned, redirects on
+credential-bearing HTTP calls are refused, and calls time out after five seconds.
+The integration follows the [pinned OIDC client's API](https://github.com/panva/openid-client/blob/v6.8.8/docs/README.md).
+
+Only encrypted server persistence holds access/refresh/ID tokens. The callback also
+checks the public authority session projection over HTTP with the matching browser
+authority cookie to obtain the actual parent expiry. Product absolute expiry is the
+earliest of that expiry, parent creation plus eight hours and verified authentication
+time plus eight hours. Protected requests enforce a thirty-minute idle limit, verify
+current token activity through authenticated introspection without a positive cache,
+and check exact issuer, subject, parent session, login client and UserInfo audience.
+Authority unavailability fails closed with 503 while preserving a retryable session;
+inactive identity returns 401. Identity and product pools/tables remain isolated.
+
+The global `UserSessionGuard` requires live local access plus explicit route permissions.
+Unannotated product routes deny by default; only explicitly public identity/health/auth
+surfaces bypass this boundary. The sole initial local permission is `turnstile:access`,
+an entry gate rather than a business administrator role. `user_access.permissions` defaults
+empty; enabled alone grants nothing. The private `auth:set-access` operator command uses
+the product migrator and fixed installation identity; runtime credentials remain read-only
+for access assignments. Authority admin roles never map to product roles. Business permissions
+will be added only with their implemented features. Cookie mutations also require a matching
+CSRF header, exact Origin and same-origin Fetch Metadata when supplied. Permissions/CSRF
+changes regenerate the product cookie generation before the request can proceed.
+
+The existing encrypted Fastify store now also holds transactions, refresh claims and logout
+receipts. An atomic synchronous mutation checks the current cookie generation under a row
+lock and increments an encrypted revision. Fastify's compare-and-set verifies both generation
+and revision, preventing stale snapshot saves from replacing refreshed/revoked state.
+The session plugin uses explicit saves only; an integration hook issues successfully saved
+cookies using the configured canonical TLS policy even behind Dokploy's internal HTTP hop.
+Host/forwarded headers cannot lower Secure or enable proxy trust. Cookies remain host-only,
+HttpOnly, Lax, path `/`, with `__Host-` names on HTTPS. API responses are no-store/no-referrer;
+automatic request logging and raw credential/error logging are disabled.
+
+Refresh starts within thirty seconds of access-token expiry. A short transaction persists a
+random fifteen-second ownership claim; the network grant runs after commit. The result is
+accepted only while that claim, current session generation and idle/absolute bounds remain
+valid. Competing instances return 503 `REFRESH_IN_PROGRESS`. A lost response, invalid/reused
+refresh token or abandoned claim ends local access with 401 `LOGIN_REQUIRED`; there is no
+unbounded grant retry. A late result after logout is rejected and its returned refresh token
+is revoked. Refresh never extends the original absolute limit.
+
+Logout first replaces authenticated state with a five-minute unauthenticated receipt, clears
+the product cookie and issues a separate opaque HttpOnly logout retry cookie. It revokes the
+retained refresh token, sends the retained signed ID hint only in a server-to-server POST
+body to end the exact parent (including direct API callers without an authority cookie),
+then calls same-origin authority sign-out to clear an ended/matching browser cookie. It avoids
+signing out a different parent established in another tab. The authority native boundary
+preserves successful empty protocol responses, including revocation. Local completion and
+authority completion are distinct DTO fields. An outage returns `authority: pending` with
+the bounded retry deadline. The original cookie/CSRF can recover a lost response; the retry
+cookie/CSRF supports subsequent attempts. Completed receipts retain only CSRF/parent identity
+and status, and retry browser-cookie clearing idempotently. Machine clients are never changed.
+Expired encrypted rows still require periodic operator cleanup; no scheduler is introduced.
+
+This implements the BFF boundary using disposable fixtures. Real client/access provisioning,
+Mailpit target deployment and final deployed operational verification remain separate work. Actual verification and deployment limits are recorded in [progress](IN_PROGRESS.md).
+
+#### DMS machine authorization and guarded enrollment
+
+AUTH-05 installs a default-deny DMS guard. Only identity, liveness and authority readiness
+are explicitly public Nest endpoints; the native authority retains its separate route
+allowlist. Machine requests require RS256 `at+jwt` tokens from the exact configured issuer
+and exact DMS resource audience, with required `kid`, `exp`, `iat`, `jti`, `sub` and `client_id`.
+Subject must equal the verified client identity; user-session and proof-bound profiles are
+rejected. Lifetime and token age cannot exceed 300 seconds. JWT-selected key URLs are
+rejected; JWKS comes only from the canonical issuer's `/jwks`, with redirects disabled,
+a five-second fetch timeout, five-minute key cache and 30-second unknown-key cooldown.
+Cookies, opaque/DPoP credentials and caller-selected tenant/application headers or query
+parameters provide no machine authority.
+
+Every normal request resolves the current DMS-owned issuer/client registration under the
+fixed installation tenant and requires an active consumer, token scopes within its live
+local ceiling, and explicit operation-scope metadata. Registration/status/ceiling decisions
+are never cached. Publisher, scanner and extractor categories are reserved, denied these
+consumer routes and have no workers in this increment. No document/resource grants are
+implied by capability-read access.
+
+The private `dms:manage-application` command uses the dedicated DMS migrator. Registration
+checks the actual managed machine-client record through supported provider APIs and creates
+an approved pending application. Identical registration retries preserve state; changed
+bindings or policy require explicit review. Key issuance produces a random 256-bit secret
+in an exclusive mode-0600 file and persists only SHA-256. Key records bind the canonical
+`DMS_RESOURCE_URL` deployment identity, tenant, application, issuer and client, with a
+maximum 24-hour unused lifetime. Composite foreign keys preserve these local bindings.
+
+`POST /v1/application-enrollments` is the sole pending-consumer exception. It requires a
+valid machine token, bound key, `Idempotency-Key` and a strict body containing the approved
+application name. A short transaction locks the registration/key, activates the application,
+consumes the key and inserts the nonsecret receipt and audit event atomically. Receipt
+identity is scoped by tenant/deployment/issuer/client/operation and hashed idempotency key;
+the canonical body is hashed. Identical replay returns the original receipt for 24 hours
+after activation, even past the original unused-key expiry. Changed body/key returns 409;
+contention returns retryable 409 with `Retry-After: 1`. Explicit key revocation or disabled
+registration denies replay. No request or startup implicitly activates an application.
+
+Disablement commits local denial and a pending issuer-suspension audit before calling the
+provider's supported private suspension operation. Issuer failure returns `issuer: pending`
+and exit code 2; explicit retry completes suspension while local access stays denied.
+Existing JWTs immediately fail subsequent local checks. There is no local re-enable
+command; provider resume alone cannot restore access. Local scope changes and provider
+scope changes are separate explicit operations, and rotation preserves registration identity.
+
+The DMS runtime may read keys/receipts, update key consumption and registration status,
+and insert receipts/security events. It cannot issue/revoke keys, change identity/ceilings,
+rewrite receipts or read/edit/delete audit history. All three added tenant tables use
+forced RLS. Audit columns contain bounded action/outcome/actor/subject/request identities,
+never arbitrary request payloads or secrets. DMS state changes and audit are transactional;
+private authority account/client commands durably record an attempt before crossing into
+the independent authority pool, then record completion. A pending outcome requires operator
+inspection; it cannot promise atomicity across pools. Audit retention defaults to 90 days;
+expired receipt/key/session cleanup remains an explicit maintenance follow-up, with no
+scheduler or public audit API in this increment.
+
+`GET /v1/capabilities` requires `dms:capabilities:read` and reports only enrollment and
+capability-read operations; formats, profiles and languages are empty. Shared Zod schemas
+in `@thaarei/dms-contracts` author enrollment/capability/error DTOs once and export JSON
+Schema. `pnpm docs:dms-auth` generates the [OpenAPI contract](docs/api/dms-auth.openapi.json).
+Responses use stable error codes, server-generated request IDs and `private, no-store`;
+the DMS request body limit is 16 KiB. AUTH-06 adds the typed backend client and product
+adapter. Private operator steps are in the [runbook](docs/runbooks/authentication.md#register-and-enroll-a-dms-machine-application).
+
+#### Typed machine client and cross-service capability request
+
+AUTH-06 implements `@thaarei/dms-client` as a server-only HTTP package over the shared
+DMS contracts. It exposes typed capability reads and explicit enrollment, with an injected
+`MachineTokenProvider`; no caller-selected endpoint or arbitrary-header forwarding surface
+is exposed. The reusable client-credentials provider retains credentials only in backend
+memory and requests the exact canonical issuer token endpoint, DMS resource and sorted
+scope set. It uses form-encoded `client_secret_basic`, never a machine refresh grant, and
+rejects malformed token responses, non-bearer profiles, refresh/ID tokens and lifetimes
+outside 1–300 seconds.
+
+Each provider owns one immutable issuer/client/resource/scope cache partition. Acquisition
+and renewal are coalesced within an API instance. Tokens renew before expiry, with a margin
+of 10% of remaining lifetime capped at 30 seconds. A delayed expired-token response cannot
+evict a newer cached token. There is no shared cache or cached DMS authorization decision.
+Credential/configuration changes require backend restart/reload with a new provider;
+registration, scope and user authority remain checked at their respective boundaries.
+
+Transport uses only operator-configured canonical URLs, disables redirects/cookies and
+referrers, and bounds each request including body consumption to five seconds and 16 KiB.
+The package permits explicit per-request deadlines from 1 ms to 10 seconds for other
+trusted backend consumers; Turnstile uses five seconds. Public issuer/resource URLs use
+HTTPS in production; the separately configured private DMS transport may use installation
+network HTTP. No request parameter or browser header changes these destinations.
+
+DMS now distinguishes `401 MACHINE_TOKEN_EXPIRED` from other invalid credentials. Only
+a capability GET receiving that exact code may invalidate/reacquire its machine token
+and replay once. All other 401s, scope/status 403s, outages and enrollment failures return
+without automatic retry. At default deadlines a capability call has at most two token
+acquisitions and two DMS attempts (20 seconds); prior live product identity checks have
+their own existing bounds. Enrollment always carries the caller-retained idempotency
+key/body and requires explicit retry after an uncertain result. `DmsClientError` contains
+bounded code/status/domain-code/retryability only, with no raw response, token, URL or cause.
+
+Turnstile exposes `GET /api/dms/capabilities`, requiring both `turnstile:access` and the
+separate `turnstile:dms:capabilities:read` product permission. Existing users do not gain
+the latter automatically. The global guard verifies the live parent session and current
+local permissions before any machine call. The integration service supplies the verified
+user ID (at most 200 safe identifier characters) and a server-generated UUID as bounded
+audit-attribution headers. These are consumer assertions, never DMS principals or delegated
+permissions. Browser authorization, cookies and spoofed actor/tenant/request headers are
+discarded at this boundary. DMS continues to authorize only its verified machine identity.
+
+The adapter checks returned tenant/application IDs against the configured installation
+and projects only `formats`, `profiles` and `languages` to a platform-independent product
+DTO. These lists are empty until document capabilities exist; enrollment/operator metadata
+is not exposed. Product API session responses use `private, no-store`. The
+[product OpenAPI](docs/api/turnstile-auth.openapi.yaml) records this route and permission.
+
+Machine policy denial becomes product `403 DMS_ACCESS_DENIED`; token-service, transport,
+malformed response or binding failures become `503 DMS_UNAVAILABLE`. Neither ends the
+product session. If the shared authority/DMS process is unavailable, the preceding live
+user check fails closed with `503 AUTH_UNAVAILABLE`, retaining retryable local state;
+the session endpoint cannot promise independence from that shared process. Actual user
+revocation/logout still stops the product boundary before a machine call. No new schemas,
+tables, roles, document endpoints or startup enrollment are introduced in AUTH-06.
+
+#### Login/recovery UI and operational boundary
+
+AUTH-07 adds React login, verification-resend, generic recovery, reset, session-expired,
+unauthorized and unavailable states, plus the authenticated application entry. No router,
+component framework, account signup, IAM editor or business feature is added. Credential
+entry uses the pinned Better Auth browser client and OAuth Provider client plugin on the
+same authority origin. `/sign-in` begins a BFF transaction when no signed continuation is
+present; the supported plugin retains the signed query and follows the provider's result.
+The frontend never builds authorization callbacks or exchanges codes. Recovery links
+start a fresh login transaction after completion rather than reusing stale signed context.
+
+Reset tokens are captured in memory and removed from the URL with `replaceState` before
+rendering. Password fields are cleared on submission. OAuth/service tokens, credentials,
+session cookies and signed continuation material never enter browser storage. The browser
+keeps only the safe session DTO and CSRF token in memory, checks current session on entry,
+focus/visibility and once a minute while visible, and relies on backend authorization for
+every operation. Session requests fail to an availability state during outages. In-flight
+session reads cannot restore UI access after logout begins. Product logout uses CSRF and
+the BFF's local-first retirement/authority receipt; partial or lost responses expose an
+explicit bounded retry and do not claim global completion. A changed CSRF generation can
+be reloaded before retry. Unauthorized users may explicitly end the current authority
+login to switch accounts. Browser login/callback failures navigate to fixed safe UI states;
+API callers keep the JSON error contract.
+
+The authenticated entry exposes only the user summary and the permission-gated document
+connection check. DMS unavailability retains the session; shared identity unavailability
+shows a retryable session-check failure. Forms have native labels/autocomplete, keyboard
+focus, bounded fields, disabled pending actions and live error/status text. The responsive
+layout needs no external images, fonts or third-party requests. Nginx adds a same-origin
+CSP, `nosniff` and `no-referrer`, suppresses auth-page logs and preserves a URL-free access
+format. Dokploy still owns TLS and `/api`, `/identity` and metadata routing; no global
+proxy trust or wildcard origin is enabled. Actual ingress/DNS/proxy verification remains
+installation-specific and must be recorded separately from disposable fixtures.
+
+Both APIs emit fixed-schema security JSON events containing only event/outcome/status,
+server request UUID and a cumulative process counter. Event labels are a fixed catalog;
+counters saturate at the maximum safe integer, reset on restart and retain no per-user/IP/
+URL dimensions. DMS observes credential login/rate denial, recovery, token issuance,
+canonical key fetch and machine access/enrollment. Turnstile observes login, session
+inactivity, logout and machine-request outcomes. This is bounded operational telemetry,
+separate from durable lifecycle audit. Telemetry emission stops above a 64 KiB stdout buffer while counters continue; pending
+authority logout has its own bounded outcome label. No public metrics/audit browsing route is added;
+operators consume the JSON process logs. Raw library errors, headers, credentials,
+email addresses, request bodies and token-bearing URLs are excluded. Test fixtures can
+disable emission while inspecting counters through private IPC.
+
+Development Compose pins Mailpit 1.33.0 by digest. `dev:auth` starts/waits for PostgreSQL
+and Mailpit; host SMTP/UI ports bind only to loopback. Capture is bounded to 200 messages,
+24 hours and 1 MiB per message, version checking is disabled, and logs are quiet. Mail
+storage is disposable and no relay is configured. The optional pilot
+`deploy/compose.mailpit.yaml` overlay requires operator-provided certificate/key/CA files,
+mandatory SMTP STARTTLS and Node CA trust, with UI access through host loopback only.
+Production-profile SMTP remains encrypted even on an internal network. Mailpit captures
+mail for controlled inspection; actual delivery to personal inboxes is a separate setup.
+
+`pnpm test:browser:auth` reuses the disposable PostgreSQL provisioning harness and runs
+three focused Chromium journeys against built frontend assets, separate real API processes
+and Mailpit. It uses the production profile, HTTPS, a test CA and isolated test DNS rather
+than changing global hosts or disabling backend TLS verification. Optional image mode uses
+the production Nginx image and verifies canonical discovery from an application container.
+Docker Desktop-to-WSL host-network reachability may be unavailable and is reported separately
+from successful browser/image checks; actual target container DNS/TLS remains a rollout check.
+Browser traces and raw failures are suppressed because they can contain signed/reset URLs;
+diagnostics contain only fixed stages and safe transport/state classifications. The
+runbook distinguishes this local evidence from actual Dokploy/customer verification.
 
 #### Authority, browser session, and machine access
 
@@ -1029,23 +1543,31 @@ Infrastructure runs in Docker Compose when needed. This keeps local application 
 fast while retaining the selected self-hosted PostgreSQL, broker, and storage products.
 Untrusted parser execution belongs in the isolated processing runtime when implemented.
 
-| Command / service    | Runs where | Current behavior                                                                                        |
-| -------------------- | ---------- | ------------------------------------------------------------------------------------------------------- |
-| `pnpm dev`           | Host       | Turborepo starts both Nest watch processes and Vite; it does not start infrastructure or Python workers |
-| `pnpm dev:turnstile` | Host       | Turnstile API at `127.0.0.1:3002`, Vite at `localhost:5173`; Vite proxies `/api` to the backend         |
-| `pnpm dev:dms`       | Host       | DMS API at `127.0.0.1:3001`, public prefix `/v1`                                                        |
-| `pnpm infra:up`      | Docker     | Local PostgreSQL, RabbitMQ and SeaweedFS using `deploy/compose.local.yaml` and the root local `.env`    |
-| `pnpm infra:down`    | Docker     | Stops/removes local infrastructure containers while preserving named volumes                            |
+| Command / service    | Runs where    | Current behavior                                                                                                                 |
+| -------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`           | Host          | Turborepo starts both Nest watch processes and Vite; it does not start infrastructure or Python workers                          |
+| `pnpm dev:turnstile` | Host          | Turnstile API at `127.0.0.1:3002`, Vite at `localhost:5173`; Vite proxies `/api` to the backend                                  |
+| `pnpm dev:auth`      | Host + Docker | Validates local API configuration, ensures PostgreSQL is healthy, then watches both APIs and web with dependency rebuild/restart |
+| `pnpm dev:dms`       | Host          | DMS API at `127.0.0.1:3001`, public prefix `/v1`                                                                                 |
+| `pnpm infra:up`      | Docker        | Local PostgreSQL, RabbitMQ and SeaweedFS using `deploy/compose.local.yaml` and the root local `.env`                             |
+| `pnpm infra:down`    | Docker        | Stops/removes local infrastructure containers while preserving named volumes                                                     |
 
 Both APIs expose `/health/live` outside their application prefix. Defaults work without
 application `.env` files; an override is loaded from each API's own working directory.
 Each owning process validates its settings. The root `.env` is infrastructure-only.
 `VITE_*` variables are public build-time values and must never contain secrets.
 
-Shared packages build once before application development starts. Automatic shared-package
-rebuilding and affected API restart are not configured; rebuild packages and restart
-affected applications after shared-code changes. This is tracked as DEV-001 in
-[progress](IN_PROGRESS.md). No Docker-based app hot-reload workflow is configured.
+`pnpm dev:auth` uses dependency-aware `turbo watch dev` with interruptible API tasks:
+shared packages rebuild before consuming APIs restart. It preserves separate DMS/product
+commands. Other `turbo run dev` commands still build shared packages once; use the auth
+watch command or rebuild/restart consumers manually after shared-code edits. Local auth
+preflight checks both API profiles, canonical URLs, distinct clients/secrets and database
+roles before starting PostgreSQL; it never provisions users, roles or clients. PostgreSQL
+stays running when the watch process stops. Vite proxies `/identity` and
+`/.well-known/oauth-authorization-server/identity` to DMS as well as `/api` to Turnstile;
+allowed authority paths return controlled unavailability until their database/installation
+configuration is valid; operator paths remain closed. No Docker-based app hot-reload
+workflow is configured.
 
 ### Linux, Dokploy, Traefik, and Nginx
 
@@ -1145,11 +1667,18 @@ This consolidation preserves the selected architecture and does not add business
 database changes, mobile code or migration. Actual completion/verification stays in
 [IN_PROGRESS.md](IN_PROGRESS.md); product requirements retain their stable IDs.
 
-| Date       | Architecture record                                                                                                                                                                                                                                  |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-31 | Consolidated blueprint v1.4 technical sections, workspace boundaries, selected/installed stack, Turnstile web/future-mobile design, and deployment picture into this file; prior product decisions remain in the blueprint history                   |
-| 2026-10-31 | Owner clarified exactly one customer tenant per installation, multiple independent application registrations, separate customer installations, and no SaaS/multi-customer provisioning; retained tenant integrity and application isolation          |
-| 2026-10-31 | Owner selected email/password first; added researched authentication-chain implementation proposal with separate browser/user and machine trust, BFF/OIDC sessions, provisioning prerequisites and verification plan; implementation remains pending |
+| Date       | Architecture record                                                                                                                                                                                                                                                                                                                                |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-31 | Consolidated blueprint v1.4 technical sections, workspace boundaries, selected/installed stack, Turnstile web/future-mobile design, and deployment picture into this file; prior product decisions remain in the blueprint history                                                                                                                 |
+| 2026-10-31 | Owner clarified exactly one customer tenant per installation, multiple independent application registrations, separate customer installations, and no SaaS/multi-customer provisioning; retained tenant integrity and application isolation                                                                                                        |
+| 2026-10-31 | AUTH-02 implements separate database ownership/migrations, forced tenant policies, persisted native authority, safe response projection, private verified-account provisioning, controlled SMTP recovery and encrypted product session storage; BFF/enrollment/client provisioning remain later increments                                         |
+| 2026-10-31 | AUTH-03 implements managed code/PKCE login and client-credentials machine policies, distinct resource audiences, private provider-backed issuance/rotation/suspension and nonsecret records; fixture protocol/rotation/restart/CLI tests verify behavior, while real provisioning remains pending                                                  |
+| 2026-10-31 | AUTH-04 adds the persisted OIDC BFF, live parent/local permission guard, default-deny route policy, CSRF, bounded fenced refresh, recoverable logout and private product-access assignment; real provisioning, DMS machine/enrollment and UI remain later work                                                                                     |
+| 2026-10-31 | AUTH-05 adds default-deny machine verification and live local policy, bound transactional enrollment/receipts, local-first disablement, narrowed runtime privileges and bounded audit; shared schemas generate the minimal protected DMS OpenAPI contract; typed cross-service consumption remains AUTH-06                                         |
+| 2026-10-31 | AUTH-07 implements minimal login/recovery/session UI, bounded redacted security telemetry, Mailpit dev/pilot STARTTLS configuration and Nginx CSP/privacy; three production-profile browser journeys and four image builds/runtime checks pass. Actual Dokploy/customer rollout and canonical container DNS/TLS remain unverified.                 |
+| 2026-10-31 | AUTH-06 implements the typed server DMS client, coalesced resource/scope-bound token cache, bounded transport/expiry-only read replay and product-permission-protected capability adapter; separate-process PostgreSQL fixtures verify real machine authorization and session-preserving failures; UI/deployed operational evidence remain AUTH-07 |
+| 2026-10-31 | AUTH-01 adds exact auth dependency pins, CLI-loadable pure plugin options, validated local/test/production configuration, unavailable auth readiness and dependency-aware local auth development; persistence/routes/provisioning remain AUTH-02 onward                                                                                            |
+| 2026-10-31 | Owner selected email/password first; added researched authentication-chain implementation proposal with separate browser/user and machine trust, BFF/OIDC sessions, provisioning prerequisites and verification plan; implementation remains pending                                                                                               |
 
 ## Ownership and distribution
 
