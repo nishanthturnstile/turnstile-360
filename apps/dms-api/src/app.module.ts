@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { HealthController } from './infrastructure/health.controller.js';
+import { SecurityTelemetryService } from './infrastructure/security-telemetry.service.js';
 import { AccessModule } from './modules/access/access.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
@@ -29,6 +30,6 @@ import { UploadsModule } from './modules/uploads/uploads.module.js';
     LifecycleModule,
   ],
   controllers: [AppController, HealthController],
-  providers: [AppService],
+  providers: [AppService, SecurityTelemetryService],
 })
 export class AppModule {}

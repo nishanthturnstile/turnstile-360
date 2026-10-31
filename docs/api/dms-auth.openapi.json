@@ -1,0 +1,276 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Thaarei DMS machine authentication and enrollment",
+    "version": "1.0.0",
+    "description": "Backend machine credentials only. Local registration is authoritative; identity sessions do not grant DMS access. Document/upload/processing capabilities are not implemented."
+  },
+  "servers": [{ "url": "/v1" }],
+  "security": [{ "MachineBearer": [] }],
+  "paths": {
+    "/capabilities": {
+      "get": {
+        "operationId": "getDmsCapabilities",
+        "summary": "Read implemented capabilities for the current active consumer",
+        "description": "Requires dms:capabilities:read in the verified token and current local ceiling. No format, extraction or business capability is advertised before implementation.",
+        "responses": {
+          "200": {
+            "description": "Current verified application context and supported operations",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CapabilitiesResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Caller-supplied tenant/application selectors are rejected",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DmsError" } }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid machine access JWT",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DmsError" } }
+            }
+          },
+          "403": {
+            "description": "Registration inactive, unsupported principal category, insufficient scope or operation denied",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DmsError" } }
+            }
+          },
+          "503": {
+            "description": "Verification keys or persistence unavailable",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DmsError" } }
+            }
+          }
+        }
+      }
+    },
+    "/application-enrollments": {
+      "post": {
+        "operationId": "enrollDmsApplication",
+        "summary": "Activate one bound pending consumer",
+        "description": "Requires a provisioned machine token, matching enrollment key and Idempotency-Key. The body name must match the operator-approved registration. Identical authenticated retries return the same nonsecret receipt within 24 hours; replay rechecks local state/scopes and explicit key revocation. Tenant/application selectors are never authority. Concurrent work returns retryable conflict. No secrets appear in the response.",
+        "security": [{ "MachineBearer": [], "EnrollmentKey": [] }],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": { "type": "string", "pattern": "^[A-Za-z0-9_-]{16,128}$" },
+            "example": "e937818d-c78a-48c0-b747-e083f7468b30"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EnrollmentRequest" },
+              "example": { "name": "Turnstile 360" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated identical replay; no reactivation",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnrollmentResponse" }
+              }
+            }
+          },
+          "201": {
+            "description": "Key consumption, activation, receipt and audit committed atomically",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnrollmentResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input, tenant selector or registration name mismatch",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DmsError" } }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid machine access JWT",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DmsError" } }
+            }
+          },
+          "403": {
+            "description": "Invalid/revoked/used key, wrong binding, disabled application, principal category or scope",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DmsError" } }
+            }
+          },
+          "409": {
+            "description": "IDEMPOTENCY_CONFLICT or retryable ENROLLMENT_IN_PROGRESS",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DmsError" } }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "One second for ENROLLMENT_IN_PROGRESS",
+                "schema": { "type": "integer", "const": 1 }
+              }
+            }
+          },
+          "410": {
+            "description": "Unused key expired or receipt replay window expired",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DmsError" } }
+            }
+          },
+          "503": {
+            "description": "Verification keys, persistence or mandatory audit unavailable",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DmsError" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "MachineBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "RS256 at+jwt",
+        "description": "Client-credentials JWT; exact configured issuer/DMS audience, client_id=sub, maximum five-minute lifetime. Cookies, ID/user tokens, opaque tokens and DPoP are unsupported."
+      },
+      "EnrollmentKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Thaarei-Enrollment-Key",
+        "description": "High-entropy bound one-time secret from the private issuance file. Never place in browser code or URLs; not required on ordinary requests."
+      }
+    },
+    "schemas": {
+      "EnrollmentRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "pattern": "^[\\p{L}\\p{N} ._'()-]+$"
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      },
+      "EnrollmentResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "status": { "type": "string", "const": "active" },
+          "receiptId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "replayUntil": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": ["applicationId", "tenantId", "status", "receiptId", "replayUntil"],
+        "additionalProperties": false
+      },
+      "CapabilitiesResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "contractVersion": { "type": "number", "const": 1 },
+          "applicationId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "operations": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["application-enrollment", "capabilities:read"] }
+          },
+          "formats": { "type": "array", "items": { "not": {} } },
+          "profiles": { "type": "array", "items": { "not": {} } },
+          "languages": { "type": "array", "items": { "not": {} } },
+          "limits": {
+            "type": "object",
+            "properties": {
+              "accessTokenSeconds": { "type": "number", "const": 300 },
+              "idempotencyWindowSeconds": { "type": "number", "const": 86400 }
+            },
+            "required": ["accessTokenSeconds", "idempotencyWindowSeconds"],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "contractVersion",
+          "applicationId",
+          "tenantId",
+          "operations",
+          "formats",
+          "profiles",
+          "languages",
+          "limits"
+        ],
+        "additionalProperties": false
+      },
+      "DmsError": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "INVALID_REQUEST",
+              "MACHINE_TOKEN_REQUIRED",
+              "INVALID_MACHINE_TOKEN",
+              "MACHINE_TOKEN_EXPIRED",
+              "APPLICATION_DENIED",
+              "SCOPE_DENIED",
+              "OPERATION_DENIED",
+              "TENANT_INPUT_REJECTED",
+              "ENROLLMENT_KEY_INVALID",
+              "ENROLLMENT_KEY_EXPIRED",
+              "ENROLLMENT_KEY_REVOKED",
+              "ENROLLMENT_KEY_USED",
+              "ENROLLMENT_NAME_MISMATCH",
+              "IDEMPOTENCY_CONFLICT",
+              "REPLAY_WINDOW_EXPIRED",
+              "ENROLLMENT_IN_PROGRESS",
+              "DMS_UNAVAILABLE"
+            ]
+          },
+          "requestId": { "type": "string" },
+          "retryable": { "type": "boolean" }
+        },
+        "required": ["code", "requestId", "retryable"],
+        "additionalProperties": false
+      }
+    }
+  }
+}

@@ -1,0 +1,1 @@
+ALTER POLICY "tenant_isolation" ON "dms"."application_registration" TO thaarei_dms_migrator,thaarei_dms_runtime USING ("dms"."application_registration"."tenant_id" = nullif(current_setting('app.tenant_id', true), '')::uuid) WITH CHECK ("dms"."application_registration"."tenant_id" = nullif(current_setting('app.tenant_id', true), '')::uuid);

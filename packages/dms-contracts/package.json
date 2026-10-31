@@ -21,5 +21,8 @@
     "typescript": "catalog:"
   },
   "description": "Shared API, job, event, and artifact contracts for the Thaarei Document Management System",
-  "author": "Thaarei"
+  "author": "Thaarei",
+  "dependencies": {
+    "zod": "4.6.7"
+  }
 }

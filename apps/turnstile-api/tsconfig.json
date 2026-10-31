@@ -20,6 +20,6 @@
     "types": ["vitest/globals", "node"]
   },
   "extends": "../../tooling/typescript/base.json",
-  "include": ["src/**/*.ts", "test/**/*.ts", "vitest.config*.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "vitest.config*.ts", "drizzle.*.config.ts"],
   "exclude": ["dist", "node_modules"]
 }

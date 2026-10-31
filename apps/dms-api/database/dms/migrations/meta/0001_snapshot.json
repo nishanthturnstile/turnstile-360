@@ -1,0 +1,183 @@
+{
+  "id": "b39d0008-1093-4b7f-b411-0856081e8a0a",
+  "prevId": "45b988e3-5211-4a6a-92cd-50943ded9c9b",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "dms.application_registration": {
+      "name": "application_registration",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "scope_ceiling": {
+          "name": "scope_ceiling",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "application_registration_tenant_id_installation_tenant_id_fk": {
+          "name": "application_registration_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "application_registration",
+          "columnsFrom": ["tenant_id"],
+          "tableTo": "installation",
+          "schemaTo": "dms",
+          "columnsTo": ["tenant_id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "application_tenant_identity": {
+          "name": "application_tenant_identity",
+          "columns": ["tenant_id", "id"],
+          "nullsNotDistinct": false
+        },
+        "application_client_identity": {
+          "name": "application_client_identity",
+          "columns": ["tenant_id", "issuer", "client_id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "\"dms\".\"application_registration\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"dms\".\"application_registration\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "application_status": {
+          "name": "application_status",
+          "value": "\"dms\".\"application_registration\".\"status\" IN ('pending', 'active', 'disabled')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.installation": {
+      "name": "installation",
+      "schema": "dms",
+      "columns": {
+        "singleton": {
+          "name": "singleton",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_key": {
+          "name": "customer_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "installation_tenant_id_unique": {
+          "name": "installation_tenant_id_unique",
+          "columns": ["tenant_id"],
+          "nullsNotDistinct": false
+        },
+        "installation_customer_key_unique": {
+          "name": "installation_customer_key_unique",
+          "columns": ["customer_key"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "one_installation": {
+          "name": "one_installation",
+          "value": "\"dms\".\"installation\".\"singleton\" = 1"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "dms": "dms"
+  },
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

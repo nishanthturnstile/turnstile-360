@@ -2,51 +2,22 @@
 
 ## Ownership and structure
 
-`apps/dms-api` owns the DMS control plane and initially hosts the shared identity authority.
-`apps/dms-processing` owns Python processing. `apps/turnstile-api` owns Turnstile business
-rules and data; `apps/turnstile-web` owns the Vite/React interface. Turnstile business
-modules follow its separate functionality specification.
-
-`packages/dms-contracts` and `packages/turnstile-contracts` contain independent public
-payload definitions. `packages/dms-client` is a server-side HTTP integration package.
-These currently export empty module boundaries; they do not advertise implemented APIs
-or a public SDK. Internal dependencies use `workspace:*`.
-
-Feature modules contain their own controllers, services, policies, and repositories.
-Do not import another application's implementation. Do not create a shared business
-database package or allow consumers to read DMS tables. Database folders reserve the
-separate auth/DMS and Turnstile migration ownership; no schema or migration is applied.
+Component ownership, repository layout, package dependencies, and data boundaries are
+maintained in [architecture.md](../../architecture.md#repository-and-package-dependencies).
+Keep feature controllers, services, policies, and repositories within their owning modules.
+Use `workspace:*` for internal packages. Do not import other applications' implementations
+or introduce a shared business database package.
 
 ## Web and future mobile clients
 
-The Turnstile backend is the shared product API for the Vite/React web application and
-a future Expo/React Native application. When mobile work is authorized, its application
-can live at `apps/turnstile-mobile` and consume the same backend and Turnstile contracts.
-No mobile project, dependencies, or runtime are introduced now.
-
-Backend services own authoritative business rules, permissions, domain calculations,
-workflow transitions, validation, and persistence. Clients submit intended changes; the
-backend checks and applies them and returns the resulting data. The backend must enforce
-these rules regardless of which client made the request.
-
-Clients own presentation, navigation, form interaction, display formatting, and transient
-UI state. They may repeat validation for immediate feedback and show optimistic updates,
-but the backend remains authoritative. API responses contain domain data and outcomes;
-they must not depend on browser rendering or React component structures.
-
-`packages/turnstile-contracts` must work across backend, browser, and native clients,
-without DOM, Node-only, framework UI, or database dependencies. Maintain API compatibility
-for deployed client versions, including mobile versions that may update independently.
-Client-specific login/session handling belongs at the authentication boundary; both
-clients receive the same server-side authorization checks. Keep DMS machine credentials
-and other service secrets on the backend. Turnstile's backend remains the consumer of
-the DMS for both clients.
+Follow [the Turnstile application architecture](../../architecture.md#turnstile-application-architecture)
+for backend authority, client responsibilities, platform-independent contracts, and future
+mobile compatibility. Do not add a mobile application without an explicit request.
 
 ## Toolchain and formatting
 
-Node 24.21.0, pnpm 12.16.1, Python 3.13.18, and uv 0.13.6 are the pinned toolchain.
-TypeScript 6.0.3 is shared through the pnpm catalog. TypeScript 7's compiler API does not
-support the installed Nest schematics; upgrade only with compatible generators/builds.
+Use the pinned [toolchain and library inventory](../../architecture.md#installed-toolchain-and-libraries),
+pnpm catalog, and lockfiles. Upgrade TypeScript only with compatible Nest generators/builds.
 
 TypeScript enables strict mode, checked indexed access, exact optional properties,
 explicit override checks, return-path checks, and switch fallthrough checks. Strict
@@ -67,9 +38,13 @@ own package files and lockfile as task inputs. Live tests and dev tasks are not 
 
 ## Configuration and runtime
 
-Each API validates its host/port at startup with Zod. API `.env` files are loaded from
-the application's working directory. `.env.example` files contain nonsecret examples;
-the root example is only for local infrastructure. Future feature settings must be
+Each API validates its host/port at startup with Zod. Auth configuration, profiles, secret
+requirements and readiness behavior follow the
+[authentication foundations](../../architecture.md#authentication-configuration-foundations).
+API `.env` files are loaded from the application's working directory. `.env.example` files contain nonsecret examples;
+the root `.env.example` is only for local infrastructure. Private `.env.migrate` files
+are for one-off operator commands; `.env.provision` is for initial database roles. Neither
+belongs in a persistent API environment. Future feature settings must be
 validated by the owning process and supplied only to that process.
 
 The browser's VITE_* values are public build-time configuration. Keep machine credentials,
@@ -84,10 +59,15 @@ globally by the application configuration.
 ## Verification
 
 `pnpm check` runs Biome, dependency rules, TypeScript checks, Python checks, and deployment
-YAML/path checks. `pnpm build` builds all seven workspace projects. `pnpm test` runs the
-API identity tests and Python entry-point smoke check. `pnpm test:integration` runs
+YAML/path checks and offline Better Auth CLI generation. `pnpm build` builds all seven
+workspace projects. `pnpm test` runs API identity/auth configuration tests and the Python
+entry-point smoke check. `pnpm test:integration` runs
 Fastify injection tests using the same application factory as production entry points.
-It does not exercise database/storage/processing services yet.
+Auth foundation coverage includes unavailable readiness and Fastify cookie/session plugin
+compatibility. The root command also runs `test:database`, using a disposable pinned
+PostgreSQL container for real authority, recovery, transaction, role and product-store
+checks. Docker Engine is required and unavailability fails explicitly. Storage and
+processing integration remain pending.
 
 Frontend interaction and browser tests will use Vitest/React Testing Library and
 Playwright when real screens are introduced. Broaden checks when implemented behavior

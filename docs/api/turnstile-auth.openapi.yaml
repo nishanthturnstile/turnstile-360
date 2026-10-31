@@ -1,0 +1,254 @@
+openapi: 3.1.0
+info:
+  title: Turnstile browser authentication and DMS capability integration
+  version: 1.0.0
+  description: >-
+    Same-origin backend for frontend. OAuth tokens and client credentials remain server-side.
+    HTTPS uses __Host-turnstile; local HTTP uses turnstile. Logout retains a distinct
+    HttpOnly retry cookie for at most five minutes. No business permissions are implied
+    by an identity authority administrator role. See architecture.md for deployment policy.
+servers:
+  - url: /
+paths:
+  /api/auth/login:
+    get:
+      operationId: beginLogin
+      summary: Begin a browser-bound one-time OIDC transaction
+      security: []
+      parameters:
+        - in: query
+          name: returnTo
+          schema:
+            type: string
+            default: /
+          description: Literal local path; no query, encoding, external origin, /api or /identity.
+      responses:
+        "302":
+          description: Navigate to the authority; retain the opaque transaction cookie. Browser HTML failures navigate to a fixed unauthorized, expired or unavailable UI state; API failures use JSON below.
+          headers:
+            Location:
+              schema: { type: string, format: uri }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "403": { $ref: "#/components/responses/Denied" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/auth/callback:
+    get:
+      operationId: completeLogin
+      summary: Consume the one-time callback and regenerate the product session
+      security: []
+      description: >-
+        Requires the transaction and matching parent authority cookies. Verifies state,
+        nonce, S256 PKCE, issuer, signature, audience, parent expiry and local access.
+        The callback is protected by the transaction rather than the product CSRF token.
+      parameters:
+        - in: query
+          name: state
+          required: true
+          schema: { type: string }
+        - in: query
+          name: code
+          schema: { type: string }
+        - in: query
+          name: iss
+          schema: { type: string, format: uri }
+        - in: query
+          name: error
+          schema: { type: string }
+        - in: query
+          name: error_description
+          schema: { type: string }
+      responses:
+        "302":
+          description: Opaque session established; navigate to the stored approved local path. Browser HTML failures use fixed /unauthorized, /session-expired or /auth-unavailable destinations; API failures retain JSON below.
+          headers:
+            Location: { schema: { type: string } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Denied" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/auth/session:
+    get:
+      operationId: getUserSession
+      summary: Verify current authority and product access and return a safe session
+      security:
+        - ProductCookie: []
+        - LocalProductCookie: []
+      responses:
+        "200":
+          description: Current user, explicit permissions, expiry and CSRF token; never OAuth credentials.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserSession" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Denied" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/dms/capabilities:
+    get:
+      operationId: getProductDmsCapabilities
+      summary: Read implemented document capabilities through the authorized backend
+      description: >-
+        Requires current parent identity, enabled local access and both turnstile:access
+        and turnstile:dms:capabilities:read. The backend uses its separate machine client,
+        checks the returned installation/application binding and projects only product
+        capability fields. Current format/profile/language arrays are empty. Browser
+        bearer, actor and tenant headers are never forwarded. DMS errors do not end
+        the browser session. If the shared authority/DMS process is unavailable, live
+        identity verification fails with AUTH_UNAVAILABLE without revoking local state.
+      security:
+        - ProductCookie: []
+        - LocalProductCookie: []
+      responses:
+        "200":
+          description: Product-safe capabilities; no machine credentials, registration IDs or operator diagnostics.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: "private, no-store" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DmsCapabilities" }
+              example: { formats: [], profiles: [], languages: [] }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403":
+          description: User product permission denied, or current machine registration/scope denied; no automatic retry.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - { $ref: "#/components/schemas/AuthError" }
+                  - { $ref: "#/components/schemas/DmsIntegrationError" }
+        "503":
+          description: Identity verification, machine-token issuance, DMS availability or response binding cannot be established. The session is retained for a later request.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - { $ref: "#/components/schemas/AuthError" }
+                  - { $ref: "#/components/schemas/DmsIntegrationError" }
+  /api/auth/logout:
+    post:
+      operationId: logout
+      summary: End local access first, then revoke refresh authority and end the parent login
+      description: >-
+        Requires exact Origin, X-CSRF-Token and same-origin Fetch Metadata when present.
+        Also supports direct API clients supplying Origin and CSRF. Pending authority
+        sign-out returns local=complete, authority=pending; explicitly retry this same
+        operation before retryUntil with the retained logout cookie and original CSRF.
+        An original product cookie also recovers a lost logout response. A completed
+        receipt is idempotent within the same five-minute bound. Machine clients are independent.
+      security:
+        - ProductCookie: []
+          CsrfToken: []
+        - LogoutCookie: []
+          CsrfToken: []
+        - LocalProductCookie: []
+          CsrfToken: []
+        - LocalLogoutCookie: []
+          CsrfToken: []
+      parameters:
+        - in: header
+          name: Origin
+          required: true
+          schema: { type: string, format: uri }
+      responses:
+        "200":
+          description: Local access ended; inspect authority result before reporting global sign-out.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Logout" }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Denied" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+components:
+  securitySchemes:
+    ProductCookie: { type: apiKey, in: cookie, name: __Host-turnstile }
+    LocalProductCookie: { type: apiKey, in: cookie, name: turnstile }
+    LogoutCookie: { type: apiKey, in: cookie, name: __Host-turnstile-logout }
+    LocalLogoutCookie: { type: apiKey, in: cookie, name: turnstile-logout }
+    CsrfToken: { type: apiKey, in: header, name: X-CSRF-Token }
+  schemas:
+    DmsCapabilities:
+      type: object
+      additionalProperties: false
+      required: [formats, profiles, languages]
+      properties:
+        formats: { type: array, items: { type: string } }
+        profiles: { type: array, items: { type: string } }
+        languages: { type: array, items: { type: string } }
+    DmsIntegrationError:
+      type: object
+      additionalProperties: false
+      required: [code]
+      properties:
+        code: { type: string, enum: [DMS_ACCESS_DENIED, DMS_UNAVAILABLE] }
+    AuthError:
+      type: object
+      additionalProperties: false
+      required: [code]
+      properties:
+        code:
+          type: string
+          enum:
+            [
+              INVALID_AUTH_REQUEST,
+              LOGIN_TRANSACTION_INVALID,
+              IDENTITY_REQUIRED,
+              PRODUCT_ACCESS_DENIED,
+              PERMISSION_DENIED,
+              CSRF_REJECTED,
+              AUTH_UNAVAILABLE,
+              REFRESH_IN_PROGRESS,
+              LOGIN_REQUIRED,
+            ]
+    UserSession:
+      type: object
+      additionalProperties: false
+      required: [user, permissions, session, csrfToken]
+      properties:
+        user:
+          type: object
+          additionalProperties: false
+          required: [id, name, email]
+          properties:
+            id: { type: string }
+            name: { type: string }
+            email: { type: string, format: email }
+        permissions:
+          type: array
+          uniqueItems: true
+          items: { type: string, enum: ["turnstile:access", "turnstile:dms:capabilities:read"] }
+        session:
+          type: object
+          additionalProperties: false
+          required: [expiresAt, idleExpiresAt]
+          properties:
+            expiresAt: { type: string, format: date-time }
+            idleExpiresAt: { type: string, format: date-time }
+        csrfToken: { type: string }
+    Logout:
+      type: object
+      additionalProperties: false
+      required: [local, authority]
+      properties:
+        local: { type: string, const: complete }
+        authority: { type: string, enum: [complete, pending] }
+        retryUntil: { type: string, format: date-time }
+  responses:
+    InvalidRequest:
+      description: Malformed, duplicate, expired or mismatched one-time authentication input.
+      content:
+        application/json: { schema: { $ref: "#/components/schemas/AuthError" } }
+    Unauthenticated:
+      description: Identity revoked/expired or login required after an uncertain refresh.
+      content:
+        application/json: { schema: { $ref: "#/components/schemas/AuthError" } }
+    Denied:
+      description: Missing local access/permission or failed CSRF/origin/Fetch Metadata.
+      content:
+        application/json: { schema: { $ref: "#/components/schemas/AuthError" } }
+    Unavailable:
+      description: >-
+        Cannot verify current authority or persistence; fail closed. REFRESH_IN_PROGRESS
+        permits a later request; an uncertain refresh ends the session with LOGIN_REQUIRED.
+      content:
+        application/json: { schema: { $ref: "#/components/schemas/AuthError" } }

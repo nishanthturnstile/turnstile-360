@@ -1,0 +1,1 @@
+ALTER TABLE "turnstile"."user_access" ADD COLUMN "permissions" text[] DEFAULT '{}'::text[] NOT NULL;

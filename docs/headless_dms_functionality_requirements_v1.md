@@ -1,8 +1,11 @@
 # Headless DMS: Sequenced Functionality and Requirements
 
-**Version:** 1.1  
-**Updated:** 2026-10-31  
-**Status:** Product requirements aligned with the accepted [architecture blueprint v1.4](headless_dms_product_blueprint_v1.md).  
+**Version:** 1.4
+
+**Updated:** 2026-10-31
+
+**Status:** Product requirements aligned with [architecture.md](../architecture.md) and the accepted [product blueprint v1.7](headless_dms_product_blueprint_v1.md).
+
 **Approach:** Direct implementation of the actual solution.
 
 ## Purpose and reading rules
@@ -11,7 +14,7 @@ This document identifies the functionality the product must provide and a depend
 
 Each numbered group describes required product behavior, its prerequisites, and the capability it makes available. Requirement IDs identify individual behaviors for future discussion and tracking. The numbers are dependency order, not release phases, sprint assignments, estimates, engineering tasks, or a prescribed code structure. A partially built sequence is not automatically a complete release.
 
-The blueprint owns architecture, technical contracts, and configured numeric defaults. This document owns the functionality inventory and ordering. If a numeric policy changes, update the blueprint and the affected requirement references together. Every functional requirement below belongs to v1 unless it appears in the explicitly deferred section.
+[architecture.md](../architecture.md) owns architecture, technical contracts, and configured numeric defaults. The [product blueprint](headless_dms_product_blueprint_v1.md) owns product scope. This document owns the functionality inventory and ordering. If a numeric policy changes, update architecture.md and the affected requirement references together. Every functional requirement below belongs to v1 unless it appears in the explicitly deferred section.
 
 The structured-extraction capability is an included opt-in profile: its installation, model artifacts, resource allocation, and advertised formats are required when enabled. It is not an architecture trial or an automatic processing step for every file. Existing requirement IDs remain stable; newly accepted behavior is appended within the relevant groups.
 
@@ -22,13 +25,19 @@ Security, tenant isolation, audit capture, safe retries, bounded resources, and 
 - **Consumers:** Registered application backends and tenant operators; applications retain their own screens, business records, and end-user business authorization.
 - **Identity:** One shared authority per deployment, Better Auth by default; supported login/session/recovery and machine-client administration. DMS operations use machine access tokens, with one-time Thaarei enrollment for initial consumer activation.
 - **Access:** One owning application per document, explicit same-tenant application grants, and no cross-tenant sharing. Browser sessions do not authorize DMS machine operations.
-- **Deployment:** Self-hosted, one tenant with multiple applications by default; tenant-aware isolation is required throughout.
-- **Files:** PDF; JPEG/PNG/TIFF/BMP/static WebP; UTF-8 text/Markdown/CSV/TSV; the approved Word/PowerPoint/OpenDocument/RTF, spreadsheet, and EML/MSG families in blueprint section 9. English OCR is included. Additional industrial formats require explicit storage-only policy and complete required assessment; universal extraction is not promised.
+- **Deployment:** Self-hosted, exactly one customer tenant per installation (for example MRR), with multiple independently registered applications such as Turnstile and other customer systems. Separate customers receive separate installations. SaaS tenant selection and multi-customer provisioning are outside scope; tenant integrity and application isolation remain required.
+- **Files:** PDF; JPEG/PNG/TIFF/BMP/static WebP; UTF-8 text/Markdown/CSV/TSV; the approved Word/PowerPoint/OpenDocument/RTF, spreadsheet, and EML/MSG families in the [architecture format matrix](../architecture.md#supported-format-and-capability-matrix). English OCR is included. Additional industrial formats require explicit storage-only policy and complete required assessment; universal extraction is not promised.
 - **Storage:** SeaweedFS. Normal file bytes transfer directly between clients/workers and storage, outside the control API.
 - **Processing:** A security requirement precedes every original publication. Native/Office text, spreadsheet data, OCR, optional structured artifacts, and search have explicit capabilities and independent outcomes. The selected Python/Celery/RabbitMQ runtime implements the durable-work behavior; these requirements do not prescribe engineering tasks.
 - **Demand:** Up to 200,000 documents/month, with declared file/page mix, OCR/structured share, processing window, and bursts used for capacity sizing.
 - **Commercial operation:** No mandatory paid commercial licenses or hosted subscriptions; customer distributions include applicable notices, covered-source obligations, and dependency/model records.
 - **Integration:** REST/JSON, documented contracts, polling, and browser/backend examples. A DMS frontend and public broker access are not required.
+
+The confirmed first authentication release uses administrator-provisioned email/password
+accounts and controlled recovery. The [authentication implementation plan](authentication_implementation_plan.md)
+coordinates the relevant parts of groups 01–04 across the authority, Turnstile session and
+DMS machine boundary. It preserves the capability dependencies and does not declare those
+groups complete; customer-specific provisioning remains required.
 
 ## Ordered capability index
 
@@ -61,12 +70,12 @@ Follow this order for the initial product. The prerequisite column names the mai
 
 **Outcome:** An operator can establish the shared identity/tenant context, support user login, and provision intended applications without changing DMS code.
 
-- **FR-01.01:** The product must support authorized bootstrap of a tenant and its operator/admin identity, without unauthenticated public sign-up.
+- **FR-01.01:** The product must support authorized bootstrap of the installation's one customer tenant and its operator/admin identity, without unauthenticated public sign-up. An identical repeated bootstrap must preserve that tenant; attempting to provision a second customer tenant or switch the installation to another tenant must fail.
 - **FR-01.02:** A tenant must be able to provision multiple intended applications with stable identities, pending/active/disabled state, permitted scopes, source namespaces, and applicable policies. Provisioning alone must not activate a consumer before group 02's enrollment requirements pass.
-- **FR-01.03:** Each application registration must belong to exactly one tenant and map to a verified identity-provider client. A service acting for multiple tenants must use separate registrations in v1.
+- **FR-01.03:** Each application registration must belong to the installation's configured customer tenant and map to a verified identity-provider client. Independent systems require separate registrations/credentials; Turnstile web and future mobile use their shared backend's DMS registration. Registrations from another customer installation must not authorize local DMS access.
 - **FR-01.04:** Operators must be able to change an application's enabled state, scopes, and policy settings through supported administration interfaces.
 - **FR-01.05:** Application credentials must be issued/rotated through the configured identity provider without changing document ownership or requiring changes to consumer repositories.
-- **FR-01.06:** Configuration must support the default single-tenant installation while preserving tenant identity on every tenant-owned resource.
+- **FR-01.06:** Configuration must enforce exactly one customer tenant per installation while preserving tenant identity on every tenant-owned resource. Turnstile uses this same customer context; request input must not select another tenant. Adding registered applications must not create additional tenants or implicit document grants.
 - **FR-01.07:** The shared authority must support user sign-in/sign-out, session expiry/revocation, and controlled account recovery for consumer applications. Consumers supply their screens and retain business permissions; these users do not automatically become DMS end-user principals.
 - **FR-01.08:** Supported private operator interfaces must provision accounts/machine clients, control scopes, rotate credentials/signing keys, and recover or suspend access without requiring a full identity-management UI or public self-registration.
 - **FR-01.09:** Consumer applications and the DMS must be able to use the same selected identity authority without sharing service credentials or deriving trust from monorepo membership.
@@ -148,7 +157,7 @@ Follow this order for the initial product. The prerequisite column names the mai
 - **FR-06.03:** Reserve the declared upload and candidate-storage capacity before granting transfer authority. Concurrent requests must not spend the same remaining capacity more than once.
 - **FR-06.04:** Account separately for staging, originals, historical versions, artifacts, and retained rejected/deleted content. Release unused reservations and removed bytes once, against actual outcomes.
 - **FR-06.05:** Bound open batches, manifest/request size, active uploads, queued work, running work, and reprocessing. Return an explicit admission/rate/capacity outcome with retry guidance where applicable.
-- **FR-06.06:** Limit expensive processing fairly across enabled tenants/applications, while preserving separate capacity for mandatory scanning.
+- **FR-06.06:** Limit expensive processing fairly across registered applications within the installation's one tenant, enforcing application and tenant-wide limits while preserving separate capacity for mandatory scanning.
 - **FR-06.07:** Storage/scratch pressure and unavailable mandatory dependencies must block affected unsafe work without incorrectly reporting success or permanently consuming reservations.
 - **FR-06.08:** Effective policy values must be discoverable. Consumer applications must not select arbitrary processors, executable instructions, or file-storage destinations.
 - **FR-06.09:** Additional industrial/proprietary types may be admitted for storage-only use only under explicit operator policy with assessable required security checks. Unsupported extraction must remain distinct from a security pass; unassessable content must remain unavailable.
@@ -388,7 +397,7 @@ Follow this order for the initial product. The prerequisite column names the mai
 
 ## Shared quality requirements
 
-These requirements accompany the relevant functionality from its introduction and its ordinary quality checks. Numeric values and detailed operating rules are owned by blueprint sections 5, 9, 12, 13, 15–19.
+These requirements accompany the relevant functionality from its introduction and its ordinary quality checks. Numeric values and detailed operating rules are owned by [architecture.md](../architecture.md), including identity, format/processing contracts, durable jobs, limits, security, deployment, recovery, and distribution.
 
 | ID | Requirement |
 |---|---|
@@ -407,7 +416,7 @@ These requirements accompany the relevant functionality from its introduction an
 | NFR-13 | Run the required commercial/self-hosted product without mandatory paid licenses or hosted subscriptions; meet applicable open-source distribution conditions for code, containers, native dependencies, fonts/codecs, signatures, language data, and models. |
 | NFR-14 | Support the demand target of up to 200,000 documents/month under a declared format/page/size mix, OCR/structured share, processing window, arrival bursts, and resourced deployment; report API latency, original availability, queue age, processing delay, and search lag separately. |
 
-Default file/page/output limits, capability lifetimes, scanner freshness, logical restore time, physical-disposal timing, and history retention remain as specified in the blueprint. A deployment configuration is not a measured capacity guarantee. Legal holds and regulated immutable retention remain outside v1.
+Default file/page/output limits, capability lifetimes, scanner freshness, logical restore time, physical-disposal timing, and history retention remain as specified in [architecture.md](../architecture.md). A deployment configuration is not a measured capacity guarantee. Legal holds and regulated immutable retention remain outside v1.
 
 ## Deferred functionality and its dependencies
 
@@ -469,3 +478,6 @@ Security assessments, ordinary tests, and backup/restore correctness in these re
 |---|---|
 | v1.0, 2026-10-30 | Initial sequenced inventory aligned with blueprint v1.2 |
 | v1.1, 2026-10-31 | Aligned with blueprint v1.3: shared identity, Thaarei enrollment, batch uploads, expanded text/data/OCR/optional-structure behavior, durable-work ownership, monthly demand, and commercial OSS distribution; retained existing IDs |
+| v1.2, 2026-10-31 | Updated architecture ownership/references after consolidation into root architecture.md; requirement IDs, functionality and ordering unchanged |
+| v1.3, 2026-10-31 | Clarified deployment boundary, FR-01.01/03/06 and FR-06.06 for exactly one customer tenant per installation, multiple registered applications, and separate customer installations; existing requirement IDs/order retained |
+| v1.4, 2026-10-31 | Recorded email/password-first decision and linked complete-chain authentication research/proposal; FR/NFR statements, IDs and dependency order unchanged |

@@ -7,6 +7,10 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: { '/api': 'http://127.0.0.1:3002' },
+    proxy: {
+      '/api': 'http://127.0.0.1:3002',
+      '/identity': 'http://127.0.0.1:3001',
+      '/.well-known/oauth-authorization-server/identity': 'http://127.0.0.1:3001',
+    },
   },
 });

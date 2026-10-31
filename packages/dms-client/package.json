@@ -18,6 +18,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
+    "@types/node": "24.19.2",
     "typescript": "catalog:"
   },
   "dependencies": {
