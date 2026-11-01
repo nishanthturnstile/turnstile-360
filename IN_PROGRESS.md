@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-10-31
+Last updated: 2026-11-01
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -22,7 +22,9 @@ use a separate machine token over real HTTP. Login/recovery/reset and safe sessi
 bounded security telemetry and Mailpit development/pilot configuration are implemented.
 Real client provisioning/enrollment,
 document/processing/business capabilities and source/data migration remain incomplete.
-Only disposable fixture provisioning was performed; no real customer was onboarded.
+A persistent local-development authentication installation has now been provisioned and
+passes live login/recovery/logout and machine-enrollment/capability checks. Earlier feature
+verification used disposable fixtures; no real customer has been onboarded.
 The technical design is maintained in [architecture.md](architecture.md).
 
 ## Updating this file
@@ -45,6 +47,48 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
+STATUS-001 is completed (owner: Codex, 2026-11-01): reviewed the current web UI,
+authentication plan/runbook, architecture and DMS requirement ordering to inventory
+available capabilities. The owner reports sign-in and workspace access working. Current
+UI supports login/recovery/reset/session/logout and a permission-protected DMS connection
+check; the capability projection currently contains empty format/profile/language lists.
+Account provisioning/access grants and application credential/enrollment administration
+are private operator commands. Business screens, document registry/upload/processing/search
+and target deployment remain pending. Handoff: agree the first Turnstile business workflow;
+for a DMS document flow, implement registry/admission boundaries before transfer and
+processing. This is a scope discussion, not authorization for new features or deployment.
+Only this status record changed; Biome/whitespace validation passed, runtime checks were
+not repeated for the documentation-only inventory.
+
+AUTH-LOCAL-002 diagnostic validation is completed (owner: Codex): the owner confirmed
+that a prompt fresh login at `/api/auth/login` in a private window reaches the workspace.
+The reported `/session-expired` route identifies login/callback rejection; redacted logs
+contained a password success followed by a product login 400 before token exchange.
+A browser probe reproduced 400 LOGIN_TRANSACTION_INVALID after a newer login replaced
+the earlier transaction; fresh transactions passed state validation. This points to stale
+sign-in state in the regular browser, but expiry versus replacement (or other profile-specific
+cookie behavior) was not established. No application defect or source/configuration repair
+is claimed. Keep state/cookie validation intact.
+Actual localhost browser login, reload, concurrent reads, DMS access, SSO, complete
+logout/relogin and natural token refresh all passed; required workspace checks passed.
+Handoff: close old sign-in tabs and start a fresh login in the regular browser. If that
+profile still fails, clear only localhost site cookies and retry; a persistent failure
+requires bounded callback diagnostics. Regular-profile recovery has not been confirmed.
+The temporary private password input was deleted; validation records are redacted.
+
+AUTH-LOCAL-001 is completed (owner: Codex): the persistent local-development installation
+is provisioned through the supported role/migration/bootstrap, account, OAuth-client and
+enrollment commands. Both APIs report auth readiness 200. Live SDK/OIDC login, safe session
+cookies/DTOs, product-to-DMS access, recovery/reset revocation, complete logout, idempotent
+enrollment and runtime-role isolation pass. All required workspace checks, 65 integration
+cases and three isolated HTTPS/STARTTLS browser journeys passed. Scope is loopback development
+with Mailpit; no customer deployment or external mail delivery is included. Handoff: services
+are running under `pnpm dev:auth`; use the verified local operator account with the chosen
+password. Runtime/operator credentials remain in ignored mode-0600 files, private backups
+and provisioning records remain outside the repository, and temporary password inputs were
+removed after validation. Restart ordinary development with `pnpm dev:auth`, without
+re-provisioning roles or replacing the fixed installation identity.
+
 AUTH-FIX-001 is completed (owner: Codex): implementation, local verification and remote CI.
 Protected requests overlapping an in-progress or committed refresh now return retryable
 503 while logout and idle/absolute expiry retain their 401 fences. The final session
@@ -63,12 +107,14 @@ AUTH-07 code and its earlier local verification are complete.
 Real customer/client provisioning, target Mailpit deployment and Dokploy ingress/container
 DNS/TLS verification remain pending; local evidence does not establish deployed readiness.
 
-| ID           | Status    | Owner | Scope / requirement                                                      | Next action                                    | Verification / remaining work                                                                                                                                                                                                         | Updated    |
-| ------------ | --------- | ----- | ------------------------------------------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| AUTH-05      | Completed | Codex | DMS machine authorization and guarded enrollment                         | Handoff recorded below                         | Required workspace checks, 40 API unit cases, 61 integration cases, role/DDL matrix, compiled smoke and contract consistency passed; fixture provisioning only                                                                        | 2026-10-31 |
-| AUTH-06      | Completed | Codex | Typed machine client and real cross-service request                      | Handoff recorded below                         | Required workspace checks, 43 API unit cases, 63 integration cases, role/DDL matrix, compiled smoke and generated-contract consistency passed; fixture provisioning only                                                              | 2026-10-31 |
-| AUTH-07      | Completed | Codex | Login/recovery UI and operational verification                           | Handoff recorded below; target rollout pending | Required checks, 43 API unit cases, 63 integration cases, three production-profile HTTPS/STARTTLS browser journeys, four image builds and isolated runtime checks passed; canonical-container probe unavailable on Docker Desktop/WSL | 2026-10-31 |
-| AUTH-FIX-001 | Completed | Codex | Preserve valid sessions during refresh overlap and fix fresh-checkout CI | PR #1 open for owner review                    | 65 local integration cases and required workspace checks passed; all five remote checks passed on implementation commit c70f294                                                                                                       | 2026-10-31 |
+| ID             | Status    | Owner | Scope / requirement                                                      | Next action                                                                    | Verification / remaining work                                                                                                                                                                                                         | Updated    |
+| -------------- | --------- | ----- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| AUTH-05        | Completed | Codex | DMS machine authorization and guarded enrollment                         | Handoff recorded below                                                         | Required workspace checks, 40 API unit cases, 61 integration cases, role/DDL matrix, compiled smoke and contract consistency passed; fixture provisioning only                                                                        | 2026-10-31 |
+| AUTH-06        | Completed | Codex | Typed machine client and real cross-service request                      | Handoff recorded below                                                         | Required workspace checks, 43 API unit cases, 63 integration cases, role/DDL matrix, compiled smoke and generated-contract consistency passed; fixture provisioning only                                                              | 2026-10-31 |
+| AUTH-07        | Completed | Codex | Login/recovery UI and operational verification                           | Handoff recorded below; target rollout pending                                 | Required checks, 43 API unit cases, 63 integration cases, three production-profile HTTPS/STARTTLS browser journeys, four image builds and isolated runtime checks passed; canonical-container probe unavailable on Docker Desktop/WSL | 2026-10-31 |
+| AUTH-FIX-001   | Completed | Codex | Preserve valid sessions during refresh overlap and fix fresh-checkout CI | PR #1 open for owner review                                                    | 65 local integration cases and required workspace checks passed; all five remote checks passed on implementation commit c70f294                                                                                                       | 2026-10-31 |
+| AUTH-LOCAL-001 | Completed | Codex | Persistent local auth installation and operational validation            | Local sign-in available; use pnpm dev:auth after stopping services             | Live local login/recovery/logout, DMS enrollment/capabilities and role isolation passed; required checks, 65 integration cases and three browser journeys passed                                                                      | 2026-10-31 |
+| AUTH-LOCAL-002 | Completed | Codex | Diagnose callback rejection and validate real local browser login        | Fresh private-window login confirmed by owner; regular-profile retry available | Browser login, reload, DMS, logout/relogin and natural refresh passed; required checks passed; stale browser sign-in state indicated, exact trigger unconfirmed                                                                       | 2026-10-31 |
 
 ## Completed milestones
 
@@ -126,6 +172,47 @@ DOC-TEST-001 completed on 2026-10-31 (Codex): added one focused testing guidelin
 for this documentation-only change. No blockers or remaining work.
 
 ## Latest recorded verification
+
+AUTH-LOCAL-002 verification (2026-10-31, Codex): T3 shared Chromium browser drove the
+actual Vite development frontend and persistent local APIs through two email/password
+logins, parallel initial session reads, reload, eight concurrent reads, existing-session
+SSO, live DMS capability access, explicit logout and fresh relogin. Logout returned 200,
+subsequent product session returned 401 and the authority session was null. Fresh relogin
+completed at 17:38:58 UTC. Session polling remained 200 through the first natural refresh;
+at 17:44:20 UTC (past the original five-minute token expiry), four parallel reads and
+DMS capability access remained 200 with the signed-in workspace visible. The private
+password input was deleted after credentialed checks. Required commands passed again:
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` (43 API unit cases and
+13 Fastify integration cases from cache; 52 PostgreSQL cases freshly executed, including
+role/DDL isolation). No app/schema/configuration source changed; only this handoff was
+updated. The reported immediate expiry was not reproduced at the owner's confirmed
+localhost origin. The owner subsequently confirmed `/session-expired`; callback transaction rejection
+was narrowed as described above. The owner confirmed that a fresh private-window login reaches the workspace.
+This points to stale regular-browser sign-in state; the exact trigger remains unconfirmed;
+no repair, new deployment or updated PR checks are claimed.
+
+AUTH-LOCAL-001 verification (2026-10-31, Codex): created a dedicated persistent local
+installation database after confirming no existing installation/owned roles would be
+replaced. Provisioned six least-privilege roles, applied committed auth/DMS/product
+migrations and bootstrapped the same installation repeatedly. Provisioned and Mailpit-verified
+one local operator, issued separate login/machine OAuth clients, assigned explicit product
+access, registered/enrolled the pending DMS consumer, and retained its idempotent receipt.
+Both live auth readiness endpoints return 200; the unsigned session endpoint correctly
+returns 401. The real browser SDK over HTTP completed signed OIDC/PKCE login, safe opaque
+cookie/session projection and a product-permission-protected DMS capability request.
+Missing-CSRF/hostile-origin logout and callback replay were denied. Actual Mailpit recovery
+and reset revoked the old parent/product session while retaining the chosen password;
+relogin and complete local/authority logout passed. Pending machine denial, one-time
+enrollment, identical receipt replay and activated capability read passed. Runtime-role
+cross-schema access and missing-tenant access were denied; installed backend secrets were
+absent from browser production assets. Environment permissions are mode 0600 and temporary
+password input files were removed. No implementation/schema source changes were required.
+`pnpm check`, `pnpm build`, `pnpm test` (43 API cases and Python entry point), and
+`pnpm test:integration` (65 cases plus role/DDL isolation) and `pnpm test:smoke` passed;
+unchanged tasks used Turbo cache. Three isolated production-profile HTTPS/STARTTLS browser journeys passed
+separately from the persistent local HTTP installation. Development remains running with
+frontend/API/authority and Mailpit on their documented loopback ports; real customer and
+Dokploy provisioning remain pending.
 
 AUTH-FIX-001 local verification (2026-10-31, Codex): both new overlap regressions failed
 against the original code with 401 instead of 503, then passed after the fix.
