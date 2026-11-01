@@ -1,0 +1,618 @@
+{
+  "id": "864113e6-87d0-42d4-8c50-a4cf993a6027",
+  "prevId": "bc537c16-71c4-4287-b9af-7732685708dd",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "dms.application_registration": {
+      "name": "application_registration",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "principal_kind": {
+          "name": "principal_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'consumer'"
+        },
+        "scope_ceiling": {
+          "name": "scope_ceiling",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "application_registration_tenant_id_installation_tenant_id_fk": {
+          "name": "application_registration_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "application_registration",
+          "tableTo": "installation",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "application_tenant_identity": {
+          "name": "application_tenant_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "id"]
+        },
+        "application_client_identity": {
+          "name": "application_client_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "issuer", "client_id"]
+        },
+        "application_enrollment_identity": {
+          "name": "application_enrollment_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "id", "issuer", "client_id"]
+        }
+      },
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator", "thaarei_dms_runtime"],
+          "using": "\"dms\".\"application_registration\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"dms\".\"application_registration\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "application_status": {
+          "name": "application_status",
+          "value": "\"dms\".\"application_registration\".\"status\" IN ('pending', 'active', 'disabled')"
+        },
+        "application_principal_kind": {
+          "name": "application_principal_kind",
+          "value": "\"dms\".\"application_registration\".\"principal_kind\" IN ('consumer', 'publisher', 'scanner', 'extractor')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.installation": {
+      "name": "installation",
+      "schema": "dms",
+      "columns": {
+        "singleton": {
+          "name": "singleton",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_key": {
+          "name": "customer_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "installation_tenant_id_unique": {
+          "name": "installation_tenant_id_unique",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id"]
+        },
+        "installation_customer_key_unique": {
+          "name": "installation_customer_key_unique",
+          "nullsNotDistinct": false,
+          "columns": ["customer_key"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "one_installation": {
+          "name": "one_installation",
+          "value": "\"dms\".\"installation\".\"singleton\" = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "dms.enrollment_key": {
+      "name": "enrollment_key",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deployment_id": {
+          "name": "deployment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "digest": {
+          "name": "digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consumed_at": {
+          "name": "consumed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "enrollment_key_application_idx": {
+          "name": "enrollment_key_application_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "application_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "enrollment_key_tenant_id_application_id_issuer_client_id_application_registration_tenant_id_id_issuer_client_id_fk": {
+          "name": "enrollment_key_tenant_id_application_id_issuer_client_id_application_registration_tenant_id_id_issuer_client_id_fk",
+          "tableFrom": "enrollment_key",
+          "tableTo": "application_registration",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "issuer", "client_id"],
+          "columnsTo": ["tenant_id", "id", "issuer", "client_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "enrollment_key_tenant_identity": {
+          "name": "enrollment_key_tenant_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator", "thaarei_dms_runtime"],
+          "using": "\"dms\".\"enrollment_key\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"dms\".\"enrollment_key\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "enrollment_digest": {
+          "name": "enrollment_digest",
+          "value": "\"dms\".\"enrollment_key\".\"digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "enrollment_expiry": {
+          "name": "enrollment_expiry",
+          "value": "\"dms\".\"enrollment_key\".\"expires_at\" > \"dms\".\"enrollment_key\".\"created_at\" AND \"dms\".\"enrollment_key\".\"expires_at\" <= \"dms\".\"enrollment_key\".\"created_at\" + interval '24 hours'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.enrollment_receipt": {
+      "name": "enrollment_receipt",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deployment_id": {
+          "name": "deployment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operation": {
+          "name": "operation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idempotency_hash": {
+          "name": "idempotency_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_hash": {
+          "name": "request_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enrollment_key_id": {
+          "name": "enrollment_key_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "enrollment_receipt_expiry_idx": {
+          "name": "enrollment_receipt_expiry_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "enrollment_receipt_tenant_id_application_id_application_registration_tenant_id_id_fk": {
+          "name": "enrollment_receipt_tenant_id_application_id_application_registration_tenant_id_id_fk",
+          "tableFrom": "enrollment_receipt",
+          "tableTo": "application_registration",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "enrollment_receipt_tenant_id_enrollment_key_id_enrollment_key_tenant_id_id_fk": {
+          "name": "enrollment_receipt_tenant_id_enrollment_key_id_enrollment_key_tenant_id_id_fk",
+          "tableFrom": "enrollment_receipt",
+          "tableTo": "enrollment_key",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "enrollment_key_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "enrollment_receipt_enrollment_key_id_unique": {
+          "name": "enrollment_receipt_enrollment_key_id_unique",
+          "nullsNotDistinct": false,
+          "columns": ["enrollment_key_id"]
+        },
+        "enrollment_idempotency_scope": {
+          "name": "enrollment_idempotency_scope",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tenant_id",
+            "deployment_id",
+            "issuer",
+            "client_id",
+            "operation",
+            "idempotency_hash"
+          ]
+        }
+      },
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator", "thaarei_dms_runtime"],
+          "using": "\"dms\".\"enrollment_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"dms\".\"enrollment_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "enrollment_receipt_hashes": {
+          "name": "enrollment_receipt_hashes",
+          "value": "\"dms\".\"enrollment_receipt\".\"idempotency_hash\" ~ '^[0-9a-f]{64}$' AND \"dms\".\"enrollment_receipt\".\"request_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "enrollment_receipt_expiry": {
+          "name": "enrollment_receipt_expiry",
+          "value": "\"dms\".\"enrollment_receipt\".\"expires_at\" > \"dms\".\"enrollment_receipt\".\"created_at\" AND \"dms\".\"enrollment_receipt\".\"expires_at\" <= \"dms\".\"enrollment_receipt\".\"created_at\" + interval '24 hours'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.security_event": {
+      "name": "security_event",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_kind": {
+          "name": "actor_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_id": {
+          "name": "subject_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "security_event_retention_idx": {
+          "name": "security_event_retention_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "security_event_tenant_id_installation_tenant_id_fk": {
+          "name": "security_event_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "security_event",
+          "tableTo": "installation",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator", "thaarei_dms_runtime"],
+          "using": "\"dms\".\"security_event\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"dms\".\"security_event\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "security_event_bounds": {
+          "name": "security_event_bounds",
+          "value": "length(\"dms\".\"security_event\".\"actor_id\") BETWEEN 1 AND 200 AND length(\"dms\".\"security_event\".\"subject_id\") BETWEEN 1 AND 128 AND \"dms\".\"security_event\".\"action\" ~ '^[a-z][a-z0-9_.-]{0,47}$'"
+        },
+        "security_event_outcome": {
+          "name": "security_event_outcome",
+          "value": "\"dms\".\"security_event\".\"outcome\" IN ('success', 'denied', 'pending')"
+        },
+        "security_event_actor_kind": {
+          "name": "security_event_actor_kind",
+          "value": "\"dms\".\"security_event\".\"actor_kind\" IN ('operator', 'machine')"
+        }
+      },
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "dms": "dms"
+  },
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -38,9 +38,13 @@ own package files and lockfile as task inputs. Live tests and dev tasks are not 
 
 ## Configuration and runtime
 
-Each API validates its host/port at startup with Zod. API `.env` files are loaded from
-the application's working directory. `.env.example` files contain nonsecret examples;
-the root example is only for local infrastructure. Future feature settings must be
+Each API validates its host/port at startup with Zod. Auth configuration, profiles, secret
+requirements and readiness behavior follow the
+[authentication foundations](../../architecture.md#authentication-configuration-foundations).
+API `.env` files are loaded from the application's working directory. `.env.example` files contain nonsecret examples;
+the root `.env.example` is only for local infrastructure. Private `.env.migrate` files
+are for one-off operator commands; `.env.provision` is for initial database roles. Neither
+belongs in a persistent API environment. Future feature settings must be
 validated by the owning process and supplied only to that process.
 
 The browser's VITE_* values are public build-time configuration. Keep machine credentials,
@@ -55,10 +59,15 @@ globally by the application configuration.
 ## Verification
 
 `pnpm check` runs Biome, dependency rules, TypeScript checks, Python checks, and deployment
-YAML/path checks. `pnpm build` builds all seven workspace projects. `pnpm test` runs the
-API identity tests and Python entry-point smoke check. `pnpm test:integration` runs
+YAML/path checks and offline Better Auth CLI generation. `pnpm build` builds all seven
+workspace projects. `pnpm test` runs API identity/auth configuration tests and the Python
+entry-point smoke check. `pnpm test:integration` runs
 Fastify injection tests using the same application factory as production entry points.
-It does not exercise database/storage/processing services yet.
+Auth foundation coverage includes unavailable readiness and Fastify cookie/session plugin
+compatibility. The root command also runs `test:database`, using a disposable pinned
+PostgreSQL container for real authority, recovery, transaction, role and product-store
+checks. Docker Engine is required and unavailability fails explicitly. Storage and
+processing integration remain pending.
 
 Frontend interaction and browser tests will use Vitest/React Testing Library and
 Playwright when real screens are introduced. Broaden checks when implemented behavior

@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Turnstile 360 · AUTH-01 & AUTH-02</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --background: light-dark(#fafaf8, #111512);
+        --foreground: light-dark(#19291f, #eef5ee);
+        --muted: light-dark(#526159, #afbbb2);
+        --card: light-dark(#f1f4ee, #1b241e);
+        --secondary: light-dark(#e7ece3, #253229);
+        --border: light-dark(#cdd7c9, #3b4b3e);
+        --primary: light-dark(#1a6341, #a7dfae);
+        --primary-foreground: light-dark(#ffffff, #123820);
+        --success: light-dark(#21603d, #b2e4b6);
+        --warning: light-dark(#825021, #edbe87);
+        --warning-surface: light-dark(#faf0e2, #32291d);
+        --info: light-dark(#335db0, #a8bcf5);
+        --ring: light-dark(#426be0, #a8bcf5);
+        --chart-1: light-dark(#337354, #a2d6a6);
+        --chart-2: light-dark(#548b78, #78b5a4);
+        --chart-3: light-dark(#4e6b9d, #a0b6dc);
+        --radius: 16px;
+        --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; background: transparent; }
+      body { font-family: var(--font-sans); color: var(--foreground); font-size: 15px; line-height: 1.5; }
+      button, a { -webkit-tap-highlight-color: transparent; }
+      button { font: inherit; cursor: pointer; color: inherit; }
+      button:focus-visible, a:focus-visible { outline: 3px solid var(--ring); outline-offset: 4px; }
+      button:active { transform: scale(.97); }
+      button:disabled { opacity: .35; cursor: default; transform: none; }
+      [hidden] { display: none; }
+      .toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 5px 0 18px; }
+      .eyebrow { font-size: 10px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+      .tools { display: flex; align-items: center; gap: 8px; }
+      .utility { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; }
+      .page { font: 12px var(--font-mono); color: var(--muted); min-width: 42px; }
+      main { min-width: 0; }
+      .slide { min-height: 640px; }
+      .kicker { color: var(--primary); font: 700 12px var(--font-mono); margin: 0 0 12px; }
+      h1, h2, h3, p { margin: 0; }
+      h1, h2 { font-size: clamp(30px, 5.7vw, 46px); font-weight: 650; letter-spacing: -.045em; line-height: 1.08; max-width: 650px; text-wrap: balance; }
+      h3 { font-size: 17px; font-weight: 650; letter-spacing: -.02em; line-height: 1.3; }
+      .lead { color: var(--muted); font-size: 16px; max-width: 620px; margin: 15px 0 25px; }
+      .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .card { border-radius: var(--radius); background: var(--card); padding: 18px; min-width: 0; }
+      .card p { color: var(--muted); font-size: 13px; margin-top: 8px; }
+      .pill { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border); border-radius: 20px; padding: 3px 8px; color: var(--success); font-size: 11px; font-weight: 650; white-space: nowrap; }
+      .pill.pending { color: var(--warning); border-style: dashed; }
+      .cardtop { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 25px; }
+      .id { font: 12px var(--font-mono); color: var(--muted); }
+      .symbol { font-size: 28px; color: var(--primary); margin-bottom: 8px; line-height: 1; }
+      .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin: 20px 0; }
+      .stat { padding: 10px 15px; border-left: 1px solid var(--border); }
+      .stat:first-child { padding-left: 0; border: 0; }
+      .number { display: block; font-size: 38px; line-height: 1.15; letter-spacing: -.06em; color: var(--primary); }
+      .stat span:last-child { font-size: 12px; color: var(--muted); }
+      .note { padding: 14px 16px; background: var(--warning-surface); border-radius: var(--radius); color: var(--warning); font-size: 13px; }
+      .note strong { font-weight: 700; }
+      .source { margin-top: 20px; font-size: 10px; color: var(--muted); line-height: 1.6; }
+      .source a { color: inherit; text-underline-offset: 3px; }
+      .pipeline { display: grid; grid-template-columns: repeat(4, 1fr); margin: 25px 0; gap: 8px; }
+      .stage { border-top: 3px solid var(--primary); padding: 12px 5px 0 0; position: relative; }
+      .stage b { font-size: 13px; display: block; }
+      .stage small { display: block; color: var(--muted); font-size: 11px; margin-top: 4px; }
+      .stage .index { font: 11px var(--font-mono); color: var(--primary); display: block; margin-bottom: 6px; }
+      .feature { display: flex; align-items: flex-start; gap: 12px; }
+      .check { color: var(--success); font-weight: 800; }
+      .feature h3 { font-size: 14px; }
+      .feature p { font-size: 12px; margin-top: 5px; }
+      code { font-family: var(--font-mono); font-size: .9em; overflow-wrap: anywhere; }
+      .command { margin-top: 15px; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding: 13px 16px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; color: var(--muted); }
+      .command code { color: var(--primary); font-size: 13px; }
+      .flow { display: flex; gap: 8px; align-items: stretch; margin-bottom: 18px; }
+      .node { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 12px; background: var(--card); }
+      .node.future { background: transparent; border-style: dashed; }
+      .node h3 { font-size: 14px; margin: 13px 0 6px; }
+      .node p { color: var(--muted); font-size: 11px; }
+      .arrow { align-self: center; color: var(--warning); font-size: 22px; }
+      .ownership { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .db { border-top: 3px solid var(--primary); background: var(--card); border-radius: 0 0 var(--radius) var(--radius); padding: 14px; }
+      .db h3 { font: 650 16px var(--font-mono); color: var(--primary); }
+      .db p { font-size: 12px; color: var(--muted); margin-top: 8px; }
+      .caption { font-size: 12px; color: var(--muted); margin: 15px 0; }
+      .boundary { display: flex; gap: 12px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+      .boundary strong { flex: 1; }
+      .boundary span { color: var(--muted); font-size: 12px; }
+      .steps { padding: 0; border: 0; min-width: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 20px 0 10px; }
+      .step { text-align: left; border: 1px solid var(--border); border-radius: 12px; padding: 12px 9px; background: transparent; }
+      .step[aria-pressed="true"] { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+      .step span { display: block; font: 11px var(--font-mono); opacity: .8; margin-bottom: 8px; }
+      .step b { font-size: 11px; }
+      .detail { padding: 20px; border-radius: var(--radius); background: var(--card); min-height: 125px; margin-bottom: 23px; }
+      .detail h3 { font-size: 18px; }
+      .detail p { font-size: 13px; color: var(--muted); margin-top: 8px; }
+      .transaction { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+      .transaction .label { font-size: 11px; color: var(--primary); font-weight: 700; margin-bottom: 13px; }
+      .atomic { display: flex; gap: 7px; align-items: center; font-size: 12px; }
+      .atomic b { flex: 1; padding: 10px 7px; text-align: center; background: var(--card); border-radius: 8px; font-weight: 550; }
+      .transaction p { color: var(--muted); font-size: 12px; margin-top: 12px; }
+      .tablewrap { overflow-x: auto; }
+      table { border-collapse: collapse; width: 100%; font-size: 12px; }
+      th { text-align: left; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 650; padding: 10px; border-bottom: 1px solid var(--border); }
+      td { padding: 14px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      .tablewrap td strong { font-size: 13px; }
+      .tablewrap td small { display: block; color: var(--muted); margin-top: 5px; }
+      .security { margin-top: 20px; }
+      .security h3 { font-size: 14px; }
+      .security p { font-size: 12px; }
+      .bar-chart { margin: 25px 0 20px; height: 178px; }
+      .bar-row { margin-bottom: 16px; }
+      .bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+      .bar-label b { font: 650 13px var(--font-mono); }
+      .track { height: 13px; background: var(--secondary); border-radius: 4px; overflow: hidden; }
+      .fill { height: 13px; background: var(--chart-1); border-radius: 4px; }
+      .fill.http { background: var(--chart-2); width: 25.64%; }
+      .fill.dbtest { background: var(--chart-3); width: 35.9%; }
+      .checklist { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px 20px; margin: 16px 0; font-size: 12px; }
+      .checklist span { color: var(--success); margin-right: 6px; }
+      .evidence p { font-size: 12px; }
+      .roadmap { margin: 20px 0; }
+      .roadrow { display: grid; grid-template-columns: 64px 1fr 65px; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+      .roadrow .id { font-size: 11px; }
+      .roadrow b { font-size: 13px; font-weight: 550; }
+      .status { font-size: 10px; font-weight: 700; text-align: right; color: var(--muted); }
+      .roadrow.done .status, .roadrow.done .id { color: var(--success); }
+      .roadrow.next .status, .roadrow.next .id { color: var(--warning); }
+      .footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--border); padding: 17px 0 5px; margin-top: 20px; }
+      .dots { display: flex; gap: 7px; align-items: center; }
+      .dot { background: var(--secondary); border: 1px solid var(--border); border-radius: 50%; width: 11px; height: 11px; padding: 0; }
+      .dot[aria-current="step"] { background: var(--primary); border-color: var(--primary); }
+      .nav { display: flex; gap: 8px; }
+      .nav button { border: 1px solid var(--border); border-radius: 10px; padding: 9px 16px; background: transparent; font-size: 12px; }
+      .nav .next { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+      .hint { font-size: 10px; color: var(--muted); }
+      .all-slides .slide { margin-bottom: 44px; padding-bottom: 30px; border-bottom: 1px solid var(--border); }
+      .all-slides .footer, .all-slides .hint { display: none; }
+      @media (max-width: 500px) {
+        .slide { min-height: 0; }
+        h1, h2 { font-size: 32px; }
+        .lead { font-size: 14px; }
+        .grid2 { grid-template-columns: 1fr; }
+        .grid3 { gap: 8px; }
+        .cardtop { margin-bottom: 14px; }
+        .card { padding: 16px; }
+        .number { font-size: 32px; }
+        .stat { padding: 6px 9px; }
+        .pipeline { grid-template-columns: repeat(2, 1fr); gap: 20px 10px; }
+        .flow { flex-direction: column; align-items: stretch; gap: 6px; }
+        .node { padding: 12px 14px; }
+        .node h3 { display: inline; margin-left: 8px; }
+        .node p { margin-top: 7px; }
+        .arrow { transform: rotate(90deg); font-size: 20px; line-height: 1; }
+        .ownership { grid-template-columns: 1fr; }
+        .db { border-radius: 12px; border-top-width: 2px; }
+        .db h3 { font-size: 14px; }
+        .db p { margin-top: 4px; }
+        .boundary { display: block; }
+        .boundary span { display: block; margin-top: 4px; }
+        .step { padding: 10px 5px; }
+        .step b { font-size: 10px; }
+        .atomic { flex-direction: column; align-items: stretch; }
+        .atomic > span { text-align: center; transform: rotate(90deg); line-height: 1; }
+        .checklist { grid-template-columns: 1fr; }
+        th, td { padding: 10px 5px; font-size: 10px; }
+        td strong { font-size: 11px; }
+        .roadrow { grid-template-columns: 57px 1fr 48px; gap: 5px; }
+        .roadrow b { font-size: 12px; }
+        .hint { display: none; }
+      }
+      @media (prefers-reduced-motion: reduce) { button:active { transform: none; } }
+      @media print {
+        :root { color-scheme: light; }
+        .toolbar, .footer, .hint { display: none; }
+        .slide, .slide[hidden] { display: block; min-height: 0; break-after: page; margin-bottom: 25px; }
+        .card, .node, .db, .transaction { break-inside: avoid; }
+        * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <span class="eyebrow">Thaarei / Turnstile 360</span>
+      <div class="tools"><span class="page" id="page" aria-live="polite">01 / 07</span><button type="button" class="utility" id="viewAll" aria-pressed="false">View all</button></div>
+    </div>
+    <main aria-label="Authentication implementation presentation">
+      <section class="slide" aria-labelledby="title-1">
+        <p class="kicker">IMPLEMENTATION BRIEF · 31 OCT 2026</p>
+        <h1 id="title-1">The foundations are in.<br />The authority is working.</h1>
+        <p class="lead">AUTH-01 and AUTH-02 take us from configured dependencies to a persisted DMS identity service.</p>
+        <div class="grid2">
+          <article class="card">
+            <div class="cardtop"><span class="id">AUTH-01</span><span class="pill">✓ Complete</span></div>
+            <div class="symbol" aria-hidden="true">⌘</div>
+            <h3>A dependable starting point</h3>
+            <p>Pinned libraries, generated modules, validated settings and a repeatable development workflow.</p>
+          </article>
+          <article class="card">
+            <div class="cardtop"><span class="id">AUTH-02</span><span class="pill">✓ Complete</span></div>
+            <div class="symbol" aria-hidden="true">◎</div>
+            <h3>A working identity authority</h3>
+            <p>Verified accounts, real database sessions, controlled recovery and isolated persistence.</p>
+          </article>
+        </div>
+        <div class="stats">
+          <div class="stat"><span class="number">13</span><span>generated auth tables</span></div>
+          <div class="stat"><span class="number">3</span><span>owned data schemas</span></div>
+          <div class="stat"><span class="number">6</span><span>separate database roles</span></div>
+        </div>
+        <div class="note"><strong>Product login is still ahead.</strong> The Turnstile login flow, deployed OAuth clients, machine access and UI belong to AUTH-03–07.</div>
+        <p class="source">Snapshot of completed implementation and recorded verification. All provisioning to date used disposable fixtures; no real customer has been onboarded.</p>
+      </section>
+
+      <section class="slide" hidden aria-labelledby="title-2">
+        <p class="kicker">01 / DEPENDENCIES, CONFIGURATION & GENERATION</p>
+        <h2 id="title-2">A repeatable path<br />from setup to runtime.</h2>
+        <p class="lead">The authentication stack now has explicit versions, ownership and configuration rules.</p>
+        <div class="pipeline">
+          <div class="stage"><span class="index">01 →</span><b>Pin dependencies</b><small>Better Auth 1.7.14<br />Drizzle · pg · Fastify SDKs</small></div>
+          <div class="stage"><span class="index">02 →</span><b>Generate structure</b><small>Installed Nest CLI<br />Authority + product modules</small></div>
+          <div class="stage"><span class="index">03 →</span><b>Validate settings</b><small>Zod profiles<br />Local · test · production</small></div>
+          <div class="stage"><span class="index">04 ✓</span><b>Run & rebuild</b><small>Both APIs + web<br />PostgreSQL orchestration</small></div>
+        </div>
+        <div class="grid2">
+          <article class="card feature"><span class="check">✓</span><div><h3>Generation without starting the API</h3><p>A separate options factory lets the official auth CLI check schemas without opening a listener or contacting PostgreSQL.</p></div></article>
+          <article class="card feature"><span class="check">✓</span><div><h3>Explicit security settings</h3><p>Canonical URLs, independent secrets, RS256 signing and host-only HttpOnly cookies are validated.</p></div></article>
+          <article class="card feature"><span class="check">✓</span><div><h3>Safe readiness behavior</h3><p>Invalid auth configuration returns an unavailable status. Process liveness remains available.</p></div></article>
+          <article class="card feature"><span class="check">✓</span><div><h3>Clear package boundaries</h3><p>Browser-safe SDK imports are allowed. Server packages and cross-app source imports are rejected.</p></div></article>
+        </div>
+        <div class="command"><code>pnpm dev:auth</code><span>Build → validate → wait for PostgreSQL → watch APIs + web</span></div>
+        <p class="source">AUTH-01 exit evidence: CLI/ESM compatibility, dependency boundaries, configuration checks and shared-package rebuild/restart verification. Architecture: “Authentication configuration foundations”.</p>
+      </section>
+
+      <section class="slide" hidden aria-labelledby="title-3">
+        <p class="kicker">02 / WHERE THE WORK LIVES</p>
+        <h2 id="title-3">One authority.<br />Separate application ownership.</h2>
+        <p class="lead">The DMS identity service is implemented. The product’s connection to that authority is the next layer of work.</p>
+        <div class="flow">
+          <article class="node future"><span class="pill pending">Pending · AUTH-07</span><h3>Web login UI</h3><p>Sign-in and recovery screens</p></article>
+          <span class="arrow" aria-hidden="true">⇢</span>
+          <article class="node future"><span class="pill pending">Pending · AUTH-04</span><h3>Turnstile BFF</h3><p>Backend login, callback and user authorization</p></article>
+          <span class="arrow" aria-hidden="true">⇢</span>
+          <article class="node"><span class="pill">✓ Implemented</span><h3>DMS authority</h3><p>Native Fastify handler<br /><code>/identity/*</code></p></article>
+        </div>
+        <p class="caption">Implemented persistence below · one dedicated PostgreSQL installation database</p>
+        <div class="ownership">
+          <article class="db"><h3>auth</h3><p><strong>Owner: DMS authority</strong><br />Accounts, sessions, verification, signing keys and rate limits.</p></article>
+          <article class="db"><h3>dms</h3><p><strong>Owner: DMS access</strong><br />Installation identity and application registrations.</p></article>
+          <article class="db"><h3>turnstile</h3><p><strong>Owner: Turnstile API</strong><br />Installation, user access and encrypted session storage.</p></article>
+        </div>
+        <div class="boundary"><strong>One customer tenant per installation</strong><span>Multiple independently registered applications</span></div>
+        <div class="boundary"><strong>Isolated credentials and migrations</strong><span>No cross-app SQL access or foreign keys</span></div>
+        <p class="source">Solid boxes: implemented capability. Dashed boxes/arrows: pending login flow. Product session storage is built; middleware and public login routes are pending. DMS machine enrollment/authorization remains AUTH-05.</p>
+      </section>
+
+      <section class="slide" hidden aria-labelledby="title-4">
+        <p class="kicker">02 / ACCOUNT & SESSION LIFECYCLE</p>
+        <h2 id="title-4">A real account can sign in,<br />persist and recover.</h2>
+        <p class="lead">This lifecycle works at the DMS authority and has been exercised with fixture users. Select a step to explore.</p>
+        <fieldset class="steps" aria-label="Explore the implemented account lifecycle">
+          <button type="button" class="step" data-step="0" aria-pressed="true"><span>01 →</span><b>Provision</b></button>
+          <button type="button" class="step" data-step="1" aria-pressed="false"><span>02 →</span><b>Verify</b></button>
+          <button type="button" class="step" data-step="2" aria-pressed="false"><span>03 →</span><b>Sign in</b></button>
+          <button type="button" class="step" data-step="3" aria-pressed="false"><span>04 →</span><b>Persist</b></button>
+          <button type="button" class="step" data-step="4" aria-pressed="false"><span>05 ✓</span><b>Recover</b></button>
+        </fieldset>
+        <div class="detail" aria-live="polite"><h3 id="stepTitle">Private operator provisioning</h3><p id="stepBody">An operator creates the account through a local command with JSON on stdin. Public signup is closed. New addresses remain unverified; no bootstrap password is printed or passed in command arguments.</p></div>
+        <div class="transaction">
+          <div class="label">PASSWORD RESET · ONE DATABASE TRANSACTION</div>
+          <div class="atomic"><b>Consume reset token</b><span aria-hidden="true">→</span><b>Revoke sessions</b><span aria-hidden="true">→</span><b>Write password</b></div>
+          <p><strong>All succeed together.</strong> An injected database failure proved all three changes roll back. A retry succeeds once; replay is rejected.</p>
+        </div>
+        <div class="grid2" style="margin-top:12px">
+          <article class="card"><h3>Safe public responses</h3><p>Sign-in/session JSON excludes raw session tokens and internal credentials. HttpOnly cookies carry authority sessions.</p></article>
+          <article class="card"><h3>Controlled recovery</h3><p>Verification and reset links expire in 30 minutes. SMTP failures return a controlled unavailable response.</p></article>
+        </div>
+        <p class="source">Native handler also preserves redirects and multiple cookies, accepts JSON/form bodies and denies raw account/client administration routes. Product login UI is pending.</p>
+      </section>
+
+      <section class="slide" hidden aria-labelledby="title-5">
+        <p class="kicker">02 / PERSISTENCE & SECURITY BOUNDARIES</p>
+        <h2 id="title-5">Each data owner<br />has a narrow set of keys.</h2>
+        <p class="lead">Three ownership boundaries, each with a separate runtime role, migrator role and migration history.</p>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Owner</th><th>Runtime access</th><th>Tenant protection</th></tr></thead>
+          <tbody>
+            <tr><td><strong><code>auth</code></strong><small>13 generated tables</small></td><td>CRUD on owned auth tables<small>Sessions, keys, accounts, protocol state</small></td><td>Better Auth global semantics<small>Separate from DMS tenant RLS</small></td></tr>
+            <tr><td><strong><code>dms</code></strong><small>Installation + registrations</small></td><td>Registration CRUD<small>Installation identity is read-only</small></td><td>Forced RLS on registrations<small>Explicit transaction-local tenant</small></td></tr>
+            <tr><td><strong><code>turnstile</code></strong><small>Identity, access + sessions</small></td><td>Session CRUD<small>Identity and user access are read-only</small></td><td>Forced RLS on access/sessions<small>Explicit transaction-local tenant</small></td></tr>
+          </tbody>
+        </table></div>
+        <div class="grid2 security">
+          <article class="card"><h3>Runtime cannot change the schema</h3><p>No DDL, temporary tables, truncation, migrator membership or access to another owner’s schema. Migrations run explicitly through private operator commands.</p></article>
+          <article class="card"><h3>Product sessions are encrypted</h3><p>SHA-256 session identifiers and AES-256-GCM payloads. Tenant/ID-bound integrity checks and atomic updates prevent stale saves from undoing logout.</p></article>
+        </div>
+        <div class="note" style="margin-top:15px"><strong>Installation identity is fixed.</strong> Matching bootstrap can be repeated safely. A different tenant or customer is rejected. Product access defaults to disabled.</div>
+        <p class="source">Role capabilities and schema isolation were checked against real PostgreSQL. Authority and product pools are separately owned; application startup does not migrate or provision accounts/clients.</p>
+      </section>
+
+      <section class="slide" hidden aria-labelledby="title-6">
+        <p class="kicker">EVIDENCE / IMPLEMENTED & VERIFIED</p>
+        <h2 id="title-6">Checked beyond<br />the happy path.</h2>
+        <p class="lead">Recorded checks passed on 31 October 2026. Integration evidence includes real PostgreSQL and the native Fastify handler.</p>
+        <div class="bar-chart" role="img" aria-label="Passed test cases by suite: 39 API unit tests, 10 Fastify integration checks and 14 PostgreSQL integration tests. Counts are not coverage percentages.">
+          <div class="bar-row"><div class="bar-label"><span>API unit tests</span><b>39</b></div><div class="track"><div class="fill" style="width:100%"></div></div></div>
+          <div class="bar-row"><div class="bar-label"><span>Fastify integration checks</span><b>10</b></div><div class="track"><div class="fill http"></div></div></div>
+          <div class="bar-row"><div class="bar-label"><span>Real PostgreSQL integration tests</span><b>14</b></div><div class="track"><div class="fill dbtest"></div></div></div>
+        </div>
+        <div class="grid2">
+          <article class="card evidence"><h3>Protocol & persistence</h3><p>Official SDK + OAuth plugin, signed continuation, form code exchange, restart persistence, reset rollback and stale-session races.</p></article>
+          <article class="card evidence"><h3>Packaging & operations</h3><p>Runtime role/DDL isolation matrix, production API package startup + migrations, and pinned Nginx checks for token-free logs.</p></article>
+        </div>
+        <div class="checklist">
+          <div><span>✓</span><code>pnpm check</code></div><div><span>✓</span><code>pnpm build</code></div>
+          <div><span>✓</span><code>pnpm test</code></div><div><span>✓</span><code>pnpm test:integration</code></div>
+          <div><span>✓</span><code>pnpm test:smoke</code></div><div><span>✓</span>Both Compose configurations</div>
+        </div>
+        <div class="note"><strong>Production remains unverified.</strong> Full application images, remote CI/Dokploy, live domains/TLS, real SMTP and the complete browser login journey still need validation.</div>
+        <p class="source">10 + 14 = 24 integration test cases; role/DDL assertions are additional. Python entry-point smoke also passed. SDK tests used HTTP injection and simulated browser location; no completed login UI or deployed customer is implied.</p>
+      </section>
+
+      <section class="slide" hidden aria-labelledby="title-7">
+        <p class="kicker">ROADMAP / THE NEXT CONNECTIONS</p>
+        <h2 id="title-7">The authority is ready<br />for the next increment.</h2>
+        <p class="lead">Two work packages are complete. The remaining packages connect identity to usable, authorized product and DMS access.</p>
+        <div class="roadmap">
+          <div class="roadrow done"><span class="id">AUTH-01</span><b>Dependencies, configuration & generation</b><span class="status">✓ DONE</span></div>
+          <div class="roadrow done"><span class="id">AUTH-02</span><b>Owned persistence & authority handler</b><span class="status">✓ DONE</span></div>
+          <div class="roadrow next"><span class="id">AUTH-03</span><b>OAuth provider policy & distinct deployed clients</b><span class="status">NEXT</span></div>
+          <div class="roadrow"><span class="id">AUTH-04</span><b>Turnstile BFF & user authorization</b><span class="status">PENDING</span></div>
+          <div class="roadrow"><span class="id">AUTH-05</span><b>DMS machine authorization & enrollment</b><span class="status">PENDING</span></div>
+          <div class="roadrow"><span class="id">AUTH-06</span><b>Typed machine client & real cross-service call</b><span class="status">PENDING</span></div>
+          <div class="roadrow"><span class="id">AUTH-07</span><b>Login/recovery UI, operations & completion evidence</b><span class="status">PENDING</span></div>
+        </div>
+        <div class="note"><strong>What we can demonstrate today:</strong> provision a fixture account, verify its email, sign in to the authority, persist/revoke its session and recover access.</div>
+        <p class="source">Sources of truth:<br /><a href="../../architecture.md">architecture.md</a> · accepted design and boundaries<br /><a href="../../IN_PROGRESS.md">IN_PROGRESS.md</a> · completed work and recorded checks<br /><a href="../authentication_implementation_plan.md">Authentication implementation plan</a> · AUTH-01–07 scope<br /><a href="../runbooks/authentication.md">Authentication operator runbook</a> · explicit setup and recovery commands<br />Confidential · Thaarei proprietary software · Snapshot: 2026-10-31</p>
+      </section>
+    </main>
+    <div class="footer">
+      <nav class="dots" aria-label="Choose presentation slide"></nav>
+      <span class="hint">Use ← → to navigate</span>
+      <div class="nav"><button type="button" id="prev" disabled aria-label="Previous slide">← Back</button><button type="button" id="next" class="next" aria-label="Next slide">Next →</button></div>
+    </div>
+    <script>
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const page = document.getElementById('page');
+      const prev = document.getElementById('prev');
+      const next = document.getElementById('next');
+      const allButton = document.getElementById('viewAll');
+      const dots = document.querySelector('.dots');
+      let current = 0;
+      let all = false;
+      const names = ['Overview', 'AUTH-01 foundations', 'System boundaries', 'Account lifecycle', 'Persistence and security', 'Verification evidence', 'Remaining work'];
+      for (let index = 0; index < slides.length; index++) {
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = 'dot';
+        button.setAttribute('aria-label', `Slide ${index + 1}: ${names[index]}`);
+        button.addEventListener('click', () => show(index));
+        dots.appendChild(button);
+      }
+      function show(index) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((slide, i) => { slide.hidden = !all && i !== current; });
+        Array.from(dots.children).forEach((dot, i) => {
+          if (i === current) dot.setAttribute('aria-current', 'step');
+          else dot.removeAttribute('aria-current');
+        });
+        page.textContent = all ? '07 slides' : `${String(current + 1).padStart(2, '0')} / 07`;
+        prev.disabled = current === 0;
+        next.disabled = current === slides.length - 1;
+      }
+      prev.addEventListener('click', () => show(current - 1));
+      next.addEventListener('click', () => show(current + 1));
+      allButton.addEventListener('click', () => {
+        all = !all;
+        document.body.classList.toggle('all-slides', all);
+        allButton.textContent = all ? 'Slide view' : 'View all';
+        allButton.setAttribute('aria-pressed', String(all));
+        show(current);
+      });
+      document.addEventListener('keydown', (event) => {
+        if (all || event.altKey || event.ctrlKey || event.metaKey || (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]'))) return;
+        if (event.key === 'ArrowRight') { event.preventDefault(); show(current + 1); }
+        if (event.key === 'ArrowLeft') { event.preventDefault(); show(current - 1); }
+      });
+      const lifecycle = [
+        ['Private operator provisioning', 'An operator creates the account through a local command with JSON on stdin. Public signup is closed. New addresses remain unverified; no bootstrap password is printed or passed in command arguments.'],
+        ['Email ownership is required', 'Verification must succeed before normal sign-in. Links expire in 30 minutes and return to the fixed sign-in path. Controlled SMTP transport failures remain visible as unavailable responses.'],
+        ['Credentials create an authority session', 'The native Fastify handler validates sign-in and issues host-only HttpOnly cookies. Public responses project safe user/session fields; raw session tokens are excluded from JSON.'],
+        ['Identity state survives an API restart', 'Sessions, rate limits, verification state and encrypted signing material live in PostgreSQL. Session retrieval and revocation use real persisted records; there is no in-memory fallback.'],
+        ['Recovery revokes previous sessions', 'A password reset consumes its one-use token, revokes sessions and writes the new password in one transaction. Logout and session revocation are also implemented. Product-wide logout propagation arrives with later work.'],
+      ];
+      document.querySelectorAll('[data-step]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const index = Number(button.dataset.step);
+          document.querySelectorAll('[data-step]').forEach((step) => { step.setAttribute('aria-pressed', String(step === button)); });
+          document.getElementById('stepTitle').textContent = lifecycle[index][0];
+          document.getElementById('stepBody').textContent = lifecycle[index][1];
+        });
+      });
+      show(0);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793435065742,
+      "tag": "0000_identity",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793435067840,
+      "tag": "0001_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793435134522,
+      "tag": "0002_scoped_operators",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793451840937,
+      "tag": "0003_machine_enrollment",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793451874932,
+      "tag": "0004_machine_privileges",
+      "breakpoints": true
+    }
+  ]
+}

@@ -47,6 +47,9 @@
   "overrides": [
     {
       "includes": ["apps/dms-api/**/*.ts", "apps/turnstile-api/**/*.ts"],
+      "javascript": {
+        "parser": { "unsafeParameterDecoratorsEnabled": true }
+      },
       "linter": {
         "rules": {
           "style": {
