@@ -38,9 +38,10 @@ runtime directories. Frontend builds are served by an unprivileged Nginx process
 Python image currently runs its processing identification command and exits; it is intentionally absent from
 the long-running Compose services until actual worker roles are implemented.
 
-Dokploy settings must explicitly map required variables into each service. Vite settings
-are public build arguments and require a frontend rebuild. Future secrets must be scoped
-to the relevant service, and must never enter browser build arguments.
+Dokploy settings must explicitly map required variables into each backend service. The
+frontend uses same-origin API requests and has no API-base build argument or runtime
+environment file. Keep secrets scoped to their backend; any future public frontend
+build variables must never contain credentials.
 
 Local infrastructure is in `deploy/compose.local.yaml`: PostgreSQL, Mailpit, RabbitMQ, and SeaweedFS
 with loopback-only development ports and persistent volumes. AUTH-02 supports PostgreSQL connections with owned runtime roles after explicit setup;
@@ -54,10 +55,11 @@ credentials out of persistent API service mappings, and keep recovery tokens/coo
 of ingress/access logs. The
 accepted DMS stack remains unchanged; idle placeholders must not imply readiness.
 
-Validate configuration before deployment:
+Validate local and production configuration separately. The root Compose file is for
+development; select `deploy/compose.dokploy.yaml` explicitly in Dokploy:
 
 ```bash
-docker compose --env-file .env.example -f deploy/compose.local.yaml config --quiet
+docker compose --env-file .env.example config --quiet
 docker compose -f deploy/compose.dokploy.yaml config --quiet
 ```
 

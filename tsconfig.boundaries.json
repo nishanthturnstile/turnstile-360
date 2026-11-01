@@ -1,0 +1,9 @@
+{
+  "extends": "./tooling/typescript/base.json",
+  "compilerOptions": {
+    "paths": { "@/*": ["./apps/turnstile-web/src/*"] },
+    "jsx": "react-jsx"
+  },
+  "include": ["apps/**/*.ts", "apps/**/*.tsx", "packages/**/*.ts"],
+  "exclude": ["**/node_modules", "**/dist"]
+}

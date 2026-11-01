@@ -31,7 +31,7 @@ use the running APIs and existing tables. They do not run any setup commands.
 | `dms:manage-application`             | Once to register each approved machine application and issue its enrollment key; later for explicit inspection, scope changes, revocation or disablement | Changes DMS-owned registration/key policy; never runs during ordinary requests or startup                                 |
 | Enrollment HTTP request              | Once per pending consumer, after registration/key issuance; repeat the identical request only to recover an uncertain response                           | Atomically activates that application; ordinary DMS calls need only the machine token                                     |
 | `pnpm docs:dms-auth`                 | After shared DMS auth DTOs or the implemented HTTP contract change                                                                                       | Regenerates committed OpenAPI from shared JSON Schemas; does not configure an environment                                 |
-| `pnpm dev:auth`                      | To start an ordinary development session after environment setup                                                                                         | Starts/watches services; does not provision roles, migrate or bootstrap the installation                                  |
+| `docker compose up --build --watch`  | To start an ordinary development session after environment setup                                                                                         | Starts/watches services; does not provision roles, migrate or bootstrap the installation                                  |
 
 For a **new development or pilot environment**, prepare the dedicated database and
 private configuration, provision roles once, apply the existing committed migrations,
@@ -58,6 +58,37 @@ persistent development/pilot auth database, OAuth client or external mail provid
 been provisioned by that verification. Passing tests does not prepare the target database.
 Actual verification is tracked in [IN_PROGRESS.md](../../IN_PROGRESS.md).
 
+### Switching branches during development
+
+Start the configured installation with `docker compose up --build --watch` from the
+repository root; `pnpm dev` invokes the same command. Leave it running while editing or
+switching compatible branches. Source edits synchronize into the affected containers;
+API/shared code rebuilds before restart and dependency changes rebuild the images.
+See [development routing, behavior and limits](../../architecture.md#local-development).
+
+The application reserves host ports 23600–23608; see the
+[service/port table](../../architecture.md#reserved-local-ports). Browser auth/product
+requests use `http://localhost:23600`; direct DMS/product probes use host ports 23601/23602.
+Private database URLs for host operator commands and the container forwarders use
+`127.0.0.1:23603`. All published services bind host loopback and fail on a port conflict.
+
+Inspect `docker compose ps`: both APIs should become healthy before signing in. A checkout
+can briefly interrupt requests. If the page already shows `/auth-unavailable`, use
+**Try again** after readiness or start a fresh `/api/auth/login` at `http://localhost:23600`.
+Expired/superseded signed login forms require a fresh transaction.
+
+The same private runtime files and persistent local volumes are preserved. When adopting
+the reserved ports on an existing installation, update private database/SMTP URLs and
+registered OAuth redirect/logout/resource/issuer/enrollment bindings together. Preserve
+credentials and active registration state; take a private backup and begin a fresh login.
+Runtime startup does not perform this one-time address change automatically. Editing a
+private API `.env` requires `docker compose restart dms-api` or `turnstile-api`; secrets
+are never part of the images/watch sync. Restart the Compose command after changing
+service topology. Fix reported code, configuration or dependency errors, and apply reviewed
+migrations explicitly when the target branch requires them. Do not re-provision roles,
+reset passwords or re-enroll for ordinary branch changes. Stop with Ctrl+C or
+`docker compose stop`; do not remove volumes as part of normal development.
+
 ## Separate credentials and prepare the database
 
 Use a dedicated installation database/cluster. Runtime logins must be
@@ -66,6 +97,10 @@ migration logins must be `thaarei_auth_migrator`, `thaarei_dms_migrator` and
 `thaarei_turnstile_migrator`. Supply independent generated passwords through private
 operator files or a secret manager. Keep real files outside version control with
 permissions restricted to the relevant operator/service account.
+
+For local first-time setup, prepare the root infrastructure `.env` from `.env.example`,
+then run `docker compose up -d postgres mailpit` to start the prerequisites in the same
+local project. This does not start application services before their runtime files exist.
 
 1. Prepare a private root `.env.provision` from [.env.provision.example](../../.env.provision.example).
    Set the administrator connection to the dedicated database and the six role URLs,
@@ -140,22 +175,23 @@ inboxes unless an upstream relay/forwarding setup is explicitly configured. AUTH
 pinned development Compose and a pilot STARTTLS overlay. Disposable browser verification
 uses real Mailpit SMTP; no persistent customer/development/pilot inbox was provisioned.
 
-When the DMS API runs on the developer host and Mailpit's SMTP port is exposed only on
-host loopback, its existing nonsecret local SMTP example applies:
+Local Compose publishes Mailpit SMTP on reserved port 23604 and its inbox on 23605.
+The DMS development container forwards its own loopback port 23604 to Mailpit's private
+1025 listener, so the same nonsecret local settings work for host operator commands:
 
 ```dotenv
 AUTH_SMTP_HOST=localhost
-AUTH_SMTP_PORT=1025
+AUTH_SMTP_PORT=23604
 AUTH_SMTP_MODE=plain
 AUTH_MAIL_FROM=identity@example.test
 ```
 
 Leave `AUTH_SMTP_USER` and `AUTH_SMTP_PASSWORD` unset for an unauthenticated local
-Mailpit listener. `pnpm dev:auth` starts and waits for PostgreSQL and Mailpit; inspect mail
-at `http://localhost:8025`. Capture is disposable, limited to 200 messages/24 hours, with
-no upstream relay. In containers,
-`localhost` names the API container itself, so use the actual Mailpit service hostname
-and TLS/STARTTLS as required by the existing SMTP validation. A production-profile pilot
+Mailpit listener. `docker compose up --build --watch` starts and waits for PostgreSQL and Mailpit; inspect mail
+at `http://localhost:23605`. Capture is disposable, limited to 200 messages/24 hours, with
+no upstream relay. The development entry point provides the documented loopback forwarding inside the
+API container. Other container deployments use the actual Mailpit service hostname and
+TLS/STARTTLS as required by the existing SMTP validation. A production-profile pilot
 also requires TLS/STARTTLS, even on loopback. Configure Mailpit's certificate/key and use
 a certificate trusted by the API; do not disable certificate checks. Mail credentials,
 if enabled, belong only in the DMS API's private runtime environment. Keep access to the
@@ -172,7 +208,7 @@ Supply private operator environment paths `MAILPIT_TLS_CERT_FILE`, `MAILPIT_TLS_
 and `MAILPIT_CA_CERT_FILE` outside the repository. The SMTP certificate must match the
 `mailpit` service hostname and chain to that CA. The overlay mounts files read-only,
 requires STARTTLS and supplies Node's trusted CA file to DMS. No SMTP host port is
-published; the inbox binds only to host loopback on 8025, for controlled operator/SSH
+published; its inbox uses the reserved host loopback port 23605 for controlled operator/SSH
 access. Keep the private key readable only by the responsible operator/container account.
 
 ```sh

@@ -55,6 +55,14 @@ async function request<T>(path: string, csrf?: string): Promise<T> {
     throw new ProductError(503, 'AUTH_UNAVAILABLE');
   }
 }
-export const loadSession = () => request<UserSessionDto>('/api/auth/session');
+let sessionRequest: Promise<UserSessionDto> | undefined;
+export function loadSession() {
+  // Share only the in-flight request (StrictMode, focus and visibility can overlap).
+  // Drop it on completion; every subsequent check still asks the backend.
+  sessionRequest ??= request<UserSessionDto>('/api/auth/session').finally(() => {
+    sessionRequest = undefined;
+  });
+  return sessionRequest;
+}
 export const endSession = (csrf: string) => request<LogoutDto>('/api/auth/logout', csrf);
 export const loadCapabilities = () => request<DmsCapabilitiesDto>('/api/dms/capabilities');

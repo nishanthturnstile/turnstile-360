@@ -103,7 +103,9 @@ const gateway = createServer({}, async (request, response) => {
           ? 'text/javascript'
           : file.endsWith('.css')
             ? 'text/css'
-            : 'text/html',
+            : file.endsWith('.woff2')
+              ? 'font/woff2'
+              : 'text/html',
         'referrer-policy': 'no-referrer',
         'content-security-policy': csp,
         'cache-control': 'no-store',
@@ -393,9 +395,125 @@ dns.lookup = function(host, options, callback) {
     return value;
   }
 
+  stage = 'design-system fonts, keyboard access and responsive recovery form';
+  await page.goto(`${origin}/forgot-password`);
+  await heading('Forgot your password?');
+  await page.evaluate(() => document.fonts.ready);
+  const typography = await page.evaluate(() => ({
+    body: getComputedStyle(document.body).fontFamily,
+    heading: getComputedStyle(document.querySelector('h1')).fontFamily,
+    loaded: [...document.fonts]
+      .filter((face) => face.status === 'loaded')
+      .map((face) => face.family),
+    external: performance
+      .getEntriesByType('resource')
+      .some((entry) => new URL(entry.name).origin !== location.origin),
+  }));
+  assert.match(typography.body, /IBM Plex Sans Variable/);
+  assert.match(typography.heading, /Noto Sans Variable/);
+  assert.ok(typography.loaded.some((family) => family.includes('IBM Plex Sans Variable')));
+  assert.ok(typography.loaded.some((family) => family.includes('Noto Sans Variable')));
+  assert.equal(typography.external, false);
+  await page.getByLabel('Email address', { exact: true }).focus();
+  await page.keyboard.press('Tab');
+  assert.equal(
+    await page
+      .getByRole('button', { name: 'Send reset link' })
+      .evaluate((node) => node === document.activeElement),
+    true,
+  );
+  for (const width of [320, 1280]) {
+    await page.setViewportSize({ width, height: 850 });
+    assert.equal(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      true,
+    );
+    assert.equal(await page.getByLabel('Email address', { exact: true }).isVisible(), true);
+  }
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  assert.equal(
+    await page
+      .getByRole('button', { name: 'Send reset link' })
+      .evaluate((node) => Number.parseFloat(getComputedStyle(node).transitionDuration) < 0.01),
+    true,
+  );
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  console.log(
+    'Design-system integration passed: bundled fonts under CSP, keyboard access, narrow/desktop layouts and reduced motion.',
+  );
+
   stage = 'sign-in, secure session, machine proof and recoverable logout';
   await login('member');
   await heading('Welcome, member.');
+  // StrictMode/focus/visibility share only pending work; completed checks are never cached.
+  const sharedChecks = await page.evaluate(async () => {
+    const original = window.fetch;
+    let calls = 0;
+    let release;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    const completed = [];
+    window.fetch = (input, options) => {
+      const path = new URL(typeof input === 'string' ? input : input.url, location.href).pathname;
+      if (path !== '/api/auth/session') return original(input, options);
+      calls++;
+      const response = gate.then(() => original(input, options));
+      completed.push(response.then((value) => value.clone().json()));
+      return response;
+    };
+    try {
+      window.dispatchEvent(new Event('focus'));
+      window.dispatchEvent(new Event('focus'));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const concurrent = calls;
+      release();
+      await Promise.all(completed);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      window.dispatchEvent(new Event('focus'));
+      await Promise.all(completed);
+      return { concurrent, total: calls };
+    } finally {
+      window.fetch = original;
+    }
+  });
+  assert.deepEqual(sharedChecks, { concurrent: 1, total: 2 });
+  await page.addInitScript(() => {
+    window.authPageSeen = false;
+    new MutationObserver(() => {
+      if (document.querySelector('.auth-layout')) window.authPageSeen = true;
+    }).observe(document, { childList: true, subtree: true });
+  });
+  let releaseSession;
+  const sessionGate = new Promise((resolve) => {
+    releaseSession = resolve;
+  });
+  const delayedSession = async (route) => {
+    await sessionGate;
+    await route.continue();
+  };
+  await page.route('**/api/auth/session', delayedSession);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.getByRole('status').filter({ hasText: 'Loading workspace…' }).waitFor();
+  assert.equal(await page.locator('.auth-layout').count(), 0);
+  releaseSession();
+  await heading('Welcome, member.');
+  await page.unroute('**/api/auth/session', delayedSession);
+  let refreshChecks = 0;
+  const observeRefresh = (request) => {
+    if (new URL(request.url()).pathname === '/api/auth/session') refreshChecks++;
+  };
+  page.on('request', observeRefresh);
+  for (let refresh = 0; refresh < 20; refresh++) {
+    await page.reload();
+    await heading('Welcome, member.');
+    assert.equal(await page.evaluate(() => window.authPageSeen), false);
+  }
+  page.off('request', observeRefresh);
+  assert.equal(refreshChecks, 20);
+  console.log(
+    'Authenticated refresh regression passed: neutral startup, 20 reloads, one check per reload and no sign-in flash.',
+  );
   const cookies = await context.cookies();
   const productCookie = cookies.find((cookie) => cookie.name === '__Host-turnstile');
   assert.ok(
@@ -432,6 +550,7 @@ dns.lookup = function(host, options, callback) {
     ),
     403,
   );
+  stage = 'permission-gated document connection';
   await page.getByRole('button', { name: 'Check connection' }).click();
   await page.getByText('Connected. Document features will appear here when available.').waitFor();
   fault = 'dms';
@@ -441,12 +560,29 @@ dns.lookup = function(host, options, callback) {
       'The document service is temporarily unavailable. Your sign-in is still active. Try again later.',
     )
     .waitFor();
+  stage = 'authority outage navigation and session recovery';
+  fault = 'authority';
+  await page.reload();
+  await heading('We can’t connect right now');
+  await page.getByRole('link', { name: 'Sign in', exact: true }).waitFor();
+  fault = 'none';
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await heading('Welcome, member.');
+  fault = 'authority';
+  await page.reload();
+  await heading('We can’t connect right now');
+  fault = 'none';
+  // The single delayed retry also recovers without a focus event or manual click.
+  await heading('Welcome, member.');
   fault = 'authority';
   await page.reload();
   await heading('We can’t connect right now');
   fault = 'none';
   await page.getByRole('button', { name: 'Try again' }).click();
   await heading('Welcome, member.');
+  await page.goto(`${origin}/auth-unavailable`);
+  await heading('Welcome, member.');
+  assert.equal(new URL(page.url()).pathname, '/');
   fault = 'logout';
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await page.getByRole('button', { name: 'Retry sign-out' }).waitFor();

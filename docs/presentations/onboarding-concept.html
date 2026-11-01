@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Turnstile 360 onboarding design illustration</title>
+    <style>
+      :root {
+        font-family: var(--font-sans, system-ui, sans-serif);
+        color: var(--foreground, #24332c);
+        line-height: 1.5;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+      button:focus-visible, input:focus-visible, select:focus-visible {
+        outline: 2px solid var(--ring, #30775c);
+        outline-offset: 3px;
+      }
+      .muted { color: var(--muted-foreground, #627068); }
+      .caption { margin: 0 0 12px; font-size: 12px; }
+      .journey { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
+      .stage, .panel, .callout {
+        border-radius: var(--radius, 12px);
+        background: var(--card, #f5f7f6);
+        border: 1px solid var(--border, #dce3de);
+        padding: 16px;
+      }
+      .stage { font-size: 12px; }
+      .stage strong { display: block; font-size: 14px; margin: 4px 0; }
+      .stage:last-child { border-color: var(--primary, #30775c); }
+      .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+      .tabs button, .choice, .secondary {
+        color: inherit;
+        background: var(--secondary, #edf1ee);
+        border: 1px solid var(--border, #dce3de);
+        border-radius: var(--radius, 12px);
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+      .tabs button[aria-selected="true"], .choice[aria-pressed="true"] {
+        border-color: var(--primary, #30775c);
+        background: var(--accent, #e5eee8);
+        color: var(--accent-foreground, #24332c);
+      }
+      .panel { min-height: 380px; }
+      [hidden] { display: none; }
+      h2 { font-size: 23px; line-height: 1.25; margin: 4px 0 8px; letter-spacing: -0.4px; }
+      h3 { font-size: 14px; margin: 0 0 8px; }
+      p { margin: 0 0 16px; }
+      .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+      .intro { font-size: 14px; }
+      .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+      label { font-size: 13px; display: block; }
+      input, select {
+        margin-top: 6px;
+        width: 100%;
+        color: inherit;
+        background: var(--background, #ffffff);
+        border: 1px solid var(--border, #dce3de);
+        border-radius: var(--radius, 12px);
+        padding: 10px 12px;
+      }
+      .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+      .primary {
+        color: var(--primary-foreground, #ffffff);
+        background: var(--primary, #30775c);
+        border: 1px solid transparent;
+        border-radius: var(--radius, 12px);
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+      .callout { margin-top: 16px; background: var(--secondary, #edf1ee); font-size: 13px; }
+      .tree { padding: 16px; margin-top: 16px; border-left: 2px solid var(--primary, #30775c); }
+      .tree p { margin: 4px 0; font-size: 14px; }
+      .branch { padding-left: 20px; }
+      .review { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+      .review div { padding: 12px; border-radius: var(--radius, 12px); background: var(--secondary, #edf1ee); }
+      .review span, .review strong { display: block; font-size: 13px; }
+      .settings { display: grid; grid-template-columns: 160px 1fr; gap: 20px; margin-top: 20px; }
+      .settings nav { font-size: 13px; border-right: 1px solid var(--border, #dce3de); }
+      .settings nav p { margin: 0 0 12px; }
+      .settings nav strong { display: block; margin: 14px 0 6px; }
+      .small { font-size: 12px; }
+      .footnote { font-size: 12px; margin-top: 12px; }
+      @media (max-width: 520px) {
+        .journey { grid-template-columns: 1fr 1fr; }
+        .fields, .review { grid-template-columns: 1fr; }
+        .settings { grid-template-columns: 120px 1fr; gap: 12px; }
+        .tabs button { flex: 1 1 42%; }
+      }
+    </style>
+  </head>
+  <body>
+    <p class="caption muted">Design illustration · fictional organization · no data is saved</p>
+    <section class="journey" aria-label="Provisioning and onboarding responsibilities">
+      <div class="stage"><span class="muted">01 · Operator</span><strong>Provision</strong>Infrastructure and private configuration</div>
+      <div class="stage"><span class="muted">02 · Operator</span><strong>Initialize</strong>One fixed customer installation</div>
+      <div class="stage"><span class="muted">03 · Operator</span><strong>Bootstrap admin</strong>Verified identity and explicit product access</div>
+      <div class="stage"><span class="muted">04 · Product admin</span><strong>Set up workspace</strong>Essential profile, optional structure, review</div>
+    </section>
+    <div class="tabs" role="tablist" aria-label="Explore proposed screens">
+      <button type="button" role="tab" id="tab-org" aria-controls="org" aria-selected="true" data-screen="org">1 · Organization</button>
+      <button type="button" role="tab" id="tab-structure" aria-controls="structure" aria-selected="false" data-screen="structure">2 · Structure · optional</button>
+      <button type="button" role="tab" id="tab-review" aria-controls="review" aria-selected="false" data-screen="review">3 · Review</button>
+      <button type="button" role="tab" id="tab-settings" aria-controls="settings" aria-selected="false" data-screen="settings">After activation</button>
+    </div>
+    <section class="panel" id="org" role="tabpanel" aria-labelledby="tab-org">
+      <span class="eyebrow muted">Essential setup</span>
+      <h2>Let's set up your organization</h2>
+      <p class="intro muted">Confirm the details your workspace will use. You can add the rest later.</p>
+      <div class="fields">
+        <label for="company">Organization name<input id="company" value="Example Manufacturing" readonly /></label>
+        <label for="zone">Organization time zone<select id="zone" aria-describedby="zone-help"><option>Asia/Kolkata · UTC +05:30</option></select></label>
+      </div>
+      <p id="zone-help" class="small muted">Confirm the organization's time zone for shared dates and future deadlines.</p>
+      <div class="callout">Your administrator account is already provisioned. The organization root is created automatically.</div>
+      <div class="actions"><button type="button" class="primary" data-go="structure">Explore next step →</button></div>
+      <p class="footnote muted">Proposed product controls: Save and continue · Save and exit · Sign out</p>
+    </section>
+    <section class="panel" id="structure" role="tabpanel" aria-labelledby="tab-structure" hidden>
+      <span class="eyebrow muted">Optional setup</span>
+      <h2>Add structure when you're ready</h2>
+      <p class="intro muted">Start at organization level, or add real sites and departments now.</p>
+      <div class="actions">
+        <button type="button" class="choice" id="later" aria-pressed="true">Set up later</button>
+        <button type="button" class="choice" id="units" aria-pressed="false">Show example structure</button>
+      </div>
+      <div class="tree"><p><strong>Example Manufacturing</strong> <span class="muted">· Organization</span></p>
+        <div class="branch" id="branches" hidden><p>↳ Main site</p><div class="branch"><p>↳ Quality</p><p>↳ Operations</p></div></div>
+      </div>
+      <p class="small muted">Departments can also sit directly under the organization. People are members of units, not hierarchy levels.</p>
+      <div class="actions"><button type="button" class="primary" data-go="review">Explore review →</button><button type="button" class="secondary" data-go="org">Back</button></div>
+    </section>
+    <section class="panel" id="review" role="tabpanel" aria-labelledby="tab-review" hidden>
+      <span class="eyebrow muted">Essential setup</span>
+      <h2>Ready to activate your workspace</h2>
+      <p class="intro muted">Check the essentials. Optional configuration can continue in Settings.</p>
+      <div class="review">
+        <div><span class="muted">Organization</span><strong>Example Manufacturing</strong></div>
+        <div><span class="muted">Time zone</span><strong>Asia/Kolkata</strong></div>
+        <div><span class="muted">Structure</span><strong id="scope-summary">Organization-wide scope</strong></div>
+        <div><span class="muted">Administrator</span><strong>Verified · explicit setup access</strong></div>
+      </div>
+      <div class="callout"><strong>Separate feature readiness</strong><br />Document Approval will require its own eligible approvers and routing policy. This does not block workspace activation.</div>
+      <div class="actions"><button type="button" class="primary" data-go="settings">Show workspace concept →</button><button type="button" class="secondary" data-go="org">Edit details</button></div>
+      <p class="footnote muted">In the product, Activate workspace revalidates and commits once on the server.</p>
+    </section>
+    <section class="panel" id="settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+      <span class="eyebrow muted">Ongoing administration</span>
+      <h2>One home for configuration</h2>
+      <p class="intro muted">Return to the same organization data through Settings.</p>
+      <div class="settings">
+        <nav aria-label="Proposed navigation"><p>Home</p><p class="muted">Documents*</p><p class="muted">My work*</p><strong>Settings</strong><p>Setup overview</p><p>Organization</p><p>Workspace defaults</p></nav>
+        <div><h3>Essential setup complete</h3><p class="small muted">Example Manufacturing · Asia/Kolkata</p><div class="callout"><strong>Optional next steps</strong><br />Add sites or departments<br /><span class="muted">Dismiss or return later</span></div><p class="small muted" style="margin-top: 16px">People and access, module settings, service status and audit join this structure as those capabilities are delivered.</p></div>
+      </div>
+      <p class="footnote muted">* Business destinations appear when implemented and permitted. Account preferences and security live in the account menu.</p>
+    </section>
+    <script>
+      const tabs = [...document.querySelectorAll('[role="tab"]')];
+      function showScreen(id, focusPanel = false) {
+        for (const tab of tabs) {
+          const selected = tab.dataset.screen === id;
+          tab.setAttribute('aria-selected', String(selected));
+          tab.tabIndex = selected ? 0 : -1;
+        }
+        for (const panel of document.querySelectorAll('[role="tabpanel"]')) {
+          panel.hidden = panel.id !== id;
+        }
+        if (focusPanel) {
+          const panel = document.getElementById(id);
+          panel.tabIndex = -1;
+          panel.focus();
+        }
+      }
+      for (const tab of tabs) {
+        tab.addEventListener('click', () => showScreen(tab.dataset.screen));
+        tab.addEventListener('keydown', (event) => {
+          const index = tabs.indexOf(tab);
+          let next;
+          if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+          if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
+          if (event.key === 'Home') next = 0;
+          if (event.key === 'End') next = tabs.length - 1;
+          if (next !== undefined) {
+            event.preventDefault();
+            showScreen(tabs[next].dataset.screen);
+            tabs[next].focus();
+          }
+        });
+      }
+      for (const button of document.querySelectorAll('[data-go]')) {
+        button.addEventListener('click', () => showScreen(button.dataset.go, true));
+      }
+      function showUnits(visible) {
+        document.getElementById('branches').hidden = !visible;
+        document.getElementById('later').setAttribute('aria-pressed', String(!visible));
+        document.getElementById('units').setAttribute('aria-pressed', String(visible));
+        document.getElementById('scope-summary').textContent = visible
+          ? '1 site · 2 departments'
+          : 'Organization-wide scope';
+      }
+      document.getElementById('later').addEventListener('click', () => showUnits(false));
+      document.getElementById('units').addEventListener('click', () => showUnits(true));
+      showScreen('org');
+    </script>
+  </body>
+</html>

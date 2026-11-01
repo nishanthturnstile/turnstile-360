@@ -31,7 +31,10 @@ our application source still receives the full configured checks.
 and CI. It rejects unresolved imports, circular dependencies, direct imports between
 applications, framework/database dependencies in contracts, and backend imports in the
 browser application. These are source-level architecture checks, separate from runtime
-authentication and authorization.
+authentication and authorization. The root `tsconfig.boundaries.json` supplies
+repository-relative web import aliases to this resolver; application compilation still
+uses each application's own TypeScript configuration. See the
+[web design-system architecture](../architecture.md#web-design-system) for UI alias ownership.
 
 `.cjs` explicitly selects Node's CommonJS loader for this tool configuration, even though
 application packages use ESM. It does not change the application module system.

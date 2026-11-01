@@ -14,6 +14,10 @@ Follow [the Turnstile application architecture](../../architecture.md#turnstile-
 for backend authority, client responsibilities, platform-independent contracts, and future
 mobile compatibility. Do not add a mobile application without an explicit request.
 
+Web presentation follows the [shared design-system guide](../design-system.md) and
+its architecture reference. Reuse configured primitives/tokens and review changes in
+the development gallery; keep designer/developer handoffs consistent with those sources.
+
 ## Toolchain and formatting
 
 Use the pinned [toolchain and library inventory](../../architecture.md#installed-toolchain-and-libraries),
@@ -34,7 +38,9 @@ for interfaces and types with no runtime identity.
 
 Python uses four spaces, Ruff, strict mypy, and a uv lockfile. Add pytest coverage as
 actual processing behavior is introduced. Build/test/typecheck tasks include Python's
-own package files and lockfile as task inputs. Live tests and dev tasks are not cached.
+own package files and lockfile as task inputs. Live tests are not cached. Development
+watching belongs to [Docker Compose](../../architecture.md#local-development); host
+toolchains remain for CI, checks, builds and explicit operator commands.
 
 ## Configuration and runtime
 
@@ -47,7 +53,8 @@ are for one-off operator commands; `.env.provision` is for initial database role
 belongs in a persistent API environment. Future feature settings must be
 validated by the owning process and supplied only to that process.
 
-The browser's VITE_* values are public build-time configuration. Keep machine credentials,
+The browser uses same-origin API requests and needs no API-base environment variable.
+Any future VITE_* values are public build-time configuration. Keep machine credentials,
 enrollment keys, signing secrets, and storage credentials on trusted backends. Validate
 user/business authority in Turnstile's backend before requesting DMS capabilities.
 

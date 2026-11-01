@@ -20,7 +20,7 @@ services:
         source: ${MAILPIT_TLS_KEY_FILE:?Set the private pilot SMTP key file}
         target: /run/mailpit/server.key
         read_only: true
-    ports: [127.0.0.1:8025:8025]
+    ports: [127.0.0.1:23605:8025]
     expose: ["1025"]
     restart: unless-stopped
     healthcheck:

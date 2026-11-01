@@ -11,7 +11,7 @@ The [Turnstile architecture](../../architecture.md#turnstile-application-archite
 defines the shared web/future-mobile API, backend authority, and DMS integration.
 
 `GET /api` returns application identity. `GET /health/live` reports process liveness.
-Run `pnpm dev:turnstile` from the repository root; the default API port is 3002.
+Run `docker compose up --build --watch` from the repository root; the private container API port is 3002.
 See the root README for setup and checks.
 
 This is proprietary Thaarei software under the root LICENSE.
@@ -41,3 +41,6 @@ session. Configure and enroll the machine client explicitly using the
 [runbook](../../docs/runbooks/authentication.md#verify-the-typed-cross-service-capability-request).
 No new migration is required for AUTH-06; existing users need explicit assignment of the
 new action permission. No browser credentials, actor headers or tenant selectors are forwarded.
+
+Local host testing uses fixed port 23602. Browser authentication uses
+http://localhost:23600. See the [reserved ports](../../architecture.md#reserved-local-ports).

@@ -1,15 +1,18 @@
+import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { type FormEvent, useEffect, useState } from 'react';
+import { ButtonLink } from '@/components/button-link';
+import { Notice } from '@/components/notice';
+import { Button } from '@/components/ui/button';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { authMessage, beginSignIn, identity } from './client';
-
-function Notice({ message, success = false }: { message: string; success?: boolean }) {
-  return (
-    <p className={`notice ${success ? 'notice-success' : ''}`} role={success ? 'status' : 'alert'}>
-      {message}
-    </p>
-  );
-}
-
-export { Notice };
 
 export function SignIn() {
   const signed = new URLSearchParams(window.location.search).has('sig');
@@ -66,61 +69,65 @@ export function SignIn() {
   return (
     <>
       <span className="eyebrow">YOUR WORKSPACE</span>
-      <h1>Welcome back</h1>
+      <h1 className="page-title">Welcome back</h1>
       <p className="intro">Sign in to continue to Turnstile 360.</p>
       {signed ? (
         <form onSubmit={submit} aria-busy={busy}>
-          <label htmlFor="email">Email address</label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="username"
-            maxLength={254}
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            disabled={busy}
-          />
-          <div className="label-row">
-            <label htmlFor="password">Password</label>
-            <a href="/forgot-password">Forgot password?</a>
-          </div>
-          <div className="password-field">
-            <input
-              id="password"
-              type={visible ? 'text' : 'password'}
-              autoComplete="current-password"
-              maxLength={128}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              disabled={busy}
-            />
-            <button
-              type="button"
-              className="reveal"
-              onClick={() => setVisible(!visible)}
-              aria-pressed={visible}
-              aria-label={visible ? 'Hide password' : 'Show password'}
-            >
-              {visible ? 'Hide' : 'Show'}
-            </button>
-          </div>
-          {message && <Notice message={message} />}
-          {unverified && (
-            <button
-              type="button"
-              className="text-button"
-              disabled={busy}
-              onClick={() => void resend()}
-            >
-              Resend verification email
-            </button>
-          )}
-          <button className="primary" type="submit" disabled={busy}>
-            {busy ? 'Signing in…' : 'Sign in'}
-            <span aria-hidden="true">↗</span>
-          </button>
+          <FieldGroup>
+            <Field data-disabled={busy}>
+              <FieldLabel htmlFor="email">Email address</FieldLabel>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="username"
+                maxLength={254}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                disabled={busy}
+              />
+            </Field>
+            <Field data-disabled={busy}>
+              <div className="flex items-baseline justify-between gap-3">
+                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <a className="text-link text-xs" href="/forgot-password">
+                  Forgot password?
+                </a>
+              </div>
+              <InputGroup data-disabled={busy}>
+                <InputGroupInput
+                  id="password"
+                  type={visible ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  maxLength={128}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                  disabled={busy}
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    onClick={() => setVisible(!visible)}
+                    aria-pressed={visible}
+                    aria-label={visible ? 'Hide password' : 'Show password'}
+                    disabled={busy}
+                  >
+                    {visible ? 'Hide' : 'Show'}
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+            </Field>
+            {message && <Notice message={message} />}
+            {unverified && (
+              <Button type="button" variant="link" disabled={busy} onClick={() => void resend()}>
+                Resend verification email
+              </Button>
+            )}
+            <Button size="lg" className="w-full" type="submit" disabled={busy}>
+              {busy ? 'Signing in…' : 'Sign in'}
+              <HugeiconsIcon icon={ArrowUpRight01Icon} data-icon="inline-end" aria-hidden="true" />
+            </Button>
+          </FieldGroup>
         </form>
       ) : (
         <p role="status">Preparing secure sign-in…</p>
@@ -130,9 +137,9 @@ export function SignIn() {
         <br />
         Contact your administrator if you need an account.
       </p>
-      <button className="text-button subtle" type="button" disabled={busy} onClick={beginSignIn}>
+      <Button variant="link" className="-ml-3" type="button" disabled={busy} onClick={beginSignIn}>
         Start sign-in again
-      </button>
+      </Button>
     </>
   );
 }
@@ -163,7 +170,7 @@ export function ForgotPassword() {
   return (
     <>
       <span className="eyebrow">ACCOUNT RECOVERY</span>
-      <h1>{sent ? 'Check your inbox' : 'Forgot your password?'}</h1>
+      <h1 className="page-title">{sent ? 'Check your inbox' : 'Forgot your password?'}</h1>
       <p className="intro">
         {sent
           ? 'If an account matches that email, we’ll send a password reset link. It expires in 30 minutes.'
@@ -171,27 +178,31 @@ export function ForgotPassword() {
       </p>
       {!sent && (
         <form onSubmit={submit} aria-busy={busy}>
-          <label htmlFor="recovery-email">Email address</label>
-          <input
-            id="recovery-email"
-            type="email"
-            autoComplete="email"
-            maxLength={254}
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            disabled={busy}
-          />
-          {message && <Notice message={message} />}
-          <button className="primary" disabled={busy} type="submit">
-            {busy ? 'Sending…' : 'Send reset link'}
-            <span aria-hidden="true">↗</span>
-          </button>
+          <FieldGroup>
+            <Field data-disabled={busy}>
+              <FieldLabel htmlFor="recovery-email">Email address</FieldLabel>
+              <Input
+                id="recovery-email"
+                type="email"
+                autoComplete="email"
+                maxLength={254}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                disabled={busy}
+              />
+            </Field>
+            {message && <Notice message={message} />}
+            <Button size="lg" className="w-full" disabled={busy} type="submit">
+              {busy ? 'Sending…' : 'Send reset link'}
+              <HugeiconsIcon icon={ArrowUpRight01Icon} data-icon="inline-end" aria-hidden="true" />
+            </Button>
+          </FieldGroup>
         </form>
       )}
-      <a className="back-link" href="/api/auth/login">
+      <ButtonLink variant="link" className="-ml-3 mt-4" href="/api/auth/login">
         ← Back to sign in
-      </a>
+      </ButtonLink>
     </>
   );
 }
@@ -230,7 +241,7 @@ export function ResetPassword({ token, clear }: { token: string | undefined; cle
   return (
     <>
       <span className="eyebrow">ACCOUNT RECOVERY</span>
-      <h1>
+      <h1 className="page-title">
         {done ? 'Password updated' : token ? 'Choose a new password' : 'Request a fresh link'}
       </h1>
       <p className="intro">
@@ -242,45 +253,52 @@ export function ResetPassword({ token, clear }: { token: string | undefined; cle
       </p>
       {!done && token && (
         <form onSubmit={submit} aria-busy={busy}>
-          <label htmlFor="new-password">New password</label>
-          <input
-            id="new-password"
-            type="password"
-            autoComplete="new-password"
-            minLength={15}
-            maxLength={128}
-            required
-            value={password}
-            disabled={busy}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-          <label htmlFor="confirm-password">Confirm new password</label>
-          <input
-            id="confirm-password"
-            type="password"
-            autoComplete="new-password"
-            minLength={15}
-            maxLength={128}
-            required
-            value={confirm}
-            disabled={busy}
-            onChange={(event) => setConfirm(event.target.value)}
-          />
-          {message && <Notice message={message} />}
-          <button className="primary" type="submit" disabled={busy}>
-            {busy ? 'Updating…' : 'Update password'}
-            <span aria-hidden="true">↗</span>
-          </button>
+          <FieldGroup>
+            <Field data-disabled={busy}>
+              <FieldLabel htmlFor="new-password">New password</FieldLabel>
+              <Input
+                id="new-password"
+                type="password"
+                autoComplete="new-password"
+                minLength={15}
+                maxLength={128}
+                required
+                value={password}
+                disabled={busy}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </Field>
+            <Field data-disabled={busy}>
+              <FieldLabel htmlFor="confirm-password">Confirm new password</FieldLabel>
+              <Input
+                id="confirm-password"
+                type="password"
+                autoComplete="new-password"
+                minLength={15}
+                maxLength={128}
+                required
+                value={confirm}
+                disabled={busy}
+                onChange={(event) => setConfirm(event.target.value)}
+              />
+            </Field>
+            {message && <Notice message={message} />}
+            <Button size="lg" className="w-full" type="submit" disabled={busy}>
+              {busy ? 'Updating…' : 'Update password'}
+              <HugeiconsIcon icon={ArrowUpRight01Icon} data-icon="inline-end" aria-hidden="true" />
+            </Button>
+          </FieldGroup>
         </form>
       )}
       {done ? (
-        <a className="primary button-link" href="/api/auth/login">
-          Back to sign in <span aria-hidden="true">↗</span>
-        </a>
+        <ButtonLink size="lg" className="w-full" href="/api/auth/login">
+          Back to sign in
+          <HugeiconsIcon icon={ArrowUpRight01Icon} data-icon="inline-end" aria-hidden="true" />
+        </ButtonLink>
       ) : (
-        <a className="back-link" href="/forgot-password">
+        <ButtonLink variant="link" className="-ml-3 mt-4" href="/forgot-password">
           Request a new reset link
-        </a>
+        </ButtonLink>
       )}
     </>
   );

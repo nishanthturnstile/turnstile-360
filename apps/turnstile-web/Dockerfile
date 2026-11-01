@@ -4,8 +4,6 @@ ENV TURBO_TELEMETRY_DISABLED=1
 RUN npm install --global pnpm@12.16.1
 COPY . .
 RUN pnpm install --frozen-lockfile
-ARG VITE_API_BASE_URL=/api
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN pnpm exec turbo run build --filter=@thaarei/turnstile-web...
 
 FROM nginx:1.30.2-alpine@sha256:5f979dcfed4ce6461873f087e8c980d6e29b084b9e8776d9704a7e989b5f4898

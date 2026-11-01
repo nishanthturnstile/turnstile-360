@@ -1,3 +1,5 @@
+const { resolve } = require('node:path');
+
 module.exports = {
   forbidden: [
     {
@@ -62,6 +64,11 @@ module.exports = {
   options: {
     doNotFollow: { path: '(^|/)(node_modules|dist)/' },
     tsPreCompilationDeps: true,
-    enhancedResolveOptions: { exportsFields: ['exports'], conditionNames: ['import', 'node'] },
+    // The resolver plugin interprets paths from the repository working directory.
+    tsConfig: { fileName: resolve(__dirname, '../../tsconfig.boundaries.json') },
+    enhancedResolveOptions: {
+      exportsFields: ['exports'],
+      conditionNames: ['import', 'node'],
+    },
   },
 };

@@ -234,7 +234,7 @@
           <article class="card feature"><span class="check">✓</span><div><h3>Safe readiness behavior</h3><p>Invalid auth configuration returns an unavailable status. Process liveness remains available.</p></div></article>
           <article class="card feature"><span class="check">✓</span><div><h3>Clear package boundaries</h3><p>Browser-safe SDK imports are allowed. Server packages and cross-app source imports are rejected.</p></div></article>
         </div>
-        <div class="command"><code>pnpm dev:auth</code><span>Build → validate → wait for PostgreSQL → watch APIs + web</span></div>
+        <div class="command"><code>pnpm dev</code><span>Compose → build → wait for PostgreSQL → watch API/web containers</span></div>
         <p class="source">AUTH-01 exit evidence: CLI/ESM compatibility, dependency boundaries, configuration checks and shared-package rebuild/restart verification. Architecture: “Authentication configuration foundations”.</p>
       </section>
 

@@ -35,6 +35,9 @@ in `IN_PROGRESS.md`. Update affected references when the architecture changes.
 - Define database schemas and migrations only when the relevant feature is implemented.
 - Never put service credentials in Vite configuration or browser code.
 - Dokploy owns ingress/TLS. Keep Compose build contexts at the monorepo root.
+- Reserve local host ports 23600–23608 for this application; follow architecture.md's
+  reserved local ports table. Keep fixed bindings and fail on conflict; never fall back
+  to default/random host service ports. Private container ports stay isolated.
 - Add focused tests only for critical behavior, likely failure points, or meaningful regressions;
   use integration tests when the risk crosses component boundaries. Skip exhaustive scenarios,
   implementation-mirroring tests, and new tests for routine low-risk or documentation changes.

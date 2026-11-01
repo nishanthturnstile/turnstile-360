@@ -231,6 +231,23 @@ describe('persisted authority and native HTTP boundary', () => {
     ).toBeGreaterThan(0);
   });
 
+  it('renews the database rate-limit budget even when requests continue inside the window', async () => {
+    const start = Date.now();
+    const clock = vi.spyOn(Date, 'now');
+    try {
+      for (const elapsed of [0, 4000, 8000]) {
+        clock.mockReturnValue(start + elapsed);
+        expect((await signIn(email, 'incorrect-password-for-test')).statusCode).toBe(401);
+      }
+      clock.mockReturnValue(start + 9000);
+      expect((await signIn(email, 'incorrect-password-for-test')).statusCode).toBe(429);
+      clock.mockReturnValue(start + 11000);
+      expect((await signIn(email, 'incorrect-password-for-test')).statusCode).toBe(401);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   it('bounds reset expiry and reports SMTP failure without issuing a successful recovery response', async () => {
     await app.inject({
       method: 'POST',

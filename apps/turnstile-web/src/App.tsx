@@ -1,8 +1,26 @@
+import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import type { UserSessionDto } from '@thaarei/turnstile-contracts';
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { ForgotPassword, Notice, ResetPassword, SignIn } from './features/auth/AuthForms';
+import { lazy, type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { ButtonLink } from '@/components/button-link';
+import { Notice } from '@/components/notice';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ForgotPassword, ResetPassword, SignIn } from './features/auth/AuthForms';
 import { beginSignIn, captureResetToken, identity } from './features/auth/client';
 import { endSession, loadCapabilities, loadSession, ProductError } from './features/auth/product';
+
+const DesignSystem = import.meta.env.DEV
+  ? lazy(() => import('./design-system/DesignSystem'))
+  : undefined;
 
 let resetToken = captureResetToken();
 function Brand() {
@@ -44,7 +62,7 @@ function AuthLayout({ children }: { children: ReactNode }) {
           <Brand />
         </div>
         <main className="auth-content">{children}</main>
-        <footer>
+        <footer className="app-footer">
           Turnstile 360 <span aria-hidden="true">·</span> Thaarei
         </footer>
       </div>
@@ -83,27 +101,39 @@ function AccountState({
   return (
     <>
       <span className="eyebrow">YOUR ACCOUNT</span>
-      <h1>{content[0]}</h1>
+      <h1 className="page-title">{content[0]}</h1>
       <p className="intro">{content[1]}</p>
-      {message && <Notice message={message} />}
-      <button
-        className="primary"
+      {message && <Notice className="mb-5" message={message} />}
+      <Button
+        size="lg"
+        className="w-full"
         type="button"
         onClick={kind === 'unavailable' ? (retry ?? beginSignIn) : beginSignIn}
       >
-        {kind === 'unavailable' ? 'Try again' : 'Sign in'}
-        <span aria-hidden="true">↗</span>
-      </button>
+        {kind === 'unavailable' && retry ? 'Try again' : 'Sign in'}
+        <HugeiconsIcon icon={ArrowUpRight01Icon} data-icon="inline-end" aria-hidden="true" />
+      </Button>
+      {kind === 'unavailable' && retry && (
+        <ButtonLink variant="link" className="-ml-3 mt-4" href="/api/auth/login">
+          Sign in
+        </ButtonLink>
+      )}
       {kind === 'denied' && (
-        <button className="text-button" type="button" onClick={() => void switchAccount()}>
+        <Button
+          variant="link"
+          className="-ml-3 mt-4"
+          type="button"
+          onClick={() => void switchAccount()}
+        >
           Sign in with a different account
-        </button>
+        </Button>
       )}
     </>
   );
 }
 function Workspace() {
   const generation = useRef(0);
+  const checks = useRef(0);
   const [session, setSession] = useState<UserSessionDto>();
   const [state, setState] = useState<
     'loading' | 'ready' | 'expired' | 'denied' | 'unavailable' | 'signed-out'
@@ -114,13 +144,16 @@ function Workspace() {
   const [logout, setLogout] = useState<{ csrf: string; retryUntil: number }>();
   const check = useCallback(async () => {
     const current = generation.current;
+    const checkId = ++checks.current;
     try {
       const value = await loadSession();
-      if (current !== generation.current) return;
+      if (current !== generation.current || checkId !== checks.current) return;
       setSession(value);
       setState('ready');
+      if (window.location.pathname === '/auth-unavailable')
+        window.history.replaceState(null, '', '/');
     } catch (error) {
-      if (current !== generation.current) return;
+      if (current !== generation.current || checkId !== checks.current) return;
       if (error instanceof ProductError && error.status === 401) {
         setSession(undefined);
         setState('expired');
@@ -134,17 +167,21 @@ function Workspace() {
     void check();
   }, [check]);
   useEffect(() => {
-    if (state !== 'ready') return;
+    if (state !== 'ready' && state !== 'unavailable') return;
     const focus = () => {
       if (!document.hidden) void check();
     };
     window.addEventListener('focus', focus);
     document.addEventListener('visibilitychange', focus);
-    const timer = window.setInterval(focus, 60000);
+    // Retry one transient startup/reload failure, then leave further retries to
+    // tab focus or the user. Do not poll an unavailable authority indefinitely.
+    const timer =
+      state === 'ready' ? window.setInterval(focus, 60000) : window.setTimeout(focus, 3000);
     return () => {
       window.removeEventListener('focus', focus);
       document.removeEventListener('visibilitychange', focus);
       window.clearInterval(timer);
+      window.clearTimeout(timer);
     };
   }, [state, check]);
   async function signOut() {
@@ -210,34 +247,49 @@ function Workspace() {
   }
   if (state === 'loading')
     return (
-      <AuthLayout>
-        <span className="eyebrow">YOUR WORKSPACE</span>
-        <h1>One moment</h1>
-        <p className="intro" role="status">
-          Checking your session…
-        </p>
-      </AuthLayout>
+      <div className="workspace" aria-busy="true">
+        <header className="workspace-header">
+          <Brand />
+          <span className="workspace-loading-label" role="status">
+            Loading workspace…
+          </span>
+        </header>
+        <main className="workspace-content">
+          <div className="flex flex-col gap-5" aria-hidden="true">
+            <Skeleton className="h-11 w-4/5 max-w-72 animate-none" />
+            <Skeleton className="h-3.5 w-4/5 max-w-85 animate-none" />
+            <Skeleton className="mt-3 h-42 w-full animate-none" />
+          </div>
+        </main>
+        <footer className="app-footer">
+          Turnstile 360 <span aria-hidden="true">·</span> Thaarei
+        </footer>
+      </div>
     );
   if (logout)
     return (
       <AuthLayout>
         <span className="eyebrow">YOUR ACCOUNT</span>
-        <h1>Finishing sign-out</h1>
+        <h1 className="page-title">Finishing sign-out</h1>
         <p className="intro" role="status">
           {message || 'Ending your workspace and account sessions…'}
         </p>
         {Date.now() < logout.retryUntil ? (
-          <button className="primary" type="button" disabled={busy} onClick={() => void signOut()}>
+          <Button
+            size="lg"
+            className="w-full"
+            type="button"
+            disabled={busy}
+            onClick={() => void signOut()}
+          >
             {busy ? 'Signing out…' : 'Retry sign-out'}
-          </button>
+          </Button>
         ) : (
           <>
-            <p className="notice">
-              The retry window has ended. Account sign-out could not be confirmed.
-            </p>
-            <a className="back-link" href="/api/auth/login">
+            <Notice message="The retry window has ended. Account sign-out could not be confirmed." />
+            <ButtonLink variant="link" className="-ml-3 mt-4" href="/api/auth/login">
               Return to sign in
-            </a>
+            </ButtonLink>
           </>
         )}
       </AuthLayout>
@@ -250,54 +302,65 @@ function Workspace() {
     );
   return (
     <div className="workspace">
-      <header>
+      <header className="workspace-header">
         <Brand />
-        <button className="secondary" type="button" disabled={busy} onClick={() => void signOut()}>
+        <Button variant="outline" type="button" disabled={busy} onClick={() => void signOut()}>
           Sign out
-        </button>
+        </Button>
       </header>
       <main className="workspace-content">
         <span className="eyebrow">YOUR WORKSPACE</span>
-        <h1>Welcome, {session.user.name}.</h1>
+        <h1 className="page-title">Welcome, {session.user.name}.</h1>
         <p className="intro">You’re signed in to Turnstile 360.</p>
-        <section className="entry-card">
-          <div className="entry-icon" aria-hidden="true">
-            ↗
-          </div>
-          <div>
-            <h2>A place to begin</h2>
-            <p>
-              Your workspace is ready. Features will appear here as they become available to your
-              organization.
-            </p>
-            <span className="account-label">
-              Signed in as <strong>{session.user.email}</strong>
-            </span>
-          </div>
-        </section>
-        {session.permissions.includes('turnstile:dms:capabilities:read') && (
-          <section className="connection-card">
-            <div>
-              <h2>Document connection</h2>
-              <p>Check that your workspace can reach its document service.</p>
-            </div>
-            <button
-              className="secondary"
-              type="button"
-              disabled={busy}
-              onClick={() => void connect()}
-            >
-              {busy ? 'Checking…' : 'Check connection'}
-            </button>
-            {connection && (
-              <p className="connection-status" role="status">
-                {connection}
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <h2>A place to begin</h2>
+              </CardTitle>
+              <CardDescription>
+                Your workspace is ready. Features will appear here as they become available to your
+                organization.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="account-label">
+                Signed in as <strong>{session.user.email}</strong>
               </p>
-            )}
-          </section>
-        )}
+            </CardContent>
+          </Card>
+          {session.permissions.includes('turnstile:dms:capabilities:read') && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  <h2>Document connection</h2>
+                </CardTitle>
+                <CardDescription>
+                  Check that your workspace can reach its document service.
+                </CardDescription>
+              </CardHeader>
+              {connection && (
+                <CardContent>
+                  <p className="text-sm" role="status">
+                    {connection}
+                  </p>
+                </CardContent>
+              )}
+              <CardFooter>
+                <Button
+                  variant="outline"
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void connect()}
+                >
+                  {busy ? 'Checking…' : 'Check connection'}
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+        </div>
       </main>
-      <footer>
+      <footer className="app-footer">
         Turnstile 360 <span aria-hidden="true">·</span> Thaarei
       </footer>
     </div>
@@ -306,6 +369,13 @@ function Workspace() {
 export default function App() {
   const path = window.location.pathname;
   const [token, setToken] = useState(resetToken);
+  if (DesignSystem && path === '/design-system') {
+    return (
+      <Suspense fallback={<p role="status">Loading design system…</p>}>
+        <DesignSystem />
+      </Suspense>
+    );
+  }
   if (path === '/sign-in')
     return (
       <AuthLayout>
@@ -340,12 +410,6 @@ export default function App() {
     return (
       <AuthLayout>
         <AccountState kind="expired" />
-      </AuthLayout>
-    );
-  if (path === '/auth-unavailable')
-    return (
-      <AuthLayout>
-        <AccountState kind="unavailable" />
       </AuthLayout>
     );
   return <Workspace />;

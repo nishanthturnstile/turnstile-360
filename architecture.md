@@ -1,6 +1,6 @@
 # Turnstile 360 and Thaarei DMS architecture
 
-**Updated:** 2026-10-31
+**Updated:** 2026-11-01
 
 **Status:** Accepted technical design with workspace foundations implemented.
 
@@ -188,17 +188,20 @@ Future process entry points and feature files are added with their capabilities.
 │   │   └── generated/ fixtures/
 │   ├── dms-client/src/
 │   └── turnstile-contracts/src/
+├── patches/                               # pinned dependency corrections
 ├── tooling/
 │   ├── typescript/{base,library}.json
 │   └── dependency-rules/config.cjs
-├── scripts/{check-deploy,smoke-runtime}.mjs
+├── scripts/{check-deploy,smoke-runtime,dev-container}.mjs
 ├── deploy/
-│   ├── compose.local.yaml, compose.dokploy.yaml
+│   ├── compose.local.yaml, compose.dev.yaml, compose.dokploy.yaml, compose.mailpit.yaml
+│   ├── Dockerfile.dev, development-ports.json
 │   ├── nginx/nginx.conf
 │   └── artifacts/
 ├── tests/system/
 ├── .github/workflows/workspace.yml
 ├── docs/                                  # scope, requirements, standards, runbooks
+├── compose.yaml                           # local Compose entry point
 ├── architecture.md
 ├── IN_PROGRESS.md
 └── AGENTS.md
@@ -254,6 +257,7 @@ The subsequent selected-technology section covers feature dependencies not yet i
 | Nest runtime support       | `reflect-metadata` 0.2.2; `rxjs` 7.8.1                                                           | Decorator metadata, dependency injection, framework reactive support                                      |
 | Validation                 | Zod 4.6.7 in both APIs                                                                           | Host/port and authentication environment validation; future shared payload schemas                        |
 | Web UI                     | React / React DOM 19.3.1                                                                         | Product presentation and interaction                                                                      |
+| Web design system          | shadcn 4.23.0, Base UI 1.9.0, Tailwind CSS / Vite plugin 4.3.3                                   | Owner-selected preset and source-owned UI; see [web design system](#web-design-system)                    |
 | Web build                  | Vite 8.3.5; `@vitejs/plugin-react` 6.1.2                                                         | Frontend development server, React integration, production asset build                                    |
 | API generation             | Nest CLI 12.0.11; schematics 12.0.12                                                             | CLI-generated modules/controllers/providers; no hand-built replacement for available scaffolding commands |
 | JavaScript quality         | Biome 2.6.4; dependency-cruiser 18.7.0                                                           | Formatting/lint/import organization and architecture import checks; ESLint/Prettier are not configured    |
@@ -278,9 +282,9 @@ explicit Fastify 5.12.7 in both APIs and root development `pg` 8.23.1 for isolat
 tooling. Authority/BFF and real browser-to-DMS evidence are recorded in progress; actual
 deployment and customer provisioning remain separate. Python currently has no runtime dependencies.
 The S3 SDK, Celery/processing engines, OpenAPI generation, OpenTelemetry and
-React Testing Library remain later additions. No
-additional UI component system, router, client-state/form library, mobile library, or
-Turnstile domain dependency has been selected by this workspace.
+React Testing Library remain later additions. The web design system is now selected
+and installed as documented below; no router, client-state/form library, mobile library,
+or Turnstile domain dependency has been added.
 
 ## Turnstile application architecture
 
@@ -302,6 +306,48 @@ User login is supplied by the selected identity authority; product sessions/user
 are enforced by the Turnstile backend. Web uses the planned secure session boundary.
 Native login/session storage and redirects will be specified when mobile is implemented;
 do not assume browser cookies, expose service secrets, or create a second business backend.
+
+### Web design system
+
+The Turnstile web app owns a source-based shadcn/ui design system initialized and
+applied with CLI 4.23.0 using the owner-selected preset `biekTCUvD` (Maia style,
+mauve base, emerald theme, red chart palette, default radius, subtle menu accent and
+inverted-translucent menus). Its primitive base is Base UI, because there was no
+existing primitive library to preserve. The authoritative CLI configuration is
+`apps/turnstile-web/components.json`, with `base-maia`, Hugeicons and `@/` aliases.
+TypeScript, Vite and dependency-boundary validation resolve the alias to the web `src`.
+Boundary validation uses root `tsconfig.boundaries.json`, because its resolver plugin
+interprets path aliases relative to the repository working directory.
+
+Tailwind CSS and its Vite plugin 4.3.3 compile the existing `src/index.css`.
+That file is the sole source of semantic light/dark color, typography and radius
+values, mapped into Tailwind through `@theme inline`. IBM Plex Sans Variable
+(body/controls) and Noto Sans Variable (headings), both Fontsource 5.3.0, are bundled
+as same-origin font assets; no external font service or CSP relaxation is required.
+Page layouts and brand presentation consume those same tokens. Product pages default
+to light mode; dark token support is previewable without adding persisted preferences.
+
+The web manifest pins shadcn 4.23.0 (CLI and theme CSS), `@base-ui/react` 1.9.0,
+`@hugeicons/core-free-icons` 4.4.0, `@hugeicons/react` 1.1.10,
+`class-variance-authority` 0.7.1, `cn` 0.5.1 and `tw-animate-css` 1.4.0.
+Generated primitives live in `src/components/ui`; product compositions live in
+`src/components` and owning features. The shared `ButtonLink` uses a native anchor
+and the Button variant styles, preserving navigation semantics that Base UI's
+non-native Button does not supply. Components use semantic colors and shared
+variants; feature instances use classes for layout. Existing authentication and
+workspace screens consume these primitives without moving business or auth authority
+into presentation. No UI package is shared with contracts, APIs or future mobile.
+
+The development-only `/design-system` catalogue renders the actual primitives and
+representative states with fixture content, no account/API access and an in-memory
+light/dark preview. Its import is guarded by `import.meta.env.DEV`; production builds
+exclude the catalogue module and route. The [design-system guide](docs/design-system.md)
+defines designer/developer handoff, component conventions and CLI maintenance rather
+than duplicating the technical design. Reviewed local adaptations retain upstream
+composition while meeting Biome, explicit transition and reduced-motion conventions.
+New UI/font/icon license texts ship in `public/third-party-notices.txt`; the proprietary
+root LICENSE remains unchanged. This is an inventory for the additions, not a completed
+audit of the assembled distribution.
 
 ### Backend composition and data ownership
 
@@ -640,7 +686,11 @@ Mail availability is checked before account lookup for known/unknown recovery ad
 after rate limiting. Request-local delivery tracking also detects the pinned library's
 caught background callback failures; failed sends return controlled unavailability.
 Passwords remain authority-hashed, public signup is disabled, the authority cookie cache
-is off, and verification/rate limits/sessions/signing keys persist in PostgreSQL. Reset-token
+is off, and verification/rate limits/sessions/signing keys persist in PostgreSQL.
+The pinned [Better Auth database limiter patch](patches/README.md) anchors each counting
+window at its first admitted request. It retains atomic enforcement and the configured
+maximum; continuous readiness/introspection traffic no longer extends the same window
+until an idle cooldown is forced. All authentication and endpoint limits remain enabled. Reset-token
 consumption, session revocation and password writes use the adapter's real transaction;
 failure injection verifies all three roll back together before one successful retry.
 
@@ -918,8 +968,8 @@ tables, roles, document endpoints or startup enrollment are introduced in AUTH-0
 #### Login/recovery UI and operational boundary
 
 AUTH-07 adds React login, verification-resend, generic recovery, reset, session-expired,
-unauthorized and unavailable states, plus the authenticated application entry. No router,
-component framework, account signup, IAM editor or business feature is added. Credential
+unauthorized and unavailable states, plus the authenticated application entry. The web design-system section describes the shared presentation primitives added
+subsequently. No router, account signup, IAM editor or business feature is added. Credential
 entry uses the pinned Better Auth browser client and OAuth Provider client plugin on the
 same authority origin. `/sign-in` begins a BFF transaction when no signed continuation is
 present; the supported plugin retains the signed query and follows the provider's result.
@@ -931,8 +981,18 @@ rendering. Password fields are cleared on submission. OAuth/service tokens, cred
 session cookies and signed continuation material never enter browser storage. The browser
 keeps only the safe session DTO and CSRF token in memory, checks current session on entry,
 focus/visibility and once a minute while visible, and relies on backend authorization for
-every operation. Session requests fail to an availability state during outages. In-flight
-session reads cannot restore UI access after logout begins. Product logout uses CSRF and
+every operation. Startup renders a neutral workspace shell with static placeholders until
+the current session is verified; it never renders a sign-in layout provisionally or
+restores identity from browser storage. Concurrent session reads share only their pending
+HTTP request, which is discarded on completion; no positive authorization cache is added.
+The /auth-unavailable landing path also revalidates the current session, allowing an
+already authenticated workspace to recover to the canonical root URL without starting
+another login transaction. Session requests fail to an availability state during outages. Only the
+latest session check may update UI state, so delayed failures cannot replace a newer
+result. The unavailable workspace offers both a session retry and direct sign-in; it
+rechecks once after three seconds and when the visible tab regains focus. Further retries
+are explicit rather than continuous outage polling. In-flight session reads cannot
+restore UI access after logout begins. Product logout uses CSRF and
 the BFF's local-first retirement/authority receipt; partial or lost responses expose an
 explicit bounded retry and do not claim global completion. A changed CSRF generation can
 be reloaded before retry. Unauthorized users may explicitly end the current authority
@@ -943,7 +1003,8 @@ The authenticated entry exposes only the user summary and the permission-gated d
 connection check. DMS unavailability retains the session; shared identity unavailability
 shows a retryable session-check failure. Forms have native labels/autocomplete, keyboard
 focus, bounded fields, disabled pending actions and live error/status text. The responsive
-layout needs no external images, fonts or third-party requests. Nginx adds a same-origin
+layout uses bundled same-origin fonts and needs no external images, font service or
+third-party requests. Nginx adds a same-origin
 CSP, `nosniff` and `no-referrer`, suppresses auth-page logs and preserves a URL-free access
 format. Dokploy still owns TLS and `/api`, `/identity` and metadata routing; no global
 proxy trust or wildcard origin is enabled. Actual ingress/DNS/proxy verification remains
@@ -961,7 +1022,7 @@ operators consume the JSON process logs. Raw library errors, headers, credential
 email addresses, request bodies and token-bearing URLs are excluded. Test fixtures can
 disable emission while inspecting counters through private IPC.
 
-Development Compose pins Mailpit 1.33.0 by digest. `dev:auth` starts/waits for PostgreSQL
+Development Compose pins Mailpit 1.33.0 by digest. `pnpm dev` starts/waits for PostgreSQL
 and Mailpit; host SMTP/UI ports bind only to loopback. Capture is bounded to 200 messages,
 24 hours and 1 MiB per message, version checking is disabled, and logs are quiet. Mail
 storage is disposable and no relay is configured. The optional pilot
@@ -1074,7 +1135,7 @@ auth-path allowlist and private administration boundary: Nest controller guards 
 automatically protect raw Fastify routes. Preserve form-encoded token requests, JSON
 login requests, response statuses/redirects and every `Set-Cookie` header separately.
 
-Local development uses one hostname consistently: `http://localhost:5173` as public
+Local development uses one hostname consistently: `http://localhost:23600` as public
 origin, `/identity` and required metadata proxied to DMS on 3001, and `/api` proxied to
 Turnstile API on 3002. The complete auth development command must run all three apps plus
 PostgreSQL. Local HTTP cookie settings are explicit development settings; production uses
@@ -1541,36 +1602,101 @@ After recovery, discard broker authority over business state: rebuild/reconcile 
 
 ### Local development
 
-Normal development runs application watch processes directly on the Linux/WSL host.
-Infrastructure runs in Docker Compose when needed. This keeps local application feedback
-fast while retaining the selected self-hosted PostgreSQL, broker, and storage products.
-Untrusted parser execution belongs in the isolated processing runtime when implemented.
+Normal development uses Docker Compose Watch with one container per implemented
+application and separate infrastructure services. The root [compose.yaml](compose.yaml)
+includes the existing local infrastructure and [development overlay](deploy/compose.dev.yaml)
+under the unchanged `turnstile-local` project name, preserving its named database/storage
+volumes. Production continues using the separate Dokploy Compose and production Dockerfiles.
+Compose owns development watching; there are no separate host Nest/Turbo development
+commands. Host builds, tests and explicit operator commands remain supported.
 
-| Command / service    | Runs where    | Current behavior                                                                                                                 |
-| -------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev`           | Host          | Turborepo starts both Nest watch processes and Vite; it does not start infrastructure or Python workers                          |
-| `pnpm dev:turnstile` | Host          | Turnstile API at `127.0.0.1:3002`, Vite at `localhost:5173`; Vite proxies `/api` to the backend                                  |
-| `pnpm dev:auth`      | Host + Docker | Validates local API configuration, ensures PostgreSQL is healthy, then watches both APIs and web with dependency rebuild/restart |
-| `pnpm dev:dms`       | Host          | DMS API at `127.0.0.1:3001`, public prefix `/v1`                                                                                 |
-| `pnpm infra:up`      | Docker        | Local PostgreSQL, RabbitMQ and SeaweedFS using `deploy/compose.local.yaml` and the root local `.env`                             |
-| `pnpm infra:down`    | Docker        | Stops/removes local infrastructure containers while preserving named volumes                                                     |
+| Command                                                  | Behavior                                                             |
+| -------------------------------------------------------- | -------------------------------------------------------------------- |
+| `docker compose up --build --watch`                      | Build/start the local stack and watch for source/dependency changes  |
+| `pnpm dev`                                               | Convenience alias for the same Docker Compose command                |
+| `docker compose ps` / `docker compose logs -f <service>` | Inspect service health and logs                                      |
+| `docker compose stop`                                    | Stop development containers without removing their data              |
+| `docker compose restart <service>`                       | Reload an existing service after private runtime configuration edits |
+| `docker compose up -d postgres mailpit`                  | Start only prerequisites for explicit first-time auth provisioning   |
 
-Both APIs expose `/health/live` outside their application prefix. Defaults work without
-application `.env` files; an override is loaded from each API's own working directory.
-Each owning process validates its settings. The root `.env` is infrastructure-only.
-`VITE_*` variables are public build-time values and must never contain secrets.
+The pinned Node/pnpm [development image](deploy/Dockerfile.dev) installs dependencies
+inside the image as the unprivileged node user. Host `node_modules`, build output,
+private environment files and Git metadata are excluded. Builds retain monorepo-root
+contexts and cached dependency layers. Application source is copied into each image;
+Compose Watch synchronizes edits without mounting host dependencies or generated output.
+The current watch rules require Compose 5.6.1 or later (validated installed version).
 
-`pnpm dev:auth` uses dependency-aware `turbo watch dev` with interruptible API tasks:
-shared packages rebuild before consuming APIs restart. It preserves separate DMS/product
-commands. Other `turbo run dev` commands still build shared packages once; use the auth
-watch command or rebuild/restart consumers manually after shared-code edits. Local auth
-preflight checks both API profiles, canonical URLs, distinct clients/secrets and database
-roles before starting PostgreSQL; it never provisions users, roles or clients. PostgreSQL
-stays running when the watch process stops. Vite proxies `/identity` and
-`/.well-known/oauth-authorization-server/identity` to DMS as well as `/api` to Turnstile;
-allowed authority paths return controlled unavailability until their database/installation
-configuration is valid; operator paths remain closed. No Docker-based app hot-reload
-workflow is configured.
+API source and shared-package changes use `sync+restart`: the affected container rebuilds
+its public dependency packages/API before executing the compiled API in the foreground.
+An API process exit therefore exits the service and the `unless-stopped` policy restarts
+it; there is no surviving Nest watcher concealing an exited API. Frontend source uses
+`sync` and Vite HMR; shared-package changes restart/rebuild its prerequisites. Manifest,
+workspace/lockfile, patch and development-Dockerfile changes rebuild images and recreate
+services. Branch checkouts are observed through their actual changed/deleted files; a
+same-content checkout needs no restart. The browser can briefly lose API access while
+services rebuild. Initial sync updates existing containers when a watch session begins.
+Health checks distinguish API auth readiness from web availability; Compose waits for
+PostgreSQL/Mailpit before starting dependent APIs. An unhealthy container alone does not
+trigger Docker's restart policy; inspect its logs to resolve configuration/schema errors.
+
+Each API mounts only its own private `.env` read-only, outside the build context. The
+[development API entry point](scripts/dev-container.mjs) requires the local profile and
+binds the API to the container interface. Development-only TCP forwarders bind loopback
+inside the API containers: canonical localhost:23600 goes to `turnstile-web:5173`,
+localhost:23603 goes to `postgres:5432`, authority localhost:23604 goes to `mailpit:1025`
+and product localhost:23601 goes to `dms-api:3001`. This preserves the existing public issuer/resource URLs,
+OAuth validation, database credentials and installation identity. Vite always uses private
+API service DNS for its development proxies and binds its listener to the container
+interface. Browser API requests use the current origin; no frontend API-base environment
+variable is required. API settings never enter the web container. The fixed web/API/infrastructure ports are published only to host loopback for local testing. Forwarders are development-only and absent from
+production entry points; Dokploy still owns production ingress/TLS.
+
+One-time role/migration/account/client/enrollment provisioning remains explicit. Normal
+startup never alters private environment files, resets accounts or migrates a database.
+Existing working local settings use the documented localhost ports; other private service
+ports require corresponding development routing. Private `.env` edits require a service
+restart, and changes to Compose service topology require restarting the Compose command;
+these files are not synced into images. Compatible branch source/dependency changes are
+automatic; missing scripts/configuration, incompatible runtime pins and schema changes
+still require fixing the reported error or explicitly applying reviewed migrations. End
+the foreground session with Ctrl+C; named volumes are preserved. Do not use `down -v`
+unless intentionally deleting local data. Python workers remain future feature work;
+RabbitMQ/SeaweedFS containers are available without claiming application integration.
+
+### Reserved local ports
+
+Turnstile owns host TCP ports **23600–23608** on this development system. Do not assign
+these ports to other applications. The bindings are fixed, not selected dynamically;
+startup must fail if another process owns one. Docker's private container ports remain
+standard because container namespaces isolate them from other installations.
+[development-ports.json](deploy/development-ports.json) records the executable reservation;
+`pnpm check:deploy` rejects drift in the Compose bindings. Changes require updating the
+architecture, mappings, runtime/operator examples and registered auth URLs together.
+
+| Service                         | Reserved host port | Private container port | Local access               |
+| ------------------------------- | ------------------ | ---------------------- | -------------------------- |
+| Turnstile web / shared identity | 23600              | 5173                   | http://localhost:23600     |
+| DMS API                         | 23601              | 3001                   | http://localhost:23601/v1  |
+| Turnstile API                   | 23602              | 3002                   | http://localhost:23602/api |
+| PostgreSQL                      | 23603              | 5432                   | 127.0.0.1:23603            |
+| Mailpit SMTP                    | 23604              | 1025                   | localhost:23604            |
+| Mailpit inbox                   | 23605              | 8025                   | http://localhost:23605     |
+| RabbitMQ AMQP                   | 23606              | 5672                   | 127.0.0.1:23606            |
+| RabbitMQ management             | 23607              | 15672                  | http://localhost:23607     |
+| SeaweedFS S3                    | 23608              | 8333                   | http://localhost:23608     |
+
+The local auth origin is `http://localhost:23600`, issuer is
+`http://localhost:23600/identity`, callback is
+`http://localhost:23600/api/auth/callback`, and DMS audience is
+`http://localhost:23601/v1`. All private local database URLs use host/forwarder port
+23603 and local Mailpit SMTP uses 23604. Existing installations need their registered
+redirect/logout/resource/issuer/enrollment bindings updated as a coordinated operator
+configuration change; changing only the web port breaks login. Preserve IDs, credentials,
+permissions, account data and enrollment state, and start a fresh sign-in afterward.
+This is not a schema migration or a reason to re-provision the installation. Automated
+isolated test fixtures may continue using ephemeral ports; they do not reserve host service
+ports or change this manual-development contract. Production ports/domains remain governed
+by the Dokploy deployment, not this development reservation.
 
 ### Linux, Dokploy, Traefik, and Nginx
 

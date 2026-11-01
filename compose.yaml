@@ -1,0 +1,6 @@
+name: turnstile-local
+
+include:
+  - path:
+      - ./deploy/compose.local.yaml
+      - ./deploy/compose.dev.yaml

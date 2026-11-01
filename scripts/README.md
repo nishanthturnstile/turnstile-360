@@ -8,8 +8,12 @@ See [architecture.md](../architecture.md#engineering-and-verification-architectu
 how these checks fit the workspace build and verification design.
 
 - `check-deploy.mjs`, invoked by `pnpm check:deploy`, validates Compose YAML and confirms
-  that declared build contexts contain their Dockerfiles. Full Compose semantics are
+  that declared build contexts contain their Dockerfiles, including inherited YAML settings.
+  It also guards the single Compose development entry point, reserved host ports and
+  separate production build/ingress configuration. Full Compose semantics are
   checked separately with `docker compose config`; container execution needs Docker Engine.
+  Pinned dependency corrections live in [patches](../patches/README.md) and are applied
+  by locked pnpm installs in host and container builds.
 - `smoke-runtime.mjs`, invoked by `pnpm test:smoke` after a build, starts both compiled API
   entry points on temporary local ports, checks application identity and liveness over
   HTTP, then stops the processes. It catches startup/module-resolution errors that a
@@ -18,9 +22,14 @@ how these checks fit the workspace build and verification design.
 - `check-auth-cli.mjs`, included in `pnpm check`, loads the authority's pure TS/ESM
   options through the pinned official CLI, generates PostgreSQL plugin metadata offline
   and removes the temporary output. It also checks the committed Drizzle schema. It does not connect to PostgreSQL or apply migrations.
-- `dev-auth.mjs`, invoked by `pnpm dev:auth`, checks local API configuration, starts/waits
-  for PostgreSQL, then runs both APIs and web with dependency-aware Turbo watching.
-  See [configuration profiles](../architecture.md#authentication-configuration-foundations).
+- `dev-container.mjs` is the local-only API entry point inside Compose. Its loopback
+  forwarders preserve the reserved localhost URLs and private database/SMTP routes;
+  it then runs the compiled API in the foreground. `dev-container.test.mjs`, included
+  in `pnpm test`, verifies canonical host/header preservation and upstream recovery.
+  `deploy/development-ports.json` fixes the host/forwarder ports; `check-deploy.mjs`
+  validates all nine Compose bindings. Compose Watch owns source synchronization, image rebuilds and per-service restarts;
+  the former host supervisor and auth startup script are removed. See
+  [local development](../architecture.md#local-development).
 
 - `provision-auth-database.mjs`, invoked by `pnpm db:provision`, is an explicit private
   operator command for fresh dedicated database roles. It never runs during API startup.

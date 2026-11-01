@@ -25,6 +25,13 @@ document/processing/business capabilities and source/data migration remain incom
 A persistent local-development authentication installation has now been provisioned and
 passes live login/recovery/logout and machine-enrollment/capability checks. Earlier feature
 verification used disposable fixtures; no real customer has been onboarded.
+The web design system and shared designer/developer guide are implemented and locally
+verified; review the live development catalogue at /design-system.
+The owner-prioritized onboarding discovery and design proposal is complete for review;
+see [the proposal](docs/onboarding_design_proposal.md) and its Version 1 inventory.
+The [implementation plan](docs/onboarding_implementation_plan.md) now defines eight
+proposed delivery packages with acceptance, verification and upgrade sequencing.
+Onboarding and Document Approval implementation remain pending product agreement.
 The technical design is maintained in [architecture.md](architecture.md).
 
 ## Updating this file
@@ -46,6 +53,310 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+ONB-PLAN-001 planning is completed (owner: Codex, 2026-11-01): audited current
+auth/provider composition, private access grants, runtime privileges, shared contracts,
+web route/request handling and test harness. Created the
+[onboarding implementation plan](docs/onboarding_implementation_plan.md) with ONB-I01–08:
+baseline/specification, contracts/persistence composition, canonical audited configuration,
+private provisioning/backend gate, web onboarding, ongoing Settings, complete-chain
+verification and coordinated existing-installation release. Mapped all ONB-R01–12;
+preserved optional units, shared configuration, separate feature readiness and private
+account management. The proposal and workspace plan now link to the ordered packages.
+Verification: pnpm check/build/test/test:integration pass on the pinned toolchain;
+build/type/API unit tasks used existing caches, 2 transport tests ran fresh, and
+13 Fastify plus 54 PostgreSQL integrations ran fresh with owned migration/bootstrap
+and runtime-role isolation. All 33 relative links/anchors in the plan, proposal and
+workspace plan resolve; package/requirement coverage, final scoped Biome and Git
+whitespace checks pass. Existing suites establish workspace health, not implementation
+of proposed onboarding. No new browser, application-image or deployed-runtime check was
+performed for this documentation-only task.
+Handoff: use ONB-I01 as the implementation starting point when authorized, then follow
+the dependency order. Exact limits/contracts become accepted architecture/specification
+in that package; broad IAM, invitations and Document Approval remain separate follow-ons.
+No planning blocker remains. No application code, schema/migration, account/secret,
+accepted architecture, customer data, deployment or commit/push/PR operation changed.
+
+ONB-001 discovery/design is completed (owner: Codex, 2026-11-01): all four Version 1
+reference areas and eight directly related screens were accessible after authorized login.
+Inspected tabs, create/edit forms, conditional selectors, downloaded CSV template,
+106-permission catalog and all 21 RACI matrix views. The field-level
+[inventory](docs/onboarding_v1_discovery.md) records functionality, overlaps and evidence
+limits. The [proposal](docs/onboarding_design_proposal.md) covers configuration
+classification, minimal organization/time-zone/root setup, optional units, provisioning
+versus bootstrap/onboarding, server readiness and permission gates, resume/waiting-user
+behavior, settings navigation, dependencies, edge cases and phased delivery. Proposed
+ONB-R01–12 are product-review requirements, not accepted implementation. A fictional
+[interactive illustration](docs/presentations/onboarding-concept.html) presents the
+screen grouping without application access or persistence. Existing architecture remains
+authoritative; no new technical decision was silently adopted.
+Verification: final pnpm check passed after document formatting; pnpm build and pnpm test
+passed with existing workspace caches (2 fresh transport cases and 43 cached API unit
+cases). pnpm test:integration passed with 13 fresh Fastify and 54 fresh PostgreSQL cases,
+repeatable owned migrations/bootstrap and runtime-role isolation. All 16 local document
+links/anchors resolve; HTML IDs/script syntax and absence of network/persistence calls
+were checked. Desktop/mobile HTML previews of entry, structure, review and settings
+states show readable layouts and no console errors. No new onboarding runtime behavior
+is implemented or tested; no new application image/deployed/customer-runtime verification
+was performed. V1 writes, SSO authentication/provider delivery, post-upload import and
+fresh-database behavior remain unverified; its SSO page reports missing server credentials.
+No V1 configuration was saved, user provisioned, invitation/test message sent or destructive
+action invoked. The owned browser tab was closed; logout was not confirmed after its
+UI action timed out. No credentials or demo contact records were written to repository docs.
+Handoff: review the proposed minimal activation boundary, setup administrator policy and
+settings grouping; agree separate Document Approval rules before implementation. No
+discovery blocker remains. No application code, schema/migration, installation credentials,
+accepted architecture, commit/push/PR, deployment or source/data migration changed in this task.
+
+Entries below preserve dated handoffs and historical commands. Follow the latest
+completed development entry and [current startup instructions](architecture.md#local-development)
+for operational commands; older entries are verification history.
+
+DS-001 is completed (owner: Codex, 2026-11-01): initialized and applied owner-selected
+shadcn preset `biekTCUvD` through CLI 4.23.0 in the existing Vite web app. Installed
+Tailwind/Vite integration and generated Base UI Maia primitives with exact dependencies.
+The existing src/index.css now owns semantic light/dark colors, local body/heading fonts
+and radius values; authentication/recovery/session states and the workspace consume shared
+controls, cards, notices and skeletons. Shared ButtonLink composes Button variants with a
+native anchor, preserving navigation semantics verified by the recovery browser regression.
+The development-only /design-system gallery renders actual primitives and states without
+account/API access. docs/design-system.md provides one designer/developer handoff and
+maintenance guide; web AGENTS.md, READMEs, workspace/tooling standards and architecture
+references are aligned. Biome supports web Tailwind directives; dependency rules resolve
+the web alias through root tsconfig.boundaries.json without weakening application boundaries.
+UI/font/icon notices ship with built assets; the proprietary root LICENSE is preserved.
+Final pnpm check/build/test/test:integration and test:browser:auth pass: 2 fresh transport
+tests, 43 recorded API unit cases (cached), 13 fresh Fastify and 54 fresh PostgreSQL cases
+plus owned migration/runtime-role isolation. All three production-profile HTTPS/STARTTLS
+browser journeys pass, including bundled fonts under CSP, keyboard access, 320px/desktop
+recovery forms, reduced motion, 20 authenticated reloads without sign-in flash, current
+session/DMS permissions, verification/recovery/reset and logout/retry behavior. Final
+Biome/whitespace checks pass. Development gallery light/dark switching, password reveal,
+320/768/1280px layouts, zero API calls/runtime errors and fixture-only visual inspection
+pass. Production assets exclude gallery code and include both font families and exact
+notices. The final production web image rebuilds; isolated non-root Nginx configuration,
+liveness and notice delivery pass. The development web image was rebuilt to include new
+source files; all seven local services run and configured health checks are healthy.
+Handoff: use http://localhost:23600 and http://localhost:23600/design-system with the
+existing Compose Watch workflow. Designers/developers maintain tokens/primitives and
+review gallery states together using the shared guide. Product pages remain light by
+default; dark preview is available in the gallery. No Figma synchronization is configured.
+No blockers remain in this scope. Existing accounts, secrets, auth authority, data,
+reserved ports and unrelated local changes are preserved. Changes remain local/uncommitted;
+no business/mobile feature, remote CI, push/PR or customer/production rollout was performed.
+
+DEV-009 is completed (owner: Codex, 2026-11-01): fixed authenticated refresh loading
+and a reproduced continuous-traffic authentication rate-limit defect. Startup now renders
+a static neutral workspace shell instead of AuthLayout until the current backend session
+is verified. Concurrent session reads share only their pending HTTP request; completion
+clears it, without persisting identity or caching authorization. /auth-unavailable now
+revalidates the session and restores a verified workspace to the canonical root URL.
+The pinned Better Auth 1.7.14 database limiter advanced lastRequest on every admitted
+request, letting continuous health/introspection traffic exhaust a budget across multiple
+nominal windows and force an idle cooldown. A new real-PostgreSQL regression failed before
+the fix (429 after the configured window) and passes afterward. Added a pnpm-managed patch
+that anchors the database window, retaining the configured maximum, atomic increment,
+persistent counters, denial and reset paths. No limiter is disabled, dependency version
+upgraded, schema/migration added, or account/secret reset. The additional authenticated
+introspection regression passes 110 continuous probes at 86/minute across multiple windows;
+existing denial/restart/forged-forwarding tests pass. Patches are documented and copied
+before development-image locked installation. Patch presence is verified in the running
+DMS container and production DMS image; private runtime settings and fixed ports remain.
+Final check/build/test/test:integration and test:smoke pass: 2 transport tests, 43 recorded
+API unit cases, 13 Fastify plus 54 PostgreSQL integrations and role/DDL isolation. All
+three isolated HTTPS browser journeys pass, including delayed bootstrap, pending-read
+coalescing, 20 authenticated reloads with one session request per reload and no observed
+auth-layout flash, and recovery from the error route to /. Final Biome/whitespace and
+root/production Compose configuration checks pass. All five Docker images rebuild;
+production API non-root/liveness, DMS patch, Nginx configuration and processing CLI checks
+pass. The latest frontend redirect adjustment was rebuilt/rechecked with browser tests.
+Architecture, patch guidance and script documentation are aligned. The owner's desktop
+runtime cannot be directly automated here; a separate preview confirmed unsigned-user
+sign-in access. Credentialed reload verification used isolated browser fixtures, not a
+password reset or new login to the owner's account. The verification preview tab is closed.
+Handoff: Compose Watch remains running at http://localhost:23600, with all seven services
+running and all configured health checks healthy. Refresh the desktop tab to pick up the
+new loading/recovery flow. Required authentication checks and rate limits remain enabled.
+Changes are local/uncommitted; no push/PR, production deployment or remote CI run in this task.
+
+DEV-008 UI recovery is completed (owner: Codex, 2026-11-01); the cause of the
+historical intermittent API 503 remains unconfirmed. The annotated tab is local desktop runtime and
+cannot be automated from this environment. A separate server preview receives the
+expected 401/IDENTITY_REQUIRED and reaches the credential form. Desktop request 503s
+were correlated with the running API; temporary diagnostics located them in OIDC
+active-token introspection rather than cookie decryption. Fresh configured-client
+introspection of the current persisted live token succeeds. The intermittent protocol
+or transport cause remains unconfirmed; no backend fix is claimed. Temporary API
+diagnostics are removed, and those backend files have no remaining changes.
+Reproduced a frontend race under development StrictMode: a delayed older 503 replaces
+a newer 401 and leaves only Try again. Fixed latest-check fencing, one bounded three-second
+automatic retry, visible-tab focus recovery and explicit sign-in access on unavailable
+screens. Existing logout generation fencing remains. Extended the real-browser journey
+with late-failure, sign-in visibility and focus/automatic/manual recovery regressions;
+aligned architecture. Controlled preview reproduction now retains the correct sign-in
+state, and the live credential form opens normally.
+Final pnpm check/build/test/test:integration and test:browser:auth pass: 2 transport tests,
+43 recorded API unit cases (cached), 13 fresh Fastify and 52 fresh PostgreSQL integrations,
+plus all three HTTPS browser journeys with the new recovery checks. Final Biome and
+whitespace checks pass. All seven services run, all configured health checks are healthy,
+and Compose Watch remains running at localhost:23600. No port, account, secret, database,
+auth-validation or production deployment changes were made in DEV-008. No commit/push/PR.
+Owner follow-up (2026-11-01): clicking Try again now shows Sign in in the desktop tab,
+confirming that recovery is accessible there. The owner then confirmed they can log in
+successfully. This is owner-reported desktop login evidence; it does not establish the
+cause of the historical introspection 503. These follow-ups changed only the progress
+record; Biome/whitespace checks passed, with runtime suites not repeated for the
+documentation-only confirmation.
+Handoff: desktop sign-in is working at localhost:23600. If an API 503 recurs, correlate that
+fresh request before claiming its underlying cause is fixed. No current desktop failure
+was reported in the owner's retry result. The temporary server preview tab opened for
+verification is closed; owner desktop tabs remain intact.
+
+DEV-007 verification is completed (owner: Codex, 2026-11-01): ran pnpm dev and
+investigated the reported alternating login 302/503 telemetry. Effective Compose and
+running container bindings use only loopback host ports 23600–23608; API public origins,
+issuer, callback, resource and database URLs match. All configured health checks pass,
+only one repository Compose Watch process runs, and twelve fresh login starts returned
+302. All 41 inspected product session envelopes were readable with the configured key;
+no key mismatch was found. The recorded local account exists, is verified, is not banned
+and has a password. The first private password input was rejected with HTTP 401; after
+the owner confirmed the email and supplied the current password through a new private
+card, the live credential/callback/session flow passed. Five consecutive complete sign-ins
+with retained cookies, current session and authenticated DMS capability checks passed.
+An authenticated session survived a product API restart; logout completed locally and
+at the authority, and subsequent session access correctly returned 401. All three
+isolated HTTPS browser journeys passed in the preceding DEV-007 validation run.
+The original intermittent 503 was not reproduced after correct credentials were supplied;
+its cause remains unconfirmed, so this is verification evidence rather than a claimed
+503 fix. Existing telemetry groups login start and callback under product.login, and
+HTTP 200 token issuance alone does not establish a product session. No speculative auth
+behavior change, account reset, password/secret rotation or deployment was made. Only this
+progress record changed in DEV-007; Biome and whitespace checks pass. Temporary validation
+script and private password input copies are removed after use; installation credentials,
+backups and data remain intact.
+Handoff: pnpm dev remains running at http://localhost:23600. Use a fresh sign-in with the
+confirmed account/password. If 503 recurs, capture its new request ID and the failing
+step/time to correlate with that running API instance; do not infer a port conflict from
+this historical log. No commit/push/PR operation was performed.
+
+DEV-006 is completed (owner: Codex, 2026-11-01): audited development/build/deploy
+callers and removed obsolete per-API Nest watch commands and Turbo overrides, the unused
+root Turbo dev task and infrastructure aliases, frontend preview command, unused
+VITE_API_BASE_URL example/build arguments and Vite host-proxy fallback. Compose Watch is
+the sole full-stack development entry point; production Dockerfiles/Dokploy, CI builds,
+host checks and explicit operator commands remain supported. Updated architecture,
+startup/component/standards/runbook docs and marked original plan/handoff evidence as
+historical. CI now builds the development image alongside all four production images.
+Deployment guards resolve YAML merge anchors (previously inherited builds were skipped),
+validate reserved bindings/project identity and reject obsolete development entry points
+or development watch/ports in production configuration.
+All required pnpm check/build/test/test:integration commands and test:smoke pass locally:
+2 fresh loopback tests, 43 recorded API unit cases (cached), 13 fresh Fastify and 52 fresh
+PostgreSQL integrations plus migration/runtime-role isolation. Root/production Compose
+configuration and final Biome/whitespace checks pass. All five Docker images rebuild;
+both production API images pass non-root compiled-entry HTTP checks, web passes non-root
+Nginx liveness/SPA/assets/CSP checks, and processing passes its packaged CLI check.
+Live validation also found blank required values in both private API runtime files
+(reason for the earlier replacement is unconfirmed). Backed up those files privately and
+restored only missing values from the existing installation backup, translating restored
+local database URLs to reserved port 23603. Kept current nonblank settings, accounts,
+passwords, credentials and installation identity; no database writes/migrations or secret
+rotation were performed by this recovery. Private snapshots remain outside Git with
+restricted permissions. Both API auth readiness checks, canonical discovery/login
+redirect, real machine token/DMS capabilities and Compose source sync/Vite HMR pass.
+All seven local services run; all six configured Docker health checks are healthy.
+No legacy host development processes remain and the original PostgreSQL volume is retained.
+Handoff: Compose Watch remains running at http://localhost:23600. Start with
+`docker compose up --build --watch` or its `pnpm dev` alias. No cleanup blockers remain;
+password login, remote CI and actual Dokploy/pilot deployment were not repeated. Changes
+remain local/uncommitted; no push/PR operation, unrelated resource deletion or backup purge.
+Follow-up notification check (2026-11-01, Codex): the earlier port-change background
+command reported exit 130 (interrupt). Rechecked the current stack: all seven services
+run, all configured health checks are healthy, and web plus both auth readiness endpoints
+return HTTP 200. No repair or restart was needed; the current Compose Watch session remains running.
+
+DEV-005 is completed (owner: Codex, 2026-11-01): reserved fixed loopback host
+ports 23600–23608 for web, DMS API, product API, PostgreSQL, Mailpit SMTP/inbox,
+RabbitMQ AMQP/management and SeaweedFS S3. Docker keeps its isolated private listener
+ports. Added deploy/development-ports.json, aligned Compose/forwarders/examples/docs,
+reserved the range in AGENTS.md and added deployment checks for all bindings and the
+pilot inbox. Startup has no fallback to default/random host ports. All nine host ports
+bound successfully; application containers and configured infrastructure health checks pass.
+Public auth is now http://localhost:23600; DMS audience/transport uses localhost:23601/v1.
+Backed up private runtime/operator files and endpoint bindings before transactionally
+updating only this installation's OAuth metadata, redirect/logout/resource links and DMS
+issuer/enrollment bindings. Immediate foreign keys remained enforced, no persistent DDL,
+new roles, re-enrollment, password or secret rotation was performed. Client credentials,
+scopes, IDs, active status, key/receipt identities and the original PostgreSQL volume are
+preserved; local operator database URLs now use 23603 and SMTP uses 23604. The current
+private installation record is updated; historical reports remain historical.
+New-origin discovery, real machine token/DMS access, browser-style authorization to the
+sign-in form, old-callback rejection, SMTP handshake, AMQP reachability and Vite HMR pass.
+All required workspace checks pass (2 transport checks, 43 recorded API unit cases,
+13 Fastify and 52 fresh PostgreSQL integrations with isolation checks). Password login
+and production/pilot rollout were not repeated. Handoff: Compose Watch remains running;
+use http://localhost:23600 and a fresh sign-in. Start with docker compose up --build --watch
+or pnpm dev; other applications must avoid 23600–23608. Credentials and data are retained,
+and private backups/current binding reports remain outside Git with restricted permissions.
+No blockers, commit/push/PR operation or target deployment in this task.
+
+
+DEV-004 is completed (owner: Codex, 2026-11-01): the owner selected Docker Compose
+with per-service hot reload. Root Compose includes the original infrastructure and a
+separate development overlay/image, preserving the turnstile-local project, PostgreSQL
+volume, accounts, credentials and localhost authentication addresses. pnpm dev aliases
+`docker compose up --build --watch`; removed redundant host dev:auth/dev:dms/dev:turnstile
+entry points and the old auth bootstrap, and discarded the unpublished host supervisor.
+API/shared source sync rebuilds before container restart, web source uses Vite HMR and
+manifest/lockfile changes rebuild images. Local-only loopback routing preserves issuer,
+resource, PostgreSQL and Mailpit connectivity without changing auth validation. Each API
+mounts only its own private .env; frontend/image privacy and unprivileged execution pass.
+Docker Desktop rejected publishing the former host API port; keeping APIs private on the
+Compose network resolved this, with only web/infrastructure ports published to loopback.
+Corrected the image's complete workspace-manifest copy to prevent runtime reinstallation.
+Live API source edits, shared rebuilds, frontend HMR, manifest-triggered image recreation
+and process-crash restart/auth recovery passed; all three application containers are healthy.
+Canonical discovery, real machine token issuance and authenticated DMS capabilities returned
+200. Password login was not repeated in this task; no password or account was changed.
+Required check/build/test/integration commands passed, including 2 new loopback transport
+checks, 43 recorded API unit cases and 65 fresh Fastify/PostgreSQL integration cases with
+role/DDL isolation. Updated architecture, startup/runbooks, component docs and CI Compose
+validation. Handoff: Compose Watch remains running and the web is at localhost:5173.
+Use the single Docker command above (or pnpm dev); stop with Ctrl+C/docker compose stop.
+Private environment edits require service restart, topology edits require restarting the
+Compose command, and migrations remain explicit. Source/dependency changes on compatible
+branches are automatic; broken code/configuration and schema/runtime incompatibility still
+require correction. No runtime credentials, installation data or production deployment
+were changed; no commit, push or PR operation was performed in this task.
+
+
+STATUS-002 is completed (owner: Codex, 2026-11-01): reviewed the recorded auth
+verification, architecture and ordered DMS requirements. The local authentication chain is
+implemented and verified; target customer provisioning and ingress/DNS/TLS/email delivery
+remain rollout work. Recommended next milestone: DMS document foundations, first checking
+and completing applicable API-contract/audit gaps (groups 03–04), then document registry
+(group 05) and admission policies (group 06), before uploads (group 07), durable work,
+security assessment/publication and retrieval. AUTH-01–07 completion does not declare all
+requirements in groups 01–04 complete. Turnstile business screens still require agreement
+on the first workflow and roles. Handoff: recommendation only; no new feature, schema,
+remote publication or deployment started. Only this progress entry changed in this task;
+Biome and whitespace checks passed. Runtime suites were not repeated for planning notes.
+
+AUTH-DEV-003 is completed (owner: Codex, 2026-11-01): restored local auth after
+switching branches while development was running. On branch development, Vite/product
+were listening but the authority on port 3001 was absent; product readiness returned
+503 authority_unavailable. The prior command was plain `pnpm dev`; the exact authority
+crash log was unavailable. Stopped only the identified workspace Turbo process and
+started `pnpm dev:auth`. Both APIs rebuilt with zero compilation errors, both auth
+readiness endpoints returned 200, and the real browser's Try again button followed
+login/authorization redirects to the credential form. Credentialed login was not repeated
+in this task. No auth code, credentials, accounts, roles or installation data changed.
+Required check/build/test/integration commands passed (43 cached API unit cases, 13 fresh
+Fastify and 52 fresh PostgreSQL integration cases plus isolation checks). Updated the
+branch-switch procedure in the authentication runbook. Handoff: development remains
+running under `pnpm dev:auth`; stop it before future branch changes, install locked
+dependencies when manifests/lockfile change, then restart that command and begin a fresh
+login. No remote deployment or PR changes were performed.
 
 STATUS-001 is completed (owner: Codex, 2026-11-01): reviewed the current web UI,
 authentication plan/runbook, architecture and DMS requirement ordering to inventory
@@ -107,19 +418,23 @@ AUTH-07 code and its earlier local verification are complete.
 Real customer/client provisioning, target Mailpit deployment and Dokploy ingress/container
 DNS/TLS verification remain pending; local evidence does not establish deployed readiness.
 
-| ID             | Status    | Owner | Scope / requirement                                                      | Next action                                                                    | Verification / remaining work                                                                                                                                                                                                         | Updated    |
-| -------------- | --------- | ----- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| AUTH-05        | Completed | Codex | DMS machine authorization and guarded enrollment                         | Handoff recorded below                                                         | Required workspace checks, 40 API unit cases, 61 integration cases, role/DDL matrix, compiled smoke and contract consistency passed; fixture provisioning only                                                                        | 2026-10-31 |
-| AUTH-06        | Completed | Codex | Typed machine client and real cross-service request                      | Handoff recorded below                                                         | Required workspace checks, 43 API unit cases, 63 integration cases, role/DDL matrix, compiled smoke and generated-contract consistency passed; fixture provisioning only                                                              | 2026-10-31 |
-| AUTH-07        | Completed | Codex | Login/recovery UI and operational verification                           | Handoff recorded below; target rollout pending                                 | Required checks, 43 API unit cases, 63 integration cases, three production-profile HTTPS/STARTTLS browser journeys, four image builds and isolated runtime checks passed; canonical-container probe unavailable on Docker Desktop/WSL | 2026-10-31 |
-| AUTH-FIX-001   | Completed | Codex | Preserve valid sessions during refresh overlap and fix fresh-checkout CI | PR #1 open for owner review                                                    | 65 local integration cases and required workspace checks passed; all five remote checks passed on implementation commit c70f294                                                                                                       | 2026-10-31 |
-| AUTH-LOCAL-001 | Completed | Codex | Persistent local auth installation and operational validation            | Local sign-in available; use pnpm dev:auth after stopping services             | Live local login/recovery/logout, DMS enrollment/capabilities and role isolation passed; required checks, 65 integration cases and three browser journeys passed                                                                      | 2026-10-31 |
-| AUTH-LOCAL-002 | Completed | Codex | Diagnose callback rejection and validate real local browser login        | Fresh private-window login confirmed by owner; regular-profile retry available | Browser login, reload, DMS, logout/relogin and natural refresh passed; required checks passed; stale browser sign-in state indicated, exact trigger unconfirmed                                                                       | 2026-10-31 |
+| ID             | Status    | Owner | Scope / requirement                                                         | Next action                                                                     | Verification / remaining work                                                                                                                                                                                                         | Updated    |
+| -------------- | --------- | ----- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| AUTH-05        | Completed | Codex | DMS machine authorization and guarded enrollment                            | Handoff recorded below                                                          | Required workspace checks, 40 API unit cases, 61 integration cases, role/DDL matrix, compiled smoke and contract consistency passed; fixture provisioning only                                                                        | 2026-10-31 |
+| AUTH-06        | Completed | Codex | Typed machine client and real cross-service request                         | Handoff recorded below                                                          | Required workspace checks, 43 API unit cases, 63 integration cases, role/DDL matrix, compiled smoke and generated-contract consistency passed; fixture provisioning only                                                              | 2026-10-31 |
+| AUTH-07        | Completed | Codex | Login/recovery UI and operational verification                              | Handoff recorded below; target rollout pending                                  | Required checks, 43 API unit cases, 63 integration cases, three production-profile HTTPS/STARTTLS browser journeys, four image builds and isolated runtime checks passed; canonical-container probe unavailable on Docker Desktop/WSL | 2026-10-31 |
+| AUTH-FIX-001   | Completed | Codex | Preserve valid sessions during refresh overlap and fix fresh-checkout CI    | PR #1 open for owner review                                                     | 65 local integration cases and required workspace checks passed; all five remote checks passed on implementation commit c70f294                                                                                                       | 2026-10-31 |
+| AUTH-LOCAL-001 | Completed | Codex | Persistent local auth installation and operational validation               | Local sign-in available; use pnpm dev:auth after stopping services              | Live local login/recovery/logout, DMS enrollment/capabilities and role isolation passed; required checks, 65 integration cases and three browser journeys passed                                                                      | 2026-10-31 |
+| AUTH-LOCAL-002 | Completed | Codex | Diagnose callback rejection and validate real local browser login           | Fresh private-window login confirmed by owner; regular-profile retry available  | Browser login, reload, DMS, logout/relogin and natural refresh passed; required checks passed; stale browser sign-in state indicated, exact trigger unconfirmed                                                                       | 2026-10-31 |
+| AUTH-DEV-003   | Completed | Codex | Restore auth after live branch switching                                    | pnpm dev:auth running; stop/restart before switching branches                   | Missing authority listener restored; both APIs ready 200; browser retry reaches sign-in; required workspace checks and 65 integration cases passed                                                                                    | 2026-11-01 |
+| DEV-004        | Completed | Codex | Container development with Compose Watch and single startup                 | Docker Compose watch running; use pnpm dev or docker compose up --build --watch | Live source/shared/HMR/image rebuild/crash recovery, canonical auth/machine access, required checks and 65 integration cases passed; private runtime files/data preserved                                                             | 2026-11-01 |
+| DEV-005        | Completed | Codex | Reserve non-default local service ports and migrate local endpoint bindings | Web localhost:23600; reserve 23600–23608 for Turnstile                          | All nine bindings, OAuth/issuer/DMS routes, SMTP/AMQP, HMR and required checks passed; credentials/data/active enrollment preserved                                                                                                   | 2026-11-01 |
 
 ## Completed milestones
 
 | ID            | Completed  | Result                                                                                                                                                                                                                                                        | Evidence                                                                                                                                                                                                                                                                                                                                                                         |
 | ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DS-001        | 2026-11-01 | Owner-selected shadcn preset applied to the web app; semantic tokens, reusable UI, local fonts, development gallery and designer/developer maintenance guide established                                                                                      | Required workspace checks, 54 PostgreSQL plus 13 Fastify integrations, all three HTTPS browser journeys, gallery states/layouts, production exclusion and non-root web image checks pass; local changes only                                                                                                                                                                     |
 | WSP-001       | 2026-10-31 | Git repository, pnpm workspace, Turborepo tasks, runtime pins, and lockfiles established                                                                                                                                                                      | [Root manifest](package.json), [workspace](pnpm-workspace.yaml), [task graph](turbo.json)                                                                                                                                                                                                                                                                                        |
 | WSP-002       | 2026-10-31 | DMS API and separate Turnstile API created with the Nest CLI and configured with Fastify                                                                                                                                                                      | [DMS API](apps/dms-api/README.md), [Turnstile API](apps/turnstile-api/README.md)                                                                                                                                                                                                                                                                                                 |
 | WSP-003       | 2026-10-31 | Turnstile Vite/React/TypeScript frontend created; local API proxy configured                                                                                                                                                                                  | [Web application](apps/turnstile-web/README.md), [Vite configuration](apps/turnstile-web/vite.config.ts)                                                                                                                                                                                                                                                                         |
@@ -172,6 +487,55 @@ DOC-TEST-001 completed on 2026-10-31 (Codex): added one focused testing guidelin
 for this documentation-only change. No blockers or remaining work.
 
 ## Latest recorded verification
+
+DEV-005 verification (2026-11-01, Codex): checked and successfully bound all nine
+reserved host ports 23600–23608 under Docker Desktop/WSL. HTTP checks returned 200 for
+web, both auth-readiness endpoints, Mailpit inbox, RabbitMQ management and SeaweedFS;
+SMTP/AMQP socket handshakes passed. Container-to-public canonical discovery, existing
+client-credentials token issuance and protected DMS capabilities returned 200 at the new
+addresses. Browser-style HTTP authorization redirects use the exact new callback and
+reach the sign-in form; the old callback is rejected with invalid_redirect. Actual Vite
+WebSocket HMR works on 23600 and the temporary source probe was restored. PostgreSQL
+retains turnstile-local_postgres-data; private old/new configuration comparison confirmed
+credentials, role names, database identity and other non-address settings unchanged.
+A bounded single-transaction local metadata update retained FK checks and active enrollment
+state; no account or schema migration was needed. pnpm check/build/test/test:integration
+passed; 2 transport tests, 43 recorded API unit cases, 13 Fastify and 52 fresh PostgreSQL
+integration cases plus role/DDL isolation are recorded in the command logs. Root/default
+Compose configuration, the fixed-port/pilot binding guards and Git whitespace checks pass.
+Credentialed browser login, target deployment and pilot STARTTLS were not rerun. A final
+Docker snapshot briefly showed product readiness unhealthy; it recovered without restart.
+Subsequent direct API/issuer/JWKS requests and successive Docker health checks passed.
+The exact transient trigger was not established; no persistent failure was reproduced.
+Local services/watch remain running on the new addresses, with no outstanding blocker.
+
+DEV-004 verification (2026-11-01, Codex): Docker Engine 29.9.2/Compose 5.6.1 built
+and ran the separate development application images. Real Compose Watch API source sync,
+shared dependency rebuild/restart, Vite WebSocket HMR, manifest-driven image rebuild and
+restoration, and a deliberately killed API process all recovered to three healthy app
+containers. Startup/restarts after the manifest-copy correction performed no runtime
+installation. Canonical public issuer discovery and existing client-credentials/DMS access
+returned 200 from the product container. Frontend private API files/variables are absent,
+containers run as UID 1000, API host ports are unpublished and PostgreSQL retains
+turnstile-local_postgres-data. All temporary source/manifest probes were restored.
+`pnpm check`, `pnpm build` (7 projects, 4 cached), `pnpm test` (2 new transport cases plus
+43 recorded API unit cases/Python check, workspace tasks partly cached) and
+`pnpm test:integration` (13 Fastify + 52 fresh PostgreSQL cases, isolation checks) passed.
+Root/default and existing Compose configuration validation and Git whitespace checks passed.
+Password/browser login, production images/deployment and remote CI were not rerun for this
+development change. Working development containers/watch remain available; no blockers.
+
+AUTH-DEV-003 verification (2026-11-01, Codex): observed connection refusal on authority
+port 3001 and 503 authority_unavailable on product readiness while Vite/product remained
+up under plain pnpm dev. After restarting the verified workspace development process with
+pnpm dev:auth, both APIs compiled without errors and returned auth readiness 200; product
+login returned 302 to the configured authority. Real-browser Try again reached the signed
+credential form through two successful redirects. The diagnostic tab was closed.
+`pnpm check`, `pnpm build`, `pnpm test` (43 cached API unit cases and Python check), and
+`pnpm test:integration` (13 Fastify plus 52 freshly executed PostgreSQL cases and role/DDL
+isolation) passed on Node 24.21.0/pnpm 12.16.1. Build used Turbo cache; no auth source changed.
+The runbook and this handoff are the only repository changes. Full password login and
+remote CI/deployment were not repeated; the existing installation was preserved.
 
 AUTH-LOCAL-002 verification (2026-10-31, Codex): T3 shared Chromium browser drove the
 actual Vite development frontend and persistent local APIs through two email/password

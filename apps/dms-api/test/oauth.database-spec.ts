@@ -182,6 +182,26 @@ describe('managed OAuth provider and distinct clients', () => {
     vi.unstubAllEnvs();
   });
 
+  it('keeps continuous readiness introspection below its per-window budget available', async () => {
+    const start = Date.now();
+    const clock = vi.spyOn(Date, 'now');
+    try {
+      // 86 probes/minute is below the pinned provider limit of 100/minute.
+      // Continuous probes must renew the window without a forced idle cooldown.
+      for (let probe = 0; probe < 110; probe++) {
+        clock.mockReturnValue(start + probe * 700);
+        const response = await protocol('introspect', 'login', {
+          token: 'turnstile-readiness',
+          token_type_hint: 'access_token',
+        });
+        expect(response.statusCode).toBe(200);
+        expect(response.json().active).toBe(false);
+      }
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   it('publishes canonical discovery and creates hashed, installation-owned clients', async () => {
     const response = await app.inject({
       method: 'GET',

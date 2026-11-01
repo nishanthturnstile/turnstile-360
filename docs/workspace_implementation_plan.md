@@ -9,6 +9,14 @@ basic checks, and deployment configuration. It does not implement DMS capabiliti
 Turnstile business features, identity, database tables, document processing, or migration
 of existing source/data. Turnstile functionality will be specified separately.
 
+For the owner-prioritized onboarding work, use the
+[onboarding implementation plan](onboarding_implementation_plan.md), based on the
+completed [Version 1 discovery](onboarding_v1_discovery.md) and
+[design proposal](onboarding_design_proposal.md). Its packages cover the minimal
+setup release and ongoing settings before Document Approval; they remain proposed
+work rather than authorization or evidence of implementation. The workspace tasks
+below retain their original foundation scope and history.
+
 ## Accepted decisions
 
 The accepted component architecture, stack, ownership boundaries, web/future-mobile design,
@@ -62,6 +70,11 @@ removed. The installed Nest CLI supplies Vitest, which is retained for API ident
 SWC preserves Nest decorator metadata in Vitest; application builds use TypeScript.
 
 ## Verification and limits
+
+This section records the original 2026-10-31 foundation snapshot. Later authentication
+and Compose development work supersedes its capability and verification limits. Use
+[IN_PROGRESS.md](../IN_PROGRESS.md) for current evidence and the
+[architecture](../architecture.md#development-and-current-deployment) for current commands.
 
 Run the commands in the README. The seven application/library projects have build tasks.
 Backend tests cover application identity and the actual Fastify application wiring.

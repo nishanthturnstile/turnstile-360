@@ -24,3 +24,5 @@ allowBuilds:
   "@nestjs/core": true
   "@swc/core": true
   esbuild: true
+patchedDependencies:
+  better-auth@1.7.14: patches/better-auth@1.7.14.patch

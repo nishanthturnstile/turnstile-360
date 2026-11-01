@@ -88,8 +88,6 @@ services:
     build:
       context: ..
       dockerfile: apps/turnstile-web/Dockerfile
-      args:
-        VITE_API_BASE_URL: /api
     expose: ["8080"]
     restart: unless-stopped
     healthcheck:
