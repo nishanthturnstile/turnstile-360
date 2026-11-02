@@ -78,9 +78,9 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
-ONB-RD-CI — **In progress** (owner: Codex, 2026-11-02). Scope: resolve hosted checks
-for [PR #3](https://github.com/nishanthturnstile/turnstile-360/pull/3) and merge the
-authorized redesign after CI succeeds. On `f645dee`, both hosted checks jobs passed the
+ONB-RD-CI — **Completed** (owner: Codex, 2026-11-02). Scope: correct and verify hosted
+checks for [PR #3](https://github.com/nishanthturnstile/turnstile-360/pull/3).
+The owner also authorized merging the redesign after CI succeeds. On `f645dee`, both hosted checks jobs passed the
 workspace suites and smoke checks but failed local Compose validation: the runner's
 bundled Compose rejects `develop.watch.initial_sync`. All five image builds passed in
 both workflow events. The architecture already requires Compose 5.6.1 or later; local
@@ -94,8 +94,18 @@ application code, Compose topology and Watch semantics are unchanged.
 Verification (2026-11-02): workflow YAML/step ordering and immutable action pin validated;
 `pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` and both real Compose
 configurations pass under Compose 5.6.1. Logs use `/tmp/turnstile-redesign-ci-*`.
-Handoff: push this correction to PR #3, let hosted CI verify the action installation
-and all jobs, then merge when the current head is green. The PR remains watched.
+Hosted verification (2026-11-02): both push and pull-request workflows pass on
+`e4c168e20f060130302fe250b893af0d1b9e866c`: workspace checks, owning PostgreSQL/archive
+integration, smoke checks, both Compose validations and all five container builds.
+The PR is mergeable with no outstanding review comments. CI runs:
+[push](https://github.com/nishanthturnstile/turnstile-360/actions/runs/41487662023) and
+[pull request](https://github.com/nishanthturnstile/turnstile-360/actions/runs/41487672401).
+
+Handoff: all implementation, regression verification and the hosted Compose correction
+are complete. PR #3 is the authoritative integration record for final-head checks and
+the merge into `development`. This final record changes documentation only; application
+code, runtime configuration and migrations remain the verified candidate. Customer and
+production rollout remain separate from this authorized repository integration.
 
 ONB-RD-REVIEW — **Completed** (owner: Codex, 2026-11-02). Scope: fix and locally verify the three
 redesign review findings: untouched India suggestions after concurrent zone saves,
