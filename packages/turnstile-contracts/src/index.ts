@@ -1,9 +1,28 @@
+import { z } from 'zod';
+import { CONFIGURATION_MANAGE_PERMISSION, configurationActorSchema } from './onboarding.js';
+
 // Product permissions are assigned locally, independently of identity/operator roles.
 export const TURNSTILE_PERMISSIONS = [
   'turnstile:access',
   'turnstile:dms:capabilities:read',
+  'turnstile:configuration:manage',
 ] as const;
 export type TurnstilePermission = (typeof TURNSTILE_PERMISSIONS)[number];
+
+export const accessAssignmentSchema = z.strictObject({
+  operatorId: configurationActorSchema,
+  userId: configurationActorSchema,
+  enabled: z.boolean(),
+  permissions: z
+    .array(z.enum(TURNSTILE_PERMISSIONS))
+    .max(TURNSTILE_PERMISSIONS.length)
+    .refine((value) => new Set(value).size === value.length)
+    .refine(
+      (value) =>
+        !value.includes(CONFIGURATION_MANAGE_PERMISSION) || value.includes('turnstile:access'),
+    ),
+});
+export type AccessAssignmentDto = z.infer<typeof accessAssignmentSchema>;
 
 export interface UserSessionDto {
   user: { id: string; name: string; email: string };
@@ -42,3 +61,6 @@ export interface DmsCapabilitiesDto {
 export interface DmsIntegrationErrorDto {
   code: 'DMS_ACCESS_DENIED' | 'DMS_UNAVAILABLE';
 }
+
+export * from './onboarding.js';
+export { SUPPORTED_TIME_ZONES, TIME_ZONE_PROVENANCE } from './time-zones.js';

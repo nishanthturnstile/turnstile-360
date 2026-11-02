@@ -14,6 +14,10 @@
     "db:migrate:turnstile": "node --env-file-if-exists=.env.migrate dist/infrastructure/database/migrate.js turnstile",
     "db:bootstrap": "node --env-file-if-exists=.env.migrate dist/infrastructure/database/migrate.js bootstrap",
     "auth:set-access": "node --env-file-if-exists=.env.migrate dist/modules/auth/set-user-access.js",
+    "setup:initialize": "node --env-file-if-exists=.env.migrate dist/modules/organization/configuration-operator.js initialize",
+    "setup:verify-installation": "node --env-file-if-exists=.env.migrate dist/modules/organization/configuration-operator.js verify-installation",
+    "configuration:inspect": "node --env-file-if-exists=.env.migrate dist/modules/organization/configuration-operator.js inspect",
+    "configuration:prune": "node --env-file-if-exists=.env.migrate dist/modules/organization/configuration-operator.js prune",
     "test:database": "vitest run --config vitest.config.database.ts"
   },
   "dependencies": {

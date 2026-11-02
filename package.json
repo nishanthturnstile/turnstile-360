@@ -13,7 +13,8 @@
     "dev": "docker compose up --build --watch",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
-    "check": "biome ci . && pnpm check:boundaries && pnpm typecheck && pnpm check:python && pnpm check:deploy && pnpm check:auth:cli",
+    "check": "biome ci . && pnpm check:boundaries && pnpm check:contracts && pnpm typecheck && pnpm check:python && pnpm check:deploy && pnpm check:auth:cli",
+    "check:contracts": "turbo run build --filter=@thaarei/turnstile-contracts && node scripts/generate-turnstile-time-zones.mjs --check && node scripts/generate-turnstile-onboarding-openapi.mjs --check",
     "check:fix": "biome check --write .",
     "check:boundaries": "turbo run build --filter=@thaarei/dms-contracts --filter=@thaarei/turnstile-contracts --filter=@thaarei/dms-client && depcruise apps/dms-api/src apps/turnstile-api/src apps/turnstile-web/src packages/dms-client/src packages/dms-contracts/src packages/turnstile-contracts/src --config tooling/dependency-rules/config.cjs",
     "check:python": "pnpm --filter @thaarei/dms-processing run check",
@@ -24,8 +25,15 @@
     "check:auth:cli": "node scripts/check-auth-cli.mjs",
     "test:database": "node scripts/test-auth-database.mjs",
     "test:browser:auth": "node scripts/test-auth-database.mjs --browser",
+    "test:browser:onboarding:structured": "node scripts/test-auth-database.mjs --browser --structured-onboarding",
+    "test:images:onboarding": "node scripts/test-onboarding-images.mjs",
+    "release:rehearse:onboarding:local": "node scripts/rehearse-local-onboarding-upgrade.mjs",
+    "release:backup:onboarding:local": "node scripts/backup-local-onboarding.mjs",
+    "release:verify:onboarding:local": "node scripts/verify-local-onboarding-release.mjs",
     "db:provision": "node --env-file-if-exists=.env.provision scripts/provision-auth-database.mjs",
-    "docs:dms-auth": "pnpm --filter @thaarei/dms-contracts build && node scripts/generate-dms-auth-openapi.mjs"
+    "docs:dms-auth": "pnpm --filter @thaarei/dms-contracts build && node scripts/generate-dms-auth-openapi.mjs",
+    "docs:turnstile-onboarding": "pnpm --filter @thaarei/turnstile-contracts build && node scripts/generate-turnstile-onboarding-openapi.mjs",
+    "generate:turnstile-time-zones": "node scripts/generate-turnstile-time-zones.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",

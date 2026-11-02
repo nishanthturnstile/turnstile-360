@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-11-01
+Last updated: 2026-11-02
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -27,11 +27,18 @@ passes live login/recovery/logout and machine-enrollment/capability checks. Earl
 verification used disposable fixtures; no real customer has been onboarded.
 The web design system and shared designer/developer guide are implemented and locally
 verified; review the live development catalogue at /design-system.
-The owner-prioritized onboarding discovery and design proposal is complete for review;
-see [the proposal](docs/onboarding_design_proposal.md) and its Version 1 inventory.
-The [implementation plan](docs/onboarding_implementation_plan.md) now defines eight
-proposed delivery packages with acceptance, verification and upgrade sequencing.
-Onboarding and Document Approval implementation remain pending product agreement.
+The owner-prioritized onboarding discovery and design proposal informed the accepted
+[onboarding specification](docs/onboarding_specification.md) established in ONB-I01.
+The [implementation plan](docs/onboarding_implementation_plan.md) defines delivery,
+acceptance, verification and upgrade sequencing. ONB-I02–03 implement executable shared
+contracts/generated documentation, product persistence composition and canonical audited
+organization/setup operations with guarded HTTP and private maintenance commands.
+ONB-I04 adds protected private manager grants and backend readiness enforcement.
+ONB-I05 adds guarded resumable onboarding and ordinary waiting with typed transport.
+ONB-I06 adds ongoing canonical Settings; ONB-I07 complete-chain verification and ONB-I08
+upgrade/recovery implementation with the selected existing local release are complete.
+Production/customer target acceptance remains separate. Document Approval
+still requires separate product agreement.
 The technical design is maintained in [architecture.md](architecture.md).
 
 ## Updating this file
@@ -53,6 +60,483 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+ONB-REVIEW-FIXES staged-onboarding review follow-ups are completed (owner: DeepSeek V4.1
+Flash, 2026-11-02). Scope: GPT-6.1 Sol (high) advised the fix/validation plan; addressed all
+seven low-severity findings without changing contracts, routes, permissions, schema or
+limits. Onboarding Save and exit now submits only non-empty values, so clearing a saved
+required field preserves the saved data and pauses, while Continue still rejects empty
+required fields; Settings re-saves compare the returned revision and report "No changes to
+save."; the duplicate Structure "Set up later" link is removed in favour of the explicit
+Continue link; configuration request ids fall back once to a server-generated UUID for any
+adapter without the bootstrap generator; the snapshot depth guard uses
+`CONFIGURATION_LIMITS.depth`; and the last-manager/inspection SQL uses
+`CONFIGURATION_MANAGE_PERMISSION` parameters instead of duplicated literals. NativeSelect's
+deliberate wrapper-level `className` is documented. Added focused actor-id unit tests, a
+controller-independent route-classification/body-limit regression, and onboarding
+cleared-field plus Settings no-op browser assertions; the expanded browser journey clears
+only the disposable fixture rate-limit window before unit creation, keeping production
+limits enabled. Files: the organization service/repository/operator, `set-user-access`,
+`configuration-http` and its new spec, the configuration HTTP Fastify and PostgreSQL specs,
+`ConfigurationEditors.tsx`, the onboarding/Settings/auth browser fixtures,
+`verify-local-onboarding-release.mjs`, and the architecture/specification/design-system
+docs. Checks actually run: `pnpm check` (Biome, boundaries, time-zone/OpenAPI drift,
+typechecks, Ruff/mypy, deployment, Better Auth CLI), `pnpm build` and `pnpm test`
+(26 product API units including 4 new) pass; `pnpm test:integration` passes all 15 Fastify
+and 71 PostgreSQL cases; the full `pnpm test:browser:auth` passes under the existing
+`~/.cache/ms-playwright` browsers (onboarding, Settings, 20 reloads, all three auth
+journeys); the focused configuration-http e2e also passes standalone. No contract/OpenAPI
+regeneration was required. Changes remain local/staged; no commit, push, deployment or
+customer-target verification occurred.
+
+ONB-I08 upgrade/recovery implementation and the selected existing local release are
+completed (owner: Codex, 2026-11-02). Production/customer target acceptance remains
+outside this authorized local target. The owner selected the existing local installation
+and approved organization “Turnstile local development” / UTC. Those values are now
+saved through the supported onboarding UI and setup is activated.
+
+Implemented a private pre-onboarding installation preflight, protected local backup,
+isolated restore/upgrade preservation rehearsal and credentialed local release runner.
+The [release runbook](docs/runbooks/onboarding-release.md) supplies exact local and
+one-off production-image migration, initialization, grant, inspection, retention,
+handover and recovery commands; authentication/Dokploy docs link to it. Migrator
+credentials stay out of persistent containers and the browser. No new role, schema,
+permission, ingress service or reserved host port was introduced by I08.
+
+Captured a coherent full database/configuration backup with all three application
+writers paused. The disposable restore/upgrade rehearsal passes: original accounts,
+sessions, clients, enrollment and data survive owning migrations; initialization/grant
+repeats preserve revision/completion and runtime isolation holds. Fixed a clone startup
+race by probing TCP instead of the temporary initialization socket. Local guards reject
+production profiles/origins, remote hosts and mixed installation database names;
+focused synthetic negative checks pass. Permission-denial probes use a false predicate.
+The original installation then passed preflight, migrations and empty initialization;
+all original table digests matched before browser admission. The coordinated Compose
+rebuild leaves the authority and matching product API/web healthy at the reserved ports.
+Actual local runtime authority-read/grant-write/no-tenant denials pass.
+
+The first password was rejected and a private retry expired; neither changed grants or
+profile data. After the owner's renewed private prompt, the valid password established
+the existing account's real login. The first credentialed attempt proved ordinary-user
+waiting and backend 409 before adding manage through the supported private writer,
+preserving the account's existing baseline/capability permissions. It then saved the
+partial name, restarted the API, resumed persisted data, explicitly saved UTC, skipped
+optional structure, activated setup and verified canonical Settings, machine connectivity
+and local HttpOnly/host-only/SameSite=Lax cookies. That attempt stopped during the logout
+handover phase. A fresh supported login/readback run then passed connection/Settings,
+logout and same-account relogin with unchanged completion. Added more precise runner
+stage diagnostics; no production application behavior changed. The private password file
+was deleted after verification. Final operator readback confirms one local manager,
+exact intended permissions and durable completion even after repeat initialization.
+
+Workspace check/build/test, 18 Fastify and 71 PostgreSQL cases, isolated production
+API/web image packaging/runtime, compiled startup smoke and production Nginx/HTTPS
+browser suites pass. Browser coverage includes onboarding, Settings, 20 refresh-fenced
+reloads and all three authentication/recovery journeys. The initial formatting failure
+was repaired. The final resumed-verification rerun of `pnpm check`, `pnpm build`,
+`pnpm test` and `pnpm test:integration` passes (18 Fastify and 71 PostgreSQL cases).
+Final web and both authority/product auth-readiness probes pass.
+
+I08 handoff: retained backup, manifest, protected manager input, private operator outputs,
+candidate image IDs and release/verification records are outside the checkout at
+`~/.local/state/thaarei/turnstile-360/onboarding-releases/20261102T032532277Z`.
+`release-state.json` distinguishes the first full setup attempt from the successful
+completed-state logout/relogin run; the latter deliberately does not repeat activation.
+No re-provisioning, account/password reset, database restoration or readiness bypass
+occurred. All changes remain uncommitted and the pre-existing staged index is preserved.
+Compose Watch services remain healthy. The selected target intentionally uses local HTTP;
+production DNS/TLS, customer administrator handover and external mail delivery have not
+been verified. No production/customer rollout was performed. Detailed development logs
+are `/tmp/turnstile-onb-i08-*.log`; the protected backup is the retained recovery point.
+
+ONB-I07 complete-chain verification is completed (owner: Codex, 2026-11-01).
+Scope: map the accepted boundary evidence to existing provisioning, PostgreSQL,
+Fastify and real HTTPS browser harnesses; add focused missing regressions; verify the
+final local candidate with required suites, production images/runtime and Compose Watch
+at the reserved ports. Preserve existing installation data/credentials and staged work.
+No customer rollout, commit or ONB-I08 release action is included. Existing coverage maps
+fresh provisioning/isolation, audit rollback, idempotent creates, concurrent activation,
+last-manager contention, waiting/resume, auth refresh/logout and canonical Settings to
+the existing harnesses. Added a genuine queued activation/revocation lock barrier,
+contending unit renames with stale delete/required-value checks, explicit verified
+authority-administrator denial without local manage permission, and DMS-outage completion
+metadata readback. The outage scenario now establishes activation through supported HTTP
+instead of depending on test order. Added a separate fresh structured-onboarding browser
+mode and isolated API/web image packaging/runtime check; both reuse existing foundations.
+Added browser assertions distinguishing configuration versus auth outages while retaining
+drafts, and a saved profile that does not claim an unsent time zone was persisted.
+No runtime, schema, contract shape, dependency or permission changes. Check/build/test,
+18 Fastify and 71 PostgreSQL cases pass; only the initial build-concurrent DMS subprocess
+timed out, and the separate fresh integration rerun passes without changing its timeout.
+Both frozen production images build and pass the isolated runtime/packaging checks.
+The structured Nginx browser mode passes. Compose Watch sync/restart, reserved-port
+liveness/auth readiness, SPA/proxy/anonymous boundaries and unchanged private-data
+fingerprints pass. Stopped only the watch session, restored same-content probe timestamps
+and retained healthy local services/volumes. The persistent local database intentionally
+remains pre-onboarding; no migration or initialization was applied. The optional container
+HTTPS fixture probe reports unavailable host-network routing; real target DNS/TLS remains
+I08 verification. The full production-Nginx root-only/Settings/auth browser journey now
+passes, including the added auth/config outage distinction and truthful saved-zone
+assertions. Compiled API smoke and generated contract consistency pass. Final documentation
+formatting is corrected; no production behavior needed a fix for these added regressions.
+
+Executed I07 boundary evidence (2026-11-01):
+
+| Boundary                           | Executed evidence                                                                                                                                                                                                                         |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fresh provisioning                 | Existing disposable harness repeats owned migrations/bootstrap, initializes explicitly and provisions verified accounts/local grants; installation/tenant mismatch and privilege rejection tests pass.                                    |
+| Database integrity                 | Product PostgreSQL cases pass repeat initialization/root/restart, supported ancestry/bounds, absent/wrong tenant context, runtime privilege and transactional audit rollback checks.                                                      |
+| Authorization                      | Real BFF denies a verified authority administrator with ordinary local access but no manage permission; existing Fastify/browser cases pass readiness, permission and CSRF ordering, ordinary waiting and direct API blocking.            |
+| Concurrency and uncertain outcomes | Real lock waiters prove queued activation rechecks earlier revocation; contending rename/stale delete checks pass. Existing same-key create replay, two-manager activation, last-manager contention and lost-response browser cases pass. |
+| Browser journeys                   | Separate fresh installations pass root-only and retained site/nested-department activation. Save/exit/resume, logout/restart, ordinary waiting → available, deep links and Back pass through real HTTPS APIs.                             |
+| Failure recovery                   | Distinct configuration/auth outages retain drafts; unsent UTC is not shown as saved. DMS outage preserves exact completion, canonical configuration and session; revocation removes unauthorized editors.                                 |
+| Existing auth                      | Real refresh overlap/generation, reset/recovery, denial and complete/partial logout pass in database and all three browser journeys, including 20 no-flash reloads.                                                                       |
+| Settings                           | Canonical name/zone/units, identity-preserving rename, rejected required-field clearing, conflict/readback, root/non-leaf protection and unchanged activation pass.                                                                       |
+
+Commands/results on this candidate:
+
+- `pnpm check`: passes Biome, boundaries, generated contracts/time zones, typechecks,
+  Ruff/mypy, deployment checks and offline Better Auth CLI generation. Host build inputs
+  remain unchanged; `pnpm build` uses seven valid task caches. `pnpm test` passes the
+  fresh root routing checks and seven project tasks (six cached, product unit task fresh).
+- `pnpm test:integration`: separate final run executes all 18 Fastify cases fresh
+  (4 DMS + 14 product), then all 71 PostgreSQL cases fresh (30 DMS + 41 product), with
+  repeat owned provisioning/migration/bootstrap and runtime-role isolation checks.
+- `pnpm test:smoke`: both compiled API entry points pass real identity/liveness HTTP checks.
+- `docker build -f apps/turnstile-api/Dockerfile -t thaarei-onb-i07-api .` and
+  `docker build -f apps/turnstile-web/Dockerfile -t thaarei-onb-i07-web .`: pass frozen
+  dependency builds. Runtime image IDs are `sha256:1f93a5000e2c58e396d681d39ab4ac86135eddea180b86466c4450fc9abac418`
+  and `sha256:eef4ecfeae33f088c9811f5235914f5fb2eeeba88846d43451df8f0bc5e63589`.
+- `pnpm test:images:onboarding thaarei-onb-i07-api thaarei-onb-i07-web`: passes
+  non-root/read-only runtime, packaged migration/private-command, liveness, fail-closed
+  unconfigured API, ten SPA entries and actual CSP/referrer headers in isolated containers.
+- `AUTH_BROWSER_WEB_IMAGE=thaarei-onb-i07-web AUTH_BROWSER_API_IMAGE=thaarei-onb-i07-api pnpm test:browser:auth`
+  and the same environment with `pnpm test:browser:onboarding:structured`: both pass
+  against production Nginx assets/CSP and real production-profile HTTPS/STARTTLS APIs.
+  Both keep backend TLS verification and runtime rate-limit enforcement enabled. The optional
+  container-to-fixture discovery probe reports unavailable host-network routing in both
+  runs; actual target container DNS/TLS remains unverified and belongs in I08.
+- `docker compose watch --no-up`: verified existing services at fixed 23600–23608,
+  real same-content API sync/restart and web sync, matching source hashes, API liveness/
+  auth readiness, SPA/proxy responses and anonymous denial. Private read-only fingerprints
+  match before/after for installation, grants and encrypted sessions. No migration,
+  initialization, access grant, credential change or volume removal occurred. Watch-only
+  session stopped and probe timestamps restored; all existing services remain healthy.
+
+Final Biome and staged/unstaged whitespace checks pass; all 201 relative file targets
+in the seven changed documentation files resolve. Detailed local command logs use
+`/tmp/turnstile-onb-i07-*.log`; reports contain no
+credentials or raw signed/recovery URLs. This is local release-candidate evidence, not
+customer/Dokploy rollout evidence. No staging, commit, push or deployment occurred.
+ONB-I08 remains the next separately authorized package; it must apply the supported
+upgrade/initialization/grant sequence and verify actual target DNS/TLS and customer access.
+
+ONB-I06 ongoing Settings and basic structure is completed (owner: Codex, 2026-11-01).
+Scope: completed-workspace Home/Settings navigation, setup overview, canonical organization
+and regional editors, shared unit creation and explicit non-root rename/unused-leaf removal.
+Reuse I05 transport/editors, preserve completion, authorization and session fencing; no
+new database or People/Approval/Risk configuration. Implemented manager-only Home/Settings
+entry, canonical overview and shared name/zone/create editors under features/configuration,
+plus selected-unit rename/removal confirmation and current-readback recovery for stale or
+uncertain writes. Known non-leaves/root have no removal path; backend checks remain
+authoritative. No schema, backend, contract shape or dependencies changed. Typecheck,
+workspace check and build pass. Added a disposable real Settings browser journey covering
+two administrators, permissions, canonical updates, conflict/duplicate recovery, root and
+completion stability, cancellation and lost delete response. Its initial region fixture
+requested an alias outside the accepted pinned allowlist; corrected the fixture to an
+existing supported zone, without changing the contract. The full expanded browser suite
+now passes Settings, onboarding and all three auth journeys.
+The final revocation assertion was corrected to respect existing identity → CSRF → route
+permission precedence: changed grants rotate CSRF, so an old-token write may receive
+CSRF_REJECTED before permission denial; Refresh session then removes the unauthorized
+editor. No auth behavior was changed to accommodate the fixture.
+Verification (2026-11-01): pnpm check/build/test/test:integration and compiled test:smoke
+pass. Build rebuilt web; seven valid unit task caches were reused. Integration reran all
+18 Fastify and 70 PostgreSQL cases fresh. The real production-profile HTTPS/STARTTLS
+browser suite verifies canonical field-only PATCHes, manager-only routes/API denial,
+shared creation, two-manager rename conflict and duplicate recovery, cancel, stable root/
+completion metadata, non-leaf protection, confirmed removal and lost-delete readback,
+live revocation, 20 no-flash reloads and existing recovery/reset/logout regressions.
+Inspected Settings screenshots at desktop and 320px with reduced motion/no overflow.
+The frozen-dependency production web image builds and passes isolated non-root Nginx,
+liveness, all onboarding/Settings SPA deep links and CSP without host bindings/external
+network. Local Markdown file targets (251), the new architecture anchor, Biome and
+staged/unstaged whitespace checks pass. Architecture, plan, runbooks, README and generated
+OpenAPI status describe I06; shared removal confirmation has a fixture-only gallery example.
+DeepSeek V4.1 Flash review completed through the user's subscribed OpenCode Go model.
+It reported no confirmed High/Medium defects and three Low findings: removed parents
+remained selected, an earlier create readback marker survived a later uncertain attempt,
+and a runbook paragraph still called Settings future work. Implemented fixes use one
+current effective parent for display/new submissions, reset reconciliation inspection for
+each create/new entry, and correct the release paragraph. Added browser regressions for
+parent deletion/readback/fallback submission and two sequential uncertain creates.
+Also improved neutral readback notices, cleared the session warning after a successful
+save, added type/ancestry to unit action names, clear corrected field errors without
+stealing focus, and fall back to UTC formatting if browser time-zone formatting fails.
+The failure screen intentionally keeps separate configuration Retry and session-check
+actions; Check session refreshes identity/status while Try again reloads configuration.
+The earlier Free-model attempt stopped at quota with no verdict; the subsequent Go
+connection/catalog repair below enabled the completed requested review. No alternate
+reviewer was used. Post-fix check/build/test and all 18 Fastify/70 PostgreSQL cases pass;
+the final image build/runtime and sequential API smoke check pass. The expanded browser
+regressions exposed the fixture's shared identity introspection budget: status-only
+diagnostics confirmed three authority 429s behind the final configuration GET 503s.
+Added a fixture scenario boundary that waits a full real request window and extended
+only the full-browser command deadline; production limits/auth remain unchanged. The
+final full browser run passes all new regressions, manager revocation/restoration,
+onboarding, 20 reloads and all three authentication journeys. Final check/build/test pass
+(build and seven unit tasks reuse valid caches); the recorded fresh integration and
+final image/runtime/smoke results above remain applicable. Staged/unstaged whitespace
+checks pass. Review fixes and the requested I06 implementation are complete; ONB-I07
+complete-chain acceptance and ONB-I08 coordinated target release remain separate work.
+No commit or live deployment occurred; disposable feature fixtures remain the only
+installation state used for verification.
+
+ONB-I06-REVIEW provider connection repair is completed (owner: Codex, 2026-11-01).
+Diagnosed the actual connection mismatch: normal OpenCode v2 already had Go connected
+and advertised opencode-go/deepseek-v4.1-flash, but T3 runs an isolated OpenCode server
+under separate XDG directories with no Go connection. Using supported OpenCode auth
+export/import, transferred only the existing Go integration locally to that isolated
+server, without printing credentials or importing other accounts. Created a private
+rollback snapshot and verified other integration metadata is unchanged. The T3-owned
+OpenCode server now advertises the subscribed model. No subscription purchase, global
+default-model change, provider replacement or application change was needed. Refreshed
+only the OpenCode provider through T3's existing provider-refresh RPC, using a short-lived
+provider-scoped local session that was revoked afterward. No active session restart was
+needed. Verified the refreshed provider cache is ready with 57 models and orchestration
+capabilities now expose opencode-go/deepseek-v4.1-flash (low/high/max), alongside the
+separate Free model. A first post-import review request was rejected by the stale T3
+catalog before any child started; the catalog refresh resolves that metadata rejection.
+The subsequent requested review successfully completed on that subscribed Go model.
+No credentials or temporary access tokens were printed or added to the repository.
+
+ONB-I05 onboarding web journey is completed (owner: Codex, 2026-11-01).
+Scope: typed configuration transport, current readiness entry/routing, organization,
+optional structure/review, save/exit/resume and ordinary-user waiting. Preserve existing
+session/logout fencing and design-system/auth boundaries; Settings remains I06.
+Implementation, requested DeepSeek V4.1 Flash review, fixes and local verification are
+complete. No commit or live rollout was requested. Implemented typed
+configuration transport, session/readiness entry, Organization/Structure/Review/paused/
+waiting routes, partial save/exit, explicit revision reconciliation, same-key create
+retries and confirmed activation. The pinned shadcn CLI added NativeSelect; its normal/
+invalid states are in the development gallery. Forms use the shared design system and
+contract validation. Async editor/navigation completions are fenced after unmount/logout.
+The first complete browser journey passes: ordinary waiting, partial save/resume across
+API restart, two administrators/shared progress, real revision conflict, uncertain create
+replay, retained optional structure, root-only activation/readback, logout fencing and
+320px/reduced-motion/deep-link/Back checks. Existing auth journeys also pass. Initial
+lost-response fixture issues (route cancellation and API-fetch DNS) were fixed without
+changing runtime networking. Ephemeral fixtures from failed/interrupted runs were cleaned.
+Workspace check/build/test/integration pass, including 18 Fastify and 70 PostgreSQL
+cases. The final expanded browser run also verifies retained drafts across readiness
+outages and neutral startup until readiness returns. Mobile/desktop screenshots were
+inspected. The production web image builds and passes non-root Nginx/liveness, SPA deep
+links and CSP without host bindings. Current docs/contract references, Biome and Git
+whitespace checks pass. Repaired an earlier documentation edit that had overwritten
+the API reserved-port table row; actual Compose bindings remain unchanged.
+DeepSeek V4.1 Flash completed its read-only I05 review with no blocking/high/medium
+findings and three confirmed low-severity issues. Implemented fixes: untouched empty
+Save/exit pauses without PATCH, duplicate sibling names show an editable associated error
+without revision reconciliation, and persisted pageshow resets transient connection busy.
+Also improved first-invalid focus/error ID references, user-scoped in-flight status sharing,
+load-specific messaging, retained new-entry text, optional-step links and scroll-list keyboard
+access; leaving a step through a link confirms discarding unsaved entries. Added focused
+browser regressions for these paths.
+
+Verification (2026-11-01): post-review pnpm check/build/test/test:integration and compiled
+test:smoke pass on the pinned toolchain. The workspace build rebuilt web with six cached
+tasks; unit checks reused seven valid Turbo caches. Integration reran all 18 Fastify and
+70 PostgreSQL cases (30 DMS, 40 product) fresh. The expanded production-profile
+HTTPS/STARTTLS browser suite passes onboarding plus all three auth journeys, including
+20 reloads without a sign-in flash, CSRF, recovery/reset, logout and shared administrator
+regressions. New browser assertions verify no PATCH on untouched pause, invalid-zone focus,
+cancelled discard retaining input, real duplicate-name 409 remaining editable, and a
+synthetic persisted-pageshow event during an in-flight capabilities request restoring
+connection/sign-out controls. The latter deterministically covers the reported ordering;
+it does not claim to reproduce a browser's BFCache fetch-abort timing. Updated desktop/
+320px screenshots were inspected. Rebuilt the final production web image with frozen
+dependencies and verified isolated non-root Nginx, liveness, all setup SPA deep links and
+CSP without host bindings/external network. Biome and staged/unstaged whitespace checks
+pass; contract/documentation consistency checks remain current.
+
+Handoff: no confirmed review finding or I05 blocker remains. ONB-I06 ongoing Settings is
+next when authorized; I07 acceptance and I08 coordinated target rollout remain pending.
+This feature's state/grant/account fixtures were disposable. Existing installation data,
+credentials, ingress/ports and user-staged I01–I04 work remain intact. No commit, push,
+PR, live/customer initialization or deployment occurred. Target Linux/Dokploy DNS/TLS,
+real installation rollout and backup/restore execution remain separate release work.
+
+ONB-I04 access provisioning and backend gate is completed (owner: Codex, 2026-11-01).
+Implementation, requested review, fixes and final verification are complete. Shared strict accessAssignmentSchema requires operator
+attribution and the manage/access dependency. Private grants use the dedicated owning
+operator verifier and exact existing initialized installation, never implicit bootstrap.
+Grant changes serialize with activation, protect the final enabled local manager,
+retain replacement-array semantics, and audit effective changes atomically without
+changing configuration revision. Generated additive migration 0006 adds the bounded
+addressed-user audit subject and enabled field. Runtime grants remain read-only.
+Nest CLI generated ApplicationAccessGuard; AppModule registers it once to compose the
+existing identity/local access, mutation CSRF and route permissions before current
+backend readiness. Explicit setup/status/organization/session exemptions skip only
+readiness; unannotated handlers remain denied. Capabilities calls cannot reach machine
+issuance/DMS while incomplete. Auth/session/logout and authority-role separation remain.
+
+DeepSeek V4.1 Flash (OpenCode) reviewed all uncommitted staged/unstaged/untracked I01–I04
+changes, including new files/migrations/contracts/docs. It found no confirmed correctness,
+security, isolation or contract defects, and identified one actionable contention issue:
+readiness acquired the singleton configuration write lock. Fixed with one committed,
+non-locking completion/local-grant SELECT under tenant context; mutations/private writers
+retain shared locking and authorization rechecks. Role/installation/forced-RLS checks
+remain current, without positive safety caching. Added a real PostgreSQL regression for
+uncommitted activation, concurrent status reads, subsequent commit and live revocation.
+Also addressed optional follow-ups: safe generic 401/403 envelopes, shared retention/batch
+SQL constants, DB receipt-window/contract consistency, and grant-derived manager checklist.
+The reviewer reran 7 DB-free Fastify cases; post-fix verification below was run by Codex.
+I05/I08's web setup/waiting/error experience is deliberately deferred, as reviewed.
+
+Verification (2026-11-01): post-review pnpm check/build/test/test:integration and
+compiled test:smoke pass on the pinned toolchain. Build rebuilt product API/web after
+contract generation with five other caches; final unit run executed 22 product API,
+six contract and two transport cases fresh, with DMS/Python caches. Integration ran
+18 fresh Fastify and 70 PostgreSQL scenarios, including last-manager contention,
+activation locking, audit rollback, private command exits, strict input, committed
+non-locking status and existing BFF/encrypted refresh/logout/machine regressions.
+The initial integration fixture granted an intentionally unprovisioned administrator
+too early; the grant now occurs only at its later setup scenario, preserving that
+regression. Generated SQL/snapshots were formatted before final static checks passed.
+All three post-review production-profile HTTPS/STARTTLS browser journeys pass, including
+real pre-activation denial/API activation/capability success, recovery/reset, CSRF,
+permissions, partial logout, CSP/fonts and 20 reloads without sign-in flash. Schema
+check/no-change generation, dependency boundaries, Biome, Git whitespace, 253 local links
+across 12 changed Markdown files and 28 auth OpenAPI references pass. Architecture,
+OpenAPI status, plan, README, contract guide and runbooks describe the delivered boundary.
+The final post-review production API image builds with frozen dependencies and passes
+isolated non-root startup/liveness plus fail-closed auth readiness/configuration/business/
+session checks without host bindings. Existing local Compose health checks remain healthy.
+Handoff: ONB-I05 is next when authorized: typed browser configuration transport and the
+manager onboarding/ordinary waiting journey. Settings, complete-chain acceptance and
+coordinated target rollout remain I06–08. No actionable review finding remains. No new
+production web image or target/customer rollout was performed; all feature grants/state/migrations
+used disposable fixtures. Existing installation accounts/grants/credentials/data, root
+LICENSE/notices, ingress and ports are preserved. User-staged baseline edits remain
+intact; no commit, push, PR, private customer initialization or live rollout was performed.
+
+ONB-I03 canonical configuration and domain operations is completed (owner: Codex,
+2026-11-01). Scope: product-owned organization/setup schema and reviewed migrations,
+canonical profile/root/optional units, revisioned/audited domain operations and owning
+HTTP adapters, bounded create retries and private initialize/inspect/prune commands.
+Preserve shared auth/persistence boundaries; broad grant provisioning/last-manager policy,
+the business readiness gate and onboarding/Settings UI remain I04 onward.
+Milestone: generated Organization/Onboarding scaffolds and additive product migrations;
+implemented canonical revision/audit operations, bounded create receipts, guarded HTTP
+and private initialize/inspect/prune. The legacy grant writer now coordinates the same
+context lock without issuing configuration permission. Eleven new real-PostgreSQL cases
+and product Fastify checks pass, including contention, root-only activation, audit rollback,
+RLS/privilege limits, hierarchy/receipt bounds, retention and private command execution.
+Tests exposed synchronous validation rejection handling and Nest/Fastify string parser
+exceptions; async domain entry points and finite parser mapping now preserve safe errors.
+SQL is isolated in the repository/private operator path; dependency boundaries pass.
+Full workspace check/build/test and integration now pass: 16 Fastify and 65 PostgreSQL
+cases, including an expired-key reuse regression with more expired receipts than one
+cleanup batch. Cleanup prioritizes that key while preserving the 1,000-row bound.
+Drizzle schema check/no-change generation and compiled API smoke pass. One preceding
+run hit an unchanged DMS enrollment assertion (401 versus expected 403); the full rerun
+passed without changing DMS code. Documentation link and whitespace checks pass.
+Verification (2026-11-01): pnpm check/build/test/test:integration and test:smoke pass on
+the pinned toolchain. The final workspace build used seven caches after the database
+harness rebuilt the changed API; the production API image also rebuilt with frozen
+dependencies. Final unit checks ran 22 product API and two transport cases fresh, with
+22 DMS, six contract and Python checks cached. Integration ran all 16 Fastify and 65
+PostgreSQL cases fresh. All three real production-profile HTTPS/STARTTLS auth browser
+journeys pass, including recovery/reset, CSRF/permissions/logout, CSP/fonts and 20 reloads
+without sign-in flash. The new HTTP/database fixtures exercise the existing global guard
+with identity stubbed only in feature-specific HTTP cases; real auth remains covered by
+the unchanged BFF/browser suites. Database tests include compiled private commands,
+contention, root-only completion, audit rollback, hierarchy/receipt bounds and forced RLS.
+The production API image passes isolated non-root startup/liveness and fail-closed
+unconfigured readiness/configuration access with no host bindings. The existing local
+Compose services remain running, with configured health checks healthy; no new production
+web image or target Dokploy/customer deployment verification was performed. Schema
+check/no-change generation, dependency boundaries, Biome, Git whitespace and 233 relative
+links across 12 changed Markdown files pass. Architecture, OpenAPI status, plan, README,
+contract guide and operator runbook describe the delivered I03 boundary.
+Handoff: ONB-I04 is next when authorized: extend private access provisioning with the
+configuration permission, initialized-context/operator input, transactional access audit
+and last-manager protection, then add backend readiness gating/exemptions. No supported
+configuration-management grant is issued by I03; test-only grants use disposable fixtures.
+UI and coordinated target migration/initialization/release remain later packages. No
+baseline blocker remains. Existing installation accounts/grants/credentials/data, root
+LICENSE/notices, ingress and reserved ports are preserved. User-staged baseline changes
+remain intact; all new work is local/uncommitted, with no commit/push/PR or live rollout.
+
+ONB-I02 contracts and persistence composition is completed (owner: Codex, 2026-11-01).
+Added explicit Zod 4.6.7 to turnstile-contracts with strict configuration request/response
+schemas/DTOs, normalized Unicode names/comparison keys, bounded revisions/units/depth,
+minimal status and detailed setup, safe errors/statuses and a generated 419-zone allowlist
+with pinned Node/ICU/tz/Unicode provenance. Generated contract-only OpenAPI 3.1 and wired
+list/schema/document/reference/example/auth-catalog drift checks into pnpm check.
+The new permission is in shared contracts; current auth:set-access rejects it until I04
+provides initialization/last-manager protection. Existing auth fixture grants now name
+only their intended access/capability permissions rather than every catalog entry.
+Nest CLI generated ProductPersistenceModule/Service with the installed module/service
+schematics (`infrastructure/database/product-persistence --flat --no-spec`). That module
+owns one configured pool, runtime-role/installation checks and shutdown. Auth consumes it
+while retaining encrypted sessions, session/access RLS checks and its availability policy;
+AppModule registers the existing default-deny guard once. Typed ConfigurationException
+preserves safe domain status/envelopes through the existing filter. Architecture, package
+guide, plan, standards, API guidance, README and auth runbook are aligned.
+Verification (2026-11-01): pnpm check/build/test/test:integration and test:smoke pass on
+the pinned toolchain. Final build rebuilt contracts/product API/web; four other builds
+used caches. Final test ran 6 contract, 22 product API unit and 2 transport cases fresh;
+22 DMS unit cases and Python smoke used caches. Integration ran 14 fresh Fastify and
+54 fresh PostgreSQL cases, including shared-pool identity/limit/single shutdown, encrypted
+restart persistence, owned migrations/bootstrap, forced RLS/runtime privilege isolation,
+refresh/logout and real HTTP DMS integration. The initial integration's existing DMS
+private-command child timed out at six seconds while an image build was running; a later
+run exposed the expanded-catalog fixture grants, which were corrected before the final
+full pass. Initial Biome formatting differences and the time-zone test's unlisted alias
+were corrected; validation still uses exactly the adopted generated allowlist.
+All three real production-profile HTTPS/STARTTLS auth browser journeys pass, including
+20 reloads without sign-in flash, CSP/fonts, recovery/reset, permission/CSRF and partial
+logout. Final production API image builds with frozen dependencies; isolated non-root
+startup/liveness and fail-closed unconfigured auth readiness pass without host bindings.
+Scoped/full Biome, Git whitespace and 242 relative document links/anchors pass. No new
+production web image or target Dokploy/customer deployment check was performed; browser
+evidence used disposable database/Mailpit/HTTPS fixtures, not customer provisioning.
+Handoff: ONB-I03 is next when authorized: canonical organization/setup persistence,
+reviewed migrations, audited/revisioned domain operations and private initialization/
+inspection/retention commands. I04 then implements grant protection, feature HTTP access
+and readiness enforcement. I02 adds no domain tables/migrations, organization/setup HTTP
+handlers, gate bypass or private configuration grant. No baseline blocker remains.
+Existing installation accounts/grants/credentials/data, root LICENSE/notices, ingress and
+ports are preserved. User-staged baseline changes are preserved; this work remains local
+and uncommitted, with no commit/push/PR or target deployment operation.
+
+ONB-I01 implementation baseline is completed (owner: Codex, 2026-11-01).
+Created the accepted [onboarding specification](docs/onboarding_specification.md) with
+unchanged ONB-R01–12 IDs and acceptance journeys. Adopted root-only activation, private
+verified administrator provisioning, narrow configuration authority and fixed Site/Department
+labels. architecture.md now owns exact normalization/time-zone/body/unit/depth limits,
+HTTP/permission/error projections, partial saves, revisions, bounded unit-create retries,
+completion/grant locking, audit retention and private initialization/grant/maintenance
+contracts. Aligned the implementation plan, proposal, workspace plan, README and both
+operator/deployment runbooks; future commands/limits are explicitly not installed yet.
+Verification: pnpm check/build/test/test:integration pass on Node 24.21.0, pnpm 12.16.1
+and pinned uv/Python. All seven build tasks and API unit/type tasks used existing caches;
+2 transport cases ran fresh, with 43 API unit cases replayed. Integration ran 13 fresh
+Fastify and 54 fresh PostgreSQL cases plus repeatable owned migration/bootstrap and
+runtime privilege isolation. Initial check found new Markdown table formatting differences;
+scoped Biome formatting corrected them and the full check passed afterward. Relative
+document links/anchors and all twelve requirement/plan mappings resolve; final scoped
+formatting and Git whitespace checks pass. Existing suites establish repository health,
+not implemented onboarding. No new browser, application-image or deployed-runtime check
+was performed for this documentation-only package; target release evidence remains I08.
+Handoff: ONB-I02 is next when authorized: executable shared schemas/time-zone allowlist,
+generated feature OpenAPI/consistency checks and shared product persistence composition,
+preserving auth/session behavior. Feature schema/migrations and private operations start
+in I03; grant/readiness enforcement in I04. No baseline blocker remains. Custom terminology,
+broad IAM, invitations and Document Approval remain separate follow-ons. No application
+code, dependency, schema/migration, installation account/grant/secret/data, deployment or
+commit/push/PR operation changed. Work remains local/uncommitted.
 
 ONB-PLAN-001 planning is completed (owner: Codex, 2026-11-01): audited current
 auth/provider composition, private access grants, runtime privileges, shared contracts,

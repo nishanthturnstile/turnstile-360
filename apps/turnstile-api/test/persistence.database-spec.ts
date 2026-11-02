@@ -6,6 +6,8 @@ import { createApplication } from '../src/bootstrap.js';
 import { parseProductEnvironment } from '../src/infrastructure/auth-environment.js';
 import { bootstrapInstallation } from '../src/infrastructure/database/migrate.js';
 import { withTenant } from '../src/infrastructure/database/postgres.js';
+import { ProductPersistenceModule } from '../src/infrastructure/database/product-persistence.module.js';
+import { ProductPersistenceService } from '../src/infrastructure/database/product-persistence.service.js';
 import { PostgresSessionStore } from '../src/modules/auth/persistence/postgres-session-store.js';
 import { ProductDatabaseService } from '../src/modules/auth/product-database/product-database.service.js';
 
@@ -20,6 +22,11 @@ describe('owned product persistence', () => {
   async function start() {
     app = await createApplication(false);
     const database = app.get(ProductDatabaseService);
+    const persistence = app
+      .select(ProductPersistenceModule)
+      .get(ProductPersistenceService, { strict: true });
+    expect(database.pool).toBe(persistence.pool);
+    expect(persistence.pool?.options.max).toBe(config.TURNSTILE_DATABASE_POOL_MAX);
     expect(await database.ready()).toBe(true);
     if (!database.store) throw new Error('PostgreSQL session store was not configured');
     const fastify = app.getHttpAdapter().getInstance();
@@ -86,7 +93,12 @@ describe('owned product persistence', () => {
     const header = (Array.isArray(setCookie) ? setCookie[0] : setCookie)?.split(';')[0];
     expect(typeof header).toBe('string');
     if (!header) throw new Error('Session cookie was not returned');
+    const pool = app.get(ProductPersistenceService).pool;
+    if (!pool) throw new Error('Shared product pool was not configured');
+    const close = vi.spyOn(pool, 'end');
     await app.close();
+    expect(close).toHaveBeenCalledTimes(1);
+    await expect(pool.query('SELECT 1')).rejects.toThrow('Cannot use a pool after calling end');
     await start();
     const restored = await app.inject({
       method: 'GET',

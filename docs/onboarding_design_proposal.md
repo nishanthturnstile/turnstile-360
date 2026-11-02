@@ -1,6 +1,6 @@
 # Turnstile 360 onboarding and workspace configuration proposal
 
-**Status:** Proposed for product review. **Date:** 2026-11-01.
+**Status:** Design source; first-release baseline adopted by ONB-I01. **Date:** 2026-11-01.
 
 Recommend a short, resumable setup for the installation's existing organization:
 confirm its name and time zone, optionally add operating units, then review and
@@ -16,10 +16,12 @@ shows the proposed grouping and conditional screens with fictional data; it has
 no application connection or persistence. No application implementation, schema,
 migration, customer provisioning or Version 1 data migration is included.
 
-The [implementation plan](onboarding_implementation_plan.md) translates this proposal
-into ordered work packages, contract/persistence integration, acceptance checks and
-an existing-installation rollout. It does not begin implementation or change this
-proposal's review status.
+The accepted [onboarding specification](onboarding_specification.md) now owns ONB-R01–12
+and the first-release boundary. Its [architecture baseline](../architecture.md#onboarding-implementation-baseline)
+finalizes technical decisions; the [implementation plan](onboarding_implementation_plan.md)
+sequences delivery and verification. This proposal remains discovery/design rationale,
+including broader future ideas; those ideas are not additional release requirements.
+In particular, custom terminology, optional-task reminders and broad IAM remain deferred.
 
 ## Product context and scope
 
@@ -446,31 +448,18 @@ report container/deployed verification separately.
 
 ### Proposed product acceptance requirements
 
-These proposed ONB-R IDs belong to this design proposal pending product agreement;
-they do not change existing DMS FR IDs or imply implementation.
-
-| ID      | Proposed acceptance requirement                                                                                                       |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| ONB-R01 | Configure only the installation's existing customer; reject tenant selection or mutation                                              |
-| ONB-R02 | Require verified identity, current local access and explicit setup permission to edit/complete setup                                  |
-| ONB-R03 | Activate from valid name, confirmed time zone and one stable organization root; sites and departments are optional                    |
-| ONB-R04 | Persist shared progress across sessions/devices and show the first unmet required item                                                |
-| ONB-R05 | Enforce incomplete-setup restrictions in the backend with explicit setup/account exemptions and a waiting-user experience             |
-| ONB-R06 | Save changes against a current revision; complete setup atomically with repeat-safe outcomes and attributable audit                   |
-| ONB-R07 | Use the same canonical configuration and validation for onboarding and ongoing Settings                                               |
-| ONB-R08 | Keep module readiness separate from global setup; missing feature policy blocks only the applicable operations                        |
-| ONB-R09 | Preserve installation/authority/DMS ownership and service-secret boundaries; no runtime bootstrap or implicit administrator           |
-| ONB-R10 | Provide accessible responsive steps, explicit save/error states, optional-step skip and recovery from interruptions                   |
-| ONB-R11 | Preserve required core settings after activation and protect against removing the last eligible product administrator                 |
-| ONB-R12 | Keep completed organizations usable when optional tasks or modules are introduced; define any mandatory upgrade transition explicitly |
+ONB-I01 carries all twelve IDs, unchanged, into the accepted
+[product requirements](onboarding_specification.md#product-requirements). That specification
+now owns their definitions and release acceptance. The DMS FR IDs remain unchanged;
+acceptance does not imply that onboarding code has been implemented.
 
 ## Decisions for product review
 
 The recommended defaults are concrete enough to review without further discovery:
 organization-wide operation is valid; name/time zone are the only mandatory business
 inputs; root creation is automatic; units are optional; initial accounts remain
-controlled; team invitations follow activation; and Document Approval has its own
-readiness gate. Confirm these choices before implementation.
+controlled; and Document Approval has its own readiness gate. ONB-I01 adopts these
+choices in the specification. Team invitations remain a separately authorized follow-on.
 
 Document Approval still needs decisions on reviewer versus approver roles, allowed
 self-approval, single/multiple stages and quorum, site/department scope, rejection

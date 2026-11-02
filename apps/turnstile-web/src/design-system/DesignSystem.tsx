@@ -21,6 +21,7 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from '@/components/ui/input-group';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
@@ -55,6 +56,7 @@ const swatches = [
 export default function DesignSystem() {
   const [dark, setDark] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [removed, setRemoved] = useState(false);
   return (
     <div className={cn('design-system', dark && 'dark')}>
       <main className="design-system-content">
@@ -72,6 +74,35 @@ export default function DesignSystem() {
           </Button>
         </header>
         <Separator />
+        <section aria-labelledby="select-heading" className="flex flex-col gap-4">
+          <h2 id="select-heading" className="section-title">
+            Native selection
+          </h2>
+          <FieldGroup className="max-w-sm">
+            <Field>
+              <FieldLabel htmlFor="gallery-zone">Time zone</FieldLabel>
+              <NativeSelect className="w-full" id="gallery-zone" defaultValue="">
+                <NativeSelectOption value="">Choose a time zone</NativeSelectOption>
+                <NativeSelectOption value="UTC">UTC</NativeSelectOption>
+              </NativeSelect>
+              <FieldDescription>
+                Use a native selector for a finite supported list.
+              </FieldDescription>
+            </Field>
+            <Field data-invalid>
+              <FieldLabel htmlFor="gallery-unit">Unit type</FieldLabel>
+              <NativeSelect
+                className="w-full"
+                id="gallery-unit"
+                aria-invalid
+                aria-describedby="gallery-unit-error"
+              >
+                <NativeSelectOption>Choose a type</NativeSelectOption>
+              </NativeSelect>
+              <FieldError id="gallery-unit-error">Choose a supported unit type.</FieldError>
+            </Field>
+          </FieldGroup>
+        </section>
         <section aria-labelledby="colors-heading" className="flex flex-col gap-4">
           <h2 id="colors-heading" className="section-title">
             Semantic colors
@@ -227,6 +258,36 @@ export default function DesignSystem() {
               </CardContent>
             </Card>
           </div>
+        </section>
+        <section aria-labelledby="configuration-heading" className="flex flex-col gap-4">
+          <h2 id="configuration-heading" className="section-title">
+            Configuration confirmation
+          </h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <h3>Remove unit?</h3>
+              </CardTitle>
+              <CardDescription>
+                Confirm the addressed unit before removal. Configuration forms use explicit
+                save/cancel.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Example department · Main organization / Example site</p>
+              {removed && (
+                <Notice success message="Example removal confirmed. No data was changed." />
+              )}
+            </CardContent>
+            <CardFooter className="flex flex-wrap gap-3">
+              <Button variant="destructive" disabled={removed} onClick={() => setRemoved(true)}>
+                Remove unit
+              </Button>
+              <Button variant="outline" onClick={() => setRemoved(false)}>
+                {removed ? 'Reset example' : 'Cancel'}
+              </Button>
+            </CardFooter>
+          </Card>
         </section>
         <section aria-labelledby="feedback-heading" className="flex flex-col gap-4">
           <h2 id="feedback-heading" className="section-title">

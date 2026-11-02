@@ -66,8 +66,14 @@ globally by the application configuration.
 ## Verification
 
 `pnpm check` runs Biome, dependency rules, TypeScript checks, Python checks, and deployment
-YAML/path checks and offline Better Auth CLI generation. `pnpm build` builds all seven
-workspace projects. `pnpm test` runs API identity/auth configuration tests and the Python
+YAML/path checks and offline Better Auth CLI generation. `pnpm check:contracts`, included
+in `pnpm check`, verifies the pinned shared time-zone list and generated onboarding
+OpenAPI/examples/references against the
+executable contracts, including the existing auth permission enumeration. Regenerate with
+`pnpm generate:turnstile-time-zones` and `pnpm docs:turnstile-onboarding` after deliberate
+contract changes; generated feature contracts do not imply implemented HTTP handlers.
+`pnpm build` builds all seven workspace projects. `pnpm test` runs shared contract/API
+identity/auth configuration tests and the Python
 entry-point smoke check. `pnpm test:integration` runs
 Fastify injection tests using the same application factory as production entry points.
 Auth foundation coverage includes unavailable readiness and Fastify cookie/session plugin

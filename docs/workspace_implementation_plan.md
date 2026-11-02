@@ -12,9 +12,10 @@ of existing source/data. Turnstile functionality will be specified separately.
 For the owner-prioritized onboarding work, use the
 [onboarding implementation plan](onboarding_implementation_plan.md), based on the
 completed [Version 1 discovery](onboarding_v1_discovery.md) and
-[design proposal](onboarding_design_proposal.md). Its packages cover the minimal
-setup release and ongoing settings before Document Approval; they remain proposed
-work rather than authorization or evidence of implementation. The workspace tasks
+[design proposal](onboarding_design_proposal.md). ONB-I01 establishes the accepted
+[onboarding specification](onboarding_specification.md) and linked architecture baseline.
+The remaining packages cover minimal setup and ongoing settings before Document Approval;
+their descriptions do not authorize or establish implementation. The workspace tasks
 below retain their original foundation scope and history.
 
 ## Accepted decisions
@@ -108,9 +109,11 @@ deployment/routing still have no verification recorded. See the progress file fo
 
 ## Subsequent implementation
 
-Define Turnstile's business functionality and migration source before creating its domain
-modules or data migrations. Implement the DMS in the accepted requirement dependency
-order, beginning with shared identity/provisioning for the installation's one customer
+Define each Turnstile capability and any migration source before creating its domain
+modules or data migrations. Onboarding now has its own accepted specification above;
+Document Approval and source/data migration remain separately unspecified. Implement the
+DMS in the accepted requirement dependency order, beginning with shared identity/provisioning
+for the installation's one customer
 tenant, as defined in the [customer deployment model](../architecture.md#customer-deployment-and-application-model).
 Add real contract schemas, JSON Schema/
 OpenAPI generation, and cross-language fixtures with those capabilities. Add coordinator,

@@ -29,6 +29,27 @@
       "when": 1793449019375,
       "tag": "0003_user_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793541624165,
+      "tag": "0004_organization_configuration",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793541624872,
+      "tag": "0005_configuration_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793544698732,
+      "tag": "0006_access_assignment_audit",
+      "breakpoints": true
     }
   ]
 }

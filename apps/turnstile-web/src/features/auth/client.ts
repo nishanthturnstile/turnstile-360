@@ -28,7 +28,24 @@ export function authMessage(code: string | undefined, status?: number) {
 }
 
 export function beginSignIn() {
-  window.location.assign('/api/auth/login');
+  const path = window.location.pathname;
+  const safe =
+    /^\/(?:[A-Za-z0-9_-]+\/?)*$/.test(path) &&
+    ![
+      '/sign-in',
+      '/forgot-password',
+      '/reset-password',
+      '/unauthorized',
+      '/session-expired',
+      '/auth-unavailable',
+    ].includes(path) &&
+    !path.startsWith('/api') &&
+    !path.startsWith('/identity');
+  window.location.assign(
+    safe && path !== '/'
+      ? `/api/auth/login?returnTo=${encodeURIComponent(path)}`
+      : '/api/auth/login',
+  );
 }
 
 export function captureResetToken() {

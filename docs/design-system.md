@@ -4,7 +4,7 @@ Designers and developers use the same working components at
 [localhost:23600/design-system](http://localhost:23600/design-system) while the
 Compose development stack is running (`pnpm dev`). The gallery includes light/dark
 preview, semantic surfaces, typography, button variants/sizes, form states, feedback
-and loading. It uses fixture text and makes no account/API requests. The gallery's
+and loading. Native selection includes normal and invalid field examples. It uses fixture text and makes no account/API requests. The gallery's
 module and route are excluded from production builds; the product currently opens
 in light mode. No theme preference is stored.
 
@@ -84,12 +84,23 @@ import { Input } from '@/components/ui/input';
 </form>;
 ```
 
+Use `NativeSelect`/`NativeSelectOption` for finite supported lists such as time zones and
+fixed unit types. Keep visible labels, associated errors and native keyboard behavior.
+`NativeSelect` applies `className` to its wrapper (which owns the full-width layout and
+the trailing icon); style the control itself through the wrapper or a future explicit
+control prop rather than expecting `className` to reach the `<select>`.
+
 Use `FieldGroup`/`Field` for forms, `FieldSet`/`FieldLegend` for related controls,
 and `FieldDescription`/`FieldError` for associated help/errors. Invalid controls need
 `aria-invalid` and `aria-describedby`; their Field needs `data-invalid`. Pending fields
 use `data-disabled` and the control's `disabled`. Password reveal composes `InputGroup`,
 `InputGroupInput`, `InputGroupAddon` and `InputGroupButton` with an accessible name and
 pressed state. Group addons never replace the input's visible label.
+
+Configuration edits use explicit save/cancel. A removal confirmation names the saved
+unit and its ancestry, with a destructive final action and an ordinary Cancel action.
+Keep the selected editor visible for validation or uncertain-response readback; never
+announce removal before the API confirms it. The gallery includes a fixture-only example.
 
 Compose cards from Header/Title/Description, Content and Footer as needed. Put a real
 heading inside `CardTitle` when it introduces a page section. Use `Notice` for shared

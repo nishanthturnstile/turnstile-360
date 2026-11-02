@@ -88,7 +88,9 @@ paths:
       summary: Read implemented document capabilities through the authorized backend
       description: >-
         Requires current parent identity, enabled local access and both turnstile:access
-        and turnstile:dms:capabilities:read. The backend uses its separate machine client,
+        and turnstile:dms:capabilities:read, followed by current completed workspace setup.
+        Incomplete setup returns SETUP_REQUIRED before a machine token or DMS call.
+        The backend uses its separate machine client,
         checks the returned installation/application binding and projects only product
         capability fields. Current format/profile/language arrays are empty. Browser
         bearer, actor and tenant headers are never forwarded. DMS errors do not end
@@ -117,13 +119,22 @@ paths:
                   - { $ref: "#/components/schemas/AuthError" }
                   - { $ref: "#/components/schemas/DmsIntegrationError" }
         "503":
-          description: Identity verification, machine-token issuance, DMS availability or response binding cannot be established. The session is retained for a later request.
+          description: Identity, configuration persistence/readiness, machine-token issuance, DMS availability or response binding cannot be established. The session is retained for a later request.
           content:
             application/json:
               schema:
                 oneOf:
                   - { $ref: "#/components/schemas/AuthError" }
                   - { $ref: "#/components/schemas/DmsIntegrationError" }
+                  - {
+                      $ref: "turnstile-onboarding.openapi.json#/components/schemas/ConfigurationUnavailable",
+                    }
+        "409":
+          description: Otherwise permitted workspace operation requires committed activation; no machine call occurs.
+          content:
+            application/json:
+              schema:
+                { $ref: "turnstile-onboarding.openapi.json#/components/schemas/SetupRequired" }
   /api/auth/logout:
     post:
       operationId: logout
@@ -216,7 +227,16 @@ components:
         permissions:
           type: array
           uniqueItems: true
-          items: { type: string, enum: ["turnstile:access", "turnstile:dms:capabilities:read"] }
+          items:
+            {
+              type: string,
+              enum:
+                [
+                  "turnstile:access",
+                  "turnstile:dms:capabilities:read",
+                  "turnstile:configuration:manage",
+                ],
+            }
         session:
           type: object
           additionalProperties: false

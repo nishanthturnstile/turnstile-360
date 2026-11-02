@@ -7,6 +7,13 @@ without a separate TypeScript build or runtime loader.
 See [architecture.md](../architecture.md#engineering-and-verification-architecture) for
 how these checks fit the workspace build and verification design.
 
+The private `release:backup:onboarding:local`, `release:rehearse:onboarding:local` and
+`release:verify:onboarding:local` commands implement the selected existing local
+installation's I08 backup, isolated preservation rehearsal and supported login/setup
+verification. Their protected inputs, destructive-action boundaries and required command
+order are in the [release runbook](../docs/runbooks/onboarding-release.md). They reject
+non-local targets and keep migrator/password inputs out of persistent containers and logs.
+
 - `check-deploy.mjs`, invoked by `pnpm check:deploy`, validates Compose YAML and confirms
   that declared build contexts contain their Dockerfiles, including inherited YAML settings.
   It also guards the single Compose development entry point, reserved host ports and
@@ -42,11 +49,19 @@ how these checks fit the workspace build and verification design.
   enrollment/capability OpenAPI contract from the built shared JSON Schemas. Regenerate
   after contract changes; use `node scripts/generate-dms-auth-openapi.mjs --check` after
   building to check the committed artifact without modifying it.
-- `test-auth-browser.mjs`, invoked only through `pnpm test:browser:auth`, reuses the
-  disposable database harness and drives three focused Chromium journeys against real
-  APIs and Mailpit. It uses production-profile HTTPS/STARTTLS, an ephemeral CA and
+- `test-auth-browser.mjs`, invoked through `pnpm test:browser:auth`, reuses the
+  disposable database harness and drives root-only onboarding, Settings and three
+  focused authentication journeys against real APIs and Mailpit.
+  `pnpm test:browser:onboarding:structured` uses the same harness in a separate fresh
+  installation for retained site/department activation, DMS outage and Settings after
+  restart. Neither mode resets completion or touches the running development data.
+  They use production-profile HTTPS/STARTTLS, an ephemeral CA and
   process-local test DNS. It neither edits global hosts nor disables backend TLS checks.
   Optional `AUTH_BROWSER_WEB_IMAGE` / `AUTH_BROWSER_API_IMAGE` values enable production
   Nginx assets and a canonical-container probe. Network unavailability is reported
   separately; TLS/metadata failures still fail. Reports omit raw URL-bearing exceptions
   and browser traces. See the [release runbook](../docs/runbooks/authentication.md#browser-operation-and-release-verification).
+- `test-onboarding-images.mjs`, invoked by `pnpm test:images:onboarding <api-tag> <web-tag>`,
+  verifies built production images in disposable non-root/read-only containers without
+  credentials, host bindings or external network. It checks API liveness/fail-closed
+  access, onboarding migrations/private command packaging, and web SPA/security headers.

@@ -1,6 +1,6 @@
 # Turnstile 360 onboarding implementation plan
 
-**Status:** Proposed execution plan. **Updated:** 2026-11-01.
+**Status:** ONB-I01 baseline accepted; ONB-I02–06 backend/onboarding/Settings foundations implemented; ONB-I07 verification implemented; ONB-I08 upgrade/recovery procedures and the selected existing local release are implemented and verified. Production target acceptance remains separate. **Updated:** 2026-11-02.
 
 Deliver onboarding and its matching settings experience as one complete release,
 built through eight reviewable work packages. An authorized administrator must be
@@ -9,11 +9,13 @@ sites or departments, activate the workspace, and maintain those same settings
 afterward. Other users must wait until activation without losing access to sign-out
 and account recovery.
 
-This plan uses the recommended defaults in the
-[design proposal](onboarding_design_proposal.md) and the observed gaps in the
-[Version 1 inventory](onboarding_v1_discovery.md). It plans implementation; it does
-not start it or mark the proposal's requirements accepted. The first package records
-the implementation baseline and its exact contracts before feature code begins.
+The [onboarding specification](onboarding_specification.md) now owns accepted ONB-R01–12
+and the first-release scope. ONB-I01 adopts the root-only activation, private provisioning
+and narrow administration baseline from the [design proposal](onboarding_design_proposal.md),
+informed by the [Version 1 inventory](onboarding_v1_discovery.md). Exact technical contracts
+and bounds are recorded in [architecture.md](../architecture.md#onboarding-implementation-baseline).
+This plan sequences delivery; it does not imply authorization or completion of later
+packages. Actual implementation and checks are recorded in [progress](../IN_PROGRESS.md).
 
 ## Scope of the first release
 
@@ -82,23 +84,17 @@ do not deploy a blocking readiness gate ahead of a usable setup route.
 
 ## ONB-I01 Implementation baseline
 
-Carry ONB-R01–12 from the proposal into a short Turnstile onboarding specification
-without renumbering the DMS FR requirements. Use the existing proposal as the product
-source until that specification is created. Confirm the recommended root-only
-activation path, controlled provisioning and narrow administration scope as the
-baseline for subsequent packages.
+The [specification](onboarding_specification.md) carries ONB-R01–12 without renumbering
+DMS FR requirements. It accepts root-only activation, controlled provisioning and narrow
+configuration administration. Custom Site/Department labels are deferred.
 
-Record adopted technical decisions in architecture.md and reference them from the
-specification, this plan and runbooks. Finalize shared field/body bounds, normalized
-name rules, unit-list/depth limits, time-zone validation, revision behavior,
-audit retention and operator initialization/grant commands. These values must be
-bounded, but this planning task does not invent configured numeric defaults.
-
-Use one new proposed permission, `turnstile:configuration:manage`, for the delivered
-core profile, regional defaults, units and setup completion. It requires
-`turnstile:access`; it does not confer user/access administration, DMS operator
-authority or document approval. Separate permissions can be introduced with later
-features rather than importing Version 1 roles now.
+The [accepted architecture baseline](../architecture.md#onboarding-implementation-baseline)
+defines field/body/name/time-zone/unit/depth bounds, routes/projections/errors, revisions,
+bounded create retries, audit retention, initialization/grant/maintenance operations and
+upgrade behavior. These are targets for subsequent code, not newly configured runtime
+limits. The new configuration-management permission and its access prerequisite are
+defined there; no Version 1 roles or broad IAM are imported. Runbooks link to those
+decisions and distinguish future command contracts from commands currently available.
 
 Acceptance: the first release can be described and tested without filling in
 Document Approval policy, complete staff directories or advanced structure. The
@@ -107,26 +103,16 @@ sequence are explicit. No schema is added in this package.
 
 ## ONB-I02 Contracts and persistence composition
 
-Add new shared schemas to `packages/turnstile-contracts/src` using the repository's
-existing Zod selection. The package currently has no validation runtime dependency;
-add it explicitly when these schemas are implemented. Keep contracts independent
+Shared schemas in `packages/turnstile-contracts/src` now use the repository's
+explicit pinned Zod dependency. Keep contracts independent
 of Nest, PostgreSQL, Node-only APIs and React. Define field validation, mutation
 requests, normalized responses, revisions, setup requirements and errors once.
 
-The following routes are proposed names to finalize in I01. They avoid separate
-wizard copies of organization data:
-
-| Route                                | Purpose                                                               | Access during incomplete setup                                                                          |
-| ------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `GET /api/workspace/status`          | Minimal current readiness and whether this caller can manage setup    | Current product access; ordinary users receive no organization configuration or administrator directory |
-| `GET /api/setup`                     | Detailed checklist, completion metadata and recommended required step | Configuration manager                                                                                   |
-| `POST /api/setup/complete`           | Validate and atomically complete setup                                | Configuration manager; CSRF                                                                             |
-| `GET /api/organization`              | Canonical profile, time zone and current revision                     | Configuration manager                                                                                   |
-| `PATCH /api/organization`            | Explicit profile/regional save                                        | Configuration manager; CSRF                                                                             |
-| `GET /api/organization/units`        | Bounded unit list with ancestry and revision                          | Configuration manager                                                                                   |
-| `POST /api/organization/units`       | Add a site or department                                              | Configuration manager; CSRF                                                                             |
-| `PATCH /api/organization/units/:id`  | Rename a supported non-root unit                                      | Configuration manager; CSRF                                                                             |
-| `DELETE /api/organization/units/:id` | Remove an unused leaf only                                            | Configuration manager; CSRF                                                                             |
+Implement the finalized [HTTP and access contracts](../architecture.md#onboarding-http-and-access-contracts).
+The status, detailed setup, completion, canonical profile and unit endpoints avoid
+separate wizard copies of organization data. Status is minimal for every permitted user;
+managers use the separate detailed projection. Shared schemas also implement the adopted
+[validation bounds and versioned time-zone list](../architecture.md#onboarding-validation-and-bounds).
 
 All configuration mutations carry the expected organization revision. A saved
 response returns the authoritative revision and data. Setup progress is derived
@@ -134,16 +120,15 @@ from canonical configuration and completion metadata; no second set of wizard
 profile fields or client-controlled “step complete” flags is stored.
 
 Distinguish invalid input, stale revision, setup required, permission denial,
-configuration unavailable and the existing auth/DMS errors. Proposed domain codes
-include `CONFIGURATION_INVALID`, `CONFIGURATION_CONFLICT`, `SETUP_REQUIRED` and
-`CONFIGURATION_UNAVAILABLE`; finalize statuses and safe field-error details in I01.
+configuration unavailable and existing auth/DMS errors using the finalized architecture
+envelopes/statuses and bounded field errors.
 For an otherwise permitted business operation, incomplete setup should yield an
 actionable conflict response, not an authentication failure. Missing route permissions
 still produce the existing denial before revealing readiness details.
 
 Generate the new feature's OpenAPI 3.1 schemas/examples from the executable contracts
 and add a consistency check. Preserve the existing authentication description and
-its protocol behavior. Document conditional manager/minimal status projections,
+its protocol behavior. Document minimal status and separate manager-only detail projections,
 CSRF headers, revision conflicts, no-store responses and repeat completion behavior.
 
 Move runtime pool ownership into a small module under the product's own database
@@ -158,6 +143,13 @@ Acceptance: packages compile, new schemas validate representative requests and
 errors, generated documentation agrees with them, and existing auth integration
 checks pass after the bounded persistence refactor. Session encryption, shutdown,
 pool limits and runtime-role validation remain intact.
+
+The implemented foundation exports schemas/DTOs and the configuration permission catalog,
+generates the [OpenAPI contract](api/turnstile-onboarding.openapi.json), and verifies
+drift through `pnpm check:contracts`. Auth consumes the shared product pool and the existing
+guard is registered once by AppModule. I03 now supplies feature modules/tables/HTTP handlers;
+I04 implements the readiness gate and private configuration grants/last-manager protection.
+Actual verification and remaining target-release evidence stay in [progress](../IN_PROGRESS.md).
 
 ## ONB-I03 Canonical configuration and domain operations
 
@@ -177,6 +169,9 @@ installation bootstrap. It creates the empty feature setup context without compl
 onboarding, making a user, or registering an application. Repeating it preserves
 existing profile, units and completion. A mismatched installation is rejected.
 Neither startup nor GET requests perform migrations or implicit operator bootstrap.
+Implement the private inspection and bounded retention commands from the same
+[operator contracts](../architecture.md#onboarding-operations-and-upgrade); maintenance
+does not remove canonical configuration or durable completion metadata.
 
 The first valid organization save creates or reuses the root in the same transaction.
 Renaming the organization updates its canonical display and root presentation while
@@ -203,8 +198,8 @@ a lost response returns the existing completion metadata after current authoriza
 without another activation. Revision conflicts on ordinary saves never overwrite
 another administrator's work. Root/unit creation also needs repeat-safe request
 identity or equivalent documented retry handling; a lost response must not create
-duplicate units. Finalize the bounded retry mechanism in I01/I02 rather than retrying
-POST automatically in the browser.
+duplicate units. Implement the [accepted receipt and reconciliation rules](../architecture.md#onboarding-consistency-and-audit)
+in I02/I03; the browser never retries POST automatically.
 
 Initial units have immutable type and parent after creation; edits rename them.
 This deliberately defers move/reparent, arbitrary taxonomy, effective dates and
@@ -225,6 +220,14 @@ Acceptance: real PostgreSQL tests demonstrate initialization/retry, one root, du
 save/resume, revision contention, repeat completion, atomic audit rollback, unit
 integrity and runtime-role/RLS enforcement. Missing initialization/schema is an
 operator availability problem, not evidence of a new tenant or completed setup.
+
+The implementation uses the [canonical persistence boundary](../architecture.md#canonical-configuration-persistence)
+and documented [private commands](runbooks/authentication.md#initialize-inspect-and-maintain-product-configuration).
+Root display derives from the profile; all effective changes and activation share the
+same revision/audit transaction. Owning HTTP adapters preserve existing auth, permissions
+and CSRF, and the legacy grant writer now coordinates its lock. I04 supplies the
+configuration grant/last-manager policy and business gate. Verification and remaining
+release work are recorded in [progress](../IN_PROGRESS.md).
 
 ## ONB-I04 Access provisioning and backend gate
 
@@ -266,6 +269,12 @@ configuration manager access to setup only with explicit rights, ordinary-user m
 status, CSRF enforcement, last-manager contention, and successful workspace access
 only after committed activation. Existing refresh/logout/local-access regressions pass.
 
+I04 implementation uses the [application guard/private grant composition](../architecture.md#access-provisioning-and-backend-readiness).
+The strict operator command and supported recovery are documented in the
+[runbook](runbooks/authentication.md#provision-local-configuration-access). The default
+business gate and explicit setup/session exemptions are delivered; target rollout waits
+for the matching UI. Actual verification and remaining work are in [progress](../IN_PROGRESS.md).
+
 ## ONB-I05 Onboarding web journey
 
 Add a guarded entry layer after successful session verification. Hold the neutral
@@ -306,6 +315,10 @@ main workspace; denied/unavailable states remain recoverable and sign-out works.
 Use the existing Base UI/shadcn controls, semantic tokens, keyboard focus and reduced
 motion conventions. Verify narrow layouts and associated field/status announcements.
 
+The I05 implementation follows the [web journey composition](../architecture.md#onboarding-web-journey)
+and existing [design system](design-system.md). Current verification and review findings
+are recorded in [progress](../IN_PROGRESS.md); no target rollout is implied.
+
 ## ONB-I06 Ongoing Settings and basic structure
 
 Provide Home and one Settings destination after activation. Settings initially
@@ -316,10 +329,8 @@ regional defaults update that profile's canonical time zone rather than a copied
 workspace setting.
 
 Configuration managers can create/rename supported units and remove only unused
-leaves, with ancestry, revision conflict handling and explicit save/cancel. If simple
-Site/Department label overrides are included, store them once in organization
-configuration; they change presentation, not type, identity, depth or permissions.
-Finalize inclusion in I01; advanced taxonomy is deferred regardless.
+leaves, with ancestry, revision conflict handling and explicit save/cancel. I01 keeps
+standard Site/Department labels fixed; label overrides and advanced taxonomy are deferred.
 
 Setup overview shows completion actor/time and links to current settings. Later
 profile/unit edits preserve completion and required invariants. No Reset onboarding
@@ -337,6 +348,9 @@ authority/UI has not implemented.
 Acceptance: changing name, zone or units in Settings is reflected on reload and in
 setup overview; root identity/completion remain stable; ordinary users cannot call
 configuration APIs; invalid/stale changes are rejected with recoverable UI feedback.
+
+I06 follows the [shared Settings composition](../architecture.md#ongoing-settings-and-basic-structure).
+Actual verification and requested review/fixes are recorded in [progress](../IN_PROGRESS.md).
 
 ## ONB-I07 Complete-chain verification
 
@@ -371,6 +385,14 @@ Acceptance: required suites, meaningful browser journeys and local image/runtime
 checks pass on the final release candidate. Record exact commands, fresh versus
 cached results, limitations and handoff in IN_PROGRESS.md rather than copying
 historical test counts into the release claim.
+
+The implemented verification composition is described in
+[architecture.md](../architecture.md#engineering-and-verification-architecture).
+Run the existing full auth browser journey and `pnpm test:browser:onboarding:structured`
+for a separate fresh optional-structure installation. Use production Nginx image mode
+for both and `pnpm test:images:onboarding <api-tag> <web-tag>` for isolated packaging/
+non-root checks; commands are in the [runbook](runbooks/authentication.md#browser-operation-and-release-verification).
+Actual I07 evidence and remaining target-release work are recorded in [progress](../IN_PROGRESS.md).
 
 ## ONB-I08 Upgrade and release
 
@@ -416,11 +438,11 @@ uses external recipients; Mailpit capture is not evidence of that delivery.
 
 ## Requirement traceability and ownership
 
-ONB-R requirements remain defined in the [proposal](onboarding_design_proposal.md#proposed-product-acceptance-requirements)
-until I01 establishes the product specification. This mapping assigns implementation
-and evidence responsibility rather than duplicating requirement definitions.
+ONB-R requirements are defined in the accepted [specification](onboarding_specification.md#product-requirements).
+This mapping assigns implementation and evidence responsibility rather than duplicating
+requirement definitions.
 
-| Proposed requirement                           | Main packages                                 |
+| Accepted requirement                           | Main packages                                 |
 | ---------------------------------------------- | --------------------------------------------- |
 | ONB-R01 fixed customer                         | I01, I03, I04, I08                            |
 | ONB-R02 explicit setup authority               | I02, I04, I07                                 |
@@ -455,6 +477,6 @@ After the first release, prioritize capabilities against the next real workflow:
 - Import, delegation, advanced organization types/dates, branding, SSO or safety
   configuration only when separately requested and specified.
 
-The immediate implementation starting point is ONB-I01, followed by contracts and
-the canonical persistence foundation. No need to repeat Version 1 discovery or
-build all of its settings before delivering this release.
+ONB-I08 executable upgrade/recovery commands are in the [release runbook](runbooks/onboarding-release.md); actual selected-local and production acceptance status is tracked in IN_PROGRESS.md.
+No need to repeat
+Version 1 discovery or build all of its settings before delivering this release.

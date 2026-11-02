@@ -67,6 +67,34 @@ Image builds and server routing require Docker Engine/Dokploy verification. Keep
 stateful services and backups independent of application redeployments as those services
 are introduced. Use compatible immutable image sets and explicit migration steps.
 
+## Onboarding release boundary
+
+The accepted [onboarding specification](../onboarding_specification.md) and
+[upgrade contract](../../architecture.md#onboarding-operations-and-upgrade) govern the
+coordinated onboarding release. ONB-I02–04 implement contracts, configuration migrations,
+private setup/grant commands and the backend gate. I05–06 deliver onboarding/waiting and
+Settings UI; I07 supplies local complete-chain verification and I08 supplies the
+[executable release and recovery procedure](onboarding-release.md);
+do not expose an intermediate backend as a complete release.
+
+Follow that procedure for coherent backup, paused product
+access, additive owning migrations, explicit incomplete initialization and a verified
+manager grant, followed by a matching API/web release. Preserve existing identities,
+sessions, unrelated permissions and enrollment. Do not deploy a blocking backend gate
+ahead of usable onboarding and Settings. Prove ordinary-user waiting, administrator
+save/restart/activation and the customer's actual login before removing staff grants.
+
+If rollout fails, remain in controlled maintenance or roll back a compatible API/web
+set. An older API alone may reopen incomplete access; preserve committed configuration
+and keys rather than bypassing setup. Destructive database restoration is a separate
+recovery decision. No new ingress service or host port is needed. The
+[authentication runbook](authentication.md#onboarding-release-boundary) identifies the
+private-operations boundary. The selected existing local installation's evidence is
+recorded in IN_PROGRESS.md; production DNS/TLS and customer handover remain separate
+target acceptance.
+
+## Runtime verification references
+
 The Nginx configuration is explained in [Frontend HTTP server](../../deploy/nginx/README.md).
 
 AUTH-07 builds all four images and verifies isolated non-root runtime startup, real

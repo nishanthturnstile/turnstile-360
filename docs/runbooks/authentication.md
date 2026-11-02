@@ -10,6 +10,34 @@ Use Node 24.21.0 and pnpm 12.16.1. Run commands from the repository root after
 `pnpm install --frozen-lockfile` and `pnpm build`. Production ingress and TLS remain
 Dokploy responsibilities; see the [deployment runbook](dokploy.md).
 
+## Onboarding release boundary
+
+ONB-I01 adopts the [onboarding specification](../onboarding_specification.md). Its
+[technical baseline](../../architecture.md#onboarding-implementation-baseline) defines
+initialization, configuration grants, inspection/retention and readiness contracts.
+ONB-I03–04 supply canonical configuration, guarded HTTP, private setup/maintenance and
+attributed access grants with last-manager protection. The backend gate is implemented;
+ONB-I05–06 supply the onboarding/waiting journey and Settings; ONB-I07 supplies local
+complete-chain verification. ONB-I08 supplies the
+[upgrade, release, handover and recovery procedure](onboarding-release.md).
+
+For delivered operations, follow the
+[operation contracts and upgrade sequence](../../architecture.md#onboarding-operations-and-upgrade).
+Follow the release procedure for executable target instructions. Apply the
+reviewed product migrations and fixed bootstrap before explicit setup initialization;
+then verify a named authority account and assign local configuration authority while
+preserving all intended permissions in the replacement array.
+No startup, GET or normal
+login initializes or completes setup. The complete API/web journey and Settings must
+ship together before the business gate is exposed to users.
+
+For an externally suspended sole administrator, recover/provision a named verified
+account through supported authority tooling, grant local configuration authority, prove
+its real login, and then remove obsolete staff access. Local last-manager protection
+cannot guarantee the external authority's eligibility. Never repair this through
+cross-schema SQL, an inferred authority role or a public bypass. Target handover remains
+pending until real access is verified on the intended deployment.
+
 ## When to run these commands
 
 Schema generation is developer work; migration and bootstrap prepare a particular
@@ -27,10 +55,15 @@ use the running APIs and existing tables. They do not run any setup commands.
 | `db:bootstrap`                       | Once per fresh installation, after migrations; repeat only to verify the same identity if needed                                                         | Records the fixed tenant/customer identity, plus the product application identity; does not create users or OAuth clients |
 | `auth:provision-user`                | For each new operator-approved account                                                                                                                   | Creates an unverified authority account and sends verification mail; does not grant product/DMS access by itself          |
 | `auth:manage-client`                 | After installation/account setup to issue clients; later for explicit inspection, rotation, suspension or machine scope changes                          | Uses supported provider APIs; never runs automatically during startup or user requests                                    |
-| `auth:set-access`                    | After account verification and login-client setup; later when explicitly granting, disabling or changing a user's product access                         | Assigns Turnstile-owned permissions using the private product migrator; no automatic role mapping from identity           |
+| `auth:set-access`                    | After account verification, fixed bootstrap and explicit setup initialization; later for deliberate local grant changes                                  | Assigns Turnstile-owned permissions using the private product migrator; no automatic role mapping from identity           |
+| `setup:initialize`                   | Once after product migrations and fixed installation bootstrap; repeat only to confirm/preserve existing setup                                           | Creates the empty canonical setup context and initialization audit; no account, grant, root or completion                 |
+| `setup:verify-installation`          | Before existing-installation migrations                                                                                                                  | Verifies the dedicated migrator and exact existing installation without requiring onboarding tables or creating state     |
+| `configuration:inspect`              | Private operator inspection after setup initialization                                                                                                   | Reads bounded configuration lifecycle/audit metadata and local manager IDs/counts; no credentials or authority directory  |
+| `configuration:prune`                | Explicit private retention maintenance after inspection                                                                                                  | Removes only expired audit/receipts in bounded batches; preserves canonical state, completion and live recovery receipts  |
 | `dms:manage-application`             | Once to register each approved machine application and issue its enrollment key; later for explicit inspection, scope changes, revocation or disablement | Changes DMS-owned registration/key policy; never runs during ordinary requests or startup                                 |
 | Enrollment HTTP request              | Once per pending consumer, after registration/key issuance; repeat the identical request only to recover an uncertain response                           | Atomically activates that application; ordinary DMS calls need only the machine token                                     |
 | `pnpm docs:dms-auth`                 | After shared DMS auth DTOs or the implemented HTTP contract change                                                                                       | Regenerates committed OpenAPI from shared JSON Schemas; does not configure an environment                                 |
+| `pnpm docs:turnstile-onboarding`     | Developer work after an onboarding contract change; `pnpm check:contracts` checks drift                                                                  | Regenerates feature API documentation; does not initialize setup, grant permission or configure an installation           |
 | `docker compose up --build --watch`  | To start an ordinary development session after environment setup                                                                                         | Starts/watches services; does not provision roles, migrate or bootstrap the installation                                  |
 
 For a **new development or pilot environment**, prepare the dedicated database and
@@ -346,6 +379,7 @@ defines cookie, token, refresh, expiry, permission and logout policy. The
 1. Apply pending committed product migrations with
    `pnpm --filter @thaarei/turnstile-api db:migrate:turnstile` using the private
    `.env.migrate`; verify the fixed product installation with `db:bootstrap` as needed.
+   Run `setup:initialize` with the private operator label before access assignment.
    These remain deployment/operator steps, never per-user request steps.
 2. Issue the distinct confidential login client using `auth:manage-client` above and
    install its returned secret only in Turnstile API runtime configuration. Keep the
@@ -358,7 +392,7 @@ defines cookie, token, refresh, expiry, permission and logout policy. The
 4. Prepare a private JSON input file, for example:
 
    ```json
-   { "userId": "verified-authority-user-id", "enabled": true, "permissions": ["turnstile:access"] }
+   { "operatorId": "named-installation-operator", "userId": "verified-authority-user-id", "enabled": true, "permissions": ["turnstile:access"] }
    ```
 
    Run `pnpm --filter @thaarei/turnstile-api auth:set-access < /private/product-access.json`
@@ -367,8 +401,8 @@ defines cookie, token, refresh, expiry, permission and logout policy. The
    nonsecret change record. Preserve that record through the operator's controlled audit
    process. Set `enabled` to false to remove access; changes take effect at the next
    protected request. An empty permission list also denies access. Runtime APIs cannot
-   write these assignments. This initial permission is an application entry gate;
-   business administrator roles and business permissions are not introduced here.
+   write these assignments. Configuration managers additionally require the explicit
+   configuration permission through [protected provisioning](#provision-local-configuration-access).
 5. Navigate to `/api/auth/login` (optional literal local `returnTo` path). The frontend
    credential/recovery screens are implemented by AUTH-07; the fixture flow establishes an
    authority login through the existing authority API before following the OIDC redirect.
@@ -543,6 +577,8 @@ route and product-safe error/result DTOs; the shared
 | `401` identity/login error                        | Re-establish the user's valid product/parent login; no machine call should occur                                                                      |
 | `403 PERMISSION_DENIED` / `PRODUCT_ACCESS_DENIED` | Inspect current enabled local access and explicit product permissions                                                                                 |
 | `403 DMS_ACCESS_DENIED`                           | Inspect the active consumer registration, provider scopes and live DMS ceiling; do not repeatedly renew tokens                                        |
+| `409 SETUP_REQUIRED`                              | Complete setup through the authorized product API/UI; no machine request occurs                                                                       |
+| `503 CONFIGURATION_UNAVAILABLE`                   | Restore product migrations/initialization/persistence; no completion is inferred                                                                      |
 | `503 DMS_UNAVAILABLE`                             | Inspect machine credentials, canonical URLs, DMS reachability and installation binding; retain the user session and retry after the cause is resolved |
 | `503 AUTH_UNAVAILABLE`                            | The preceding live identity check cannot reach/verify the shared authority; retain retryable local state and restore that dependency                  |
 
@@ -552,6 +588,164 @@ mutations are not automatically retried. DMS-domain errors do not log the user o
 logout or revoked product/parent access still prevents subsequent machine calls. If the
 shared DMS/authority process is down, both identity verification and machine access depend
 on its recovery; session inspection cannot claim independence from it.
+
+## Initialize, inspect and maintain product configuration
+
+ONB-I03 adds product migrations `0004_organization_configuration.sql` and
+`0005_configuration_guards.sql`. They create only product configuration/unit/receipt/audit
+records, forced tenant policies, explicit runtime grants and structural guards. Apply
+them through the existing owning migration command as part of the intended release;
+do not rerun role provisioning or change installation/client identity. The legacy
+`auth:set-access` command also requires this schema to coordinate its configuration lock.
+ONB-I04 adds `0006_access_assignment_audit.sql` and requires an initialized context for
+all private grant changes. `auth:set-access` now requires operatorId and supports
+configuration-management grants with last-manager protection.
+
+After building the intended release, preparing the target's private
+`apps/turnstile-api/.env.migrate` and confirming its fixed bootstrap, use:
+
+```sh
+pnpm --filter @thaarei/turnstile-api db:migrate:turnstile
+pnpm --filter @thaarei/turnstile-api setup:initialize < /private/configuration-operator.json
+pnpm --filter @thaarei/turnstile-api configuration:inspect < /private/configuration-operator.json
+pnpm --filter @thaarei/turnstile-api configuration:prune < /private/configuration-operator.json
+```
+
+The protected input file contains only an asserted operator label:
+
+```json
+{ "operatorId": "named-installation-operator" }
+```
+
+All three commands read at most the architecture's private input bound, reject unknown
+fields and take tenant/customer/application identity only from private configuration.
+They verify the exact already-installed identity and dedicated product migrator, then
+close the connection pool. They never bootstrap a missing installation or access auth/DMS
+schemas. Exit 0 reports committed success, including repeat initialization; exit 1 reports
+invalid input, missing/unsafe schema/context, identity/role mismatch or an unavailable
+database. Failure output is generic and does not print connection details or submitted
+values. Operator labels are assertions by the trusted operator, not verified user sessions.
+
+Initialization creates revision-zero empty setup with an attributable initialization
+event. Repeating it preserves saved configuration, units, revision and completion; it
+does not create a root, choose a name/zone, create an account or grant authority. Normal
+startup and reads never substitute for this command. Missing feature initialization
+returns configuration unavailable while authentication retains its existing boundaries.
+
+Inspection returns revision/state/completion metadata, manager and receipt counts, and
+at most 100 local manager IDs and 100 retained audit entries with truncation flags. It
+does not query authority accounts, return a staff/contact directory or print profile
+text, passwords, tokens, enrollment keys or request bodies. Preserve operational output
+through the installation's controlled operator records rather than a public endpoint.
+
+Pruning follows the [architecture retention policy](../../architecture.md#canonical-configuration-persistence)
+using database time. Each invocation removes at most 1,000 rows total: expired audit
+first, then expired unit-create receipts. Inspect and explicitly repeat when more expired
+rows remain. Live receipts, current profile/units and durable completion metadata are
+preserved. No scheduler or general audit UI is installed. Runtime APIs cannot rewrite
+audit or prune live receipts; private retention is a deliberate operator capability.
+
+Configuration managers can use the [implemented HTTP contract](../api/turnstile-onboarding.openapi.json)
+with the supported private grant path below. ONB-I04 enforces business readiness;
+ONB-I05–06 supply onboarding/waiting and Settings UI; target release and customer handover remain later packages. Do not use test fixture SQL as a customer grant
+procedure or deploy a blocking gate before the complete setup/recovery experience.
+
+## Provision local configuration access
+
+Use the verified authority subject ID obtained through supported account provisioning;
+no authority role grants product access automatically. Apply the reviewed product
+migrations, fixed bootstrap and explicit `setup:initialize` first. The private
+`auth:set-access` input now requires an asserted operator label:
+
+```json
+{
+  "operatorId": "named-installation-operator",
+  "userId": "verified-authority-subject",
+  "enabled": true,
+  "permissions": ["turnstile:access", "turnstile:configuration:manage"]
+}
+```
+
+```sh
+pnpm --filter @thaarei/turnstile-api auth:set-access < /private/product-access.json
+```
+
+This is a strict replacement array, so retain every intended permission explicitly,
+including `turnstile:dms:capabilities:read` when applicable. Configuration management
+requires baseline access, and never grants account/DMS operator rights. OperatorId,
+subject, boolean and catalog bounds use shared contracts; input is limited to the
+architecture's private-command bound. Tenant/customer/application IDs come only from
+private configuration. Unknown fields, missing context and unsafe/mismatched migrators
+fail without bootstrap or changes. No authority account eligibility is inferred here.
+
+Exit 0 returns bounded committed metadata, including `changed: false` on an identical
+repeat. Exit 1 is invalid input/configuration/role/initialization or persistence failure.
+Exit 2 emits `{ "code": "LAST_CONFIGURATION_MANAGER_REQUIRED" }` on stderr: a refused
+removal/disablement would eliminate the last enabled local access/manage holder.
+All assignments remain intact on failure. Grant changes serialize with activation and
+other grant writers, audit the operator and addressed subject atomically, and leave
+organization revision unchanged. Runtime credentials cannot write grants or edit audit.
+
+For handover, grant the replacement first, prove their actual verified login, setup
+access and ability to complete/resume, then remove unnecessary staff grants. If the sole
+manager is suspended externally, recover/provision a named verified replacement through
+supported authority tooling; local last-manager protection cannot repair authority state.
+Use `configuration:inspect` for bounded local manager/audit reconciliation. Never use
+fixture SQL, a public admin endpoint or a readiness bypass as the recovery procedure.
+
+Protected business calls now return 409 `SETUP_REQUIRED` while incomplete; permitted
+users can read minimal `/api/workspace/status`, managers can use setup/organization APIs,
+and session/logout keep their auth/CSRF boundaries. Missing/unsafe configuration returns
+503 `CONFIGURATION_UNAVAILABLE`. The capability endpoint reaches the machine/DMS boundary
+only after committed activation. No manual completion SQL is a supported operator step.
+
+## Use the onboarding web journey
+
+After the supported private initialization, verified account and explicit manager grant,
+sign in at the application origin. Current backend readiness routes incomplete managers
+to Organization or Review; permitted ordinary users see Waiting for setup, with Retry
+and Sign out. No account directory, tenant selector or public administrator bootstrap
+is offered. Missing feature migrations/initialization is a configuration outage.
+
+Save a recognized organization name and explicitly choose a supported time zone.
+Save and continue commits required values before optional Structure; Save and exit
+can commit valid partial progress and opens paused setup. Resume uses the saved gaps,
+so a saved name without a zone resumes Organization and a complete profile resumes
+Review. Structure is optional and skipping keeps saved units. Review reads saved
+configuration and activation is confirmed by the server before Home opens.
+
+On a revision conflict, load the latest saved data and compare it with retained entries
+before deliberately saving again. On an uncertain unit creation, retry the same request
+with its retained key/body or inspect saved units; do not blindly create a fresh entry.
+After reload loses in-memory retry context, inspect current structure before any new
+create. Uncertain activation can be checked or deliberately repeated. No form is saved
+merely by navigation, and browser/local storage is not authoritative setup state.
+
+Current setup/status/configuration APIs retain their existing permission/CSRF boundaries.
+The UI does not alter accounts, grants or DMS registration. I06 adds Settings and
+rename/delete editors; full target release and customer handover still wait
+for the remaining coordinated packages. Do not use a partial release as a readiness bypass.
+
+## Maintain configuration in Settings
+
+After activation, configuration managers use **Settings** in workspace navigation.
+Setup overview displays current saved organization/zone/units and the original activation
+actor/time. Organization edits the canonical name (and root presentation); Workspace
+edits the canonical time zone. Each form saves explicitly and Cancel returns to the
+saved overview. Clearing required values is rejected. Later edits do not reset activation.
+
+Structure adds fixed Site/Department units under supported saved parents. Rename changes
+only a non-root name; type and parent are fixed. Remove opens a confirmation and is
+available only for unused leaf units. Delete children first; do not attempt to remove the
+organization root. A stale or uncertain rename/removal needs **Load latest saved data**
+and inspection before another deliberate action; there is no automatic mutation retry.
+For uncertain creates, the existing same-request/key retry remains available.
+
+Ordinary users retain Home/document connection access according to their permissions,
+without Settings configuration reads. A direct Settings link shows an access-required
+state. Live revocation is enforced by the API and subsequent status checks remove editors.
+No People/Approval/Risk or access-grant screen is included. Follow the private operator
+procedures for grants and account recovery.
 
 ## Browser operation and release verification
 
@@ -581,11 +775,16 @@ pnpm test:integration
 pnpm test:smoke
 pnpm exec playwright install chromium
 pnpm test:browser:auth
+pnpm test:browser:onboarding:structured
 ```
 
 The browser command provisions a disposable database and Mailpit container, uses the
 production auth profile with a temporary HTTPS certificate/isolated test DNS, and drives
-three focused Chromium journeys through the real APIs. It leaves running development
+root-only onboarding, Settings and three focused authentication journeys through the real APIs.
+The structured-onboarding command provisions a separate fresh installation and verifies
+activation with a retained site/nested department, completion through a DMS outage, and
+canonical Settings after an API restart. Completion is never reset between scenarios.
+Both commands leave running development
 data untouched. Chromium trusts the fixture certificate only within its test context;
 backend TLS verification remains enabled using that CA. No raw browser traces, token
 URLs or credentials are written to the report. Repeat browser checks for changes to the
@@ -600,12 +799,19 @@ docker build -t thaarei-auth07-api -f apps/turnstile-api/Dockerfile .
 docker build -t thaarei-auth07-web -f apps/turnstile-web/Dockerfile .
 docker build -t thaarei-auth07-processing -f apps/dms-processing/Dockerfile .
 AUTH_BROWSER_WEB_IMAGE=thaarei-auth07-web AUTH_BROWSER_API_IMAGE=thaarei-auth07-api pnpm test:browser:auth
+AUTH_BROWSER_WEB_IMAGE=thaarei-auth07-web AUTH_BROWSER_API_IMAGE=thaarei-auth07-api pnpm test:browser:onboarding:structured
+pnpm test:images:onboarding thaarei-auth07-api thaarei-auth07-web
 ```
 
 Image mode serves the browser from the actual Nginx container and probes canonical HTTPS
 discovery from an application container, using a temporary CA and host network. It does
 not simulate an actual Dokploy network or establish customer DNS/TLS readiness. Processing
 still runs its identification entry point; no worker is implemented.
+The onboarding image check uses non-root read-only containers with no credentials,
+external network or host ports. It verifies API liveness, fail-closed access without
+installation configuration, packaged product migrations/private commands, and ten web
+onboarding/Settings SPA entries with security headers. This packaging check does not
+replace authenticated HTTP/database/browser verification or real-installation readiness.
 
 Before admitting users to a **real installation**, record its version/environment and:
 
