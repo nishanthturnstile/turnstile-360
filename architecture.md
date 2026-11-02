@@ -2403,6 +2403,8 @@ private environment files and Git metadata are excluded. Builds retain monorepo-
 contexts and cached dependency layers. Application source is copied into each image;
 Compose Watch synchronizes edits without mounting host dependencies or generated output.
 The current watch rules require Compose 5.6.1 or later (validated installed version).
+CI installs Compose 5.6.1 explicitly through the commit-pinned Docker setup action,
+so runner-image updates cannot silently select an older Watch schema.
 
 API source and shared-package changes use `sync+restart`: the affected container rebuilds
 its public dependency packages/API before executing the compiled API in the foreground.
@@ -2540,7 +2542,8 @@ The same command therefore works before a full application build on a fresh chec
 The [CI workflow](.github/workflows/workspace.yml) installs pinned tools/locked dependencies,
 runs Biome/boundary/TypeScript/Python/deployment checks, builds all seven projects, runs
 API/Python entry-point tests, Fastify injection and compiled-runtime smoke checks, and
-validates both Compose files. A separate matrix is configured to build all four images.
+validates both Compose files with the pinned supported Compose release. A separate matrix
+builds the four application images and the shared development image.
 Adding this workflow does not prove remote execution or container/deployment success.
 
 Onboarding verification reuses the owned migration/bootstrap, real PostgreSQL/Fastify

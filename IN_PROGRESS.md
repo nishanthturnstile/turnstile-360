@@ -78,6 +78,25 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
+ONB-RD-CI — **In progress** (owner: Codex, 2026-11-02). Scope: resolve hosted checks
+for [PR #3](https://github.com/nishanthturnstile/turnstile-360/pull/3) and merge the
+authorized redesign after CI succeeds. On `f645dee`, both hosted checks jobs passed the
+workspace suites and smoke checks but failed local Compose validation: the runner's
+bundled Compose rejects `develop.watch.initial_sync`. All five image builds passed in
+both workflow events. The architecture already requires Compose 5.6.1 or later; local
+verification uses 5.6.1.
+
+The checks job now installs exactly Compose v5.6.1 through Docker's setup action pinned
+to commit `54042514f505b273907334ae2b9cdbb9a0213c1a`. The explicit version replaces
+an incompatible preinstalled runner binary. Architecture records that CI tool boundary;
+application code, Compose topology and Watch semantics are unchanged.
+
+Verification (2026-11-02): workflow YAML/step ordering and immutable action pin validated;
+`pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` and both real Compose
+configurations pass under Compose 5.6.1. Logs use `/tmp/turnstile-redesign-ci-*`.
+Handoff: push this correction to PR #3, let hosted CI verify the action installation
+and all jobs, then merge when the current head is green. The PR remains watched.
+
 ONB-RD-REVIEW — **Completed** (owner: Codex, 2026-11-02). Scope: fix and locally verify the three
 redesign review findings: untouched India suggestions after concurrent zone saves,
 filtered inline-editor recovery, and large-tree move eligibility cost. Preserve all
