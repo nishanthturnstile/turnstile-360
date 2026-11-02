@@ -1,8 +1,15 @@
 import assert from 'node:assert/strict';
 
 // A separate fresh installation reuses the owning HTTPS/auth fixture. Completion
-// is never reset to manufacture a second onboarding path in the same installation.
-export async function testStructuredOnboarding({ page, origin, login, restartProduct, setFault }) {
+// is never reset to manufacture a second first-unit journey in one installation.
+export async function testStructuredOnboarding({
+  page,
+  origin,
+  login,
+  restartProduct,
+  setFault,
+  clearRateLimits,
+}) {
   const heading = (name) => page.getByRole('heading', { name, exact: true }).waitFor();
   const read = () =>
     page.evaluate(async () => {
@@ -18,44 +25,83 @@ export async function testStructuredOnboarding({ page, origin, login, restartPro
     });
   await login('member');
   await heading('Tell us about your organization');
+  assert.equal(await page.getByLabel('Time zone', { exact: true }).inputValue(), 'Asia/Kolkata');
+  assert.equal((await read()).profile.organization.timeZone, null);
+  assert.equal(await page.locator('.workspace').count(), 0);
   await page
     .getByLabel('Organization name', { exact: true })
     .fill('Structured fixture organization');
-  await page.getByLabel('Time zone', { exact: true }).selectOption('UTC');
   await page.getByRole('button', { name: 'Save and continue', exact: true }).click();
-  await heading('Add structure, if you need it');
-  const list = page.getByRole('list', { name: 'Saved units' });
-  async function create(name) {
-    await page.getByLabel('Unit name', { exact: true }).fill(name);
-    await page.getByRole('button', { name: 'Add unit', exact: true }).click();
-    await list.getByText(name, { exact: true }).waitFor();
-  }
-  await create('North office');
+  await heading('First unit');
+  const profile = await read();
+  assert.equal(profile.profile.organization.timeZone, 'Asia/Kolkata');
+  assert.equal(profile.setup.nextStep, 'structure');
+  assert.equal(profile.structure.units.length, 1);
+  assert.equal(await page.getByLabel('Parent', { exact: true }).count(), 0);
+  assert.equal(
+    await page.getByRole('button', { name: 'Continue to review', exact: true }).isDisabled(),
+    true,
+  );
+  await page.getByRole('button', { name: 'Save and exit', exact: true }).click();
+  await heading('Setup saved for later');
+  assert.deepEqual(await read(), profile);
+  await page.getByRole('link', { name: 'Resume setup', exact: true }).click();
+  await heading('First unit');
   await page.getByLabel('Unit type', { exact: true }).selectOption('department');
-  await page.getByLabel('Parent', { exact: true }).selectOption({
-    label: 'Structured fixture organization / North office',
-  });
-  await create('Operations');
-  await page.getByRole('link', { name: 'Continue to review', exact: true }).click();
+  await page.getByLabel('Unit name', { exact: true }).fill('Operations');
+  await page.getByRole('button', { name: 'Save and exit', exact: true }).click();
+  await heading('Setup saved for later');
+  await restartProduct();
+  await page.reload();
+  await heading('Setup saved for later');
+  await page.getByRole('link', { name: 'Resume setup', exact: true }).click();
   await heading('Ready to open your workspace?');
-  await page.getByText(/2 optional sites or departments saved/).waitFor();
-  const before = await read();
+  let before = await read();
+  // Separate expanded fixture phases within the real authority's request window.
+  await clearRateLimits();
   assert.equal(before.setup.state, 'in_progress');
   assert.equal(before.setup.nextStep, 'review');
-  assert.equal(before.structure.units.length, 3);
+  assert.equal(before.structure.units.length, 2);
   const root = before.profile.organization.rootId;
-  const site = before.structure.units.find((unit) => unit.type === 'site');
-  const department = before.structure.units.find((unit) => unit.type === 'department');
-  assert.equal(site.parentId, root);
-  assert.equal(department.parentId, site.id);
-  assert.deepEqual(department.ancestorIds, [root, site.id]);
-  await page.getByRole('button', { name: 'Activate workspace', exact: true }).click();
+  const first = before.structure.units.find((unit) => unit.type === 'department');
+  assert.equal(first.name, 'Operations');
+  assert.equal(first.parentId, root);
+  assert.deepEqual(first.ancestorIds, [root]);
+  await page.getByRole('link', { name: 'Edit first unit', exact: true }).click();
+  await heading('First unit');
+  await page.getByRole('button', { name: /^Rename Operations / }).click();
+  await heading('Rename unit');
+  await page.getByLabel('New unit name', { exact: true }).fill('Operations team');
+  await page.getByRole('button', { name: 'Save unit name', exact: true }).click();
+  await page.getByText('Unit name saved.', { exact: true }).waitFor();
+  before = await read();
+  assert.equal(before.structure.units.find((unit) => unit.id === first.id).name, 'Operations team');
+  await page.getByLabel('Unit name', { exact: true }).fill('Unsent additional unit');
+  const blocked = page.waitForEvent('dialog');
+  const back = page.goBack();
+  await (await blocked).dismiss();
+  await back;
+  assert.equal(
+    await page.getByLabel('Unit name', { exact: true }).inputValue(),
+    'Unsent additional unit',
+  );
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.goBack();
+  await heading('Ready to open your workspace?');
+  await page.goForward();
+  await heading('First unit');
+  assert.equal(await page.getByLabel('Unit name', { exact: true }).inputValue(), '');
+  assert.deepEqual(await read(), before);
+  await page.getByRole('link', { name: 'Continue to review', exact: true }).click();
+  await heading('Ready to open your workspace?');
+  await page.getByRole('button', { name: 'Finish setup', exact: true }).click();
   await heading('Welcome, member.');
   const activated = await read();
   assert.equal(activated.setup.state, 'completed');
   assert.ok(activated.setup.completion);
   assert.equal(activated.profile.revision, before.profile.revision + 1);
   assert.deepEqual(activated.structure.units, before.structure.units);
+  await clearRateLimits();
 
   try {
     setFault('dms');
@@ -66,8 +112,7 @@ export async function testStructuredOnboarding({ page, origin, login, restartPro
         { exact: true },
       )
       .waitFor();
-    const unavailable = await read();
-    assert.deepEqual(unavailable, activated);
+    assert.deepEqual(await read(), activated);
     await page.reload();
     await heading('Welcome, member.');
   } finally {
@@ -76,10 +121,30 @@ export async function testStructuredOnboarding({ page, origin, login, restartPro
   await restartProduct();
   await page.goto(`${origin}/settings/organization/structure`);
   await heading('Organization structure');
-  await list.getByText('North office', { exact: true }).waitFor();
-  await list.getByText('Operations', { exact: true }).waitFor();
+  const list = page.getByRole('list', { name: 'Saved units' });
+  await list.getByText('Operations team', { exact: true }).waitFor();
   assert.deepEqual(await read(), activated);
+  async function create(name) {
+    await page.getByLabel('Unit name', { exact: true }).fill(name);
+    await page.getByRole('button', { name: 'Add unit', exact: true }).click();
+    await list.getByText(name, { exact: true }).waitFor();
+  }
+  await create('North office');
+  await page.getByLabel('Unit type', { exact: true }).selectOption('department');
+  await page
+    .getByRole('button', {
+      name: 'Add below Structured fixture organization / North office',
+      exact: true,
+    })
+    .click();
+  await create('Engineering');
+  const ongoing = await read();
+  const site = ongoing.structure.units.find((unit) => unit.type === 'site');
+  const nested = ongoing.structure.units.find((unit) => unit.name === 'Engineering');
+  assert.deepEqual(nested.ancestorIds, [root, site.id]);
+  assert.equal(nested.parentId, site.id);
+  assert.deepEqual(ongoing.setup.completion, activated.setup.completion);
   console.log(
-    'Structured onboarding browser journey passed: fresh root/site/nested department, retained units on activation, DMS outage preserves completion/session, and canonical Settings after API restart.',
+    'Structured onboarding browser journey passed: fresh required Department, explicitly confirmed India suggestion, saved-unit resume after restart, Back/Forward dirty protection, preserved completion/session during DMS outage and ongoing nested units in canonical Settings.',
   );
 }

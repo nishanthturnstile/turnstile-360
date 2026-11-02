@@ -2,7 +2,16 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
-import { closeSync, openSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import {
+  closeSync,
+  mkdtempSync,
+  openSync,
+  readFileSync,
+  realpathSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
@@ -98,6 +107,14 @@ async function rehearse(directory) {
   function run(command, args, options = {}) {
     const result = spawnSync(command, args, { encoding: 'utf8', timeout: 120000, ...options });
     // Subprocess diagnostics can contain connection details or restored row values.
+    if (result.status !== 0) {
+      const diagnostic = resolve(
+        mkdtempSync(resolve(tmpdir(), 'thaarei-rehearsal-diagnostic-')),
+        'failure.log',
+      );
+      writeFileSync(diagnostic, `${result.stdout ?? ''}\n${result.stderr ?? ''}`, { mode: 0o600 });
+      console.error(`Private rehearsal diagnostic retained: ${diagnostic}`);
+    }
     assert.equal(result.status, 0, `Rehearsal command failed (${stage})`);
     return result.stdout?.trim() ?? '';
   }
@@ -204,6 +221,19 @@ async function rehearse(directory) {
     const originalGrants = (
       await admin.query('SELECT * FROM turnstile.user_access ORDER BY user_id')
     ).rows;
+    const hadConfiguration = baseline.some(
+      (table) => table.tablename === 'organization_configuration',
+    );
+    const configuration = hadConfiguration
+      ? (await admin.query('SELECT * FROM turnstile.organization_configuration ORDER BY tenant_id'))
+          .rows
+      : [];
+    const expectedConfiguration = configuration.map((row) =>
+      row.requirement_version === 1 && row.completed_at === null
+        ? { ...row, requirement_version: 2 }
+        : row,
+    );
+    const unchanged = baseline.filter((table) => table.tablename !== 'organization_configuration');
     const previous = originalGrants.find((grant) => grant.user_id === input.userId);
     assert.ok(previous?.enabled, 'Expected an existing enabled local account');
     assert.ok(
@@ -217,7 +247,13 @@ async function rehearse(directory) {
     const migrate = 'apps/turnstile-api/dist/infrastructure/database/migrate.js';
     run(process.execPath, [migrate, 'turnstile'], { env });
     run(process.execPath, [migrate, 'bootstrap'], { env });
-    assert.deepEqual(await fingerprintTables(admin, baseline), baseline);
+    assert.deepEqual(await fingerprintTables(admin, unchanged), unchanged);
+    if (hadConfiguration)
+      assert.deepEqual(
+        (await admin.query('SELECT * FROM turnstile.organization_configuration ORDER BY tenant_id'))
+          .rows,
+        expectedConfiguration,
+      );
     stage = 'initialization';
     run(process.execPath, [command, 'initialize'], { env, input: operator });
     const first = JSON.parse(run(process.execPath, [command, 'inspect'], { env, input: operator }));
@@ -226,8 +262,10 @@ async function rehearse(directory) {
     );
     assert.equal(repeated.alreadyInitialized, true);
     assert.equal(repeated.revision, first.revision);
+    assert.equal(repeated.requirementVersion, first.requirementVersion);
     if (!baseline.some((table) => table.tablename === 'organization_configuration')) {
       assert.equal(first.state, 'not_started');
+      assert.equal(first.requirementVersion, 2);
       assert.equal(first.revision, 0);
       assert.equal(first.completion, null);
       assert.equal(
@@ -261,9 +299,18 @@ async function rehearse(directory) {
     assert.deepEqual(final.completion, first.completion);
     assert.ok(final.managers.ids.includes(input.userId));
     const untouched = baseline.filter(
-      (table) => !['user_access', 'configuration_audit'].includes(table.tablename),
+      (table) =>
+        !['user_access', 'configuration_audit', 'organization_configuration'].includes(
+          table.tablename,
+        ),
     );
     assert.deepEqual(await fingerprintTables(admin, untouched), untouched);
+    if (hadConfiguration)
+      assert.deepEqual(
+        (await admin.query('SELECT * FROM turnstile.organization_configuration ORDER BY tenant_id'))
+          .rows,
+        expectedConfiguration,
+      );
     stage = 'runtime-privileges';
     const runtime = new pg.Pool({ connectionString: env.TURNSTILE_DATABASE_URL, max: 1 });
     try {
@@ -282,8 +329,28 @@ async function rehearse(directory) {
     } finally {
       await runtime.end();
     }
+    stage = 'v1-archive-matrix';
+    run(
+      'pnpm',
+      [
+        '--filter',
+        '@thaarei/turnstile-api',
+        'exec',
+        'vitest',
+        'run',
+        '--config',
+        'vitest.config.database.ts',
+        'test/configuration-upgrade.database-spec.ts',
+      ],
+      {
+        env: { ...env, NODE_ENV: 'test', AUTH_PROFILE: 'test', ONBOARDING_ARCHIVE_CONTAINER: name },
+      },
+    );
     console.log(
       'Local archive restore/upgrade rehearsal passed: old data/identities/sessions/clients/enrollment preserved, owning migrations, repeat-safe initialization/grant, unchanged completion and runtime isolation.',
+    );
+    console.log(
+      'Six real v1 dump/restore upgrade cases passed: empty/partial, Calcutta/Kolkata, completed root-only and completed structure; values, revisions, receipts, audit and activation preserved.',
     );
     console.log(
       'Only a disposable database was changed; the selected installation and backup archive were not modified.',

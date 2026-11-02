@@ -9,6 +9,7 @@ import {
   unitCreateResponseSchema,
   unitCreateSchema,
   unitDeleteSchema,
+  unitMoveSchema,
   unitPathSchema,
   unitRenameSchema,
   type WorkspaceStatusDto,
@@ -155,6 +156,57 @@ export class OrganizationService {
     });
   }
 
+  async moveUnit(actor: ConfigurationActor, unitId: unknown, input: unknown) {
+    const id = parseConfiguration(unitPathSchema, { id: unitId }).id;
+    const value = parseConfiguration(unitMoveSchema, input);
+    return this.repository.transaction(actor, true, async (tx) => {
+      this.expected(tx, value.expectedRevision);
+      const snapshot = await this.repository.snapshot(tx);
+      const unit = snapshot.units.find((row) => row.id === id);
+      if (!unit) throw new ConfigurationException({ code: 'CONFIGURATION_NOT_FOUND' });
+      if (unit.type === 'organization') return invalidConfiguration('id', 'unsupported');
+      const parent = snapshot.units.find((row) => row.id === value.parentId);
+      if (!parent) throw new ConfigurationException({ code: 'CONFIGURATION_NOT_FOUND' });
+      if (
+        parent.id === id ||
+        parent.ancestorIds.some((ancestor) => ancestor === id) ||
+        (unit.type === 'site' && parent.type !== 'organization')
+      )
+        return invalidConfiguration('parentId');
+      if (unit.parentId === parent.id) return snapshot;
+      const height = Math.max(
+        1,
+        ...snapshot.units
+          .filter((row) => row.ancestorIds.some((ancestor) => ancestor === id))
+          .map((row) => row.ancestorIds.length - unit.ancestorIds.length + 1),
+      );
+      if (parent.ancestorIds.length + 1 + height > CONFIGURATION_LIMITS.depth)
+        return invalidConfiguration('parentId', 'limit_reached');
+      if (
+        snapshot.units.some(
+          (row) =>
+            row.id !== id &&
+            row.parentId === parent.id &&
+            configurationNameKey(row.name) === configurationNameKey(unit.name),
+        )
+      )
+        return configurationConflict(tx.record, 'duplicate_name');
+      if (
+        snapshot.setup.state === 'completed' &&
+        snapshot.setup.requirementVersion === 2 &&
+        unit.parentId === snapshot.organization.rootId &&
+        parent.id !== snapshot.organization.rootId &&
+        !snapshot.units.some(
+          (row) => row.id !== id && row.parentId === snapshot.organization.rootId,
+        )
+      )
+        return configurationConflict(tx.record, 'required_unit');
+      await this.repository.moveUnit(tx, id, parent.id);
+      await this.repository.change(tx, 'unit_moved', id, ['parentId']);
+      return this.repository.snapshot(tx);
+    });
+  }
+
   async deleteUnit(actor: ConfigurationActor, unitId: unknown, input: unknown) {
     const id = parseConfiguration(unitPathSchema, { id: unitId }).id;
     const value = parseConfiguration(unitDeleteSchema, input);
@@ -166,6 +218,15 @@ export class OrganizationService {
       if (unit.type === 'organization') return invalidConfiguration('id', 'unsupported');
       if (snapshot.units.some((row) => row.parentId === id))
         return configurationConflict(tx.record, 'unit_in_use');
+      if (
+        snapshot.setup.state === 'completed' &&
+        snapshot.setup.requirementVersion === 2 &&
+        unit.parentId === snapshot.organization.rootId &&
+        !snapshot.units.some(
+          (row) => row.id !== id && row.parentId === snapshot.organization.rootId,
+        )
+      )
+        return configurationConflict(tx.record, 'required_unit');
       await this.repository.deleteUnit(tx, id);
       await this.repository.change(tx, 'unit_deleted', id, []);
       return this.repository.snapshot(tx);
@@ -181,6 +242,11 @@ export class OrganizationService {
       if (!snapshot.organization.name) return invalidConfiguration('name', 'required');
       if (!snapshot.organization.timeZone) return invalidConfiguration('timeZone', 'required');
       if (!snapshot.organization.rootId) return configurationUnavailable();
+      if (
+        snapshot.setup.requirementVersion === 2 &&
+        !snapshot.setup.requirements.find((item) => item.id === 'first_unit')?.satisfied
+      )
+        return invalidConfiguration('body', 'required');
       await this.repository.change(tx, 'setup_completed', tx.tenantId, ['completion'], {
         complete: true,
       });

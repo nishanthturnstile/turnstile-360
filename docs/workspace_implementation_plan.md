@@ -9,14 +9,14 @@ basic checks, and deployment configuration. It does not implement DMS capabiliti
 Turnstile business features, identity, database tables, document processing, or migration
 of existing source/data. Turnstile functionality will be specified separately.
 
-For the owner-prioritized onboarding work, use the
-[onboarding implementation plan](onboarding_implementation_plan.md), based on the
-completed [Version 1 discovery](onboarding_v1_discovery.md) and
-[design proposal](onboarding_design_proposal.md). ONB-I01 establishes the accepted
-[onboarding specification](onboarding_specification.md) and linked architecture baseline.
-The remaining packages cover minimal setup and ongoing settings before Document Approval;
-their descriptions do not authorize or establish implementation. The workspace tasks
-below retain their original foundation scope and history.
+For the owner-prioritized onboarding work, the
+[original implementation plan](onboarding_implementation_plan.md) preserves ONB-I01–08
+v1 delivery, informed by the [Version 1 discovery](onboarding_v1_discovery.md) and
+[design proposal](onboarding_design_proposal.md). The
+[redesign plan](onboarding_redesign_implementation_plan.md) sequences the current
+[specification](onboarding_specification.md) and linked architecture baseline adopted by
+ONB-RD01. Planned descriptions do not establish implementation; actual evidence stays in
+IN_PROGRESS.md. The workspace tasks below retain their foundation scope and history.
 
 ## Accepted decisions
 

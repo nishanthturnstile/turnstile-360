@@ -2,6 +2,14 @@
 
 **Status:** ONB-I01 baseline accepted; ONB-I02–06 backend/onboarding/Settings foundations implemented; ONB-I07 verification implemented; ONB-I08 upgrade/recovery procedures and the selected existing local release are implemented and verified. Production target acceptance remains separate. **Updated:** 2026-11-02.
 
+**Historical v1 delivery plan:** ONB-RD01 adopts the redesigned requirement baseline in
+the [current specification](onboarding_specification.md) and
+[architecture](../architecture.md#onboarding-implementation-baseline). The
+[separate redesign plan](onboarding_redesign_implementation_plan.md) sequences new work.
+Optional structure/root-only activation and immutable parents below describe the original
+v1 release; they do not override the adopted v2 first-unit/move policy. Preserve ONB-I01–08
+history and evidence in this plan and IN_PROGRESS.md.
+
 Deliver onboarding and its matching settings experience as one complete release,
 built through eight reviewable work packages. An authorized administrator must be
 able to configure the existing organization's name and time zone, optionally add

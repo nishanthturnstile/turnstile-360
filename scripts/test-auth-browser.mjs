@@ -15,6 +15,7 @@ import { parse } from 'yaml';
 import { testOnboarding } from './test-onboarding-browser.mjs';
 import { testSettings } from './test-settings-browser.mjs';
 import { testStructuredOnboarding } from './test-structured-onboarding-browser.mjs';
+import { testVisualStructure } from './test-visual-structure-browser.mjs';
 
 assert.equal(process.env.INSTALLATION_CUSTOMER_KEY, 'auth-fixture', 'Disposable harness required');
 const temporary = await mkdtemp(join(tmpdir(), 'thaarei-auth-browser-'));
@@ -430,13 +431,23 @@ dns.lookup = function(host, options, callback) {
       });
     await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
   }
-  if (process.argv.includes('--structured-onboarding')) {
-    stage = 'fresh optional-structure onboarding web journey';
+  if (process.argv.includes('--structure-editor')) {
+    stage = 'visual structure editor';
+    await testVisualStructure({
+      page,
+      context,
+      origin,
+      login,
+      clearRateLimits: () => command('clear-rate-limits'),
+    });
+  } else if (process.argv.includes('--structured-onboarding')) {
+    stage = 'fresh required-Department onboarding web journey';
     await testStructuredOnboarding({
       page,
       origin,
       login,
       restartProduct,
+      clearRateLimits: () => command('clear-rate-limits'),
       setFault: (value) => {
         fault = value;
       },
@@ -518,6 +529,7 @@ dns.lookup = function(host, options, callback) {
       origin,
       login,
       setAccess,
+      clearRateLimits: () => command('clear-rate-limits'),
       waitForAuthorityWindow: async () => {
         // Keep the full production limiter enabled. Expanded scenarios share its
         // 100/minute introspection budget; start access-transition checks in a new window.
@@ -588,12 +600,17 @@ dns.lookup = function(host, options, callback) {
     };
     page.on('request', observeRefresh);
     for (let refresh = 0; refresh < 20; refresh++) {
+      // Manager Home also reads canonical configuration for the legacy suggestion.
+      // Give each artificial reload burst a fresh private fixture window; retain
+      // production limits and real authorization on every HTTP request.
+      if (refresh % 5 === 0) await command('clear-rate-limits');
       await page.reload();
       await heading('Welcome, member.');
       assert.equal(await page.evaluate(() => window.authPageSeen), false);
     }
     page.off('request', observeRefresh);
     assert.equal(refreshChecks, 20);
+    await command('clear-rate-limits');
     console.log(
       'Authenticated refresh regression passed: neutral startup, 20 reloads, one check per reload and no sign-in flash.',
     );

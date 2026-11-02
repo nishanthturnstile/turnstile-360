@@ -73,7 +73,7 @@ executable contracts, including the existing auth permission enumeration. Regene
 `pnpm generate:turnstile-time-zones` and `pnpm docs:turnstile-onboarding` after deliberate
 contract changes; generated feature contracts do not imply implemented HTTP handlers.
 `pnpm build` builds all seven workspace projects. `pnpm test` runs shared contract/API
-identity/auth configuration tests and the Python
+identity/auth configuration tests, focused web structure-model regressions and the Python
 entry-point smoke check. `pnpm test:integration` runs
 Fastify injection tests using the same application factory as production entry points.
 Auth foundation coverage includes unavailable readiness and Fastify cookie/session plugin
@@ -82,9 +82,14 @@ PostgreSQL container for real authority, recovery, transaction, role and product
 checks. Docker Engine is required and unavailability fails explicitly. Storage and
 processing integration remain pending.
 
-Frontend interaction and browser tests will use Vitest/React Testing Library and
-Playwright when real screens are introduced. Broaden checks when implemented behavior
-or a failure requires it, rather than creating tests for empty placeholder folders.
+Focused web model tests use the pinned Node TypeScript support. The disposable HTTPS
+Playwright fixtures run through `pnpm test:browser:auth`,
+`pnpm test:browser:onboarding:structured` and `pnpm test:browser:structure`; they cover
+real owning HTTP and auth/permissions rather than a second browser-only state model.
+See [architecture.md](../../architecture.md#web-design-system) for component boundaries.
+Vitest/React Testing Library remains a possible later frontend addition when needed.
+Broaden checks when implemented behavior or a failure requires it, rather than creating
+tests for empty placeholder folders.
 
 ## Ownership
 

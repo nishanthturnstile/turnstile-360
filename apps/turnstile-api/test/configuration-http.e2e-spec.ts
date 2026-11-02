@@ -45,6 +45,7 @@ describe('configuration HTTP parser and authentication boundary', () => {
       ['GET', '/api/organization/units'],
       ['POST', '/api/organization/units'],
       ['PATCH', '/api/organization/units/:id'],
+      ['PATCH', '/api/organization/units/:id/parent'],
       ['DELETE', '/api/organization/units/:id'],
     ] as const;
     const methods = (value: string | string[]) => (Array.isArray(value) ? value : [value]);
@@ -76,6 +77,7 @@ describe('configuration HTTP parser and authentication boundary', () => {
       ['/api/organization', 'PATCH'],
       ['/api/organization/units', 'POST'],
       ['/api/organization/units/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'PATCH'],
+      ['/api/organization/units/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/parent', 'PATCH'],
       ['/api/organization/units/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'DELETE'],
     ] as const) {
       for (const [payload, contentType, status, code] of [
@@ -97,6 +99,7 @@ describe('configuration HTTP parser and authentication boundary', () => {
         expect(response.statusCode, `${method} ${url}`).toBe(status);
         expect(response.json().code).toBe(code);
         expect(response.headers['cache-control']).toBe('private, no-store');
+        expect(response.headers['referrer-policy']).toBe('no-referrer');
         expect(response.body).not.toContain('private-invalid-input');
       }
     }
@@ -112,6 +115,13 @@ describe('configuration HTTP parser and authentication boundary', () => {
       expect(response.statusCode).toBe(503);
       expect(response.json()).toEqual({ code: 'AUTH_UNAVAILABLE' });
     }
+    const move = await app.inject({
+      method: 'PATCH',
+      url: '/api/organization/units/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/parent',
+      payload: { expectedRevision: 0, parentId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' },
+    });
+    expect(move.statusCode).toBe(503);
+    expect(move.json()).toEqual({ code: 'AUTH_UNAVAILABLE' });
   });
   it('preserves generic authentication/permission failures without misclassifying them as body validation', async () => {
     const authenticate = vi.spyOn(app.get(BrowserAuthService), 'authenticate');

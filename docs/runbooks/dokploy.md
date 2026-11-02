@@ -77,6 +77,15 @@ Settings UI; I07 supplies local complete-chain verification and I08 supplies the
 [executable release and recovery procedure](onboarding-release.md);
 do not expose an intermediate backend as a complete release.
 
+These executable procedures cover preserved v1 and the v2 redesign. The
+[redesign plan](../onboarding_redesign_implementation_plan.md#onb-rd08-verification-and-coordinated-release)
+requires compatible v2 migrations/API/web and extended upgrade verification before target
+rollout. Upgrade incomplete v1 only; preserve completed v1 version/revision/completion,
+units and saved zone. RD03 delivers v2 persistence/readiness and RD04 adds guarded moves;
+RD05 delivers dedicated setup/waiting. RD06 adds the shared editor and confirmed moves;
+RD07 delivers completed navigation and RD08 verifies the coordinated local release.
+Customer/production acceptance still requires evidence from that selected target.
+
 Follow that procedure for coherent backup, paused product
 access, additive owning migrations, explicit incomplete initialization and a verified
 manager grant, followed by a matching API/web release. Preserve existing identities,

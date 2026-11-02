@@ -5,6 +5,7 @@ import { lazy, type ReactNode, Suspense, useCallback, useEffect, useRef, useStat
 import { useLocation, useNavigate } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
 import { ContentLoading, LoadingStatus } from '@/components/content-loading';
+import { EntryContent, EntryLayout } from '@/components/entry-layout';
 import { AppLink } from '@/components/navigation';
 import { Notice } from '@/components/notice';
 import { Button } from '@/components/ui/button';
@@ -16,15 +17,18 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import { Spinner } from '@/components/ui/spinner';
 import { WorkspaceLayout } from '@/components/workspace-layout';
+import { workspaceDestinations } from '@/components/workspace-navigation';
+import { cn } from '@/lib/utils';
 import { ForgotPassword, ResetPassword, SignIn } from './features/auth/AuthForms';
 import { beginSignIn, captureResetToken, identity } from './features/auth/client';
 import { endSession, loadCapabilities, loadSession, ProductError } from './features/auth/product';
-
 import { loadWorkspaceStatus } from './features/configuration/api';
 import { settingsPaths, setupPaths } from './features/configuration/routes';
 import { OnboardingJourney } from './features/onboarding/OnboardingJourney';
+import { LegacyUnitPrompt } from './features/settings/LegacyUnitPrompt';
 import { Settings } from './features/settings/Settings';
 
 const DesignSystem = import.meta.env.DEV
@@ -343,21 +347,17 @@ export function Workspace() {
   }, [check]);
   if (state === 'loading')
     return (
-      <div className="workspace">
-        <header className="workspace-header">
-          <Brand />
-          <span className="workspace-loading-label">
-            <Spinner aria-hidden="true" />
-            Loading workspace…
-          </span>
-        </header>
-        <main className="workspace-content">
+      <EntryLayout
+        header={
+          <header className="entry-header">
+            <Brand />
+          </header>
+        }
+      >
+        <EntryContent>
           <ContentLoading label="Loading workspace…" />
-        </main>
-        <footer className="app-footer">
-          Turnstile 360 <span aria-hidden="true">·</span> Thaarei
-        </footer>
-      </div>
+        </EntryContent>
+      </EntryLayout>
     );
   if (logout)
     return (
@@ -402,45 +402,99 @@ export function Workspace() {
         />
       </AuthLayout>
     );
+  const header = (
+    <header className={cn('entry-header', workspace?.status === 'complete' && 'workspace-header')}>
+      <Brand />
+      <div className="entry-account">
+        <p className="account-label">
+          Signed in as <strong>{session.user.email}</strong>
+        </p>
+        {checking && routePath === path && <LoadingStatus>Checking session…</LoadingStatus>}
+        <Button variant="outline" type="button" disabled={busy} onClick={() => void signOut()}>
+          {busy && busyAction === 'sign-out' && (
+            <Spinner aria-hidden="true" data-icon="inline-start" />
+          )}
+          Sign out
+        </Button>
+      </div>
+    </header>
+  );
+  const unavailable =
+    state === 'setup-unavailable' ? (
+      <div className="flex flex-col gap-5">
+        <h1 className="page-title">Setup is temporarily unavailable</h1>
+        <p className="intro">
+          We couldn’t check saved setup. Your entries are kept while you retry.
+        </p>
+        <Button className="self-start" disabled={checking} onClick={() => void check()}>
+          {checking && <Spinner aria-hidden="true" data-icon="inline-start" />}
+          {checking ? 'Checking…' : 'Try again'}
+        </Button>
+      </div>
+    ) : state === 'unavailable' ? (
+      <AccountState kind="unavailable" retry={() => void check()} pending={checking} />
+    ) : null;
+  const notFound = (
+    <div className="flex flex-col gap-5">
+      <h1 className="page-title">Page not found</h1>
+      <p className="intro">This page isn’t available.</p>
+      <ButtonLink className="self-start" href="/">
+        Return to workspace
+      </ButtonLink>
+    </div>
+  );
+  if (workspace?.status !== 'complete')
+    return (
+      <EntryLayout header={header}>
+        {unavailable && <EntryContent>{unavailable}</EntryContent>}
+        <div className="entry-view" hidden={state !== 'ready'}>
+          {!knownPath ? (
+            <EntryContent>{notFound}</EntryContent>
+          ) : !workspace ? (
+            <EntryContent>
+              <ContentLoading label="Loading workspace…" />
+            </EntryContent>
+          ) : workspace.canManageConfiguration ? (
+            <OnboardingJourney
+              key={session.user.id}
+              session={session}
+              path={path}
+              onCheck={refreshWorkspace}
+              pending={routePath !== path || state !== 'ready'}
+              checking={checking}
+            />
+          ) : (
+            <EntryContent>
+              {path === '/waiting-for-setup' ? (
+                <div className="flex flex-col gap-5">
+                  <span className="eyebrow">WORKSPACE SETUP</span>
+                  <h1 className="page-title">Waiting for setup</h1>
+                  <p className="intro">
+                    Your administrator is preparing this workspace. You can retry when setup is
+                    ready, or sign out.
+                  </p>
+                  <Button
+                    className="self-start"
+                    disabled={busy || checking}
+                    onClick={() => void check()}
+                  >
+                    {checking && <Spinner aria-hidden="true" data-icon="inline-start" />}
+                    {checking ? 'Checking…' : 'Retry'}
+                  </Button>
+                </div>
+              ) : (
+                <ContentLoading label="Loading workspace…" />
+              )}
+            </EntryContent>
+          )}
+        </div>
+      </EntryLayout>
+    );
   return (
     <WorkspaceLayout
       pending={state === 'ready' && routePath !== path}
-      header={
-        <header className="workspace-header">
-          <Brand />
-          <div className="flex items-center gap-3">
-            {checking && routePath === path && <LoadingStatus>Checking session…</LoadingStatus>}
-            <Button variant="outline" type="button" disabled={busy} onClick={() => void signOut()}>
-              {busy && busyAction === 'sign-out' && (
-                <Spinner aria-hidden="true" data-icon="inline-start" />
-              )}
-              Sign out
-            </Button>
-          </div>
-        </header>
-      }
-      navigation={
-        workspace?.status === 'complete' && (
-          <nav aria-label="Workspace navigation" className="workspace-navigation">
-            <ButtonLink
-              variant={path === '/' ? 'secondary' : 'ghost'}
-              href="/"
-              aria-current={path === '/' ? 'page' : undefined}
-            >
-              Home
-            </ButtonLink>
-            {workspace.canManageConfiguration && (
-              <ButtonLink
-                variant={settingsPaths.some((value) => value === path) ? 'secondary' : 'ghost'}
-                href="/settings"
-                aria-current={settingsPaths.some((value) => value === path) ? 'page' : undefined}
-              >
-                Settings
-              </ButtonLink>
-            )}
-          </nav>
-        )
-      }
+      header={header}
+      destinations={workspaceDestinations(path, workspace.canManageConfiguration)}
       settings={
         state === 'ready' &&
         workspace?.status === 'complete' &&
@@ -448,54 +502,10 @@ export function Workspace() {
         settingsPaths.some((value) => value === path)
       }
     >
-      {state === 'setup-unavailable' && (
-        <div className="mb-6 flex flex-col gap-5">
-          <h1 className="page-title">Setup is temporarily unavailable</h1>
-          <p className="intro">
-            We couldn’t check saved setup. Your entries are kept while you retry.
-          </p>
-          <Button disabled={checking} onClick={() => void check()}>
-            {checking && <Spinner aria-hidden="true" data-icon="inline-start" />}
-            {checking ? 'Checking…' : 'Try again'}
-          </Button>
-        </div>
-      )}
-      {state === 'unavailable' && (
-        <AccountState kind="unavailable" retry={() => void check()} pending={checking} />
-      )}
+      {unavailable}
       <div className="workspace-view" hidden={state !== 'ready'}>
         {!knownPath ? (
-          <>
-            <h1 className="page-title">Page not found</h1>
-            <p className="intro">This page isn’t available.</p>
-            <ButtonLink href="/">Return to workspace</ButtonLink>
-          </>
-        ) : !workspace ? (
-          <ContentLoading label="Loading workspace…" />
-        ) : workspace.status === 'incomplete' ? (
-          workspace.canManageConfiguration ? (
-            <OnboardingJourney
-              key={session.user.id}
-              session={session}
-              path={path}
-              onCheck={refreshWorkspace}
-            />
-          ) : path === '/waiting-for-setup' ? (
-            <>
-              <span className="eyebrow">WORKSPACE SETUP</span>
-              <h1 className="page-title">Waiting for setup</h1>
-              <p className="intro">
-                Your administrator is preparing this workspace. You can retry when setup is ready,
-                or sign out.
-              </p>
-              <Button disabled={busy || checking} onClick={() => void check()}>
-                {checking && <Spinner aria-hidden="true" data-icon="inline-start" />}
-                {checking ? 'Checking…' : 'Retry'}
-              </Button>
-            </>
-          ) : (
-            <ContentLoading label="Loading workspace…" />
-          )
+          notFound
         ) : setupPaths.some((value) => value === path) || path === '/waiting-for-setup' ? (
           <ContentLoading label="Opening workspace…" />
         ) : settingsPaths.some((value) => value === path) ? (
@@ -529,22 +539,37 @@ export function Workspace() {
             <h1 className="page-title">Welcome, {session.user.name}.</h1>
             <p className="intro">You’re signed in to Turnstile 360.</p>
             <div className="flex flex-col gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    <h2>A place to begin</h2>
-                  </CardTitle>
-                  <CardDescription>
-                    Your workspace is ready. Features will appear here as they become available to
-                    your organization.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="account-label">
-                    Signed in as <strong>{session.user.email}</strong>
-                  </p>
-                </CardContent>
-              </Card>
+              <Empty>
+                <EmptyHeader>
+                  <EmptyTitle>
+                    <h2>Your workspace is ready</h2>
+                  </EmptyTitle>
+                  <EmptyDescription>
+                    Business features will appear here as they become available to your
+                    organization.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+              {workspace.canManageConfiguration && (
+                <>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>
+                        <h2>Manage your workspace</h2>
+                      </CardTitle>
+                      <CardDescription>
+                        Update your organization, sites and departments, or time zone in Settings.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardFooter>
+                      <ButtonLink href="/settings" variant="outline">
+                        Open Settings
+                      </ButtonLink>
+                    </CardFooter>
+                  </Card>
+                  <LegacyUnitPrompt key={session.user.id} />
+                </>
+              )}
               {session.permissions.includes('turnstile:dms:capabilities:read') && (
                 <Card>
                   <CardHeader>

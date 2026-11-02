@@ -1,6 +1,6 @@
 # Turnstile 360 and Thaarei DMS architecture
 
-**Updated:** 2026-11-01
+**Updated:** 2026-11-02
 
 **Status:** Accepted technical design with workspace foundations implemented.
 
@@ -19,7 +19,7 @@ feature implementation.
 | [architecture.md](architecture.md)                                                   | Components, responsibilities, dependencies, data/work flows, technical contracts, selected stack, configured limits, security, deployment topology, recovery, and architecture decisions |
 | [DMS product blueprint](docs/headless_dms_product_blueprint_v1.md)                   | Product promise, included/deferred scope, product correctness, deployment inputs, and product decision history                                                                           |
 | [DMS functionality requirements](docs/headless_dms_functionality_requirements_v1.md) | Stable FR/NFR IDs and capability dependency order                                                                                                                                        |
-| [Onboarding specification](docs/onboarding_specification.md)                         | Accepted ONB-R01–12 product scope and acceptance; delivery packages remain in the linked implementation plan                                                                             |
+| [Onboarding specification](docs/onboarding_specification.md)                         | Accepted ONB-R01–13 product scope and acceptance; delivery packages remain in the linked implementation plans                                                                            |
 | [Workspace standards](docs/standards/workspace.md)                                   | Coding, formatting, configuration, and verification conventions                                                                                                                          |
 | [Workspace implementation plan](docs/workspace_implementation_plan.md)               | Workspace setup sequence, CLI provenance, and original validation                                                                                                                        |
 | [Dokploy runbook](docs/runbooks/dokploy.md)                                          | Deployment commands and operator steps                                                                                                                                                   |
@@ -40,17 +40,17 @@ Navigation: [status](#implementation-status), [system picture](#system-context),
 
 ## Implementation status
 
-| Area                 | Current state                                                                                                                                           | Accepted target / remaining work                                                                              |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| DMS API              | Nest/Fastify, persisted authority, managed clients, machine guard, transactional enrollment, local-first disablement and bounded audit                  | Real client/customer provisioning, document/resource grants, storage and private job APIs                     |
-| Turnstile API        | Nest/Fastify, OIDC BFF, live permissions, audited organization/setup, protected private grants and backend readiness enforcement                        | Document workflows and real deployment setup                                                                  |
-| Turnstile web        | Login/recovery/reset, live session/readiness entry, resumable onboarding/waiting, canonical Settings and safe logout with typed configuration transport | Further product screens and coordinated customer rollout                                                      |
-| Python processing    | Installable package, identification command, reserved execution folders                                                                                 | Publisher, Celery tasks, job/transfer clients, scanner/parser supervision and sandbox enforcement             |
-| Shared packages      | Typed DMS client, auth/capability DTOs, executable onboarding contracts/time-zone list and generated DMS/onboarding OpenAPI                             | Remaining feature contracts and cross-language fixtures                                                       |
-| Local infrastructure | PostgreSQL, bounded Mailpit capture, RabbitMQ and SeaweedFS Compose definitions                                                                         | API PostgreSQL integration verified with disposable fixtures; broker/storage compatibility remains unverified |
-| Production packaging | Four built images, isolated runtime checks and three-service Dokploy application Compose                                                                | Production stateful/processing services and actual container DNS, deployed domains/TLS verification           |
-| Quality              | Build, type, boundary, formatting, API identity/injection/runtime smoke checks configured and previously passed                                         | Business/security/processor/recovery tests as capabilities are implemented                                    |
-| Mobile               | Architecture boundary only                                                                                                                              | Expo/React Native project is deferred; no mobile application or dependencies exist                            |
+| Area                 | Current state                                                                                                                                              | Accepted target / remaining work                                                                              |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| DMS API              | Nest/Fastify, persisted authority, managed clients, machine guard, transactional enrollment, local-first disablement and bounded audit                     | Real client/customer provisioning, document/resource grants, storage and private job APIs                     |
+| Turnstile API        | Nest/Fastify, OIDC BFF, live permissions, audited v1/v2 setup and guarded moves, protected grants and first-unit invariants                                | Document workflows and coordinated customer release                                                           |
+| Turnstile web        | Login/recovery/reset, live session/readiness entry, dedicated v2 onboarding/waiting, canonical Settings and safe logout with typed configuration transport | Collapsible completed navigation and customer rollout                                                         |
+| Python processing    | Installable package, identification command, reserved execution folders                                                                                    | Publisher, Celery tasks, job/transfer clients, scanner/parser supervision and sandbox enforcement             |
+| Shared packages      | Typed DMS client, auth/capability DTOs, executable onboarding contracts/time-zone list and generated DMS/onboarding OpenAPI                                | Remaining feature contracts and cross-language fixtures                                                       |
+| Local infrastructure | PostgreSQL, bounded Mailpit capture, RabbitMQ and SeaweedFS Compose definitions                                                                            | API PostgreSQL integration verified with disposable fixtures; broker/storage compatibility remains unverified |
+| Production packaging | Four built images, isolated runtime checks and three-service Dokploy application Compose                                                                   | Production stateful/processing services and actual container DNS, deployed domains/TLS verification           |
+| Quality              | Build, type, boundary, formatting, API identity/injection/runtime smoke checks configured and previously passed                                            | Business/security/processor/recovery tests as capabilities are implemented                                    |
+| Mobile               | Architecture boundary only                                                                                                                                 | Expo/React Native project is deferred; no mobile application or dependencies exist                            |
 
 AUTH-01–07 implement authentication foundations, the persisted authority, managed distinct
 OAuth clients, the Turnstile BFF/user boundary, DMS machine enrollment and the typed
@@ -392,22 +392,88 @@ the DMS never imports Turnstile business rules.
 
 ### Onboarding implementation baseline
 
-ONB-I01 adopts the [onboarding specification](docs/onboarding_specification.md) and the
-following technical decisions for ONB-I02–08. These are accepted implementation targets;
-ONB-I01 adds no executable schemas, database definitions/migrations, permission grant,
-operator command or runtime behavior. See [progress](IN_PROGRESS.md) for actual delivery.
+ONB-I01 adopted the original [onboarding specification](docs/onboarding_specification.md)
+and technical decisions for ONB-I02–08. ONB-RD01 now adopts the redesign target from the
+[dated proposal](docs/onboarding_design_proposal.md#redesign-recommendation-2026-11-02)
+and [redesign delivery plan](docs/onboarding_redesign_implementation_plan.md). The existing
+v1 implementation and its evidence remain in [progress](IN_PROGRESS.md); RD01 changes
+requirements/technical decisions only. RD02 adds executable versioned contracts, Kolkata
+compatibility and the adopted move contract. RD03 implements v2 persistence, initialization,
+incomplete-only upgrades and first-unit activation/deletion guards. RD04 implements
+guarded audited parent moves. RD05 implements dedicated setup/waiting layouts and
+version-aware first-unit resume/review. RD06 adds the shared visual editor and confirmed
+Move to/pointer/touch moves; RD07 adds completed responsive navigation and compact
+Settings. RD08 supplies exact-image verification and version-aware archive/target helpers;
+actual release evidence is maintained in IN_PROGRESS.md. Historical I-package descriptions below identify delivered v1 behavior;
+explicit redesign targets govern subsequent implementation and coordinated release.
 ONB-I02 implements the shared executable contract/time-zone foundation and product pool
 composition below. The [generated OpenAPI](docs/api/turnstile-onboarding.openapi.json)
-now describes I03's implemented canonical storage/domain operations and authenticated
+describes I03's implemented canonical storage/domain operations and authenticated
 HTTP handlers. I04 implements private manager grants and backend readiness enforcement;
 I05 implements the onboarding/waiting web journey; I06 implements ongoing Settings.
 I07's verification composition is described below; I08 adds the private preflight and
 executable release/recovery procedures. Actual deployment acceptance is tracked in IN_PROGRESS.md.
-Organization-wide activation with no sites/departments is supported. The sole new
+Completed v1 activation with no sites/departments remains supported. New/incomplete setup
+uses v2 after the owning migrations and requires a real direct-child Site or Department. The configuration
 permission is `turnstile:configuration:manage`, dependent on `turnstile:access`; it covers
 core profile, time zone, units and completion, without account/access administration,
 DMS operator authority or approval rights. Site/Department labels remain fixed; custom
-terminology, membership, moving units and a generic settings/workflow engine are deferred.
+terminology, membership and a generic settings/workflow engine are deferred. Safe parent
+moves are now adopted scope; arbitrary sibling ordering and persisted canvas coordinates
+remain outside this release.
+
+#### Adopted redesign and compatibility
+
+The server remains authoritative for lifecycle, canonical structure, live permissions
+and revision. No second setup store, pool, browser completion flag or implicit bootstrap
+is introduced. The minimal ordinary-user status projection remains unchanged. Detailed
+setup/snapshot contracts now discriminate requirement versions 1 and 2, including completion
+with the same version as its setup. Completed v1 retains its four-item requirement tuple;
+v2 adds `first_unit` before `configuration_manager`. Runtime validation checks the tuple,
+saved profile/root, direct-child qualification, lifecycle, revision and next step together.
+
+New initialization uses v2. The owning migration converts only incomplete v1 rows to v2
+under the fixed installation and existing configuration lock, preserving saved values,
+units and business revision. Empty revision-0 rows stay `not_started`. The update guard
+permits this metadata-only 1→2 transition only for the verified dedicated product migrator,
+with unchanged values/completion/revision; check the database role, never a caller-set
+session flag as authority. All other version updates remain forbidden. Keep forced RLS,
+fixed installation checks and invoker-rights guards active; do not disable triggers or
+grant runtime version-update privileges. Completed rows keep version/completion metadata
+and are never converted, reinitialized or reactivated. Applied migrations 0004–0006 stay
+immutable. RD03 adds generated `0007_setup_requirement_v2.sql` (allowed versions/default)
+and reviewed custom `0008_setup_v2_guards.sql` (invariants and incomplete-only upgrade).
+The upgrade locks the existing installation, sets transaction-local tenant context and
+locks its configuration before changing requirement metadata. No context is created when
+installation/setup is absent. The invoker-rights update guard permits only the direct
+owning login's 1→2 change with an identical JSONB projection of every other column;
+completed conversions, mixed updates and downgrades fail. Runtime retains its existing
+column privileges, with no version write. RD04 will generate its own later migrations.
+
+For v2, a qualifying unit is a saved `site` or `department` whose `parentId` is the canonical
+root ID. Profile/root gaps take precedence over `structure`, then `review`; completed
+setup has null next step. Completion rechecks this under the existing configuration/grant
+lock. Incomplete last-unit removal returns setup to Structure. Completed v2 rejects any
+deletion/move leaving zero qualifying units; completed v1 retains optional-unit policy.
+Leaf/reference protection remains in force for all deletions. Optional edits and feature
+outages never clear durable completion.
+
+RD02 extends the shared generated time-zone list with explicit `Asia/Kolkata` support alongside
+`Asia/Calcutta` and `UTC`, retaining exact identifier validation and stored values. It records
+the pinned Node/ICU/time-zone-data source plus explicit compatibility additions in the
+generator/provenance at allowlist version 2, independent of the setup requirement version.
+OpenAPI is generated/validated from those same executable contracts. Event/audit timestamps
+remain UTC instants, while date-only values remain dates; organization time zone supplies
+business-day/display defaults without rewriting historical instants.
+
+RD02 defines `PATCH /api/organization/units/:id/parent` for revision-checked moves, returning a
+canonical snapshot. RD04 extends parent-column privileges, validated invoker-rights guards,
+finite audit actions and explicit configuration-route classification; RD06 adds the
+shared visual editor. RD05 separates neutral entry, dedicated setup and ordinary waiting
+from the completed application layout; RD07 adds collapsible completed navigation. The
+existing pool, auth/session boundaries, limits, reserved ports and deployment topology
+remain in place. Compatible migrations/API/web ship together after RD08 verification;
+package completion alone does not authorize applying a partial release to an installation.
 
 #### Onboarding composition and ownership
 
@@ -472,10 +538,30 @@ features depend on product infrastructure rather than auth implementation files.
 All four tables use forced tenant RLS with transaction-local context, explicit privileges
 and indexes for actual parent/sibling, receipt-expiry and audit-retention lookups. Reviewed
 invoker-rights triggers enforce stable root/completion identity, one-step revision updates,
-immutable unit identity/type/parent, supported parents, count/depth bounds and cycle
-prevention. Trigger search paths are fixed; no security-definer or cross-schema function
+immutable unit identity/type (and parent in delivered v1), supported parents, count/depth
+bounds and cycle prevention. Trigger search paths are fixed; no security-definer or cross-schema function
 is introduced. Semantic name/zone validation remains in shared executable contracts;
 normalized responses also detect inconsistent persisted configuration.
+RD03 extends the version/completion guards for the adopted policy. RD04 replaces parent
+immutability for non-root units with guarded moves; root tenant/ID/type/parent remain
+immutable. It adds only `parent_id` to runtime's unit-update columns, retaining name/key
+privileges and forbidding identity/type changes. Guards validate the resulting subtree,
+not just the moved node. No new privileged pool or broader table grant is needed.
+RD03 also adds an invoker-rights unit-delete guard under the same configuration lock:
+root deletion is forbidden, and completed v2 cannot lose its last qualifying child.
+Configuration updates cannot set/retain v2 completion without a qualifying unit. These
+checks use `23514`/`configuration_first_unit` at SQL level without changing forced RLS.
+OrganizationService provides the finite HTTP domain outcomes before these SQL backstops.
+
+RD04 adds generated `0009_unit_move_audit.sql` for the finite `unit_moved` action and
+reviewed custom `0010_unit_move_guards.sql` for the parent-column grant and guard replacement.
+The unit guard retains insertion/count/type rules and validates non-root parent changes
+against bounded ancestor/subtree queries, including the entire resulting depth and
+canonical root. Sibling-key uniqueness remains enforced by the existing index. Explicit
+`VOLATILE` invoker-rights semantics let row guards see earlier changes in a multi-row
+statement, so an invalid final graph rejects/rolls back the statement; see
+[PostgreSQL 18 trigger visibility](https://www.postgresql.org/docs/18/trigger-datachanges.html).
+Tenant RLS, existing root/configuration/delete guards and migration history are retained.
 
 OrganizationService owns use-case rules and transaction sequencing; OrganizationRepository
 owns SQL, context/grant reads, canonical projections, state/revision/audit writes
@@ -536,19 +622,33 @@ current on every operation. Incomplete returns 409 `SETUP_REQUIRED`;
 missing/unsafe/uninitialized persistence returns 503 `CONFIGURATION_UNAVAILABLE`.
 `/api/dms/capabilities` uses the default gate after its existing permissions and before
 any machine token or DMS request. Auth/session readiness remains independent of setup;
-DMS outages never clear durable completion. I05–06 supply the UI; coordinated target release remains later work.
+DMS outages never clear durable completion. I05–06 supply the UI, extended by RD05–07;
+RD08 supplies coordinated release verification. Actual local/production acceptance is
+recorded separately in IN_PROGRESS.md.
 
 #### Onboarding web journey
 
 ONB-I05 adds the web feature under `features/onboarding`. Workspace entry verifies the
 existing live session, then current minimal status before rendering business content.
-Managers resume Organization while required saved values are missing, otherwise Review;
+In delivered v1, managers resume Organization while required saved values are missing,
+otherwise Review;
 ordinary users see Waiting for setup with explicit Retry/Sign out. Known onboarding and
 waiting paths redirect Home only after backend completion. Unknown paths render not-found
 rather than Home. React Router links/history provide client navigation and deep links/Back,
 with session/readiness checks on entry, route changes and BFCache restoration. Restoration resets
 transient connection-check state; in-flight status sharing is scoped to the verified user.
 I06 adds the Settings composition below.
+
+RD05 implements the incomplete journey in a dedicated setup layout:
+brand, signed-in identity, Sign out and Organization → First unit → Review progress.
+`EntryLayout`/`EntryContent` own neutral entry and incomplete setup/waiting;
+`WorkspaceLayout` is selected only after verified completion. Verify session/status before
+selecting a layout. Initial unresolved status and unavailable configuration use neutral entry/retry content; no dashboard/sidebar/Settings mounts or
+flashes. Incomplete managers entering dashboard/Settings resume the earliest saved gap;
+ordinary users use waiting with Retry/Sign out, and accounts without access stay denied.
+Completed users enter the application layout, including legacy root-only v1. Preserve
+existing login/recovery/logout orchestration and distinguish identity expiry, configuration
+unavailability and feature-specific DMS failure.
 
 The existing typed transport now supports JSON GET/PATCH/POST/DELETE, in-memory CSRF,
 explicit create keys, same-origin credentials, no-store/no-referrer, fixed deadlines and
@@ -558,24 +658,34 @@ revisions agree, with at most one bounded GET reconciliation retry. Backend serv
 remain authoritative; there is no local completion flag or browser grant writer.
 
 Organization uses shared name/zone validation and the adopted finite time-zone list;
-no deployment/browser zone is silently saved. Save and continue commits required values;
+no deployment/browser zone is silently saved. RD05 suggests Indian Standard Time · Kolkata
+· UTC+05:30 only when no zone is saved; explicit save confirms it and existing saved zones
+always take precedence. Save and continue commits required values;
 Save and exit submits only non-empty values, so it can commit valid partial progress or
 preserve already-saved required values and open paused setup; an untouched empty profile
-pauses without a mutation. Continue still reports empty required values. Resume derives
-from persisted gaps. Transient drafts
-stay in component memory; leaving through a link asks before discarding unsaved entries.
+pauses without a mutation. An untouched India suggestion adopts any saved zone returned
+by canonical readback; an explicitly edited zone remains a draft for comparison.
+An untouched India suggestion is omitted on Save and exit;
+Save and continue explicitly confirms it. Continue still reports empty required values.
+Resume derives from persisted gaps. Transient drafts stay in component memory; leaving through a link asks before discarding unsaved entries.
 Revision conflicts require explicit reload/comparison before a new save; unsent entries
 are retained while reconciling. Duplicate sibling names remain editable with a name error.
-Structure starts at the canonical root, creates only fixed Site/Department types with
-valid saved parents, displays ancestry and offers one optional-skip link without deleting
-units.
+Delivered v1 Structure starts at the canonical root, creates only fixed Site/Department
+types with valid saved parents, displays ancestry and offers an optional skip. RD05 replaces
+that setup surface with First unit, infers the root parent and requires a real saved direct-child
+Site/Plant or Department before v2 Continue/Review. Additional/deeper units remain optional.
+Save/exit can pause partial setup; it never bypasses requirements. Resume/deep links and
+Back/Forward use a fresh saved snapshot with profile gaps before first-unit gaps.
 If a selected parent disappears, both the selector and a new create use the saved root.
 An uncertain create retains the exact normalized body/revision/key for explicit retry;
 reloading current state does not silently issue a fresh key. New-entry reconciliation is
 a separate deliberate action after readback for that attempt; starting another attempt
-resets the readback marker. I06 adds rename/delete editors in Settings.
+resets the readback marker. I06 adds rename/delete editors in Settings. RD05 reuses those
+editors for saved setup units, so Review’s Edit first unit action supports actual corrections without a second mutation path.
+First-unit Save and exit commits a non-empty valid entry before pausing, or pauses an empty
+entry without a create. Uncertain retries retain that original save/exit intent and receipt key.
 
-Review displays saved profile/units and server checklist. Activation sends the saved
+Delivered v1 Review displays saved profile/units and the server checklist. Activation sends the saved
 revision; uncertain completion supports explicit readback/retry and opens Home only
 when completion is confirmed. Authority/configuration/validation/conflict/DMS errors
 retain their separate meanings. Existing session generation/check fencing and editor
@@ -583,6 +693,13 @@ unmount fencing suppress late reads/mutations after logout/navigation. Session/l
 special handling and development-only gallery boundaries remain intact. Forms compose
 Base UI/shadcn Field/Input/Card/NativeSelect; shared semantic tokens, narrow layouts,
 associated errors and reduced-motion behavior follow the existing design system.
+RD05 replaces the customer checklist with saved organization, regional and first-unit
+summaries, Edit actions and Finish setup. Technical root/permission checks remain server
+invariants. Enable Finish setup only from a fresh ready saved snapshot, and open the
+dashboard only after confirmed server completion. A conflict or uncertain completion disables
+Finish setup until explicit saved-state readback; readback never replays the mutation.
+Preserve shared dirty-editor navigation blocking, partial drafts, exact create receipts, explicit error/readback recovery and
+revision/unmount/session fencing throughout the new layouts.
 
 #### Ongoing Settings and basic structure
 
@@ -605,28 +722,72 @@ navigation confirms discard. No browser persistence or duplicated record is adde
 durable activation actor/time, and offers a nonblocking structure link for a root-only
 organization. It does not replay activation or track recurring optional tasks.
 
-Structure reuses fixed types, parent/depth/count validation, ancestry and exact-key create
-retries. A single selected non-root unit editor supports rename or explicit removal
+Delivered v1 Structure reuses fixed types, parent/depth/count validation, ancestry and
+exact-key create retries. A single selected non-root unit editor supports rename or explicit removal
 confirmation; the root is renamed only through the organization profile. Known parents
 with children cannot be removed; the backend checks current leaf usage and revision.
 Other structure mutations are disabled while the selected editor is open. Duplicate names
 remain editable; stale/unknown rename or delete outcomes require current saved readback
 before another deliberate write. Removed units are never recreated by retry. Completion,
 root identity, audit and backend invariants remain unchanged. People, approval, risk,
-access administration, unit moves and label overrides remain outside this feature.
+access administration and label overrides remain outside this feature. RD03 adds
+version-specific last-unit protection; RD04/RD06 add moves and the shared visual editor.
+
+RD06 implements `StructureEditor` for both setup and Settings, retaining the existing
+create body/revision/key and partial-save recovery. `StructureTree` composes connected expandable cards and a compact outline from the same
+bounded canonical units. Contextual Add first unit/Add below infer parent/valid types;
+inline rename offers Save/Cancel, selection exposes details, and unused-leaf removal
+names the unit and restriction explicitly. Root naming continues through the profile.
+Search preserves ancestor context and distinguishes duplicate names under different
+parents. Tree traversal renders a flat list of keyed unit rows with canonical depth/ancestry
+connectors, so changing parent never remounts an inline editor or loses its pending
+destination/name. If readback removes an edited unit, keep its clearly labelled transient
+row until explicit cancellation so draft/error/readback controls remain reachable; it
+never enters canonical units or a write body. An active canonical editor and its ancestors
+also stay visible when a rename/readback stops matching the current filter. Selected and
+edited ancestor paths stay expanded until their context closes.
+No sibling sort or persisted diagram coordinates; canonical ordering stays
+comparison key then ID. Filtered dragging must not imply ordering hidden/unrelated nodes.
+
+Move to… provides a complete click/tap/keyboard destination selector, old/new-path preview
+and confirmation before submission. Pointer/touch drag uses the same command/validation
+and confirmation, highlights valid targets and supports cancellation; precision dragging
+is never the sole operation. Native Pointer Events capture gestures on the handle only;
+normal card/pane touch scrolling remains native. Movement beyond a small activation
+threshold identifies a gesture; pointer cancellation, Escape and invalid/outside drops
+leave canonical structure unchanged. Filtering disables drag while retaining the full
+Move to destination chooser. Drag status does not shift target geometry.
+`UnitMoveEditor` and the typed parent PATCH helper share validation and old/new paths for
+both inputs; they never optimistically rewrite units. Only server confirmation labels a move saved. Failures or
+lost responses restore/read the canonical tree and preserve intended destination for
+explicit reconciliation before retry. No automatic move write replay. Use current
+shadcn/Base UI primitives, Hugeicons, semantic tokens, shared fonts and reduced-motion
+behavior. Review pinned CLI component docs and generate missing primitives with that CLI;
+avoid a heavy diagram dependency. Any needed interaction dependency requires a recorded
+compatibility/license decision. Gallery examples cover empty, populated, loading, selected,
+invalid/conflicting and narrow states; the development-only gallery composes the actual
+presentation with inert fixture commands. No new interaction dependency is added.
+Move validation indexes canonical identities, sibling keys and subtree heights once per
+unit snapshot. Destination eligibility is cached across transient form/gesture changes,
+and the fixed Site parent rule avoids scanning impossible Site moves.
+Focused Node model tests cover subtree depth, cycles/types, sibling collisions and
+version-aware last-unit removal; the disposable HTTPS `test:browser:structure` journey
+checks real keyboard/pointer/touch moves, explicit readback, contention and shared setup/Settings.
 
 #### Web navigation and scroll ownership
 
 React Router's browser router separates account/development routes from the shared
 workspace route. Router state updates are synchronous (`useTransitions: false`), so
 frequent navigation and blocker dismissal do not defer subsequent form interactions. `Workspace` retains verified session/readiness state across internal
-navigation; `WorkspaceLayout` owns the header, top navigation, footer and bounded page
+navigation. RD05 selects `EntryLayout` for neutral/setup/waiting and reserves
+`WorkspaceLayout` for completed users. The completed layout owns the slim header, persistent left navigation, footer and bounded page
 pane. It never keys the shell by URL. Route changes display a localized skeleton while
 the session/readiness check accepts the destination, then change only the active page.
 Existing page state stays mounted and hidden during that check. Settings section
 navigation remains visible while its content pane waits; initial configuration reads
 and retries also keep the Settings layout mounted. Onboarding retains its step navigation
-while canonical reads are pending. Form/list/card skeletons and loading announcements
+while canonical reads are pending. Shared `SetupProgress` sits outside the setup scroll pane
+and has a fixture-only gallery example. Form/list/card skeletons and loading announcements
 live in the shared `content-loading` composition, using the generated shadcn Spinner and
 Skeleton primitives. Spinner SVGs are decorative beside a single status label or action
 name; reduced-motion users receive static loading indicators. Explicit readback and saves
@@ -636,12 +797,12 @@ Focus and the existing completed-workspace interval also revalidate without retu
 the startup skeleton. Onboarding step changes wait for a fresh canonical snapshot;
 late older reads cannot replace a newer revision. APIs remain authoritative on every request.
 
-Settings retains its canonical snapshot and sidebar between sections; only the active
+Settings retains its canonical snapshot and compact horizontal section row between sections; only the active
 editor is keyed by pathname so draft/error state cannot leak between organization and
 time-zone forms. Returning from Home reloads Settings through the existing transport.
-The viewport is bounded by `100dvh` and flex `min-height: 0` boundaries. The Settings
-sidebar and content pane scroll independently; at narrow widths sections become a
-horizontal scroll row. Header/top navigation/footer remain outside page scrolling.
+The viewport is bounded by `100dvh` and flex `min-height: 0` boundaries. The workspace
+sidebar and content pane scroll independently; Settings sections use a horizontally
+scrolling row at all widths. Header/navigation/footer remain outside page scrolling.
 `ScrollRegion` resets the changed content pane and moves keyboard focus there on client
 navigation, while surrounding navigation retains its position. Native overflow supplies
 keyboard, wheel and touch scrolling without a second scroll library.
@@ -654,61 +815,89 @@ confirmation retains its existing behavior. Auth redirects and credential exchan
 full document navigation, and browser reset-token capture still precedes router creation.
 No session, configuration or draft is persisted in browser storage.
 
+RD05 retains that orchestration and selects dedicated setup/waiting or completed
+application layout only from verified readiness. RD07 extends the completed layout: a slim
+brand/account header and persistent collapsible left navigation surround independently
+scrolling navigation/content. The navigation is 232px expanded or 64px collapsed, adapting at 760px and below
+with a generated shadcn/Base UI Sheet overlay. Tooltip supplies icon-rail labels. Collapse preference is
+transient in memory. Provide accessible names/tooltips in the icon rail, correct expanded
+state, focus management and overlay close on accepted router navigation. Cancelling a
+dirty-form blocker leaves the overlay and draft intact; Escape returns focus to its
+trigger. Accepted navigation focuses the persistent content region, and resizing to
+desktop dismisses the overlay and focuses its visible collapse control. Keep only delivered Home and
+authorized Settings destinations; show available actions and honest empty states. A
+root-only completed v1 organization gets a small optional unit prompt. This manager-only
+Home composition reads the existing canonical projections without gating the completed
+layout; ordinary users never request configuration. Unavailable reads omit the suggestion. Settings keeps
+compact nested section navigation rather than a second wide sidebar. Preserve persistent
+layout nodes across internal routes, content-only loading, native scroll ownership and
+dirty-form protection; no account/configuration data goes into browser storage.
+
 #### Onboarding validation and bounds
 
-I02 contracts, I03 domain/HTTP adapters and I04 grant/readiness policy implement the bounds below. These are fixed release bounds, not new environment knobs.
+I02 contracts, I03 domain/HTTP adapters and I04 grant/readiness policy implement the bounds
+below; RD02 adds the explicit Kolkata allowlist entry. These are fixed release bounds,
+not new environment knobs.
 Changing them later requires updating contracts and this record together.
 
-| Boundary                                  | Adopted value/rule                                                                                                                                                                                                                                                                  |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| New configuration HTTP mutation body      | At most 4,096 UTF-8 bytes, JSON object with unknown keys rejected; preserve the existing 16,384-byte global Fastify ceiling for other routes                                                                                                                                        |
-| Private setup/configuration command input | At most 4,096 UTF-8 bytes from stdin; strict JSON, never secrets or identity overrides in arguments                                                                                                                                                                                 |
-| Organization name                         | 1–160 Unicode code points after normalization; require at least one Unicode letter or number                                                                                                                                                                                        |
-| Site/department name                      | 1–120 Unicode code points after the same normalization                                                                                                                                                                                                                              |
-| Raw name                                  | At most 1,024 Unicode code points before normalization; reject unpaired surrogates                                                                                                                                                                                                  |
-| Name normalization                        | NFC, then collapse each Unicode `White_Space` run to one ASCII space and trim; reject remaining Unicode categories Cc/Cf/Cs. Preserve display case, punctuation and diacritics                                                                                                      |
-| Sibling comparison key                    | Normalized display name converted with locale-independent Unicode lowercase, then NFC; compare exact keys within the same parent across both unit types. Do not strip accents or apply fuzzy matching                                                                               |
-| Time zone                                 | 1–100 ASCII characters and exact member of a shared versioned allowlist generated in I02 from pinned Node 24.21.0 `Intl.supportedValuesOf('timeZone')`, plus `UTC`; commit generator, list and provenance. No offsets, OS-local zone, case-insensitive matching or unlisted aliases |
-| Time-zone confirmation                    | Persist only an explicitly submitted valid zone; non-null saved zone means confirmed. Browser/operator suggestions are not persisted by initialization or GET. Browser validation uses the committed list, not its own ICU enumeration                                              |
-| Organization units                        | At most 500 live units including the one root; one bounded full list, no silent truncation or pagination in this release                                                                                                                                                            |
-| Hierarchy depth                           | At most 8 nodes on any root-to-unit path, counting root as 1; Organization is the sole root, Site is allowed only under root, Department under root/Site/Department                                                                                                                 |
-| IDs                                       | Root, unit and create-retry IDs are UUIDs, normalized lowercase; actor/authority subject and private operator labels follow the existing 1–200 ASCII `[A-Za-z0-9_-]` bound                                                                                                          |
-| Organization revision                     | JSON integer 0–2,147,483,647; initialized at 0, increases once per effective profile/unit/completion change; never wraps. Exhaustion makes writes unavailable pending an explicit upgrade                                                                                           |
-| Field errors                              | At most 8 entries using the finite fields/reasons below; no echoed rejected values or arbitrary validation paths                                                                                                                                                                    |
-| Configuration read/response               | At most 1,048,576 UTF-8 bytes, including the full bounded unit list; new browser transport enforces this limit and the existing 10-second deadline                                                                                                                                  |
-| Unit-create receipts                      | 24-hour recovery window from commit; at most 1,024 unexpired receipts per installation. Remove expired receipts before enforcing the limit; if still full return controlled unavailable without creating a unit                                                                     |
-| Audit retention                           | 90 days for configuration/access events; explicit private maintenance only. Completion actor/time/version and current configuration are durable state, not deleted by audit retention                                                                                               |
+| Boundary                                  | Adopted value/rule                                                                                                                                                                                                                                                                                                                               |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| New configuration HTTP mutation body      | At most 4,096 UTF-8 bytes, JSON object with unknown keys rejected; preserve the existing 16,384-byte global Fastify ceiling for other routes                                                                                                                                                                                                     |
+| Private setup/configuration command input | At most 4,096 UTF-8 bytes from stdin; strict JSON, never secrets or identity overrides in arguments                                                                                                                                                                                                                                              |
+| Organization name                         | 1–160 Unicode code points after normalization; require at least one Unicode letter or number                                                                                                                                                                                                                                                     |
+| Site/department name                      | 1–120 Unicode code points after the same normalization                                                                                                                                                                                                                                                                                           |
+| Raw name                                  | At most 1,024 Unicode code points before normalization; reject unpaired surrogates                                                                                                                                                                                                                                                               |
+| Name normalization                        | NFC, then collapse each Unicode `White_Space` run to one ASCII space and trim; reject remaining Unicode categories Cc/Cf/Cs. Preserve display case, punctuation and diacritics                                                                                                                                                                   |
+| Sibling comparison key                    | Normalized display name converted with locale-independent Unicode lowercase, then NFC; compare exact keys within the same parent across both unit types. Do not strip accents or apply fuzzy matching                                                                                                                                            |
+| Time zone                                 | 1–100 ASCII characters and exact member of the shared versioned allowlist: pinned Node 24.21.0 `Intl.supportedValuesOf('timeZone')`, plus `UTC` and RD02's explicit `Asia/Kolkata` compatibility addition, retaining `Asia/Calcutta`. Commit generator/list/provenance. No offsets, OS-local zone, case-insensitive matching or unlisted aliases |
+| Time-zone confirmation                    | Persist only an explicitly submitted valid zone; non-null saved zone means confirmed. Browser/operator suggestions are not persisted by initialization or GET. Browser validation uses the committed list, not its own ICU enumeration                                                                                                           |
+| Organization units                        | At most 500 live units including the one root; one bounded full list, no silent truncation or pagination in this release                                                                                                                                                                                                                         |
+| Hierarchy depth                           | At most 8 nodes on any root-to-unit path, counting root as 1; Organization is the sole root, Site is allowed only under root, Department under root/Site/Department                                                                                                                                                                              |
+| IDs                                       | Root, unit and create-retry IDs are UUIDs, normalized lowercase; actor/authority subject and private operator labels follow the existing 1–200 ASCII `[A-Za-z0-9_-]` bound                                                                                                                                                                       |
+| Organization revision                     | JSON integer 0–2,147,483,647; initialized at 0, increases once per effective profile/unit/completion change; never wraps. Exhaustion makes writes unavailable pending an explicit upgrade                                                                                                                                                        |
+| Field errors                              | At most 8 entries using the finite fields/reasons below; no echoed rejected values or arbitrary validation paths                                                                                                                                                                                                                                 |
+| Configuration read/response               | At most 1,048,576 UTF-8 bytes, including the full bounded unit list; new browser transport enforces this limit and the existing 10-second deadline                                                                                                                                                                                               |
+| Unit-create receipts                      | 24-hour recovery window from commit; at most 1,024 unexpired receipts per installation. Remove expired receipts before enforcing the limit; if still full return controlled unavailable without creating a unit                                                                                                                                  |
+| Audit retention                           | 90 days for configuration/access events; explicit private maintenance only. Completion actor/time/version and current configuration are durable state, not deleted by audit retention                                                                                                                                                            |
 
 After the raw-input bound, normalization runs before display-length/key checks. Derive
 the comparison key in the shared validator and persist/compare it exactly, independent
 of database/browser locale. Whitespace-only or symbol-only names are invalid. Duplicate
 sibling names are rejected even when their types differ; equal names
 under different parents are valid and shown with ancestry. The root's display name is
-the organization name, never an independent edit. Type/parent/identity are immutable after
-unit creation; no root endpoint, move, employee node, synthetic site or label override.
+the organization name, never an independent edit. Type/identity are immutable after unit
+creation; the root's parent is immutable. Non-root parent changes use only the adopted
+move operation, with full subtree depth/type/cycle checks. No root endpoint, employee node,
+synthetic site or label override.
 Deletion requires an unused leaf and checks all currently implemented product references;
-future referencing features must extend protection before shipping.
+future referencing features must extend deletion/move protection before shipping. Completed
+v2 also requires at least one qualifying direct-child unit after deletion or movement.
 
 #### Onboarding HTTP and access contracts
 
-All routes below are readiness-exempt and require current `turnstile:access`; all except
-workspace status also require `turnstile:configuration:manage`. Cookie mutations preserve
+RD04 implements the parent-change route alongside the RD03 version-aware configuration
+behavior. Generated OpenAPI contract version
+2.0.0 includes explicit legacy/v2 response examples and implementation status; runtime
+initialization defaults to v2 after migrations. All routes below are readiness-exempt and require current
+`turnstile:access`; all except workspace status also require `turnstile:configuration:manage`.
+Cookie mutations preserve
 exact Origin, `X-CSRF-Token` and same-origin Fetch Metadata checks. Use `private, no-store`
 and `no-referrer` on feature responses, including failures. No tenant/customer/application
 or actor field is accepted in public request bodies. Unknown query fields are rejected;
 these read endpoints require no query parameters.
 
-| Route                                | Strict input and success outcome                                                                                                                                                                                                                               |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/workspace/status`          | 200 `{status: 'incomplete' \| 'complete', canManageConfiguration: boolean}` for any permitted user; same minimal projection for managers, without profile, revision, administrator directory or completion actor                                               |
-| `GET /api/setup`                     | 200 detailed setup projection defined below; configuration managers only                                                                                                                                                                                       |
-| `POST /api/setup/complete`           | `{expectedRevision}`; 200 current configuration snapshot after atomic completion or authorized repeat completion                                                                                                                                               |
-| `GET /api/organization`              | 200 `{revision, organization}`                                                                                                                                                                                                                                 |
-| `PATCH /api/organization`            | `{expectedRevision, name?, timeZone?}`, at least one profile field required; 200 configuration snapshot                                                                                                                                                        |
-| `GET /api/organization/units`        | 200 `{revision, units}`; full bounded list with each unit's root-to-parent ancestor IDs                                                                                                                                                                        |
-| `POST /api/organization/units`       | `{expectedRevision, type: 'site' \| 'department', parentId, name}` plus UUID `Idempotency-Key`; first success 201 `{configuration, unitId, replayed: false}`, identical authorized replay 200 with the same unitId, current configuration and `replayed: true` |
-| `PATCH /api/organization/units/:id`  | UUID path ID and `{expectedRevision, name}` only; 200 configuration snapshot                                                                                                                                                                                   |
-| `DELETE /api/organization/units/:id` | UUID path ID and JSON `{expectedRevision}`; 200 configuration snapshot, rather than a bodyless response                                                                                                                                                        |
+| Route                                      | Strict input and success outcome                                                                                                                                                                                                                               |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/workspace/status`                | 200 `{status: 'incomplete' \| 'complete', canManageConfiguration: boolean}` for any permitted user; same minimal projection for managers, without profile, revision, administrator directory or completion actor                                               |
+| `GET /api/setup`                           | 200 detailed setup projection defined below; configuration managers only                                                                                                                                                                                       |
+| `POST /api/setup/complete`                 | `{expectedRevision}`; 200 current configuration snapshot after atomic completion or authorized repeat completion                                                                                                                                               |
+| `GET /api/organization`                    | 200 `{revision, organization}`                                                                                                                                                                                                                                 |
+| `PATCH /api/organization`                  | `{expectedRevision, name?, timeZone?}`, at least one profile field required; 200 configuration snapshot                                                                                                                                                        |
+| `GET /api/organization/units`              | 200 `{revision, units}`; full bounded list with each unit's root-to-parent ancestor IDs                                                                                                                                                                        |
+| `POST /api/organization/units`             | `{expectedRevision, type: 'site' \| 'department', parentId, name}` plus UUID `Idempotency-Key`; first success 201 `{configuration, unitId, replayed: false}`, identical authorized replay 200 with the same unitId, current configuration and `replayed: true` |
+| `PATCH /api/organization/units/:id`        | UUID path ID and `{expectedRevision, name}` only; 200 configuration snapshot                                                                                                                                                                                   |
+| `PATCH /api/organization/units/:id/parent` | RD04: UUID path ID and strict `{expectedRevision, parentId}`; 200 canonical configuration snapshot, including same-parent no-op at the current revision. No idempotency key, type/name/actor/tenant selectors or implicit write replay                         |
+| `DELETE /api/organization/units/:id`       | UUID path ID and JSON `{expectedRevision}`; 200 configuration snapshot, rather than a bodyless response                                                                                                                                                        |
 
 `organization` is `{name: string | null, timeZone: string | null, rootId: UUID | null}`.
 Initial values are null. Omitted PATCH fields retain their values; submitted fields must
@@ -724,14 +913,22 @@ ID using deterministic code-point order, not browser locale. A configuration sna
 `{revision, organization, units, setup}` read consistently at one revision.
 
 The detailed `setup` projection is `{state, requirementVersion, revision, requirements,
-nextStep, completion}`. Version is 1. State is `not_started` before any effective save,
-`in_progress` after a save and `completed` after activation; paused is a UI state only.
-`requirements` has four fixed `{id, satisfied}` entries: `organization_name`, `time_zone`,
-`organization_root`, `configuration_manager`. The last is checked for the current verified
-actor, not a cross-schema account count. `nextStep` is `organization` while required profile
-or root is missing, `review` when ready and incomplete, or null when completed. Structure
-is never a required gap. `completion` is null or `{completedAt, completedBy, requirementVersion}`
-with server UTC timestamp and authority subject ID; no administrator contact directory.
+nextStep, completion}`. RD02 supports literal versions 1 and 2; pre-redesign strict clients
+understand only 1. State is `not_started` before any effective save, `in_progress` after a save and
+`completed` after activation; paused is a UI state only. Version-1 `requirements` retains
+its four fixed `{id, satisfied}` entries: `organization_name`, `time_zone`, `organization_root`,
+`configuration_manager`. Version 2 uses the ordered tuple `organization_name`, `time_zone`,
+`organization_root`, `first_unit`, `configuration_manager`. The manager check reflects the
+current verified actor, not a cross-schema account count. `first_unit` reflects a saved
+Site/Department directly below the canonical root; snapshots validate this agreement.
+Never validate completed v1 against the v2 tuple.
+
+`nextStep` is `organization` while required profile/root is missing, then `structure` for
+v2 missing its first unit, otherwise `review` when incomplete, or null when completed.
+Not-started remains revision 0 with empty saved profile/units even after the metadata-only
+version upgrade. `completion` is null or `{completedAt, completedBy, requirementVersion}`
+with matching setup version, server UTC timestamp and authority subject ID; no administrator
+contact directory. The existing minimal workspace-status DTO gains no version/profile fields.
 
 | Existing surface                                                    | Classification during incomplete setup                                                                                                                                                 |
 | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -748,15 +945,15 @@ Preserve auth/DMS error DTOs and their precedence. A route permission denial ret
 existing 403 before revealing readiness. Only an otherwise authorized business operation
 receives 409 `SETUP_REQUIRED`. Feature errors never revoke an otherwise valid session:
 
-| HTTP | Feature envelope                                     | Meaning                                                                                                                                                                                         |
-| ---- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 400  | `{code: 'CONFIGURATION_INVALID', fieldErrors}`       | Invalid JSON/schema, unsupported changes, invalid field/parent or configured unit/depth bound                                                                                                   |
-| 404  | `{code: 'CONFIGURATION_NOT_FOUND'}`                  | Addressed non-root unit does not exist in this installation; never reveal another installation's record                                                                                         |
-| 409  | `{code: 'CONFIGURATION_CONFLICT', reason, revision}` | Reason is `revision`, `duplicate_name`, `unit_in_use` or `idempotency_mismatch`; revision is current and visible only to an authorized manager                                                  |
-| 409  | `{code: 'SETUP_REQUIRED'}`                           | Workspace activation required; use the permitted status endpoint to choose setup versus waiting                                                                                                 |
-| 413  | `{code: 'CONFIGURATION_TOO_LARGE'}`                  | New feature request exceeds its body bound; preserve framework status rather than converting it to an auth error                                                                                |
-| 415  | `{code: 'CONFIGURATION_MEDIA_TYPE_UNSUPPORTED'}`     | Mutation is not JSON                                                                                                                                                                            |
-| 503  | `{code: 'CONFIGURATION_UNAVAILABLE'}`                | Missing/unsafe schema, initialization, identity binding or configuration persistence, lock/dependency timeout, revision exhaustion or full receipt capacity; retryable, no internal diagnostics |
+| HTTP | Feature envelope                                     | Meaning                                                                                                                                                                                                                        |
+| ---- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 400  | `{code: 'CONFIGURATION_INVALID', fieldErrors}`       | Invalid JSON/schema, unsupported changes, invalid field/parent or configured unit/depth bound                                                                                                                                  |
+| 404  | `{code: 'CONFIGURATION_NOT_FOUND'}`                  | Addressed non-root unit does not exist in this installation; never reveal another installation's record                                                                                                                        |
+| 409  | `{code: 'CONFIGURATION_CONFLICT', reason, revision}` | Reason is `revision`, `duplicate_name`, `unit_in_use`, `idempotency_mismatch` or RD02's `required_unit`; the last protects completed v2's final qualifying unit. Revision is current and visible only to an authorized manager |
+| 409  | `{code: 'SETUP_REQUIRED'}`                           | Workspace activation required; use the permitted status endpoint to choose setup versus waiting                                                                                                                                |
+| 413  | `{code: 'CONFIGURATION_TOO_LARGE'}`                  | New feature request exceeds its body bound; preserve framework status rather than converting it to an auth error                                                                                                               |
+| 415  | `{code: 'CONFIGURATION_MEDIA_TYPE_UNSUPPORTED'}`     | Mutation is not JSON                                                                                                                                                                                                           |
+| 503  | `{code: 'CONFIGURATION_UNAVAILABLE'}`                | Missing/unsafe schema, initialization, identity binding or configuration persistence, lock/dependency timeout, revision exhaustion or full receipt capacity; retryable, no internal diagnostics                                |
 
 `fieldErrors` entries contain only `{field, reason}`. Field is one of `body`, `name`,
 `timeZone`, `type`, `parentId`, `id`, `expectedRevision`, `idempotencyKey`; reason is one of
@@ -765,6 +962,13 @@ input uses `body/invalid`; no SQL/stack traces, submitted values or raw Zod erro
 Configuration exceptions and feature parser failures need explicit mapping in I02/I04:
 the current global filter maps unknown failures to `AUTH_UNAVAILABLE` and must not mask
 domain errors. Auth verification/CSRF failures continue to use their existing envelopes.
+Move validation uses the same finite errors: invalid/self/descendant/type relationships
+map to `parentId/invalid`, subtree depth to `parentId/limit_reached`, and root movement to
+`id/unsupported`; missing source/destination uses `CONFIGURATION_NOT_FOUND`. Sibling-name,
+live-reference and last-required-unit conflicts use their finite conflict reasons above.
+No rejected paths, names, foreign tenant data or raw database errors are returned. The
+explicit route classifier applies the same body/media/response limits and privacy headers
+to the new parent-change path; auth/CSRF/permission precedence remains unchanged.
 
 The browser route map is `/` (Home), `/onboarding/organization`, `/onboarding/structure`,
 `/onboarding/review`, `/onboarding/paused`, `/waiting-for-setup`, `/settings` (Setup overview),
@@ -774,7 +978,9 @@ return validation. After session verification, wait for current readiness before
 business content. Incomplete managers resume the first required step; ordinary users wait
 and can explicitly Retry or sign out. A completed user visiting onboarding/waiting goes
 to Home, with Settings links for managers. An incomplete manager's paused route remains
-usable; Structure requires a saved root, and Review redirects to Organization if required values are absent.
+usable. Keep the literal `/onboarding/structure` route while labelling it First unit.
+Structure requires a saved root; Review redirects to the earliest unmet saved requirement,
+including Structure for v2. No skip/URL bypass may satisfy a missing first unit.
 Ordinary users cannot open configuration routes. Unknown paths show a safe not-found state,
 never an apparently active Home. Back/deep links recheck access; no mandatory polling.
 
@@ -795,11 +1001,35 @@ the context lock before applying an authenticated configuration mutation.
 
 Ordinary mutations check expected revision after authorization, validate the resulting
 state, and commit configuration, one new revision and audit together. Identical normalized
-profile/rename saves with a current revision are no-ops without another revision/audit.
+profile/rename saves and same-parent moves with a current revision are no-ops without
+another revision/audit.
 Stale ordinary saves still conflict. Root creation is inside the first name-save
 transaction; profile retries reconcile via GET and cannot create a second root. Deletion
 and ordinary PATCH are not replayed automatically: after an uncertain response, refetch
 and reconcile before a deliberate new action.
+
+RD04 moves acquire that same configuration lock before reading source/destination and
+checking the expected revision. Validate tenant-bound existence, immutable root/type,
+permitted destination type, self/descendant cycles, deepest resulting subtree path,
+sibling comparison-key uniqueness and currently implemented references. Recheck completed
+v2's first-unit invariant against the resulting tree. Update only the moved node's
+parent; stable IDs/types and descendant parent links survive, and ancestry is derived
+from canonical references. The effective move commits one revision and one `unit_moved`
+audit event with affected unit ID and `parentId` changed field. No user grant/membership,
+sort order or card position changes. Audit failure rolls back the move. Canonical readback
+after a lost response compares the current parent before an explicit retry; a stale retry
+conflicts normally and cannot create a second success event. Same-parent no-op still
+requires current authorization/revision and existing source/destination.
+
+The implemented unit references are the canonical root/parent foreign keys, create-retry
+unit IDs and audit subjects. Moves preserve IDs and descendant links; a child or live
+create receipt is not a reason to refuse a valid subtree move. There are no additional
+business-unit references yet. Future referencing features must extend move/deletion
+rules before shipping. A database reference refusal maps to finite `unit_in_use`, without
+exposing SQL details. In a valid single-root tree, moving the sole direct child below
+another node necessarily creates a cycle and is rejected; the explicit completed-v2
+required-unit check remains a backstop. Same-parent moves require a fresh revision and
+return canonical state without audit/revision changes. Rename stays name-only.
 
 For unit creation, the caller generates one UUID `Idempotency-Key` per intended create
 and retains the exact body in memory for explicit retry. Bind its receipt to tenant,
@@ -813,13 +1043,23 @@ or lost client retry context, inspect current units before any new create; never
 issue a fresh key or automatically retry POST. Unit/depth bounds and sibling uniqueness
 still apply. Expired-receipt cleanup is a bounded exception to runtime receipt immutability.
 
-Activation checks the saved name, confirmed zone, stable root and current actor's local
-manager grant at the same locked revision. It writes one durable completion (actor,
-server UTC time, requirement version 1), increments revision once and inserts one audit.
+Activation checks the saved name, confirmed zone, stable root, current actor's local
+manager grant and version-specific first-unit requirement at the same locked revision.
+It writes one durable completion (actor, server UTC time, the configuration's requirement
+version), increments revision once and inserts one audit.
+An incomplete v2 profile/root-only activation returns 400 `CONFIGURATION_INVALID` with
+`body/required`, without a completion, revision increment or success audit. Ordinary-user
+status remains minimal; protected business calls still return 409 `SETUP_REQUIRED` before
+any machine-token or DMS request until completion.
 Concurrent/lost-response repeats return current snapshot and the same completion after
 current authorization, without another audit/revision; once completed, a syntactically
 valid stale expectedRevision does not prevent this readback. Incomplete stale activation
 conflicts normally. No authority/DMS call occurs inside the transaction.
+
+Deletion uses the same lock/revision/live-permission boundary. Reject a last-qualifying-unit
+removal from completed v2 with `CONFIGURATION_CONFLICT/required_unit`; preserve leaf and
+current reference checks. Before completion, valid removal changes revision/readiness
+without resetting profile or root. Completed v1 retains its legacy optional-unit policy.
 
 An enabled local manager has both access/manage permissions. `auth:set-access` rejects
 manage without access and serializes against the same context. Allow the first grant;
@@ -864,14 +1104,23 @@ and successful grant output include action/time/installation IDs; grant denial i
 not a silent no-op. Private inspection supplies manager IDs for operator reconciliation,
 never an ordinary-user administrator directory. Retention cleanup records counts and
 operator metadata; it is explicitly permitted operator maintenance of append-only history.
+RD03 initialization output also includes `requirementVersion`; repeat initialization
+preserves either supported version and its revision/completion. Inspection includes the
+configuration's version even when incomplete, independently of completion metadata.
 
-Fresh sequence: platform provisioning/migrations → fixed bootstrap → explicit setup
+Fresh sequence: platform provisioning/migrations → fixed bootstrap → explicit v2 setup
 initialization → verified authority account and explicit local manager grant → login/setup.
 Existing installation sequence: coherent backup and compatibility check → pause affected
-product access → reviewed additive product migrations → initialize existing identity as
-incomplete → explicit verified manager grant preserving unrelated rights → release matching
-API/web together → verify manager setup, early-user waiting, save/restart, activation and
-Settings → verify the customer's actual login before removing unnecessary staff access.
+writers/access → reviewed additive product migrations → repeat-safe initialization only
+if no context exists → verify/preserve intended manager grants and unrelated rights →
+release matching API/web together → verify readiness, resume/activation where incomplete
+and canonical Settings → verify the customer's actual login before removing unnecessary staff access.
+For an installation predating onboarding, initialize the existing identity incomplete at
+v2. For an existing incomplete v1 context, the migration upgrades requirement metadata only;
+for completed v1, retain version, revision, actor/time, profile, zone and units. Neither
+initialization nor the upgrade reopens completed setup. Repeat initialization preserves
+either version and all existing state. Never re-bootstrap accounts/tenants, invent a unit,
+rewrite saved zones or infer completion from historical activity.
 Do not infer completion from accounts, sessions, enrollment or row counts. Do not deploy
 the gate before usable setup and Settings. Auth identities/sessions, machine enrollment,
 unrelated grants/data, ports and ingress topology remain intact.
@@ -885,18 +1134,35 @@ recover/provision and verify a named account through supported authority tools, 
 grant it locally, prove its real login, then remove obsolete access without crossing the
 last-local-manager boundary. No cross-schema SQL or authority-role inference.
 
+The v1 strict client/API cannot be assumed to parse v2, `structure` nextStep, the expanded
+conflict enum or Kolkata. Parent-column privileges/guard changes also affect rollback.
+RD08 records no verified prior rollback pair: the pre-redesign I08 API/web set is not
+approved for v2/move schema and contracts. Any proposed prior immutable pair must pass
+the current readiness, contract and guard checks before use;
+reverting only the web or only the API is not a compatible recovery plan. Keep maintenance
+and fix forward or use a verified coordinated rollback. The disposable
+restore rehearsal checks exact archive preservation, allows only the incomplete-v1
+metadata transition, and runs six synthetic v1 dump/restore cases covering empty, partial,
+completed, Calcutta/Kolkata and root-only state before a selected target upgrade. Build matching images from the monorepo root and verify packaged
+migrations/non-root runtimes; do not reset the persistent local installation to test fresh
+v2. Isolated Site and Department fixtures plus a deliberate completed root-only v1 fixture
+provide the browser evidence. Actual target backup/migration/administrator handover remain
+separate operator actions and evidence; this baseline does not execute them.
+
 Operator procedures are linked from the [authentication runbook](docs/runbooks/authentication.md#onboarding-release-boundary)
 and [deployment runbook](docs/runbooks/dokploy.md#onboarding-release-boundary). The
 [I08 release procedure](docs/runbooks/onboarding-release.md) supplies executable local
 and one-off production-image commands and phase-specific recovery. Local-only helpers
 capture a protected coherent backup outside the checkout, rehearse restore/migration and
-preservation in a disposable PostgreSQL fixture, and verify the selected existing account
+preservation in a disposable PostgreSQL fixture (with isolated synthetic archive cases),
+and verify the selected existing account
 through supported login/setup/Settings. The clone uses generated role credentials and
 an ephemeral fixture port, never the original database for restoration. Application
 services remain on the reserved ports. Actual production DNS/TLS, runtime privilege and
 administrator handover evidence must come from that intended deployment.
-Future mandatory setup changes need an explicit requirement-version transition; optional
-features never clear version-1 completion. Broad IAM and Document Approval remain separate.
+The explicit v2 transition above is limited to new/incomplete setup; future mandatory
+changes need another adopted transition. Optional features never clear completion.
+Broad IAM and Document Approval remain separate.
 
 ### Product functionality boundary
 
@@ -2137,6 +2403,8 @@ private environment files and Git metadata are excluded. Builds retain monorepo-
 contexts and cached dependency layers. Application source is copied into each image;
 Compose Watch synchronizes edits without mounting host dependencies or generated output.
 The current watch rules require Compose 5.6.1 or later (validated installed version).
+CI installs Compose 5.6.1 explicitly through the commit-pinned Docker setup action,
+so runner-image updates cannot silently select an older Watch schema.
 
 API source and shared-package changes use `sync+restart`: the affected container rebuilds
 its public dependency packages/API before executing the compiled API in the foreground.
@@ -2274,7 +2542,8 @@ The same command therefore works before a full application build on a fresh chec
 The [CI workflow](.github/workflows/workspace.yml) installs pinned tools/locked dependencies,
 runs Biome/boundary/TypeScript/Python/deployment checks, builds all seven projects, runs
 API/Python entry-point tests, Fastify injection and compiled-runtime smoke checks, and
-validates both Compose files. A separate matrix is configured to build all four images.
+validates both Compose files with the pinned supported Compose release. A separate matrix
+builds the four application images and the shared development image.
 Adding this workflow does not prove remote execution or container/deployment success.
 
 Onboarding verification reuses the owned migration/bootstrap, real PostgreSQL/Fastify
@@ -2329,26 +2598,33 @@ This consolidation preserves the selected architecture and does not add business
 database changes, mobile code or migration. Actual completion/verification stays in
 [IN_PROGRESS.md](IN_PROGRESS.md); product requirements retain their stable IDs.
 
-| Date       | Architecture record                                                                                                                                                                                                                                                                                                                                                                                      |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-11-01 | ONB-I07 extends the existing real PostgreSQL/Fastify/HTTPS harnesses with queued revocation/activation and unit contention, a separate fresh structured-onboarding path, DMS-outage completion readback, and isolated production API/web packaging/runtime checks. Compose Watch verification preserves existing installation state; coordinated target release remains I08.                             |
-| 2026-11-02 | ONB-I08 adds a private existing-installation preflight plus local-only protected backup, isolated restore/upgrade preservation rehearsal and supported account/setup release verification. Production-image one-off migration/grant/handover/recovery commands share the existing roles, network and fixed identity. Actual local versus production acceptance remains in IN_PROGRESS.md.                |
-| 2026-11-01 | ONB-I06 adds manager-only canonical Settings, original activation overview, shared configuration transport/profile/create editors and explicit non-root rename/leaf removal with revision and uncertain-response readback. Home/document connection and auth boundaries remain; full-chain acceptance and target release follow in I07–08.                                                               |
-| 2026-11-01 | ONB-I05 adds guarded web readiness entry, typed configuration transport, partial save/exit/resume, optional structure with explicit create retries, review/activation and ordinary waiting. Session/logout fencing and the design system remain; Settings and coordinated release follow in I06–08.                                                                                                      |
-| 2026-11-01 | ONB-I04 implements strict attributed private grants, shared owning operator verification, initialized-context/last-manager locking and atomic access audit; one application guard enforces current readiness after identity/CSRF/permissions, with explicit configuration/session exemptions and default business gating. UI and coordinated release remain later work.                                  |
-| 2026-11-01 | ONB-I03 implements canonical organization/setup state, optional units, bounded create receipts and transactional audit with forced RLS/restricted privileges; guarded HTTP handlers, private initialization/inspection/pruning and grant-writer lock coordination preserve auth and installation identity. Configuration provisioning/business gate remain I04; UI and target release remain later work. |
-| 2026-11-01 | ONB-I02 implements executable configuration contracts, pinned shared time zones and generated contract-only OpenAPI/drift checks; ProductPersistenceModule owns the single runtime pool/shutdown and Auth retains encrypted sessions/RLS readiness. AppModule owns the existing guard. Configuration grant/readiness policy remains I04; domain schema/handlers remain I03.                              |
-| 2026-11-01 | ONB-I01 adopts the onboarding specification and root-only/private-provisioning baseline, bounded validation/HTTP/error contracts, configuration permission, revision/retry/audit policy, shared-pool composition and coordinated upgrade/operator contracts. Executable schemas, commands, grants, tables and runtime gate remain ONB-I02–08 work.                                                       |
-| 2026-10-31 | Consolidated blueprint v1.4 technical sections, workspace boundaries, selected/installed stack, Turnstile web/future-mobile design, and deployment picture into this file; prior product decisions remain in the blueprint history                                                                                                                                                                       |
-| 2026-10-31 | Owner clarified exactly one customer tenant per installation, multiple independent application registrations, separate customer installations, and no SaaS/multi-customer provisioning; retained tenant integrity and application isolation                                                                                                                                                              |
-| 2026-10-31 | AUTH-02 implements separate database ownership/migrations, forced tenant policies, persisted native authority, safe response projection, private verified-account provisioning, controlled SMTP recovery and encrypted product session storage; BFF/enrollment/client provisioning remain later increments                                                                                               |
-| 2026-10-31 | AUTH-03 implements managed code/PKCE login and client-credentials machine policies, distinct resource audiences, private provider-backed issuance/rotation/suspension and nonsecret records; fixture protocol/rotation/restart/CLI tests verify behavior, while real provisioning remains pending                                                                                                        |
-| 2026-10-31 | AUTH-04 adds the persisted OIDC BFF, live parent/local permission guard, default-deny route policy, CSRF, bounded fenced refresh, recoverable logout and private product-access assignment; real provisioning, DMS machine/enrollment and UI remain later work                                                                                                                                           |
-| 2026-10-31 | AUTH-05 adds default-deny machine verification and live local policy, bound transactional enrollment/receipts, local-first disablement, narrowed runtime privileges and bounded audit; shared schemas generate the minimal protected DMS OpenAPI contract; typed cross-service consumption remains AUTH-06                                                                                               |
-| 2026-10-31 | AUTH-07 implements minimal login/recovery/session UI, bounded redacted security telemetry, Mailpit dev/pilot STARTTLS configuration and Nginx CSP/privacy; three production-profile browser journeys and four image builds/runtime checks pass. Actual Dokploy/customer rollout and canonical container DNS/TLS remain unverified.                                                                       |
-| 2026-10-31 | AUTH-06 implements the typed server DMS client, coalesced resource/scope-bound token cache, bounded transport/expiry-only read replay and product-permission-protected capability adapter; separate-process PostgreSQL fixtures verify real machine authorization and session-preserving failures; UI/deployed operational evidence remain AUTH-07                                                       |
-| 2026-10-31 | AUTH-01 adds exact auth dependency pins, CLI-loadable pure plugin options, validated local/test/production configuration, unavailable auth readiness and dependency-aware local auth development; persistence/routes/provisioning remain AUTH-02 onward                                                                                                                                                  |
-| 2026-10-31 | Owner selected email/password first; added researched authentication-chain implementation proposal with separate browser/user and machine trust, BFF/OIDC sessions, provisioning prerequisites and verification plan; implementation remains pending                                                                                                                                                     |
+| Date       | Architecture record                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-02 | ONB-RD08 adds exact image migration/contract checks, v1 archive round trips and version-aware local verification. Protected backups record image/role/journal inventory. Completed v1 and saved values survive owning migrations; no prior I08 pair is approved for v2/move rollback. Actual local release and production acceptance remain in IN_PROGRESS.md.                                                                                                                                                                                            |
+| 2026-11-02 | ONB-RD06 implements one connected-card/outline structure editor for setup and Settings, contextual parent/type inference, inline CRUD, canonical selection/search and confirmed Move to/pointer/touch moves. Flat stable row keys retain pending edits across parent changes; typed revision-bound moves require explicit readback after uncertain/conflicting writes, with no optimistic tree or replay. Native Pointer Events add no dependency; filtered dragging is disabled and last-unit/reference protections remain authoritative on the backend. |
+| 2026-11-02 | ONB-RD05 adds dedicated neutral/setup/waiting entry layouts selected after verified session/readiness, persistent setup progress and saved-gap Organization/First unit/Review guards. An unsaved India suggestion, implicit-root first-unit create/save/exit with exact retry receipts, reused unit correction controls and business-only Review/Finish setup preserve canonical state and draft/readback fencing. Completed navigation, visual moves and coordinated rollout remain RD06–08.                                                             |
+| 2026-11-02 | ONB-RD04 adds generated 0009 audit action and custom 0010 parent privilege/guard migrations plus a revision-checked, live-manage/CSRF-protected parent-change route. Canonical subtree/ancestry, type/root/tenant/depth/name validation, preserved references/completion, no-op/readback semantics and atomic move audit retain the existing lock/pool/RLS boundary. Visual moves/layouts and coordinated rollout remain RD05–08.                                                                                                                         |
+| 2026-11-02 | ONB-RD03 adds generated 0007 and reviewed custom 0008 migrations: v2 default/allowed versions, owning-login metadata-only incomplete-v1 upgrade, canonical first-unit projection, locked activation and completed-v2 last-unit deletion protection. Completed v1 and saved values/revisions survive. Private output and generated API status are version-aware; runtime privileges, forced RLS, pools and limits remain. Moves/layouts and coordinated target release remain RD04–08.                                                                     |
+| 2026-11-02 | ONB-RD01 adopts versioned v2 first-unit setup with completed-v1 preservation, explicit Kolkata compatibility, guarded audited parent moves, dedicated setup/waiting and completed collapsible navigation. Existing pools, limits, auth and deployment topology remain. Contracts, migrations, handlers, layouts and coordinated verification/release remain RD02–08; adoption changes documentation only.                                                                                                                                                 |
+| 2026-11-02 | ONB-RD02 implements executable v1/v2 setup/completion and first-unit/snapshot agreement, strict move payloads and the finite required-unit conflict, explicit versioned Kolkata/Calcutta/UTC generation and generated OpenAPI 2.0.0 with validated legacy/v2 examples and a planned move handler. Existing runtime initialization/readiness remains v1 until RD03; persistence, moves, UI and target rollout remain subsequent work.                                                                                                                      |
+| 2026-11-01 | ONB-I07 extends the existing real PostgreSQL/Fastify/HTTPS harnesses with queued revocation/activation and unit contention, a separate fresh structured-onboarding path, DMS-outage completion readback, and isolated production API/web packaging/runtime checks. Compose Watch verification preserves existing installation state; coordinated target release remains I08.                                                                                                                                                                              |
+| 2026-11-02 | ONB-I08 adds a private existing-installation preflight plus local-only protected backup, isolated restore/upgrade preservation rehearsal and supported account/setup release verification. Production-image one-off migration/grant/handover/recovery commands share the existing roles, network and fixed identity. Actual local versus production acceptance remains in IN_PROGRESS.md.                                                                                                                                                                 |
+| 2026-11-01 | ONB-I06 adds manager-only canonical Settings, original activation overview, shared configuration transport/profile/create editors and explicit non-root rename/leaf removal with revision and uncertain-response readback. Home/document connection and auth boundaries remain; full-chain acceptance and target release follow in I07–08.                                                                                                                                                                                                                |
+| 2026-11-01 | ONB-I05 adds guarded web readiness entry, typed configuration transport, partial save/exit/resume, optional structure with explicit create retries, review/activation and ordinary waiting. Session/logout fencing and the design system remain; Settings and coordinated release follow in I06–08.                                                                                                                                                                                                                                                       |
+| 2026-11-01 | ONB-I04 implements strict attributed private grants, shared owning operator verification, initialized-context/last-manager locking and atomic access audit; one application guard enforces current readiness after identity/CSRF/permissions, with explicit configuration/session exemptions and default business gating. UI and coordinated release remain later work.                                                                                                                                                                                   |
+| 2026-11-01 | ONB-I03 implements canonical organization/setup state, optional units, bounded create receipts and transactional audit with forced RLS/restricted privileges; guarded HTTP handlers, private initialization/inspection/pruning and grant-writer lock coordination preserve auth and installation identity. Configuration provisioning/business gate remain I04; UI and target release remain later work.                                                                                                                                                  |
+| 2026-11-01 | ONB-I02 implements executable configuration contracts, pinned shared time zones and generated contract-only OpenAPI/drift checks; ProductPersistenceModule owns the single runtime pool/shutdown and Auth retains encrypted sessions/RLS readiness. AppModule owns the existing guard. Configuration grant/readiness policy remains I04; domain schema/handlers remain I03.                                                                                                                                                                               |
+| 2026-11-01 | ONB-I01 adopts the onboarding specification and root-only/private-provisioning baseline, bounded validation/HTTP/error contracts, configuration permission, revision/retry/audit policy, shared-pool composition and coordinated upgrade/operator contracts. Executable schemas, commands, grants, tables and runtime gate remain ONB-I02–08 work.                                                                                                                                                                                                        |
+| 2026-10-31 | Consolidated blueprint v1.4 technical sections, workspace boundaries, selected/installed stack, Turnstile web/future-mobile design, and deployment picture into this file; prior product decisions remain in the blueprint history                                                                                                                                                                                                                                                                                                                        |
+| 2026-10-31 | Owner clarified exactly one customer tenant per installation, multiple independent application registrations, separate customer installations, and no SaaS/multi-customer provisioning; retained tenant integrity and application isolation                                                                                                                                                                                                                                                                                                               |
+| 2026-10-31 | AUTH-02 implements separate database ownership/migrations, forced tenant policies, persisted native authority, safe response projection, private verified-account provisioning, controlled SMTP recovery and encrypted product session storage; BFF/enrollment/client provisioning remain later increments                                                                                                                                                                                                                                                |
+| 2026-10-31 | AUTH-03 implements managed code/PKCE login and client-credentials machine policies, distinct resource audiences, private provider-backed issuance/rotation/suspension and nonsecret records; fixture protocol/rotation/restart/CLI tests verify behavior, while real provisioning remains pending                                                                                                                                                                                                                                                         |
+| 2026-10-31 | AUTH-04 adds the persisted OIDC BFF, live parent/local permission guard, default-deny route policy, CSRF, bounded fenced refresh, recoverable logout and private product-access assignment; real provisioning, DMS machine/enrollment and UI remain later work                                                                                                                                                                                                                                                                                            |
+| 2026-10-31 | AUTH-05 adds default-deny machine verification and live local policy, bound transactional enrollment/receipts, local-first disablement, narrowed runtime privileges and bounded audit; shared schemas generate the minimal protected DMS OpenAPI contract; typed cross-service consumption remains AUTH-06                                                                                                                                                                                                                                                |
+| 2026-10-31 | AUTH-07 implements minimal login/recovery/session UI, bounded redacted security telemetry, Mailpit dev/pilot STARTTLS configuration and Nginx CSP/privacy; three production-profile browser journeys and four image builds/runtime checks pass. Actual Dokploy/customer rollout and canonical container DNS/TLS remain unverified.                                                                                                                                                                                                                        |
+| 2026-10-31 | AUTH-06 implements the typed server DMS client, coalesced resource/scope-bound token cache, bounded transport/expiry-only read replay and product-permission-protected capability adapter; separate-process PostgreSQL fixtures verify real machine authorization and session-preserving failures; UI/deployed operational evidence remain AUTH-07                                                                                                                                                                                                        |
+| 2026-10-31 | AUTH-01 adds exact auth dependency pins, CLI-loadable pure plugin options, validated local/test/production configuration, unavailable auth readiness and dependency-aware local auth development; persistence/routes/provisioning remain AUTH-02 onward                                                                                                                                                                                                                                                                                                   |
+| 2026-10-31 | Owner selected email/password first; added researched authentication-chain implementation proposal with separate browser/user and machine trust, BFF/OIDC sessions, provisioning prerequisites and verification plan; implementation remains pending                                                                                                                                                                                                                                                                                                      |
 
 ## Ownership and distribution
 

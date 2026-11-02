@@ -1,4 +1,5 @@
 import { type ChildProcess, fork, spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { createServer, request as httpRequest, type IncomingMessage } from 'node:http';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -904,11 +905,36 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
       payload: { expectedRevision: 0, name: 'BFF workspace', timeZone: 'UTC' },
     });
     expect(profile.statusCode).toBe(200);
-    const activated = await app.inject({
+    const rootOnly = await app.inject({
       method: 'POST',
       url: '/api/setup/complete',
       headers: managerHeaders,
       payload: { expectedRevision: profile.json().revision },
+    });
+    expect(rootOnly.statusCode).toBe(400);
+    expect({ tokens: machineCalls, requests: dmsCalls }).toEqual(before);
+    expect(
+      (
+        await app.inject({ url: '/api/dms/capabilities', headers: { cookie: signed.cookie } })
+      ).json(),
+    ).toEqual({ code: 'SETUP_REQUIRED' });
+    const firstUnit = await app.inject({
+      method: 'POST',
+      url: '/api/organization/units',
+      headers: { ...managerHeaders, 'idempotency-key': randomUUID() },
+      payload: {
+        expectedRevision: profile.json().revision,
+        type: 'site',
+        parentId: profile.json().organization.rootId,
+        name: 'First site',
+      },
+    });
+    expect(firstUnit.statusCode).toBe(201);
+    const activated = await app.inject({
+      method: 'POST',
+      url: '/api/setup/complete',
+      headers: managerHeaders,
+      payload: { expectedRevision: firstUnit.json().configuration.revision },
     });
     expect(activated.statusCode).toBe(200);
     expect(
@@ -976,11 +1002,35 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
       },
     });
     expect(saved.statusCode).toBe(200);
+    let revision = saved.json().revision;
+    const units = await app.inject({ url: '/api/organization/units', headers: managerHeaders });
+    expect(units.statusCode).toBe(200);
+    if (
+      !units
+        .json()
+        .units.some(
+          (unit: { parentId: string | null }) => unit.parentId === saved.json().organization.rootId,
+        )
+    ) {
+      const firstUnit = await app.inject({
+        method: 'POST',
+        url: '/api/organization/units',
+        headers: { ...managerHeaders, 'idempotency-key': randomUUID() },
+        payload: {
+          expectedRevision: revision,
+          type: 'department',
+          parentId: saved.json().organization.rootId,
+          name: 'Operations',
+        },
+      });
+      expect(firstUnit.statusCode).toBe(201);
+      revision = firstUnit.json().configuration.revision;
+    }
     const activated = await app.inject({
       method: 'POST',
       url: '/api/setup/complete',
       headers: managerHeaders,
-      payload: { expectedRevision: saved.json().revision },
+      payload: { expectedRevision: revision },
     });
     expect(activated.statusCode).toBe(200);
     const completion = activated.json().setup.completion;

@@ -6,6 +6,7 @@ import {
   organizationUnitsResponseSchema,
   setupSchema,
   type UnitCreate,
+  type UnitMove,
   type UnitRename,
   unitCreateResponseSchema,
   workspaceStatusSchema,
@@ -72,6 +73,13 @@ export const deleteUnit = (id: string, expectedRevision: number, csrf: string) =
   productRequest(`/api/organization/units/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     body: { expectedRevision },
+    csrf,
+    schema: configurationSnapshotSchema,
+  });
+export const moveUnit = (id: string, body: UnitMove, csrf: string) =>
+  productRequest(`/api/organization/units/${encodeURIComponent(id)}/parent`, {
+    method: 'PATCH',
+    body,
     csrf,
     schema: configurationSnapshotSchema,
   });

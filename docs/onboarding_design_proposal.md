@@ -1,19 +1,26 @@
 # Turnstile 360 onboarding and workspace configuration proposal
 
-**Status:** Design source; first-release baseline adopted by ONB-I01. **Date:** 2026-11-01.
+**Status:** Historical v1 design source with redesign decisions adopted by ONB-RD01.
+**Original date:** 2026-11-01. **Adoption updated:** 2026-11-02.
 
 **New review, 2026-11-02:** The [redesign recommendation](#redesign-recommendation-2026-11-02)
 and [new interactive concept](presentations/onboarding-redesign-concept.html) address the
 owner's subsequent request for dedicated onboarding, a mandatory first operational unit,
-India-first defaults and a visual structure editor. They are proposed changes, not the
-accepted v1 implementation baseline described below. The accepted specification and
-architecture remain authoritative until the redesign is adopted.
+India-first defaults and a visual structure editor. ONB-RD01 adopts these decisions through
+the [specification](onboarding_specification.md) and
+[architecture](../architecture.md#onboarding-implementation-baseline); those documents are
+authoritative. The concept remains illustrative; adoption is not runtime delivery.
 
 The separate [redesign implementation plan](onboarding_redesign_implementation_plan.md)
 sequences ONB-RD01–08, including affected components, acceptance, verification and
 existing-installation compatibility. It does not replace the completed v1 delivery history.
 
-Recommend a short, resumable setup for the installation's existing organization:
+**Historical v1 rationale:** The sections preceding the dated redesign preserve the
+original optional-unit journey and acceptance reasoning. Required first-unit policy,
+accessible moves, compatibility and layouts now follow the adopted specification;
+the older optional-first-unit and deferred-move recommendations are superseded for v2.
+
+The original recommendation was a short, resumable setup for the existing organization:
 confirm its name and time zone, optionally add operating units, then review and
 activate the workspace. Create the organization root automatically. Require
 detailed structure, people assignments and approval rules only when a feature
@@ -27,10 +34,11 @@ shows the proposed grouping and conditional screens with fictional data; it has
 no application connection or persistence. No application implementation, schema,
 migration, customer provisioning or Version 1 data migration is included.
 
-The accepted [onboarding specification](onboarding_specification.md) now owns ONB-R01–12
-and the first-release boundary. Its [architecture baseline](../architecture.md#onboarding-implementation-baseline)
-finalizes technical decisions; the [implementation plan](onboarding_implementation_plan.md)
-sequences delivery and verification. This proposal remains discovery/design rationale,
+The accepted [onboarding specification](onboarding_specification.md) now owns ONB-R01–13
+and the redesigned release boundary. Its [architecture baseline](../architecture.md#onboarding-implementation-baseline)
+finalizes technical decisions; the [original implementation plan](onboarding_implementation_plan.md)
+preserves v1 delivery and the [redesign plan](onboarding_redesign_implementation_plan.md)
+sequences the new delivery and verification. This proposal remains discovery/design rationale,
 including broader future ideas; those ideas are not additional release requirements.
 In particular, custom terminology, optional-task reminders and broad IAM remain deferred.
 
@@ -482,10 +490,13 @@ those feature requirements are being agreed.
 
 ## Redesign recommendation, 2026-11-02
 
-**Status:** Proposed for product/design review; planning only. This recommendation
-responds to the owner's new onboarding brief. It supersedes the earlier optional-first-unit
-recommendation for this discussion, without silently rewriting the accepted ONB-R01–12
-requirements or claiming the redesign is implemented. Actual work and verification are in
+**Status:** Decisions adopted in ONB-RD01 on 2026-11-02. The owner confirmed either
+Site/Plant or Department for the first unit; the specification/architecture adopt the
+plan's compatibility, time-zone and interaction defaults. The recommendation below is
+retained as design rationale. Where it asks for adoption/decisions, consult the current
+[specification](onboarding_specification.md) and
+[architecture](../architecture.md#adopted-redesign-and-compatibility) for the adopted target.
+It does not claim the redesign is implemented; actual work/verification remain in
 [progress](../IN_PROGRESS.md).
 
 ### Evidence and the change being proposed

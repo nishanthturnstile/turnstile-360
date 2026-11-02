@@ -24,10 +24,26 @@ let stage = 'private-input';
 let admin;
 try {
   const directory = process.argv[2];
+  const [apiImage, webImage] = process.argv.slice(3);
   assert.ok(
-    process.argv.length === 3 && isAbsolute(directory),
-    'Use an absolute private backup directory',
+    [3, 5].includes(process.argv.length) && isAbsolute(directory),
+    'Use an absolute private backup directory and optional matching API/web image pair',
   );
+  const candidateImages = {};
+  if (apiImage && webImage) {
+    for (const [application, reference] of [
+      ['api', apiImage],
+      ['web', webImage],
+    ]) {
+      assert.ok(!reference.startsWith('-'));
+      const result = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}}', reference], {
+        encoding: 'utf8',
+        timeout: 15000,
+      });
+      assert.equal(result.status, 0, 'Build and verify both candidate images before backup');
+      candidateImages[application] = { reference, id: result.stdout.trim() };
+    }
+  }
   mkdirSync(dirname(directory), { recursive: true, mode: 0o700 });
   const parent = relative(realpathSync('.'), realpathSync(dirname(directory)));
   assert.ok(
@@ -101,6 +117,16 @@ try {
     'Preserve every intended existing permission',
   );
   const fingerprints = await fingerprintTables(admin);
+  const roles = (
+    await admin.query(
+      "SELECT rolname,rolsuper,rolbypassrls,rolcreaterole,rolcreatedb,rolcanlogin FROM pg_roles WHERE rolname LIKE 'thaarei\\_%' ESCAPE '\\' ORDER BY rolname",
+    )
+  ).rows;
+  const installedProductMigrations = (
+    await admin.query(
+      'SELECT id,hash,created_at FROM turnstile_migrations.__drizzle_migrations ORDER BY id',
+    )
+  ).rows;
   stage = 'coherent-database-dump';
   const url = new URL(env.PROVISION_DATABASE_URL);
   const partial = resolve(directory, 'database.dump.partial');
@@ -150,6 +176,9 @@ try {
       target: 'local-development',
       node: process.version,
       images,
+      candidateImages,
+      roles,
+      installedProductMigrations,
       databaseSha256: createHash('sha256').update(readFileSync(archive)).digest('hex'),
       fingerprints,
     }),

@@ -80,6 +80,10 @@ describe('canonical audited organization configuration', () => {
       key,
     );
   }
+  async function readyProfile() {
+    const saved = await profile();
+    return (await create(saved, saved.organization.rootId as string, 'Operations')).configuration;
+  }
   beforeAll(start);
   beforeEach(async () => {
     // Disposable installation only. Do not replace production initialization with these fixture grants.
@@ -130,6 +134,10 @@ describe('canonical audited organization configuration', () => {
     expect(initial.organization).toEqual({ name: null, timeZone: null, rootId: null });
     expect(initial.units).toHaveLength(0);
     expect(initial.setup.state).toBe('not_started');
+    expect(initial.setup.requirementVersion).toBe(2);
+    expect(initial.setup.requirements.find((item) => item.id === 'first_unit')?.satisfied).toBe(
+      false,
+    );
     for (const replacement of [
       { INSTALLATION_TENANT_ID: randomUUID() },
       { INSTALLATION_CUSTOMER_KEY: 'another' },
@@ -149,7 +157,7 @@ describe('canonical audited organization configuration', () => {
     ).rejects.toThrow('Dedicated product migrator required');
   });
 
-  it('persists partial/shared progress and one root through restart, rename and concurrent root-only activation', async () => {
+  it('persists partial/shared progress and one root through restart, rename and concurrent v2 activation', async () => {
     await initialize();
     const regional = await organization.save(actor(), { expectedRevision: 0, timeZone: 'UTC' });
     expect(regional.organization.rootId).toBeNull();
@@ -160,7 +168,7 @@ describe('canonical audited organization configuration', () => {
     expect(saved.organization.name).toBe('Example Company');
     const root = saved.organization.rootId;
     expect(saved.units).toHaveLength(1);
-    expect(saved.setup.nextStep).toBe('review');
+    expect(saved.setup.nextStep).toBe('structure');
     await app.close();
     await start();
     expect((await organization.read(actor())).organization).toEqual(saved.organization);
@@ -174,26 +182,27 @@ describe('canonical audited organization configuration', () => {
     const noop = await organization.save(actor(), { expectedRevision: 3, name: 'Renamed Company' });
     expect(noop.revision).toBe(3);
     expect(await auditCount()).toBe(events);
+    const ready = await create(renamed, root as string, 'First site', 'site');
     const complete = await Promise.all([
-      organization.complete(actor(), { expectedRevision: 3 }),
-      organization.complete(actor(ids[1]), { expectedRevision: 3 }),
+      organization.complete(actor(), { expectedRevision: ready.configuration.revision }),
+      organization.complete(actor(ids[1]), { expectedRevision: ready.configuration.revision }),
     ]);
     expect(complete[0]?.setup.completion).toEqual(complete[1]?.setup.completion);
-    expect(complete[0]?.revision).toBe(4);
+    expect(complete[0]?.revision).toBe(5);
     expect(await auditCount('setup_completed')).toBe(1);
     const repeated = await organization.complete(actor(), { expectedRevision: 0 });
     expect(repeated.setup.completion).toEqual(complete[0]?.setup.completion);
     const updated = await organization.save(actor(), {
-      expectedRevision: 4,
+      expectedRevision: 5,
       timeZone: 'Europe/London',
     });
     expect(updated.organization.rootId).toBe(root);
     expect(updated.setup.completion).toEqual(repeated.setup.completion);
     await initialize();
-    expect((await organization.read(actor())).revision).toBe(5);
+    expect((await organization.read(actor())).revision).toBe(6);
     expect(await auditCount('initialized')).toBe(1);
     await expect(
-      organization.save(actor(), { expectedRevision: 5, name: null }),
+      organization.save(actor(), { expectedRevision: 6, name: null }),
     ).rejects.toMatchObject({ response: { code: 'CONFIGURATION_INVALID' } });
   });
 
@@ -227,6 +236,203 @@ describe('canonical audited organization configuration', () => {
     ).rejects.toMatchObject({ response: { code: 'CONFIGURATION_INVALID' } });
     expect((await organization.read(actor())).organization).toEqual(saved.organization);
   });
+
+  it.each(['site', 'department'] as const)(
+    'requires a saved direct-child %s and protects completed v2 from last-unit removal',
+    async (type) => {
+      const saved = await profile();
+      const root = saved.organization.rootId as string;
+      expect(saved.setup).toMatchObject({ requirementVersion: 2, nextStep: 'structure' });
+      await expect(
+        organization.complete(actor(), { expectedRevision: saved.revision }),
+      ).rejects.toMatchObject({
+        response: {
+          code: 'CONFIGURATION_INVALID',
+          fieldErrors: [{ field: 'body', reason: 'required' }],
+        },
+      });
+      expect(await organization.read(actor())).toEqual(saved);
+      await expect(
+        withTenant(runtime, tenantId, (client) =>
+          client.query(
+            'UPDATE turnstile.organization_configuration SET completed_at = statement_timestamp(), completed_by = $2, revision = revision + 1 WHERE tenant_id = $1',
+            [tenantId, ids[0]],
+          ),
+        ),
+      ).rejects.toMatchObject({ code: '23514', constraint: 'configuration_first_unit' });
+      const first = await create(saved, root, 'First unit', type);
+      expect(first.configuration.setup.nextStep).toBe('review');
+      const removed = await organization.deleteUnit(actor(), first.unitId, {
+        expectedRevision: first.configuration.revision,
+      });
+      expect(removed.setup.nextStep).toBe('structure');
+      expect(removed.organization).toEqual(saved.organization);
+      const replacement = await create(removed, root, 'First unit', type);
+      const complete = await organization.complete(actor(), {
+        expectedRevision: replacement.configuration.revision,
+      });
+      expect(complete.setup.completion?.requirementVersion).toBe(2);
+      const events = await auditCount();
+      await expect(
+        organization.deleteUnit(actor(), replacement.unitId, {
+          expectedRevision: complete.revision,
+        }),
+      ).rejects.toMatchObject({
+        response: {
+          code: 'CONFIGURATION_CONFLICT',
+          reason: 'required_unit',
+          revision: complete.revision,
+        },
+      });
+      await expect(
+        withTenant(runtime, tenantId, (client) =>
+          client.query('DELETE FROM turnstile.organization_unit WHERE tenant_id = $1 AND id = $2', [
+            tenantId,
+            replacement.unitId,
+          ]),
+        ),
+      ).rejects.toMatchObject({ code: '23514', constraint: 'configuration_first_unit' });
+      expect(await organization.read(actor())).toEqual(complete);
+      expect(await auditCount()).toBe(events);
+      expect(await configurationOperator('inspect', operator)).toMatchObject({
+        requirementVersion: 2,
+        state: 'completed',
+        completion: complete.setup.completion,
+      });
+      const second = await create(complete, root, 'Second unit', type);
+      // Runtime has DELETE on units: a bulk statement must also preserve the invariant
+      // and roll back its earlier row deletions when it reaches the final direct child.
+      await expect(
+        withTenant(runtime, tenantId, (client) =>
+          client.query(
+            "DELETE FROM turnstile.organization_unit WHERE tenant_id = $1 AND type <> 'organization'",
+            [tenantId],
+          ),
+        ),
+      ).rejects.toMatchObject({ code: '23514', constraint: 'configuration_first_unit' });
+      expect(await organization.read(actor())).toEqual(second.configuration);
+      const kept = await organization.deleteUnit(actor(), replacement.unitId, {
+        expectedRevision: second.configuration.revision,
+      });
+      expect(kept.units).toHaveLength(2);
+      expect(kept.setup.completion).toEqual(complete.setup.completion);
+    },
+  );
+
+  it('restricts requirement upgrades to metadata-only owning writes without relaxing tenant/runtime privileges', async () => {
+    await owned((client) =>
+      client.query(
+        'INSERT INTO turnstile.organization_configuration (tenant_id,requirement_version) VALUES ($1,1)',
+        [tenantId],
+      ),
+    );
+    for (const query of [
+      'UPDATE turnstile.organization_configuration SET requirement_version = 2, revision = revision + 1 WHERE tenant_id = $1',
+      "UPDATE turnstile.organization_configuration SET requirement_version = 2, time_zone = 'UTC' WHERE tenant_id = $1",
+    ])
+      await expect(owned((client) => client.query(query, [tenantId]))).rejects.toMatchObject({
+        code: '23514',
+      });
+    await expect(
+      withTenant(runtime, tenantId, async (client) => {
+        await client.query("SELECT set_config('app.configuration_upgrade','true',true)");
+        return client.query(
+          'UPDATE turnstile.organization_configuration SET requirement_version = 2 WHERE tenant_id = $1',
+          [tenantId],
+        );
+      }),
+    ).rejects.toMatchObject({ code: '42501' });
+    await withTenant(owner, randomUUID(), async (client) =>
+      expect(
+        (
+          await client.query(
+            'UPDATE turnstile.organization_configuration SET requirement_version = 2 WHERE tenant_id = $1',
+            [tenantId],
+          )
+        ).rowCount,
+      ).toBe(0),
+    );
+    await owned((client) =>
+      client.query(
+        'UPDATE turnstile.organization_configuration SET requirement_version = 2 WHERE tenant_id = $1',
+        [tenantId],
+      ),
+    );
+    expect(await organization.read(actor())).toMatchObject({
+      revision: 0,
+      setup: { requirementVersion: 2, state: 'not_started' },
+    });
+    await expect(
+      owned((client) =>
+        client.query(
+          'UPDATE turnstile.organization_configuration SET requirement_version = 1 WHERE tenant_id = $1',
+          [tenantId],
+        ),
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+    expect(await auditCount()).toBe(0);
+  });
+
+  it.each(['activation', 'deletion'] as const)(
+    'serializes contending completion/deletion when %s acquires the lock first',
+    async (firstAction) => {
+      const saved = await readyProfile();
+      const unit = saved.units.find((row) => row.type !== 'organization');
+      const client = await owner.connect();
+      const writes = {
+        activation: () => organization.complete(actor(), { expectedRevision: saved.revision }),
+        deletion: () =>
+          organization.deleteUnit(actor(), unit?.id, { expectedRevision: saved.revision }),
+      };
+      const waitFor = async (count: number) => {
+        for (let attempt = 0; attempt < 100; attempt++) {
+          const result = await owner.query(
+            "SELECT count(DISTINCT a.pid)::int AS total FROM pg_locks l JOIN pg_stat_activity a ON a.pid = l.pid WHERE NOT l.granted AND a.usename = 'thaarei_turnstile_runtime' AND a.datname = current_database()",
+          );
+          if (result.rows[0].total >= count) return;
+          await delay(10);
+        }
+        throw new Error('Expected configuration lock waiters');
+      };
+      let first: Promise<PromiseSettledResult<ConfigurationSnapshotDto>[]> | undefined;
+      let second: Promise<PromiseSettledResult<ConfigurationSnapshotDto>[]> | undefined;
+      try {
+        await client.query('BEGIN');
+        await client.query("SELECT set_config('app.tenant_id',$1,true)", [tenantId]);
+        await client.query(
+          'SELECT * FROM turnstile.organization_configuration WHERE tenant_id = $1 FOR UPDATE',
+          [tenantId],
+        );
+        first = Promise.allSettled([writes[firstAction]()]);
+        await waitFor(1);
+        second = Promise.allSettled([
+          writes[firstAction === 'activation' ? 'deletion' : 'activation'](),
+        ]);
+        await waitFor(2);
+        await client.query('COMMIT');
+      } finally {
+        await client.query('ROLLBACK');
+        client.release();
+        await Promise.all([first, second]);
+      }
+      expect(await first).toMatchObject([{ status: 'fulfilled' }]);
+      expect(await second).toMatchObject([
+        {
+          status: 'rejected',
+          reason: { response: { code: 'CONFIGURATION_CONFLICT', reason: 'revision' } },
+        },
+      ]);
+      const after = await organization.read(actor());
+      expect(after.revision).toBe(saved.revision + 1);
+      expect(after.setup.nextStep).toBe(firstAction === 'activation' ? null : 'structure');
+      expect(await auditCount('setup_completed')).toBe(firstAction === 'activation' ? 1 : 0);
+      expect(await auditCount('unit_deleted')).toBe(firstAction === 'deletion' ? 1 : 0);
+      if (firstAction === 'deletion')
+        await expect(
+          organization.complete(actor(), { expectedRevision: after.revision }),
+        ).rejects.toMatchObject({ response: { code: 'CONFIGURATION_INVALID' } });
+    },
+  );
 
   it('enforces supported ancestry, sibling names, immutable edits, leaf deletion and bounded identical create replay', async () => {
     let snapshot = await profile();
@@ -458,12 +664,23 @@ describe('canonical audited organization configuration', () => {
       await expect(
         create(saved, saved.organization.rootId as string, 'Rollback unit'),
       ).rejects.toMatchObject({ response: { code: 'CONFIGURATION_UNAVAILABLE' } });
-      await expect(organization.complete(actor(), { expectedRevision: 1 })).rejects.toMatchObject({
-        response: { code: 'CONFIGURATION_UNAVAILABLE' },
-      });
       expect((await organization.read(actor())).revision).toBe(1);
       expect((await organization.read(actor())).setup.completion).toBeNull();
       expect((await organization.read(actor())).units).toHaveLength(1);
+    } finally {
+      await owner.query(
+        'ALTER TABLE turnstile.configuration_audit DROP CONSTRAINT fixture_audit_failure',
+      );
+    }
+    const created = await create(saved, saved.organization.rootId as string, 'Live receipt');
+    await owner.query(
+      "ALTER TABLE turnstile.configuration_audit ADD CONSTRAINT fixture_audit_failure CHECK (action <> 'setup_completed') NOT VALID",
+    );
+    try {
+      await expect(
+        organization.complete(actor(), { expectedRevision: created.configuration.revision }),
+      ).rejects.toMatchObject({ response: { code: 'CONFIGURATION_UNAVAILABLE' } });
+      expect(await organization.read(actor())).toEqual(created.configuration);
     } finally {
       await owner.query(
         'ALTER TABLE turnstile.configuration_audit DROP CONSTRAINT fixture_audit_failure',
@@ -483,13 +700,14 @@ describe('canonical audited organization configuration', () => {
       'UPDATE turnstile.configuration_create_receipt SET fingerprint = fingerprint',
       'INSERT INTO turnstile.organization_configuration (tenant_id) VALUES (gen_random_uuid())',
       'DELETE FROM turnstile.organization_configuration',
-      'UPDATE turnstile.organization_unit SET parent_id = parent_id',
+      'UPDATE turnstile.organization_unit SET id = id WHERE false',
+      'UPDATE turnstile.organization_unit SET type = type WHERE false',
+      'UPDATE turnstile.organization_unit SET tenant_id = tenant_id WHERE false',
       'ALTER TABLE turnstile.organization_unit DISABLE ROW LEVEL SECURITY',
     ])
       await expect(
         withTenant(runtime, tenantId, (client) => client.query(query)),
       ).rejects.toMatchObject({ code: '42501' });
-    const created = await create(saved, saved.organization.rootId as string, 'Live receipt');
     const window = await owned((client) =>
       client.query(
         'SELECT extract(epoch FROM (expires_at - created_at))::int AS seconds FROM turnstile.configuration_create_receipt WHERE tenant_id = $1',
@@ -524,7 +742,7 @@ describe('canonical audited organization configuration', () => {
   });
 
   it('rechecks local grants after the context lock and coordinates the private writer with activation', async () => {
-    const saved = await profile();
+    const saved = await readyProfile();
     const client = await owner.connect();
     let completion: Promise<PromiseSettledResult<ConfigurationSnapshotDto>[]> | undefined;
     try {
@@ -588,7 +806,7 @@ describe('canonical audited organization configuration', () => {
   });
 
   it('reads committed status without queuing behind configuration writers and observes subsequent commits and revocation', async () => {
-    await profile();
+    await readyProfile();
     const client = await owner.connect();
     try {
       await client.query('BEGIN');
@@ -658,7 +876,17 @@ describe('canonical audited organization configuration', () => {
       name: 'Protected workspace',
       timeZone: 'UTC',
     });
-    await organization.complete(actor(ids[1]), { expectedRevision: saved.revision });
+    const ready = await organization.createUnit(
+      actor(ids[1]),
+      {
+        expectedRevision: saved.revision,
+        parentId: saved.organization.rootId,
+        type: 'department',
+        name: 'Operations',
+      },
+      randomUUID(),
+    );
+    await organization.complete(actor(ids[1]), { expectedRevision: ready.configuration.revision });
     await expect(
       setUserAccess({ ...assignment, userId: ids[1], enabled: false }),
     ).rejects.toMatchObject({ code: 'LAST_CONFIGURATION_MANAGER_REQUIRED' });
@@ -766,7 +994,7 @@ describe('canonical audited organization configuration', () => {
   });
 
   it('provides private bounded inspection/retention and preserves live receipts/configuration/completion', async () => {
-    const saved = await profile();
+    const saved = await readyProfile();
     const completed = await organization.complete(actor(), { expectedRevision: saved.revision });
     // Inspection reports enabled managers only; ordinary or disabled grants are excluded.
     await owned((client) =>
@@ -808,7 +1036,8 @@ describe('canonical audited organization configuration', () => {
     const after = await organization.read(actor());
     expect(after).toEqual(completed);
     const retained = await configurationOperator('inspect', operator);
-    expect('receipts' in retained && retained.receipts?.live).toBe(1);
+    // The required first-unit create and the explicit live fixture both survive pruning.
+    expect('receipts' in retained && retained.receipts?.live).toBe(2);
   });
 
   it('executes compiled private commands with bounded stdin, repeat-safe output and no public bootstrap', async () => {
@@ -890,6 +1119,18 @@ describe('canonical audited organization configuration', () => {
     });
     expect(saved.statusCode).toBe(200);
     expect(saved.headers['cache-control']).toBe('private, no-store');
+    const required = await app.inject({
+      method: 'POST',
+      url: '/api/setup/complete',
+      headers,
+      payload: { expectedRevision: saved.json().revision },
+    });
+    expect(required.statusCode).toBe(400);
+    expect(required.json()).toEqual({
+      code: 'CONFIGURATION_INVALID',
+      fieldErrors: [{ field: 'body', reason: 'required' }],
+    });
+    expect(required.headers['cache-control']).toBe('private, no-store');
     const stale = await app.inject({
       method: 'PATCH',
       url: '/api/organization',

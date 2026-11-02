@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { testWorkspaceNavigation } from './test-workspace-navigation-browser.mjs';
 
 // Extends the disposable production-profile HTTPS fixture through supported UI/HTTP.
 // Never reads customer configuration or writes grants outside that private fixture.
@@ -10,6 +11,7 @@ export async function testSettings({
   login,
   setAccess,
   waitForAuthorityWindow,
+  clearRateLimits,
 }) {
   const configurationResponses = [];
   const recordConfigurationResponse = (response) => {
@@ -101,6 +103,8 @@ export async function testSettings({
   try {
     await login('member');
     await heading(page, 'Welcome, member.');
+    await testWorkspaceNavigation({ page, origin });
+    await clearRateLimits();
     console.log('Settings verification: persistent shell, client routing and scroll ownership.');
     let documentNavigations = 0;
     const observeDocument = (request) => {
@@ -212,11 +216,18 @@ export async function testSettings({
       before.setup.completion.completedAt,
     );
     await page
-      .getByText(
-        'Add sites or departments whenever you need them. Your workspace is ready to use.',
-        { exact: true },
-      )
+      .getByRole('list', { name: 'Configured units' })
+      .getByText('Site: Main site', { exact: true })
       .waitFor();
+    assert.equal(
+      await page
+        .getByText(
+          'Add sites or departments whenever you need them. Your workspace is ready to use.',
+          { exact: true },
+        )
+        .count(),
+      0,
+    );
 
     let releaseNavigation;
     const navigationGate = new Promise((resolve) => {
@@ -408,7 +419,7 @@ export async function testSettings({
     const list = page.getByRole('list', { name: 'Saved units' });
     const actionButton = (action, name) =>
       list
-        .getByRole('listitem')
+        .locator('[data-unit-row]')
         .filter({ has: page.getByText(name, { exact: true }) })
         .getByRole('button', { name: new RegExp(`^${action} `) });
     const create = async (name) => {
@@ -425,7 +436,10 @@ export async function testSettings({
         ).id,
     );
     await page.getByLabel('Unit type', { exact: true }).selectOption('department');
-    await page.getByLabel('Parent', { exact: true }).selectOption(firstId);
+    await page
+      .locator(`[data-unit-row="${firstId}"]`)
+      .getByRole('button', { name: /^Add below / })
+      .click();
     await create('Child department');
     assert.match(
       await actionButton('Rename', 'Child department').getAttribute('aria-label'),
@@ -488,7 +502,10 @@ export async function testSettings({
           (item) => item.name === 'Child department',
         ).id,
     );
-    await page.getByLabel('Parent', { exact: true }).selectOption(childId);
+    await page
+      .locator(`[data-unit-row="${childId}"]`)
+      .getByRole('button', { name: /^Add below / })
+      .click();
     let deletes = 0;
     const lostDelete = async (route) => {
       if (route.request().method() !== 'DELETE') return route.continue();
@@ -521,8 +538,8 @@ export async function testSettings({
     await page.unroute('**/api/organization/units/*', lostDelete);
     assert.equal(await list.getByText('Child department', { exact: true }).count(), 0);
     assert.equal(
-      await page.getByLabel('Parent', { exact: true }).inputValue(),
-      before.profile.organization.rootId,
+      await page.getByText('Adding under Second administrator Settings', { exact: true }).count(),
+      1,
     );
     const secondId = await page.evaluate(
       async () =>
@@ -530,13 +547,16 @@ export async function testSettings({
           (item) => item.name === 'Second site',
         ).id,
     );
-    await page.getByLabel('Parent', { exact: true }).selectOption(secondId);
+    await page
+      .locator(`[data-unit-row="${secondId}"]`)
+      .getByRole('button', { name: /^Add below / })
+      .click();
     await actionButton('Remove', 'Second site').click();
     await page.getByRole('button', { name: 'Remove unit', exact: true }).click();
     await page.getByText('Unit removed.', { exact: true }).waitFor();
     assert.equal(
-      await page.getByLabel('Parent', { exact: true }).inputValue(),
-      before.profile.organization.rootId,
+      await page.getByText('Adding under Second administrator Settings', { exact: true }).count(),
+      1,
     );
     const replacement = page.waitForResponse(
       (response) =>
@@ -654,7 +674,7 @@ export async function testSettings({
     console.error(
       'Settings fixture source:',
       error instanceof Error
-        ? error.stack?.match(/test-settings-browser\.mjs:\d+:\d+/g)
+        ? error.stack?.match(/test-(?:settings|workspace-navigation)-browser\.mjs:\d+:\d+/g)
         : 'unknown',
     );
     throw error;

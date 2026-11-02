@@ -24,7 +24,7 @@ export interface ConfigurationRecord {
   name: string | null;
   time_zone: string | null;
   root_id: string | null;
-  requirement_version: 1;
+  requirement_version: 1 | 2;
   completed_at: Date | null;
   completed_by: string | null;
 }
@@ -57,7 +57,7 @@ export function invalidConfiguration(
 }
 export function configurationConflict(
   record: ConfigurationRecord,
-  reason: 'revision' | 'duplicate_name' | 'unit_in_use' | 'idempotency_mismatch',
+  reason: 'revision' | 'duplicate_name' | 'unit_in_use' | 'idempotency_mismatch' | 'required_unit',
 ): never {
   throw new ConfigurationException({
     code: 'CONFIGURATION_CONFLICT',
@@ -243,6 +243,21 @@ export class OrganizationRepository {
     );
   }
 
+  async moveUnit(tx: ConfigurationTransaction, id: string, parentId: string) {
+    try {
+      await tx.client.query(
+        'UPDATE turnstile.organization_unit SET parent_id = $3 WHERE tenant_id = $1 AND id = $2',
+        [tx.tenantId, id, parentId],
+      );
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error) {
+        if (error.code === '23503') return configurationConflict(tx.record, 'unit_in_use');
+        if (error.code === '23505') return configurationConflict(tx.record, 'duplicate_name');
+      }
+      throw error;
+    }
+  }
+
   async deleteUnit(tx: ConfigurationTransaction, id: string) {
     try {
       await tx.client.query(
@@ -332,6 +347,9 @@ export class OrganizationRepository {
     if (units.length !== rows.length) return configurationUnavailable();
     const { record } = tx;
     const profile = [record.name !== null, record.time_zone !== null, record.root_id !== null];
+    const firstUnit = units.some(
+      (unit) => unit.type !== 'organization' && unit.parentId === record.root_id,
+    );
     const complete = record.completed_at !== null;
     const result = configurationSnapshotSchema.safeParse({
       revision: record.revision,
@@ -342,12 +360,19 @@ export class OrganizationRepository {
         requirementVersion: record.requirement_version,
         revision: record.revision,
         requirements: [
-          'organization_name',
-          'time_zone',
-          'organization_root',
-          'configuration_manager',
-        ].map((id, index) => ({ id, satisfied: index < 3 ? profile[index] : tx.canManage })),
-        nextStep: complete ? null : profile.every(Boolean) ? 'review' : 'organization',
+          { id: 'organization_name', satisfied: profile[0] },
+          { id: 'time_zone', satisfied: profile[1] },
+          { id: 'organization_root', satisfied: profile[2] },
+          ...(record.requirement_version === 2 ? [{ id: 'first_unit', satisfied: firstUnit }] : []),
+          { id: 'configuration_manager', satisfied: tx.canManage },
+        ],
+        nextStep: complete
+          ? null
+          : !profile.every(Boolean)
+            ? 'organization'
+            : record.requirement_version === 2 && !firstUnit
+              ? 'structure'
+              : 'review',
         completion: complete
           ? {
               completedAt: record.completed_at?.toISOString(),

@@ -12,7 +12,9 @@ export function notice(error: unknown) {
   if (error.detail?.code === 'CONFIGURATION_CONFLICT' && error.detail.reason === 'duplicate_name')
     return 'A unit with this name already exists under this parent. Choose a different name.';
   if (error.detail?.code === 'CONFIGURATION_CONFLICT' && error.detail.reason === 'unit_in_use')
-    return 'This unit is in use and cannot be removed. Load the latest saved structure.';
+    return 'This unit is in use and cannot be changed. Load the latest saved structure.';
+  if (error.detail?.code === 'CONFIGURATION_CONFLICT' && error.detail.reason === 'required_unit')
+    return 'Keep at least one Site / Plant or Department directly under the organization.';
   if (error.code === 'CONFIGURATION_NOT_FOUND')
     return 'This unit no longer exists. Load the latest saved structure.';
   if (error.code === 'CONFIGURATION_CONFLICT')

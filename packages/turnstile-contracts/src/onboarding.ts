@@ -17,7 +17,7 @@ export const CONFIGURATION_LIMITS = {
   auditRetentionDays: 90,
   maintenanceRows: 1000,
 } as const;
-export const SETUP_REQUIREMENT_VERSION = 1;
+export const SETUP_REQUIREMENT_VERSION = 2;
 export const CONFIGURATION_MANAGE_PERMISSION = 'turnstile:configuration:manage';
 
 export function normalizeConfigurationName(value: string): string {
@@ -80,7 +80,7 @@ export const organizationRevisionSchema = z
   .max(CONFIGURATION_LIMITS.revision);
 export const timeZoneSchema = z.enum(SUPPORTED_TIME_ZONES).meta({
   description:
-    'Exact shared version-1 time-zone allowlist; an explicitly submitted value confirms the zone. No browser/OS default or offset is accepted.',
+    'Exact shared time-zone allowlist, including Asia/Kolkata, retained Asia/Calcutta and UTC. List provenance is independent of setup requirement version. An explicitly submitted value confirms the zone; no browser/OS default or numeric offset is accepted.',
 });
 export const configurationQuerySchema = z.strictObject({});
 export const unitPathSchema = z.strictObject({ id: configurationIdSchema });
@@ -112,6 +112,15 @@ export const unitRenameSchema = z.strictObject({
   expectedRevision: organizationRevisionSchema,
   name: unitNameSchema,
 });
+export const unitMoveSchema = z
+  .strictObject({
+    expectedRevision: organizationRevisionSchema,
+    parentId: configurationIdSchema,
+  })
+  .meta({
+    description:
+      'Move a non-root unit to a saved parent. Backend validation checks current authorization/revision, relationships, cycles, full subtree depth, sibling names, references and required-unit preservation. Same-parent/current-revision is a no-op. Reconcile an uncertain response through canonical readback before explicit retry; never automatically replay.',
+  });
 export const revisionMutationSchema = z.strictObject({
   expectedRevision: organizationRevisionSchema,
 });
@@ -161,58 +170,95 @@ export const workspaceStatusSchema = z.strictObject({
   status: z.enum(['incomplete', 'complete']),
   canManageConfiguration: z.boolean(),
 });
-export const setupRequirementsSchema = z.tuple([
+export const setupRequirementsV1Schema = z.tuple([
   z.strictObject({ id: z.literal('organization_name'), satisfied: z.boolean() }),
   z.strictObject({ id: z.literal('time_zone'), satisfied: z.boolean() }),
   z.strictObject({ id: z.literal('organization_root'), satisfied: z.boolean() }),
   z.strictObject({ id: z.literal('configuration_manager'), satisfied: z.boolean() }),
 ]);
-export const setupCompletionSchema = z.strictObject({
-  completedAt: z.iso.datetime(),
-  completedBy: configurationActorSchema,
-  requirementVersion: z.literal(SETUP_REQUIREMENT_VERSION),
-});
-const setupBase = {
-  requirementVersion: z.literal(SETUP_REQUIREMENT_VERSION),
-  revision: organizationRevisionSchema,
-  requirements: setupRequirementsSchema,
-};
-export const setupSchema = z
-  .discriminatedUnion('state', [
+export const setupRequirementsV2Schema = z.tuple([
+  z.strictObject({ id: z.literal('organization_name'), satisfied: z.boolean() }),
+  z.strictObject({ id: z.literal('time_zone'), satisfied: z.boolean() }),
+  z.strictObject({ id: z.literal('organization_root'), satisfied: z.boolean() }),
+  z.strictObject({ id: z.literal('first_unit'), satisfied: z.boolean() }),
+  z.strictObject({ id: z.literal('configuration_manager'), satisfied: z.boolean() }),
+]);
+export const setupRequirementsSchema = z.union([
+  setupRequirementsV1Schema,
+  setupRequirementsV2Schema,
+]);
+function completionForVersion<const Version extends 1 | 2>(version: Version) {
+  return z.strictObject({
+    completedAt: z.iso.datetime(),
+    completedBy: configurationActorSchema,
+    requirementVersion: z.literal(version),
+  });
+}
+export const setupCompletionSchema = z.discriminatedUnion('requirementVersion', [
+  completionForVersion(1),
+  completionForVersion(SETUP_REQUIREMENT_VERSION),
+]);
+function setupForVersion<
+  const Version extends 1 | 2,
+  Requirements extends typeof setupRequirementsV1Schema | typeof setupRequirementsV2Schema,
+  NextStep extends z.ZodType,
+>(version: Version, requirements: Requirements, nextStep: NextStep) {
+  const base = {
+    requirementVersion: z.literal(version),
+    revision: organizationRevisionSchema,
+    requirements,
+  };
+  return z.discriminatedUnion('state', [
     z.strictObject({
-      ...setupBase,
+      ...base,
       state: z.literal('not_started'),
       nextStep: z.literal('organization'),
       completion: z.null(),
     }),
     z.strictObject({
-      ...setupBase,
+      ...base,
       state: z.literal('in_progress'),
-      nextStep: z.enum(['organization', 'review']),
+      nextStep,
       completion: z.null(),
     }),
     z.strictObject({
-      ...setupBase,
+      ...base,
       state: z.literal('completed'),
       nextStep: z.null(),
-      completion: setupCompletionSchema,
+      completion: completionForVersion(version),
     }),
+  ]);
+}
+export const setupSchema = z
+  .union([
+    setupForVersion(1, setupRequirementsV1Schema, z.enum(['organization', 'review'])),
+    setupForVersion(
+      SETUP_REQUIREMENT_VERSION,
+      setupRequirementsV2Schema,
+      z.enum(['organization', 'structure', 'review']),
+    ),
   ])
   .superRefine((value, ctx) => {
     const profileReady = value.requirements.slice(0, 3).every((item) => item.satisfied);
+    const businessRequirements = value.requirements.slice(0, -1);
+    const businessReady = businessRequirements.every((item) => item.satisfied);
+    const nextStep = !profileReady ? 'organization' : !businessReady ? 'structure' : 'review';
     if (
       value.state === 'not_started' &&
-      (value.revision !== 0 || value.requirements.slice(0, 3).some((item) => item.satisfied))
+      (value.revision !== 0 || businessRequirements.some((item) => item.satisfied))
     )
       ctx.addIssue({
         code: 'custom',
-        message: 'Not-started setup must have empty profile at revision zero',
+        message: 'Not-started setup must have empty profile and units at revision zero',
       });
     if (value.state !== 'not_started' && value.revision === 0)
       ctx.addIssue({ code: 'custom', message: 'Saved setup must have a positive revision' });
     if (
       (value.state === 'completed' && !value.requirements.every((item) => item.satisfied)) ||
-      (value.state === 'in_progress' && (value.nextStep === 'review') !== profileReady)
+      (value.state === 'in_progress' && value.nextStep !== nextStep) ||
+      (value.requirementVersion === 2 &&
+        value.requirements[3].satisfied &&
+        !value.requirements[2].satisfied)
     )
       ctx.addIssue({
         code: 'custom',
@@ -221,7 +267,7 @@ export const setupSchema = z
   })
   .meta({
     description:
-      'Version-1 setup; fixed requirements in order. Not-started is revision 0 with no saved profile; saved/completed revisions are positive. Review requires saved name, confirmed zone and root; completed requires all checks. These cross-field invariants are enforced by executable validation.',
+      'Versioned setup: v1 retains its four requirements and valid root-only completion. V2 adds first_unit before configuration_manager; Review additionally requires a saved direct-child Site/Department. Resume Organization for profile/root gaps, Structure for a v2 first-unit gap, otherwise Review. Not-started is revision 0 with no saved business values; saved/completed revisions are positive. Completion matches the setup version and requires every check. Cross-field rules are enforced by executable validation.',
   });
 export const organizationResponseSchema = z.strictObject({
   revision: organizationRevisionSchema,
@@ -256,10 +302,20 @@ export const configurationSnapshotSchema = z
     ];
     if (actual.some((satisfied, index) => value.setup.requirements[index]?.satisfied !== satisfied))
       ctx.addIssue({ code: 'custom', message: 'Setup checklist disagrees with saved profile' });
+    if (value.setup.requirementVersion === 2) {
+      const firstUnit = value.units.some(
+        (unit) => unit.type !== 'organization' && unit.parentId === value.organization.rootId,
+      );
+      if (value.setup.requirements[3].satisfied !== firstUnit)
+        ctx.addIssue({
+          code: 'custom',
+          message: 'First-unit checklist disagrees with saved units',
+        });
+    }
   })
   .meta({
     description:
-      'One consistent canonical revision. Snapshot/setup revisions agree, root identity/name match the profile, and the first three requirements reflect saved values. Parent/reference/uniqueness authorization rules remain backend domain validation.',
+      'One consistent canonical revision. Snapshot/setup revisions agree, root identity/name match the profile and the first three requirements reflect saved values. V2 first_unit agrees with a saved direct-child Site/Department; completed v1 needs no first unit. Graph/reference/uniqueness authorization rules remain backend domain validation.',
   });
 export const unitCreateResponseSchema = z
   .strictObject({
@@ -300,7 +356,13 @@ export const configurationInvalidSchema = z.strictObject({
 });
 export const configurationConflictSchema = z.strictObject({
   code: z.literal('CONFIGURATION_CONFLICT'),
-  reason: z.enum(['revision', 'duplicate_name', 'unit_in_use', 'idempotency_mismatch']),
+  reason: z.enum([
+    'revision',
+    'duplicate_name',
+    'unit_in_use',
+    'idempotency_mismatch',
+    'required_unit',
+  ]),
   revision: organizationRevisionSchema,
 });
 export const configurationNotFoundSchema = z.strictObject({
@@ -363,6 +425,7 @@ export function configurationValidationError(error: z.ZodError): ConfigurationEr
 export type OrganizationPatch = z.infer<typeof organizationPatchSchema>;
 export type UnitCreate = z.infer<typeof unitCreateSchema>;
 export type UnitRename = z.infer<typeof unitRenameSchema>;
+export type UnitMove = z.infer<typeof unitMoveSchema>;
 export type RevisionMutation = z.infer<typeof revisionMutationSchema>;
 export type SetupComplete = z.infer<typeof setupCompleteSchema>;
 export type UnitDelete = z.infer<typeof unitDeleteSchema>;
@@ -383,6 +446,7 @@ export const onboardingSchemas = {
   OrganizationPatch: organizationPatchSchema,
   UnitCreate: unitCreateSchema,
   UnitRename: unitRenameSchema,
+  UnitMove: unitMoveSchema,
   RevisionMutation: revisionMutationSchema,
   UnitPath: unitPathSchema,
   UnitCreateHeaders: unitCreateHeadersSchema,
