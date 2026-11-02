@@ -22,6 +22,7 @@ import {
   useMounted,
   useUnsavedEntries,
 } from './shared';
+import { removalRestriction } from './structure-model';
 
 export function UnitEditor({
   snapshot,
@@ -58,10 +59,12 @@ export function UnitEditor({
   useEffect(() => {
     if (!busy && fieldError(errors, 'name')) nameRef.current?.focus();
   }, [errors, busy]);
-  const removable =
-    !!unit &&
-    unit.type !== 'organization' &&
-    !snapshot.units.some((child) => child.parentId === id);
+  const removalReason = removalRestriction(
+    snapshot.units,
+    id,
+    snapshot.setup.state === 'completed' && snapshot.setup.requirementVersion === 2,
+  );
+  const removable = !removalReason;
   async function save() {
     if (
       busy ||
@@ -140,7 +143,9 @@ export function UnitEditor({
         <CardDescription>
           {action === 'rename'
             ? 'Only the name changes. Unit type and parent stay the same.'
-            : 'Remove only an unused leaf unit. Your organization will stay activated.'}
+            : snapshot.setup.state === 'completed'
+              ? 'Remove only an unused leaf unit. Your organization will stay activated.'
+              : 'Remove only an unused leaf unit. Save a first unit before finishing setup.'}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
@@ -186,11 +191,7 @@ export function UnitEditor({
                 <FieldError id="rename-unit-error">{nameError}</FieldError>
               </Field>
             )}
-            {action === 'delete' && !removable && (
-              <p role="status">
-                This unit has children or is no longer available. It cannot be removed here.
-              </p>
-            )}
+            {action === 'delete' && !removable && <p role="status">{removalReason}</p>}
             <div className="flex flex-wrap gap-3">
               <Button
                 type="submit"

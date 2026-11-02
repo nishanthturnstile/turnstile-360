@@ -36,7 +36,7 @@ export async function testOnboarding({
     );
     assert.deepEqual(minimal, { status: 'incomplete', canManageConfiguration: false });
     assert.equal(
-      await waiting.getByRole('button', { name: 'Activate workspace', exact: true }).count(),
+      await waiting.getByRole('button', { name: 'Finish setup', exact: true }).count(),
       0,
     );
     let releaseStatus;
@@ -55,6 +55,8 @@ export async function testOnboarding({
       0,
     );
     assert.equal(await page.locator('.auth-layout').count(), 0);
+    assert.equal(await page.locator('.workspace').count(), 0);
+    assert.equal(await page.getByRole('navigation', { name: 'Workspace navigation' }).count(), 0);
     releaseStatus();
     await heading(page, 'Tell us about your organization');
     await page.unroute('**/api/workspace/status', delayedStatus);
@@ -113,6 +115,8 @@ export async function testOnboarding({
       await page.getByLabel('Organization name', { exact: true }).inputValue(),
       'Browser fixture organization',
     );
+    assert.equal(await page.getByLabel('Time zone', { exact: true }).inputValue(), 'Asia/Kolkata');
+    await page.getByLabel('Time zone', { exact: true }).selectOption('');
     await page.getByRole('button', { name: 'Save and continue', exact: true }).click();
     assert.equal(
       await page
@@ -217,14 +221,18 @@ export async function testOnboarding({
     await saveHandled;
     await page.unroute('**/api/organization', delayed);
     await heading(page, 'You’re signed out');
+    await clearRateLimits();
     await login('member');
     await heading(page, 'Tell us about your organization');
     await page.getByLabel('Time zone', { exact: true }).selectOption('UTC');
     await page.getByRole('button', { name: 'Save and exit', exact: true }).click();
     await heading(page, 'Setup saved for later');
     await page.getByRole('link', { name: 'Resume setup', exact: true }).click();
-    await heading(page, 'Ready to open your workspace?');
-    await page.getByRole('link', { name: 'Edit organization', exact: true }).click();
+    await heading(page, 'First unit');
+    await page
+      .getByRole('navigation', { name: 'Setup steps' })
+      .getByRole('link', { name: 'Organization', exact: true })
+      .click();
     await heading(page, 'Tell us about your organization');
 
     // Clearing saved required values and exiting pauses without a mutation.
@@ -239,8 +247,11 @@ export async function testOnboarding({
     await page.getByText('Browser fixture organization', { exact: true }).waitFor();
     await page.getByText('UTC', { exact: true }).waitFor();
     await page.getByRole('link', { name: 'Resume setup', exact: true }).click();
-    await heading(page, 'Ready to open your workspace?');
-    await page.getByRole('link', { name: 'Edit organization', exact: true }).click();
+    await heading(page, 'First unit');
+    await page
+      .getByRole('navigation', { name: 'Setup steps' })
+      .getByRole('link', { name: 'Organization', exact: true })
+      .click();
     await heading(page, 'Tell us about your organization');
     assert.equal(
       await page.getByLabel('Organization name', { exact: true }).inputValue(),
@@ -265,18 +276,25 @@ export async function testOnboarding({
 
     // Restore the canonical regional value before the remaining shared journey.
     await page.getByRole('link', { name: 'Resume setup', exact: true }).click();
-    await heading(page, 'Ready to open your workspace?');
-    await page.getByRole('link', { name: 'Edit organization', exact: true }).click();
+    await heading(page, 'First unit');
+    await page
+      .getByRole('navigation', { name: 'Setup steps' })
+      .getByRole('link', { name: 'Organization', exact: true })
+      .click();
     await heading(page, 'Tell us about your organization');
     await page.getByLabel('Time zone', { exact: true }).selectOption('UTC');
     await page.getByRole('button', { name: 'Save and exit', exact: true }).click();
     await heading(page, 'Setup saved for later');
     await page.getByText('UTC', { exact: true }).waitFor();
     await page.getByRole('link', { name: 'Resume setup', exact: true }).click();
-    await heading(page, 'Ready to open your workspace?');
-    await page.getByRole('link', { name: 'Edit organization', exact: true }).click();
+    await heading(page, 'First unit');
+    await page
+      .getByRole('navigation', { name: 'Setup steps' })
+      .getByRole('link', { name: 'Organization', exact: true })
+      .click();
     await heading(page, 'Tell us about your organization');
 
+    await clearRateLimits();
     await setAccess('reset', managerPermissions);
     await waiting.goto(`${origin}/onboarding/organization`);
     await heading(waiting, 'Tell us about your organization');
@@ -304,7 +322,19 @@ export async function testOnboarding({
     await page.getByRole('button', { name: 'Load latest saved data', exact: true }).click();
     await page.getByText('Shared administrator update', { exact: true }).waitFor();
     await page.getByRole('button', { name: 'Save and continue', exact: true }).click();
-    await heading(page, 'Add structure, if you need it');
+    await heading(page, 'First unit');
+    assert.equal(await page.locator('.workspace').count(), 0);
+    assert.equal(await page.getByLabel('Parent', { exact: true }).count(), 0);
+    await clearRateLimits();
+    assert.equal(
+      await page.getByRole('button', { name: 'Continue to review', exact: true }).isDisabled(),
+      true,
+    );
+    await page.goto(`${origin}/onboarding/review`);
+    await heading(page, 'First unit');
+    await page.goto(`${origin}/settings/organization`);
+    await heading(page, 'First unit');
+    assert.equal(new URL(page.url()).pathname, '/onboarding/structure');
     // Reset only the disposable fixture window so the expanded journey stays inside the
     // real authority's 100/minute introspection limit. Production limits stay enabled.
     await clearRateLimits();
@@ -388,15 +418,19 @@ export async function testOnboarding({
     page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('link', { name: 'Continue to review', exact: true }).click();
     await heading(page, 'Ready to open your workspace?');
-    await page.getByText(/1 optional sites or departments saved/).waitFor();
-    await page.getByRole('link', { name: 'Edit structure', exact: true }).click();
-    await heading(page, 'Add structure, if you need it');
+    await page
+      .getByRole('list', { name: 'Saved first units' })
+      .getByText('Main site', { exact: true })
+      .waitFor();
+    await page.getByRole('link', { name: 'Edit first unit', exact: true }).click();
+    await heading(page, 'First unit');
     await page
       .getByRole('list', { name: 'Saved units' })
       .getByText('Main site', { exact: true })
       .waitFor();
-    // Remove the optional fixture unit through the already-supported owning API so the
-    // same real browser journey also proves root-only activation. Rename/delete UI is I06.
+    await clearRateLimits();
+    // Removing the only saved unit before completion must restore First unit readiness.
+    // Use owning HTTP; ongoing rename/delete controls belong to Settings.
     assert.equal(
       await page.evaluate(async () => {
         const session = await (await fetch('/api/auth/session')).json();
@@ -413,8 +447,36 @@ export async function testOnboarding({
       200,
     );
     await page.getByRole('link', { name: 'Continue to review', exact: true }).click();
+    await heading(page, 'First unit');
+    assert.equal(
+      await page.getByRole('button', { name: 'Continue to review', exact: true }).isDisabled(),
+      true,
+    );
+    assert.equal(await page.getByRole('button', { name: 'Finish setup', exact: true }).count(), 0);
+    const rootOnly = await page.evaluate(async () => {
+      const session = await (await fetch('/api/auth/session')).json();
+      const setup = await (await fetch('/api/setup')).json();
+      const response = await fetch('/api/setup/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-csrf-token': session.csrfToken },
+        body: JSON.stringify({ expectedRevision: setup.revision }),
+      });
+      return { status: response.status, nextStep: setup.nextStep };
+    });
+    assert.deepEqual(rootOnly, { status: 400, nextStep: 'structure' });
+    await page.getByLabel('Unit name', { exact: true }).fill('Main site');
+    await page.getByRole('button', { name: 'Save and exit', exact: true }).click();
+    await heading(page, 'Setup saved for later');
+    await restartProduct();
+    await page.reload();
+    await heading(page, 'Setup saved for later');
+    await page.getByRole('link', { name: 'Resume setup', exact: true }).click();
     await heading(page, 'Ready to open your workspace?');
-    await page.getByText(/0 optional sites or departments saved/).waitFor();
+    assert.equal(await page.getByText('Organization root created', { exact: true }).count(), 0);
+    assert.equal(
+      await page.getByText('Your configuration access verified', { exact: true }).count(),
+      0,
+    );
     await page.setViewportSize({ width: 320, height: 760 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     assert.equal(
@@ -441,14 +503,17 @@ export async function testOnboarding({
       } else await route.continue();
     };
     await page.route('**/api/setup/complete', lostActivation);
-    await page.getByRole('button', { name: 'Activate workspace', exact: true }).click();
+    await page.getByRole('button', { name: 'Finish setup', exact: true }).click();
     await page.getByText(/We couldn’t confirm this change/).waitFor();
     assert.equal(new URL(page.url()).pathname, '/onboarding/review');
     assert.equal(activations.length, 1);
-    await page.getByRole('button', { name: 'Activate workspace', exact: true }).click();
+    assert.equal(
+      await page.getByRole('button', { name: 'Finish setup', exact: true }).isDisabled(),
+      true,
+    );
+    await page.getByRole('button', { name: 'Check saved setup', exact: true }).click();
     await heading(page, 'Welcome, member.');
-    assert.equal(activations.length, 2);
-    assert.equal(activations[0], activations[1]);
+    assert.equal(activations.length, 1);
     await page.unroute('**/api/setup/complete', lostActivation);
     await waiting.getByRole('button', { name: 'Retry', exact: true }).click();
     await heading(waiting, 'Welcome, reset.');
@@ -497,7 +562,7 @@ export async function testOnboarding({
     await connectionHandled;
     await page.unroute('**/api/dms/capabilities', delayedConnection);
     console.log(
-      'Onboarding browser journey passed: ordinary waiting, partial save/exit/resume across restart, shared administrators, revision reconciliation, retained optional units, exact-key lost-response retry, root-only activation/readback, logout fencing, deep links/Back, no implicit POST retries and 320px/reduced-motion layouts.',
+      'Onboarding browser journey passed: ordinary waiting, partial save/exit/resume across restart, shared administrators, revision reconciliation, required first-unit resume, exact-key lost-response retry, root-only rejection and completion readback, logout fencing, deep links/Back, no implicit POST retries and 320px/reduced-motion layouts.',
     );
   } catch (error) {
     console.error(

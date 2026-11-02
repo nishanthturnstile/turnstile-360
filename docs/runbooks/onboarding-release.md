@@ -6,9 +6,19 @@ command contracts and recovery boundaries are defined in
 [architecture.md](../../architecture.md#onboarding-operations-and-upgrade).
 Actual verification and remaining target acceptance belong in [IN_PROGRESS.md](../../IN_PROGRESS.md).
 
+This procedure covers the v2 first-unit/move release and preserved completed v1.
+The [redesign plan](../onboarding_redesign_implementation_plan.md#onb-rd08-verification-and-coordinated-release)
+defines its release evidence. Build matching API/web candidates, verify their exact
+migration payloads, and rehearse the protected archive before changing the selected target.
+A completed v1 installation stays activated with the same version, revision, profile,
+zone, units and completion metadata. An incomplete v1 installation upgrades only its
+requirement metadata; an installation without setup starts incomplete at v2.
+
 ## Prepare a recoverable release
 
 1. Identify the canonical URL, deployment access and intended verified administrator.
+   Validate that account’s real login before pausing services; keep its password only in
+   the protected secret file for this invocation and delete it after verification.
    Record the installed tenant/customer/application identities, current immutable image
    IDs and proposed compatible API/web images. Keep the authority, client registrations,
    machine enrollment and encryption/signing keys unchanged.
@@ -40,6 +50,10 @@ Build with the pinned toolchain before pausing services:
 ```bash
 pnpm install --frozen-lockfile
 pnpm build
+# Use reviewed release-specific tags; record the resolved immutable image IDs.
+docker build -f apps/turnstile-api/Dockerfile -t turnstile360-api:release .
+docker build -f apps/turnstile-web/Dockerfile -t turnstile360-web:release .
+pnpm test:images:onboarding turnstile360-api:release turnstile360-web:release
 docker compose stop turnstile-web turnstile-api dms-api
 ```
 
@@ -51,18 +65,24 @@ checks eligibility and rejects permission removal. It does not create an account
 Choose a new absolute backup directory outside the checkout for each attempt:
 
 ```bash
-pnpm release:backup:onboarding:local /private/onboarding-release < /private/manager-access.json
+pnpm release:backup:onboarding:local /private/onboarding-release turnstile360-api:release turnstile360-web:release < /private/manager-access.json
 pnpm release:rehearse:onboarding:local /private/onboarding-release
 ```
 
 The backup requires all three application containers stopped, retains their image IDs,
-copies the six private environment files, takes a complete custom-format database dump,
+records the proposed API/web pair, installed product migration rows and nonsecret role
+inventory, copies the six private environment files, takes a complete custom-format database dump,
 and records a SHA-256 archive checksum plus table counts/digests. It verifies that data
 did not change during capture. Failure leaves services paused; an incomplete archive is
 not a recovery point. The rehearsal creates only a disposable PostgreSQL container,
 restores ownership/ACLs with generated clone credentials, verifies old data, runs the
 compiled preflight/migration/bootstrap/initialization/grant commands, and checks
-idempotency and runtime isolation. Its temporary port belongs only to that test fixture.
+idempotency and runtime isolation. It allows only the metadata-only incomplete v1 upgrade;
+all other saved configuration remains identical. It also runs six real synthetic v1
+archive round trips (empty, partial, saved Calcutta/Kolkata, completed root-only and
+completed structure) through the actual pending migrations. Synthetic cases use their
+own disposable database, never reset the restored installation, and retain revisions,
+receipts, audit and completion. Its temporary port belongs only to that test fixture.
 It removes the clone, never the selected installation or archive.
 
 Apply to the original installation only after rehearsal succeeds:
@@ -75,9 +95,9 @@ pnpm --filter @thaarei/turnstile-api configuration:inspect < /private/onboarding
 ```
 
 The preflight works before onboarding tables exist. It checks the already installed
-identity and dedicated migrator without creating setup state. Product migrations
-0004–0006 are additive. Initialization creates only the empty incomplete context; its
-repeat preserves revision and completion. Compare the backup's original table digests
+identity and dedicated migrator without creating setup state. The candidate includes the original additive onboarding migrations and RD03/RD04
+migrations 0007–0010. Initialization creates only an absent empty incomplete v2 context;
+its repeat preserves either supported version, revision and completion. Compare the backup's original table digests
 before admitting browser traffic; auth/session/client/enrollment data must be unchanged.
 Do not re-run fresh role provisioning or replace fixed bootstrap identities.
 
@@ -87,11 +107,13 @@ Start the matching local source/images together using the normal development ent
 docker compose up --build --watch
 ```
 
-For this controlled loopback verification, keep the existing sole account's ordinary
-grant until its first login proves **Waiting for setup** and the backend's 409 gate.
-Then the following runner assigns manage through the private command, preserving the
-permissions captured in the protected input. This temporary verification ordering must
-not be used to expose an unconfigured production application to users.
+On an incomplete installation the runner can observe the selected ordinary account's
+**Waiting for setup** and the backend's 409 gate, then explicitly assign manage through
+the private command while preserving every permission in the protected input. An already
+completed installation instead proves direct Home/Settings entry and preserved canonical
+state; never remove manage or reset completion to manufacture a waiting/setup journey.
+This controlled loopback ordering does not authorize exposing unconfigured production
+access. Fresh Site and Department journeys run in isolated HTTPS fixtures.
 
 Provide the existing account password through a private secret file, never command-line
 text or a repository file. The runner reads that file without logging its contents:
@@ -100,14 +122,23 @@ text or a repository file. The runner reads that file without logging its conten
 pnpm release:verify:onboarding:local /private/onboarding-release /private/existing-password 'Turnstile local development' UTC
 ```
 
-Delete the private password file after the invocation (including failure). The runner
-uses the supported login and onboarding UI, saves a partial profile, restarts the product
-API, resumes saved data, explicitly submits the approved zone and activates setup.
+Delete the private password file after the invocation (including failure).
+For incomplete v2 only, supply an additional protected JSON file containing the explicitly
+approved first unit, for example `{"type":"site","name":"Approved site"}` (type is
+`site` or `department`). Pass its absolute path as the fifth argument after UTC. No unit
+is invented or inferred. A missing approval stops before profile changes. Supply an
+existing saved zone exactly; changing it is a separate deliberate Settings edit.
+
+The runner uses supported login and UI. For incomplete setup it saves a partial profile,
+restarts the product API, resumes saved data, explicitly submits the approved zone,
+creates the approved first unit only when missing, and selects **Finish setup**.
 It checks Settings, existing machine connectivity, local cookie attributes and same-account
 logout/relogin. It writes a protected `local-verification.json`, without password or signed
 URL diagnostics. Failed writes may have committed: inspect current saved state before
-retrying, retain receipts, and do not reset setup. A rerun on completed state verifies
-readback without clearing completion; it cannot claim it re-ran the earlier partial journey.
+retrying, retain receipts, and do not reset setup. A run on completed state verifies
+exact version/revision/profile/zone/units/completion readback without configuration writes;
+it also checks the optional-unit prompt for root-only v1. It cannot claim it re-ran the
+earlier partial journey. The protected report distinguishes these paths.
 
 Keep local HTTP cookie evidence separate from production TLS evidence. A real customer
 administrator and external mail delivery are not established by this local account or
@@ -157,6 +188,14 @@ leaves assignments intact; inspect and explicitly supply the complete intended a
 After an uncertain browser write, reload saved state before another deliberate mutation.
 Do not infer completion from login/enrollment, edit completion in SQL, reset accounts or
 set a readiness bypass.
+
+The pre-redesign I08 API/web set is **not an approved rollback** for this release: its
+strict v1 projections do not establish support for v2, `structure` next-step, Kolkata or
+move conflicts, and its parent-update assumptions predate the new privileges/guards.
+No prior candidate has been verified as a compatible v2/move rollback pair. Record
+`approvedPriorPair: null` until a specific immutable pair passes the current schema,
+readiness and contract checks. Keep maintenance active and fix forward with the matching
+candidate if release verification fails. Do not undo the parent guard/privilege migrations.
 
 A coordinated application rollback is allowed only to a schema-compatible API/web set
 that enforces readiness. An older API alone can reopen incomplete access. Retain additive

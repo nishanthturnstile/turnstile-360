@@ -39,6 +39,23 @@ ONB-I06 adds ongoing canonical Settings; ONB-I07 complete-chain verification and
 upgrade/recovery implementation with the selected existing local release are complete.
 Production/customer target acceptance remains separate. Document Approval
 still requires separate product agreement.
+ONB-RD01 adopts the authorized redesign's versioned first-unit, move and layout baseline;
+ONB-RD02 implements compatible v1/v2 contracts, exact Kolkata/Calcutta support and the
+adopted move payload/generated API documentation. ONB-RD03 adds v2 initialization,
+incomplete-only v1 upgrades, canonical first-unit readiness and completion/deletion
+protection while retaining completed v1. ONB-RD04 implements guarded transactional
+subtree moves with atomic audit/revision and canonical ancestry. ONB-RD05 adds dedicated
+setup/waiting layouts, saved-gap Organization/First unit/Review resume, explicit India
+confirmation and guarded Finish setup with readback. ONB-RD06 adds the shared visual
+structure editor, contextual CRUD/search and confirmed keyboard/pointer/touch moves.
+ONB-RD07 adds completed-workspace collapsible navigation, an accessible mobile overlay,
+compact Settings sections, available dashboard actions and the optional legacy unit prompt.
+ONB-RD08 completes exact image/archive verification and the selected local release of the
+[redesign plan](docs/onboarding_redesign_implementation_plan.md). The existing local
+installation is migrated through 0010, retains completed v1 and all saved configuration,
+and passes real administrator Settings/connection/logout/relogin checks. Fresh v2 and
+upgrade variants are verified in isolated fixtures. Production/customer DNS/TLS, external
+email and rollout acceptance remain separate.
 The technical design is maintained in [architecture.md](architecture.md).
 
 ## Updating this file
@@ -60,6 +77,450 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+ONB-RD-REVIEW — **Completed** (owner: Codex, 2026-11-02). Scope: fix and locally verify the three
+redesign review findings: untouched India suggestions after concurrent zone saves,
+filtered inline-editor recovery, and large-tree move eligibility cost. Preserve all
+staged ONB-RD01–08 implementation and add focused regressions. The owner now authorizes
+committing the redesign and fixes, creating a PR, resolving CI failures and merging once
+the PR is ready. No customer deployment, persistent database reset or release replay.
+
+Implemented untouched-zone projection from canonical readback while retaining explicit
+zone drafts, kept filtered active editors/ancestry visible through rename reconciliation,
+and indexed/cached move validation by canonical unit snapshot. The maximum-width model
+regression passes; the 500-unit eligibility calculation now takes about 20–32 ms locally
+instead of roughly 700 ms, and transient typing reuses the cached eligibility set.
+Added real HTTPS regressions for concurrent UTC confirmation followed by Save and exit,
+and a lost rename response that stops matching the filter while recovery remains usable.
+Architecture and affected delivery references are current. All prior staged work remains.
+
+Verification (2026-11-02): focused web tests/typecheck, `pnpm check`, `pnpm build`,
+`pnpm test` and `pnpm test:integration` pass, including 19 Fastify and 91 PostgreSQL
+checks and real synthetic upgrade archives. All three browser suites pass: auth,
+structured onboarding and the extended structure editor. The new recovery cases passed
+on their initial run; a later touch-fixture geometry assumption was corrected by restoring
+its original alphabetical name before the existing drag checks, and the full suite then
+passed. Existing explicit drafts, dirty blocking, keyboard/pointer/touch moves, session
+refresh/recovery/revocation and logout are retained.
+
+Built `turnstile360-api:rd-review-20261102` and `turnstile360-web:rd-review-20261102`
+from monorepo-root contexts; isolated candidate image checks pass for exact packaged
+migrations/contracts, SPA/privacy policy, non-root and read-only runtime. `pnpm test:smoke`
+and both local/Dokploy Compose configurations pass. Logs use
+`/tmp/turnstile-redesign-fix-*`. The existing >500kB web bundle warning remains.
+
+Handoff: source fixes and local verification are complete. Deliver the preserved redesign
+and corrections through `feat/onboarding-redesign` → `development`; the associated GitHub
+PR records hosted CI/review and merge status. The owner authorized resolving CI and merging.
+No persistent installation migration, credential change or customer/production deployment
+was performed by this task; retain RD08's recovery evidence and running Watch installation.
+
+ONB-RD08 — **Completed** (owner: Codex, 2026-11-02). Scope: final redesign verification,
+exact candidate image checks, version-aware archive rehearsal and the previously selected
+existing local-development release. RD01–07 changes and staged/uncommitted work are preserved.
+No customer/production rollout, account reset, tenant bootstrap or live database restoration.
+
+Updated `test-onboarding-images.mjs` to compare every packaged migration journal entry and
+SQL hash (including 0007–0010), verify packaged v1/v2 contracts/private commands, and retain
+non-root/read-only/fail-closed runtime and SPA/CSP/notices checks. The backup helper can
+record the matching candidate pair plus installed images, product journal and nonsecret
+role inventory. Local archive rehearsal allows only the intended incomplete-v1 metadata
+transition; all other saved configuration is compared exactly. The existing six upgrade
+cases now dump/restore their synthetic v1 database before migration, validating empty,
+partial, saved Calcutta/Kolkata, completed root-only and completed-structure preservation.
+Synthetic cases use an identified disposable cluster and their own database. Failed
+subprocess details are retained only in protected diagnostics outside the checkout.
+
+The local release verifier follows Organization/First unit/Review and Finish setup, requires
+an explicit protected approved-unit input only when missing in incomplete v2, preserves
+existing saved zones, and performs exact canonical readback for completed installations.
+It never invents a unit or replays activation to manufacture a fresh journey. Runbook,
+architecture, README and generated OpenAPI implementation notes are current. No prior
+I08 pair is approved for v2/move rollback: retain maintenance and fix forward unless a
+specific immutable compatible pair is separately verified; do not undo parent guards.
+
+Verification (2026-11-02):
+
+- `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` pass. Integration
+  includes 19 Fastify and 91 PostgreSQL checks; the six upgrade cases include real archives.
+  The final regenerated OpenAPI and architecture formatting check passes.
+- `pnpm test:browser:auth`, `pnpm test:browser:onboarding:structured` and
+  `pnpm test:browser:structure` pass: required Site/Department, waiting/resume/readback,
+  manager permissions and canonical Settings, responsive sidebar/focus/dirty blocking,
+  real keyboard/pointer/touch moves, 20 reloads, recovery/revocation and full/partial logout.
+- Built `turnstile360-api:rd08-20261102` (image `sha256:6c3dc09471ee25ec9bc66eefd33a0b5304376dc4006b3fe11c7597751ac3687d`)
+  and `turnstile360-web:rd08-20261102` (image `sha256:5fed7ae6dfd916cc4b85745a5ff0541a9f9d0c3f3cd638c6387517997977ce74`)
+  from monorepo-root contexts. `pnpm test:images:onboarding` passes with no credentials,
+  external network or host bindings. The existing >500kB web bundle warning remains.
+- Both the retained pre-onboarding archive and a fresh coherent current-target archive
+  pass isolated restore/owning migration/repeat initialization/grant/isolation plus the
+  six-case matrix. An initial matrix subprocess failure was bounded; the two successful
+  rehearsals and final integration run establish the recorded evidence.
+- Verified the existing administrator login/logout before maintenance. Paused all three
+  application writers, captured the fresh backup, rehearsed it, then applied only pending
+  owning product migrations through 0010 and repeated initialization. Every original table
+  fingerprint and recorded role setting matched before browser admission: identities,
+  accounts, sessions, grants, clients, enrollment, saved UTC/profile/units and completed-v1
+  revision/actor/time were preserved. Runtime authority-read, grant-write and missing-tenant
+  denials plus the new parent-column privilege were verified on the actual target.
+- Rebuilt the matching development images and started the established `docker compose up
+  --watch` entry. All three application services are healthy and non-root on reserved
+  23600/23601/23602; Watch is enabled. No ingress, port or persistent credential changed.
+- The updated credentialed release runner passes on the actual target: direct Home,
+  root-only legacy optional-unit prompt, canonical Settings, machine connection, local
+  host-only HttpOnly SameSite=Lax cookies, logout and same-account relogin. Exact version,
+  revision, profile, zone, units and completion readback remains unchanged. Ordinary waiting
+  and fresh activation were deliberately not repeated on this already completed target.
+  The private password file was removed after verification.
+- 378 relative documentation links resolve, including 149 heading anchors; `git diff --check`
+  passes. Root LICENSE, third-party notices and lockfile remain unchanged by RD08.
+
+Recovery/evidence is retained privately at
+`~/.local/state/thaarei/turnstile-360/onboarding-releases/20261102-rd08`: coherent dump,
+checksum/manifest, original/candidate/runtime image IDs, role/journal inventory, operator
+readbacks, `local-verification.json` and final `release-state.json`. The record distinguishes
+production-image isolation checks from the actual development runtime and marks production
+acceptance false. Original I08 backups remain intact. Public bounded logs are
+`/tmp/turnstile-onboarding-rd08-{check,build,test,integration,images,prior-archive,target-rehearsal,target-migration,browser-auth,browser-department,browser-structure,local-verification,doc-links}.log`;
+Compose build/Watch logs use the same prefix.
+
+Handoff: RD01–08 are complete for the authorized local target. No implementation item
+remains in this redesign plan. Production/customer release still needs its own selected
+backup/rehearsal, compatible deployment, actual DNS/TLS/cookies/runtime evidence, named
+customer administrator handover and external email acceptance. Local HTTP/fixture results
+do not establish those outcomes. Keep the protected recovery point and approved candidate
+pair; leave the healthy local Watch stack running. No commit or push was requested.
+
+ONB-RD07 — **Completed** (owner: Codex, 2026-11-02). Scope: persistent completed
+workspace sidebar with transient collapse and accessible narrow overlay, compact Settings
+navigation, real dashboard actions and a legacy-only optional first-unit prompt. Preserve
+RD01–06 changes, canonical editors, session/readiness boundaries and draft protection.
+Implemented `WorkspaceNavigation` with shared 232px/64px navigation, generated Sheet/Tooltip/Empty compositions,
+compact horizontal Settings sections and manager-only canonical legacy suggestion. Layout
+state remains transient; accepted navigation dismisses the overlay, cancelled dirty
+navigation retains it, and content focus handles return from Settings. The development
+gallery reuses the navigation with inert anchors. `App` exposes only delivered Home and
+authorized Settings actions; ordinary users never request manager configuration. The
+optional prompt requires a completed v1 canonical snapshot with only the organization
+root. Settings reuses the existing controllers and version-specific backend protections;
+the overview no longer describes every v2 unit as optional. Activation is preserved.
+
+Architecture/design guidance and gallery references are current. The pinned shadcn CLI
+generated the three primitives without overwriting Button. Existing MIT notices cover
+them; dependencies, lockfile and proprietary LICENSE are unchanged by RD07.
+
+Verification (2026-11-02):
+
+- `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` pass, including
+  19 Fastify and 91 PostgreSQL checks (30 authority/DMS + 61 product).
+- `pnpm test:browser:auth` passes the full setup/Settings/auth chain. New coverage checks
+  root-only completed-v1 direct entry and optional Settings navigation using read-only
+  canonical projection fixtures, named keyboard icon links/tooltips, persistent chrome,
+  modal focus/expanded state, Escape/desktop-resize dismissal, cancelled draft navigation
+  and accepted navigation/content focus. Existing database upgrade tests separately prove
+  preservation of real completed v1. Ordinary routes still make no configuration reads.
+- Both `pnpm test:browser:onboarding:structured` and `pnpm test:browser:structure` pass:
+  fresh required Department, DMS outage, canonical ongoing CRUD, real keyboard/pointer/touch
+  moves, conflicts/readback, narrow layout and reduced motion.
+- The full auth fixture retains 20 real reloads and one session check per reload. Its
+  private rate counter resets between artificial reload groups to accommodate canonical
+  manager Home reads; production limits and per-request authorization are unchanged.
+  Tooltip assertions follow the installed Base UI visual-label contract, while modal
+  assertions/captures wait for settled focus and the opening transition.
+- Inspected desktop dashboard and 320px Settings/open-menu captures. Relative documentation
+  file links resolve and `git diff --check` passes. The existing >500kB bundle warning remains.
+
+Final logs: `/tmp/turnstile-onboarding-rd07-{check,build,test,integration,browser-auth,browser-department,browser-structure}.log`.
+Captures: `/tmp/turnstile-rd07-{dashboard-desktop,settings-mobile,navigation-mobile}.png`.
+
+Handoff: ONB-RD08 is next: coordinated verification/release, candidate API/web images,
+upgrade/restore rehearsal and installed-target evidence. No persistent installation
+migration, image deployment or target acceptance was performed in RD07. Preserve existing
+RD01–06 worktree changes; do not reset an activated installation to manufacture setup tests.
+
+ONB-RD06 — **Completed** (owner: Codex, 2026-11-02). Scope: one visual structure
+editor for setup/Settings with connected expandable cards, compact outline, contextual
+create/rename/remove, selection/search with ancestry, and confirmed keyboard/touch/pointer
+moves through RD04. Existing RD01–05 worktree changes, canonical revisions, exact create
+receipts, partial save/exit, shared dirty blocking and auth/session boundaries are retained.
+
+Extracted `StructureEditor` owns create/recovery state for both callers. `StructureTree`
+composes connected cards/outline from bounded canonical units, with contextual Add first
+unit/Add below, valid type/parent inference, inline rename/remove and selected details.
+Root naming stays in Organization. Search retains ancestor context/full paths and disables
+filtered dragging without restricting the complete Move to chooser. Last required-unit,
+root, child/reference and type/depth/name protections remain authoritative on the backend;
+client preflight helpers explain restrictions and prevent invalid choices.
+
+Typed parent PATCH plus `UnitMoveEditor` provide one destination search, old/new-path
+preview and explicit Confirm move for keyboard/click/tap and Pointer Event gestures.
+Touch-action is restricted to the handle; native scrolling, valid-target highlighting,
+Escape/pointer cancellation and invalid/outside-drop cancellation stay available. No
+sibling sorting, diagram coordinates, optimistic tree replacement or automatic PATCH
+replay is added. Uncertain/conflicting writes keep the destination and require explicit
+readback before retry; canonical readback can confirm an already-saved destination.
+Stable flat row keys retain inline state across reparenting. If an edited unit disappears,
+a clearly labelled transient row preserves draft/error/readback/Cancel controls, without
+entering canonical units or write payloads. Drag feedback never shifts target geometry.
+
+Files: extracted StructureEditor, new StructureTree/UnitMoveEditor/structure-model,
+configuration API/shared errors/read hook and existing UnitEditor, shared CSS, fixture-only
+StructureGallery and design-system composition, four Node model regressions, new HTTPS
+visual-editor scenario/command and existing structured/Settings fixtures, OpenAPI
+implementation description and affected architecture/design/workspace/release guidance.
+Native Pointer Events require no new dependency; no schema/migration, port, topology,
+LICENSE or third-party notice changes were made by RD06.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. Integration executes 19 Fastify and 91 real PostgreSQL cases
+(30 authority/DMS and 61 product). Four new Node tests cover cycle/type/root relationships,
+whole-subtree depth eight/nine, sibling collisions and version-aware required-unit removal.
+`pnpm test:browser:structure`, `pnpm test:browser:onboarding:structured` and
+`pnpm test:browser:auth` all pass against disposable HTTPS/PostgreSQL/Mailpit fixtures.
+The new suite exercises shared setup/Settings and stable IDs, contextual creation,
+ancestor search/duplicate names, outline/details, keyboard Move to/invalid destinations,
+real revision conflict, exact lost-response GET reconciliation with no write replay,
+pointer cancellation/drop preview/confirmation, native Chromium touch drag and
+320px/reduced motion. Existing suites verify fresh Department/India setup, partial saves,
+restart/resume/dirty navigation, canonical Settings CRUD/concurrent edits/lost deletion,
+live permission removal, twenty authenticated reloads and auth/recovery/reset/logout.
+Desktop/mobile editor captures were inspected. Initial remount and drag-geometry findings
+were corrected; accessible type/path names were restored, and an adapted fixture's stale
+organization-name expectation was fixed. Final static/build/model checks pass after the
+missing-unit copy correction. Unchanged tasks use valid Turbo caches; the existing web
+chunk-size warning remains. Generated contract/example drift, targeted Biome/whitespace
+and 203 local document links/anchors pass.
+
+Handoff: ONB-RD07 is next: completed dashboard/sidebar, compact nested Settings navigation,
+legacy completed-v1 optional-unit prompt and ongoing Settings refinements. Reuse this
+editor and preserve its canonical/draft/readback boundaries. RD08 still owns coordinated
+image/upgrade/restore/installed-target verification and release; local browser success is
+not that rollout. No blocker remains for RD06. No persistent local/customer migration,
+deployment, account/data/zone change, commit or push was performed. Logs:
+`/tmp/turnstile-onboarding-rd06-{check,build,test,integration,docs,browser-department,browser-structure-complete,browser-auth-complete}.log`.
+
+ONB-RD05 — **Completed** (owner: Codex, 2026-11-02). Scope: dedicated setup and
+ordinary waiting layouts, canonical Organization/First unit/Review resume and guarded
+completion, preserving typed transport, draft recovery and shared navigation blocking.
+Existing RD01–04 worktree changes and authentication/session behavior are retained.
+
+Implemented neutral entry and dedicated setup/waiting with `EntryLayout`/`EntryContent`;
+completed `WorkspaceLayout` mounts only after verified session/readiness. Brand, signed-in
+identity and Sign out remain available; shared `SetupProgress` stays outside the bounded
+setup scroll pane. Incomplete dashboard/Settings entry resumes the first saved gap;
+ordinary users receive waiting/Retry. Direct Review cannot bypass a missing profile or
+first unit. Configuration failure stays distinct from identity expiry and DMS outages;
+recoverable checks retain mounted hidden drafts, while successful canonical reads clear
+stale failure state.
+
+Organization suggests Indian Standard Time/Kolkata only without a saved zone. Continue
+explicitly confirms it; untouched empty/partial Save and exit omits that suggestion and
+preserves saved values. First unit creates a real direct-child Site/Plant or Department
+with implicit root, required saved readiness and explicit partial save/exit. Exact
+body/revision/key plus save/exit intent survive uncertain create retries and readback.
+Existing rename/remove editors support actual Review corrections without a new mutation
+path. Business-only Review summarizes saved profile/zone/first units and provides Edit,
+Back and Finish setup; internal root/access checks stay on the server. Completion is
+revision-bound and disabled while unready/checking or after a conflict/uncertain result
+until explicit readback. No automatic mutation replay occurs. Active create/save-exit/
+retry actions have their own pending feedback.
+
+Files: App orchestration, new entry/progress compositions, configuration forms/unit
+editor/routes/read hook, OnboardingJourney, shared CSS, gallery/design guide, existing
+onboarding/structured/Settings HTTPS scripts, OpenAPI generator/output implementation
+status, architecture and package/release references. No dependency, database schema or
+migration changes were added by RD05.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass (19 Fastify and 91 real PostgreSQL cases: 30 authority/DMS,
+61 product). Both `pnpm test:browser:auth` and
+`pnpm test:browser:onboarding:structured` pass against disposable HTTPS/PostgreSQL/
+Mailpit fixtures. Browser evidence covers fresh required Site and Department, empty and
+partial profile/unit saves, India confirmation versus unsaved suggestion, saved UTC,
+restart/relogin resume, Review/Settings deep links, first-unit rename, dirty Back/Forward,
+root-only HTTP/UI rejection, exact-key lost-response create recovery, completion readback
+without replay, ordinary waiting transitions, permission revocation, DMS outage isolation,
+Settings CRUD/concurrency, twenty authenticated reloads, recovery/reset/logout and
+320px/reduced-motion states. Desktop/mobile Review screenshots were inspected. Initial
+expanded fixture runs exhausted the real 100/minute introspection window; only the
+private disposable counter is reset between phases, leaving production limits unchanged.
+An inherited root-only Settings assertion was corrected to check the retained first Site.
+Final static/build/unit checks also pass after the action-feedback adjustment. Unchanged
+tasks use valid Turbo caches; the existing web chunk-size warning remains. Generated
+contract/example drift, targeted Biome/whitespace checks and 196 local documentation
+links/anchors pass.
+
+Handoff: ONB-RD06 is next: shared visual structure editor/contextual CRUD and accessible
+moves consuming RD04, including Setup and Settings integration. RD07 owns completed
+navigation/ongoing Settings refinements. RD08 still owns coordinated image/upgrade/
+restore/installed-target release verification; the new browser evidence alone is not
+that release. No blocker remains for RD05. No persistent local/customer migration,
+deployment, account/data/zone change, commit or push occurred. Logs:
+`/tmp/turnstile-onboarding-rd05-{check,build,test,integration,docs,browser-auth-final,browser-department-latest}.log`.
+
+ONB-RD04 — **Completed** (owner: Codex, 2026-11-02). Scope: implement the adopted
+revision-checked parent-change API with live manage/CSRF/tenant protections, validated
+subtree movement and atomic move audit/revision. Add only the required parent-column
+privilege, preserve immutable identities/types/root and v2 first-unit completion, and
+extend PostgreSQL/Fastify coverage plus generated implementation status. Existing
+RD01–03 worktree changes are retained.
+
+Implemented `PATCH /api/organization/units/:id/parent` through the existing configuration
+lock, live grant and CSRF boundary. Strict input forbids tenant/actor selectors; canonical
+checks reject missing/root units, invalid types, self/descendant cycles, excessive subtree
+depth and duplicate siblings. Valid moves preserve IDs/types, descendant links, existing
+root/parent references and retry receipts, grants and v1/v2 completion. Each effective
+move commits one revision and attributable `unit_moved` event atomically. Current-revision
+same-parent requests are no-ops; stale lost-response retries conflict, with canonical
+readback supporting explicit reconciliation. The completed-v2 required-unit guard remains
+explicit; moving the sole direct child below its own subtree is already rejected as a cycle.
+
+The installed Drizzle CLI generated `0009_unit_move_audit.sql` and custom
+`0010_unit_move_guards.sql` plus metadata. Reviewed SQL grants only parent-column UPDATE
+and replaces the invoker-rights guard with bounded ancestry/subtree validation, retaining
+tenant/identity/type/root/count protections, forced RLS and the existing pool/lock boundary.
+Existing references permit valid moves; no unimplemented business references were added.
+Files: Organization controller/service/repository/schema, configuration HTTP classifier,
+new `configuration-move.database-spec.ts`, existing HTTP/runtime privilege checks, generated
+OpenAPI, architecture and package/deployment/authentication guidance.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. Integration executes 19 Fastify and 91 real PostgreSQL cases
+(30 authority/DMS and 61 product). Nine new move cases cover completed v1/v2 subtree
+preservation, exact depth limits, SQL and bulk-cycle rollback, duplicate siblings,
+audit-failure atomicity, stale/no-op/readback behavior, one-winner contention, permission
+revocation while waiting and authenticated HTTP/CSRF/privacy/response bounds. The separate
+initial database run also passes. One full run encountered an existing BFF capability
+success read returning 503; the complete clean-fixture rerun passes without a code change,
+and its cause remains unconfirmed. The initial tuple `.includes` type error and generated
+journal formatting issue were corrected. Unchanged tasks use valid Turbo caches; the
+existing web chunk-size warning remains. Drizzle metadata checks, generated-document drift,
+195 relative documentation links/anchors and whitespace checks pass. Pre-existing SQL
+0000–0008 and prior new snapshots remain byte-identical; existing committed journal entries
+and the new snapshot chain are preserved.
+
+Handoff: ONB-RD05 is next: dedicated resumable onboarding/waiting layouts and first-unit
+forms. RD06 consumes the move API in the shared visual editor; RD07 completes navigation
+and Settings. Current browser/release helpers still need their planned v2 changes and
+RD08 browser/image/restore/target verification before coordinated rollout. No blocker
+remains for RD04. No persistent local/customer migration, deployment, account/data/zone
+change, commit or push occurred. Logs:
+`/tmp/turnstile-onboarding-rd04-{check,build,test,integration,integration-rerun,database}.log`.
+
+ONB-RD03 — **Completed** (owner: Codex, 2026-11-02). Scope: implement v2 product
+configuration initialization and incomplete-only v1 metadata upgrade, canonical first-unit
+readiness, locked activation and completed-v2 last-unit deletion protection. Preserve
+completed v1, saved zones/revisions, forced RLS and runtime/migrator boundaries; extend
+real PostgreSQL/Fastify verification and generated implementation status. Existing
+RD01/RD02 worktree changes are retained.
+
+Implemented generated `0007_setup_requirement_v2.sql` and reviewed custom
+`0008_setup_v2_guards.sql` using the installed Drizzle CLI, with new journal entries and
+snapshots. New contexts default to v2. The owning migration locks the installed identity
+then tenant configuration and upgrades only incomplete v1 metadata without changing
+profile, units or business revision; empty revision-0 remains not_started. Completed v1
+retains its version, actor/time, revision and optional-unit policy. SQL guards remain
+invoker-rights with fixed search paths/forced RLS; no runtime privilege or new pool is added.
+Only the direct owning login can perform a 1→2 metadata-only change; mixed updates,
+completed conversions, downgrades and runtime attempts are rejected.
+
+Canonical snapshots derive first-unit readiness and Organization/Structure/Review resume
+from saved records. Locked activation requires a saved direct-child Site or Department
+for v2 and returns finite `body/required` without side effects when missing. Completed v2
+cannot lose its last qualifying unit through service or single/bulk SQL deletion; a failed
+bulk statement rolls back earlier row deletions. Incomplete removal resumes Structure.
+Existing leaf/reference, revision, audit, grant and repeat-completion behavior is retained.
+Private initialization/inspection now expose requirementVersion. Generated OpenAPI,
+architecture, README/package guidance and auth/deployment/release references match the
+implemented backend; the move handler remains explicitly planned for RD04.
+
+Files: owning organization schema/repository/service/operator, `0007`/`0008` SQL and
+metadata, configuration and real-BFF PostgreSQL fixtures, the new isolated
+`configuration-upgrade.database-spec.ts`, OpenAPI generator/output and affected docs.
+The upgrade fixture prepares the unmodified 0000–0006 baseline in a separate database
+inside the disposable test cluster; it does not reset the shared or persistent installation.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. Integration executes 19 Fastify and 82 real PostgreSQL
+cases (30 DMS/authority and 52 product, including 11 added cases). Coverage includes six
+empty/partial/completed old-version upgrades, saved UTC/Calcutta/Kolkata preservation,
+repeat migrations/initialization, Site and Department activation, direct HTTP/business
+gating, SQL/runtime/tenant protection, last-unit removal, completion/delete lock ordering
+in both directions and grant revocation queued before valid activation. Existing audit
+rollback checks now use a genuinely ready v2 fixture. A final `pnpm test:database` also
+passes after adding the bulk-delete rollback assertion. The initial crypto import and
+retention receipt-count findings were fixed. Unchanged tasks use valid Turbo caches;
+the existing web chunk-size warning remains. `drizzle-kit check`, generated-document
+drift checks, targeted Biome/whitespace checks and 303 local document links/anchors pass.
+All seven applied SQL migrations and original journal entries are byte/content unchanged;
+the two new snapshot links are consistent.
+
+Handoff: ONB-RD04 is next: implement the adopted parent-change route with guarded parent
+privileges, subtree/reference validation and atomic move audit/revision; retain the v2
+last-unit invariant. RD05–07 still own dedicated setup/resume, shared editor and completed
+navigation. Current v1 browser journeys/release helpers need their planned v2 updates and
+RD08 browser/image/restore/target verification before coordinated rollout; they were not
+claimed or rerun here. No blocker remains for RD03. No persistent local/customer migration,
+account/data/zone change, image deployment, commit or push occurred. Logs:
+`/tmp/turnstile-onboarding-rd03-{check,build,test,integration,database}.log`.
+
+ONB-RD02 — **Completed** (owner: Codex, 2026-11-02). Scope: implement the adopted
+versioned executable setup/completion contracts, v2 first-unit/snapshot agreement,
+Kolkata/Calcutta/UTC compatibility and strict move payload/finite error contracts.
+Regenerate time zones and OpenAPI with the pinned toolchain, distinguish adopted move
+contracts from unimplemented handlers, and add focused contract regressions. Existing
+v1 persistence, completion and browser layout remain until their dependent packages.
+Implemented version-specific requirement tuples and completion metadata, lifecycle/resume
+validation and canonical v2 first-unit agreement while preserving completed root-only v1.
+Exported strict `UnitMove`/schema and finite `required_unit` conflict; no move handler is
+claimed. The generated 420-zone allowlist retains all prior identifiers and adds Kolkata,
+with independent list-version/provenance and explicit compatibility additions. OpenAPI
+2.0.0 validates legacy/v2 named examples, documents parent-change input/snapshot/errors
+and marks the handler planned for RD04. Shared-package guidance and the web review's
+exhaustive label map are updated. Files: `packages/turnstile-contracts` source/tests/README,
+both generation scripts, generated onboarding OpenAPI and `OnboardingJourney.tsx`.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. The contract suite passes 10 cases (4 added focused
+regressions covering v2 Site/Department readiness, mixed-version/nextStep rejection,
+saved-zone/legacy preservation and strict moves). Integration runs 19 Fastify and 71
+real disposable PostgreSQL cases. Generated allowlist/OpenAPI/reference/example drift
+checks pass, including auth permission-catalog agreement. Unchanged build/unit tasks use
+valid Turbo caches. Initial document-table formatting and a missing exhaustive web label
+were corrected; final Biome/whitespace checks pass. Build retains the web chunk-size warning.
+
+Handoff: implement ONB-RD03 next using these contracts: generate/review new migrations,
+default initialization to v2, upgrade incomplete v1 metadata without changing business
+revision, and enforce first-unit activation/deletion under existing locks with PostgreSQL
+upgrade/contention evidence. Update the generator's runtime-initialization/implementation
+status when that behavior is delivered. Then follow RD04–08; do not treat the contract-only
+move route or v2 examples as live handlers/enforcement. No blocker remains for RD02.
+No feature database schema/migration, target data change, image release, production/customer
+rollout, commit or push occurred. Browser/image/target verification was not repeated and
+remains required for the later runtime/layout/release packages. Existing installation
+completion/profile/zone are untouched. Logs:
+`/tmp/turnstile-onboarding-rd01-rd02-{check,build,test,integration}.log`.
+
+ONB-RD01 — **Completed** (owner: Codex, 2026-11-02). Scope: begin the authorized
+onboarding redesign with adoption of its specification and technical baseline. Reconcile
+required direct-child Site/Plant-or-Department setup, version-aware completion/upgrade,
+saved time zones, audited accessible moves and dedicated/completed layouts with the
+existing implementation. Preserve ONB-I01–08 history and all other work entries.
+Milestone: specification preserves ONB-R01–12 and adds ONB-R13 moves; architecture adopts
+v1/v2 projections, migration-only incomplete upgrade, direct-child readiness/deletion,
+Kolkata compatibility, move route/locking/errors/audit and layout/scroll ownership. The
+proposal/original plan are explicitly historical where superseded; redesign plan links
+the adopted target. No configured limit, application boundary or deployment topology
+changed. README, workspace plan and authentication/deployment/release references distinguish
+delivered v1 procedures from the adopted v2 target. No feature schema, runtime behavior,
+persistent installation change or deployment belongs to this package. Initial worktree
+was clean; all other entries and ONB-I01–08 history are preserved.
+
+Verification actually run (2026-11-02): combined RD01/RD02 `pnpm check`, `pnpm build`,
+`pnpm test` and `pnpm test:integration` pass as recorded above; targeted Biome/whitespace
+checks and 234 local document-link/anchor resolutions across 11 affected documents pass.
+No new tests were added for the documentation-only RD01 package. Handoff: adopted target
+is consistent; RD02 contracts are delivered above, and RD03 is next. No blocker remains.
 
 ONB-REDESIGN-PLAN-001 — **Completed** (owner: Codex, 2026-11-02). Scope: create a
 separate implementation plan for the owner's onboarding redesign, carrying forward the

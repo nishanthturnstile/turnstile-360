@@ -310,10 +310,65 @@
     flex-direction: column;
     background: var(--muted);
   }
+  .entry-layout {
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--background);
+  }
+  .entry-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1.25rem clamp(1.25rem, 4vw, 3rem);
+    border-bottom: 1px solid var(--border);
+    background: var(--background);
+  }
+  .entry-account {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+  .entry-main,
+  .entry-view,
+  .setup-journey {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    flex-direction: column;
+  }
+  .entry-view[hidden] {
+    display: none;
+  }
+  .entry-page {
+    flex: 1;
+    padding: 2.5rem 1.25rem;
+  }
+  .entry-content {
+    width: min(42rem, 100%);
+    margin: 0 auto;
+  }
+  .setup-progress {
+    flex-shrink: 0;
+    width: min(44.5rem, 100%);
+    margin: 0 auto;
+    padding: 1rem 1.25rem 0;
+  }
+  .entry-layout > .app-footer {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+  }
   .workspace-header {
     flex-shrink: 0;
-    min-height: 5.5rem;
-    padding: 1.25rem clamp(1.25rem, 6vw, 5.5rem);
+    min-height: 4.5rem;
+    padding: 0.75rem 1.25rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -324,17 +379,56 @@
   .workspace-main {
     flex: 1;
     min-height: 0;
+    min-width: 0;
+    display: flex;
+  }
+  .workspace-sidebar {
     display: flex;
     flex-direction: column;
+    width: 14.5rem;
+    min-height: 0;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    background: var(--background);
+  }
+  .workspace-sidebar[data-collapsed="true"] {
+    width: 4rem;
+  }
+  .workspace-sidebar-controls {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.75rem;
   }
   .workspace-navigation {
     display: flex;
-    flex-shrink: 0;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 0.5rem;
-    padding: 0.75rem clamp(1.25rem, 6vw, 5.5rem);
-    border-bottom: 1px solid var(--border);
-    background: var(--background);
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 0 0.75rem 1rem;
+  }
+  .workspace-navigation a {
+    flex-shrink: 0;
+    justify-content: flex-start;
+  }
+  .workspace-sidebar:where([data-collapsed="true"]) :where(.workspace-navigation) a {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .workspace-mobile-navigation {
+    display: none;
+  }
+  .workspace-navigation-sheet .workspace-navigation {
+    flex: 1;
+  }
+  .workspace-gallery {
+    display: flex;
+    height: 24rem;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
   }
   .scroll-region {
     min-height: 0;
@@ -376,27 +470,83 @@
   }
   .settings-layout {
     display: flex;
+    flex-direction: column;
     flex: 1;
     min-height: 0;
     min-width: 0;
   }
-  .settings-sidebar {
-    width: 15rem;
-    flex-shrink: 0;
+  .structure-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 38rem;
     overflow: auto;
     overscroll-behavior: contain;
-    padding: 2rem 1.25rem;
-    border-right: 1px solid var(--border);
+    padding: 0.25rem;
+    scrollbar-gutter: stable;
+  }
+  .structure-branch {
+    min-width: 0;
+  }
+  .structure-child {
+    position: relative;
+    border-left: 1px solid var(--border);
+    padding-left: 0.5rem;
+  }
+  .structure-child::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 2rem;
+    width: 0.5rem;
+    height: 1px;
+    background: var(--border);
+  }
+  .structure-node {
+    min-width: 0;
+    border-radius: var(--radius-2xl);
+  }
+  .structure-node[data-selected],
+  .structure-node[data-drop="valid"] {
+    outline: 2px solid var(--ring);
+    outline-offset: 1px;
+  }
+  .structure-node[data-drop="valid"][data-over] {
+    outline: 3px solid var(--primary);
+  }
+  .structure-node[data-drop="invalid"][data-over] {
+    outline: 2px solid var(--destructive);
+  }
+  .structure-drag-handle {
+    touch-action: none;
+    cursor: grab;
+  }
+  .structure-drag-handle:active {
+    cursor: grabbing;
+  }
+  .structure-outline .structure-tree {
+    gap: 0.5rem;
+  }
+  .structure-outline .structure-node > [data-slot="card"] {
+    gap: 0.5rem;
+    padding-block: 0.75rem;
+  }
+  .settings-sidebar {
+    min-width: 0;
+    flex-shrink: 0;
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--border);
     background: var(--background);
   }
   .settings-navigation {
     display: flex;
-    flex-direction: column;
     gap: 0.5rem;
-    margin-top: 1.25rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    margin-top: 0.5rem;
   }
   .settings-navigation a {
-    justify-content: flex-start;
+    flex-shrink: 0;
   }
   .settings-content {
     flex: 1;
@@ -429,6 +579,9 @@
     color: var(--muted-foreground);
     font-size: 0.75rem;
     overflow-wrap: anywhere;
+  }
+  .entry-account .account-label {
+    max-width: 20rem;
   }
   .account-label strong {
     color: var(--foreground);
@@ -468,23 +621,21 @@
       align-self: flex-start;
       margin-bottom: 1.25rem;
     }
-    .settings-layout {
+    .workspace-main {
       flex-direction: column;
     }
-    .settings-sidebar {
-      width: 100%;
-      padding: 1rem 1.25rem;
-      border-right: 0;
-      border-bottom: 1px solid var(--border);
+    .workspace-sidebar {
+      display: none;
     }
-    .settings-navigation {
-      flex-direction: row;
-      overflow-x: auto;
-      overscroll-behavior-x: contain;
-      margin-top: 0.75rem;
-    }
-    .settings-navigation a {
+    .workspace-mobile-navigation {
+      display: flex;
       flex-shrink: 0;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--background);
     }
     .settings-content,
     .workspace-page:not(.workspace-page-settings) {

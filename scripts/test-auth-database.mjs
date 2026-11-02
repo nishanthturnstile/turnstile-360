@@ -78,6 +78,7 @@ try {
     ...process.env,
     NODE_ENV: 'test',
     AUTH_PROFILE: 'test',
+    ONBOARDING_ARCHIVE_CONTAINER: name,
     PROVISION_DATABASE_URL: `postgresql://postgres:${password}@127.0.0.1:${port}/auth_fixture`,
     INSTALLATION_TENANT_ID: randomUUID(),
     INSTALLATION_CUSTOMER_KEY: 'auth-fixture',
@@ -154,6 +155,7 @@ try {
         [
           'scripts/test-auth-browser.mjs',
           ...(process.argv.includes('--structured-onboarding') ? ['--structured-onboarding'] : []),
+          ...(process.argv.includes('--structure-editor') ? ['--structure-editor'] : []),
         ],
         env,
       ),

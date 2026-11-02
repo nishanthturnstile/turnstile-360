@@ -50,6 +50,34 @@
       "when": 1793544698732,
       "tag": "0006_access_assignment_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793624349207,
+      "tag": "0007_setup_requirement_v2",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793624385316,
+      "tag": "0008_setup_v2_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793626483123,
+      "tag": "0009_unit_move_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793626485602,
+      "tag": "0010_unit_move_guards",
+      "breakpoints": true
     }
   ]
 }

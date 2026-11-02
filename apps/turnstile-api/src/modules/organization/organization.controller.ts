@@ -43,6 +43,10 @@ export class OrganizationController {
   rename(@Req() request: FastifyRequest, @Param('id') id: string, @Body() body: unknown) {
     return this.organization.renameUnit(configurationActor(request), id, body);
   }
+  @Patch('units/:id/parent')
+  move(@Req() request: FastifyRequest, @Param('id') id: string, @Body() body: unknown) {
+    return this.organization.moveUnit(configurationActor(request), id, body);
+  }
   @Delete('units/:id')
   remove(@Req() request: FastifyRequest, @Param('id') id: string, @Body() body: unknown) {
     return this.organization.deleteUnit(configurationActor(request), id, body);

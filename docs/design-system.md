@@ -42,8 +42,9 @@ never communicate state through color alone.
 
 Errors and destructive actions use the destructive variants. Ordinary confirmations
 use a neutral `Alert` with `role="status"`; do not treat the brand green as a universal
-success state. Chart and sidebar tokens are retained from the preset for future use;
-they do not imply implemented chart or navigation features. Red chart colors are a
+success state. Chart and unused sidebar tokens are retained from the preset. Delivered
+workspace navigation uses the shared background/foreground and border roles; chart tokens
+do not imply implemented chart features. Red chart colors are a
 data palette, independent of error meaning. Additional status roles require a shared
 token/variant decision, light/dark review and matching examples.
 
@@ -126,10 +127,50 @@ examples use a different API.
 Workspace layout and scroll ownership follow the
 [architecture](../architecture.md#web-navigation-and-scroll-ownership). Use `AppLink`
 for ordinary text navigation and `ButtonLink` for button appearance; reserve
-`window.location` for full auth/identity navigation. Place page content in `ScrollRegion`
-and keep persistent navigation outside its scrolling area. Settings owns its nested
-sidebar/content layout; avoid adding a document scrollbar or keying the whole shell
+`window.location` for full auth/identity navigation. Setup uses the shared `SetupProgress` composition above its independently scrolling form;
+its current-step state also appears in the fixture-only gallery. Keep neutral entry and
+incomplete setup/waiting outside completed workspace navigation. Place page content in `ScrollRegion`
+and keep persistent navigation outside its scrolling area. Settings owns its compact section row and nested
+content pane; avoid adding a document scrollbar or keying the whole shell
 by URL. The gallery's bounded navigation example demonstrates independent scrolling.
+
+Completed workspaces compose `WorkspaceNavigation` with real `ButtonLink` destinations.
+Use its transient collapse control, named icon links and generated Tooltip. At narrow
+widths the generated Sheet supplies focus trapping, dismissal and a visible title.
+Close on accepted router navigation so a cancelled dirty-form warning preserves the menu
+and draft. Keep collapse state in memory. Settings sections remain a horizontal link row
+at every width, outside their content scroll pane. The gallery uses this same navigation
+with inert anchor destinations; it reads no account or configuration data.
+
+Use the generated Empty composition for honest dashboard availability, with actions only
+for delivered destinations. The optional first-unit suggestion belongs only to managers
+of completed v1 organizations without a non-root unit; it uses canonical configuration,
+never a second onboarding model or browser storage.
+
+## Structure editing
+
+The shared `StructureTree` presentation serves setup and Settings through the owning
+`StructureEditor` controller. Use contextual Add below to infer the parent and allowed
+type. Keep explicit inline rename Save/Cancel and named unused-leaf removal. The root’s
+name always comes from Organization; show full paths when names repeat.
+
+Connected cards and compact outline use the same canonical hierarchy. Keep unit row keys
+stable across parent changes, preserve selected ancestor paths, and retain the native
+bounded scroll pane. Search shows matching units plus ancestors; disable drag while
+filtered. Selected-node details remain contextual rather than a second navigation sidebar.
+
+Moves always use one old/new-path preview and Confirm move, from either Move to… or a
+pointer/touch handle. Restrict touch-action only on that handle so the rest of the pane
+scrolls normally. Highlight valid targets without moving target geometry. Escape,
+pointer cancellation or dropping outside a valid target cancels without a write. Keep
+Move to… complete for keyboard and click/tap users. Never replace saved cards before a
+server confirmation or announce success before it. A conflict/uncertain response retains
+the destination and requires explicit readback before another confirmation.
+
+The gallery's structure example switches between empty, populated, loading, selected,
+invalid-move, conflict and narrow states. It uses the production presentation with inert
+fixture commands; it performs no account/API requests. Do not add persistent coordinates,
+sibling sorting, an additional palette or a diagram dependency for this composition.
 
 ## Designer and developer handoff
 
@@ -174,7 +215,9 @@ intended scope before switching presets; do not rerun it as routine maintenance.
 Current local adaptations are explicit label content/association and stable error keys
 for Biome, narrowly explained accessibility lint suppressions for upstream composite
 groups, explicit button/badge transition properties, button press feedback, and
-reduced-motion behavior. Biome enables Tailwind directives for web CSS only.
+reduced-motion behavior. Sheet/Tooltip/Empty are generated through the same pinned CLI;
+Sheet uses the semantic foreground overlay token and all three use the shared `cn` helper.
+Existing Button customizations are preserved. Biome enables Tailwind directives for web CSS only.
 Dependency-boundary validation resolves the same `@/` alias as TypeScript and Vite
 through the root `tsconfig.boundaries.json` (its resolver plugin uses repository-relative paths).
 

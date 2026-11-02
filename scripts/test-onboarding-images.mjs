@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const [apiImage, webImage, ...extra] = process.argv.slice(2);
@@ -23,6 +24,15 @@ async function ready(check) {
   check();
 }
 const containers = [];
+const journal = JSON.parse(
+  readFileSync('apps/turnstile-api/database/migrations/meta/_journal.json', 'utf8'),
+);
+const migrations = journal.entries.map(({ tag }) => ({
+  tag,
+  sha256: createHash('sha256')
+    .update(readFileSync(`apps/turnstile-api/database/migrations/${tag}.sql`))
+    .digest('hex'),
+}));
 try {
   for (const [kind, image] of [
     ['api', apiImage],
@@ -56,7 +66,9 @@ try {
     if (kind === 'api') {
       const probe = `
         import assert from 'node:assert/strict';
-        import { access, readdir } from 'node:fs/promises';
+        import { access, readFile } from 'node:fs/promises';
+        import { createHash } from 'node:crypto';
+        import { SETUP_REQUIREMENT_VERSION, setupSchema } from '@thaarei/turnstile-contracts';
         const get = async (path) => fetch('http://127.0.0.1:3002'+path, {signal: AbortSignal.timeout(2000)});
         assert.deepEqual(await (await get('/health/live')).json(), {status:'ok'});
         assert.deepEqual(await (await get('/api')).json(), {name:'Turnstile 360 API'});
@@ -70,12 +82,18 @@ try {
           'dist/modules/auth/set-user-access.js', 'dist/modules/organization/configuration-operator.js',
           'database/migrations/meta/_journal.json',
         ]) await access(file);
-        for (const prefix of ['0004_', '0005_', '0006_'])
-          assert.ok((await readdir('database/migrations')).some(file => file.startsWith(prefix) && file.endsWith('.sql')));
+        assert.deepEqual(JSON.parse(await readFile('database/migrations/meta/_journal.json', 'utf8')), ${JSON.stringify(journal)});
+        for (const {tag, sha256} of ${JSON.stringify(migrations)})
+          assert.equal(createHash('sha256').update(await readFile('database/migrations/'+tag+'.sql')).digest('hex'), sha256);
+        assert.equal(SETUP_REQUIREMENT_VERSION, 2);
+        const completed = {state:'completed',revision:1,nextStep:null,completion:{completedAt:'2026-11-02T00:00:00Z',completedBy:'image-fixture',requirementVersion:1},requirementVersion:1,requirements:['organization_name','time_zone','organization_root','configuration_manager'].map(id=>({id,satisfied:true}))};
+        assert.equal(setupSchema.parse(completed).requirementVersion,1);
+        const fresh = {...completed, requirementVersion:2,completion:{...completed.completion,requirementVersion:2},requirements:[...completed.requirements.slice(0,3),{id:'first_unit',satisfied:true},completed.requirements[3]]};
+        assert.equal(setupSchema.parse(fresh).requirementVersion,2);
       `;
       await ready(() => docker(['exec', name, 'node', '--input-type=module', '-e', probe]));
       console.log(
-        'API image passed: non-root/read-only runtime, liveness, fail-closed unconfigured access and packaged onboarding migrations/private commands.',
+        'API image passed: non-root/read-only runtime, liveness, fail-closed access, compatible v1/v2 contracts and exact candidate migration journal/SQL including first-unit and move guards/private commands.',
       );
     } else {
       await ready(() =>
@@ -99,6 +117,7 @@ try {
       const entry = docker(['exec', name, 'wget', '-qO-', 'http://127.0.0.1:8080/']);
       assert.match(entry, /<div id="root"><\/div>/);
       assert.match(entry, /\/assets\//);
+      docker(['exec', name, 'test', '-f', '/usr/share/nginx/html/third-party-notices.txt']);
       for (const path of paths)
         assert.equal(docker(['exec', name, 'wget', '-qO-', `http://127.0.0.1:8080${path}`]), entry);
       const headers = docker(

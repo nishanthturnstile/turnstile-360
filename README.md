@@ -80,9 +80,9 @@ injection, then starts a disposable PostgreSQL container for real authority/pers
 Docker Engine is required for `test:integration` and `test:database`. `test:smoke` starts the built API entry points
 and checks their HTTP responses. `check:fix` applies Biome fixes. `pnpm test:browser:auth` runs three focused real-API/Mailpit
 journeys with production-profile HTTPS/STARTTLS; install the pinned Playwright Chromium
-first with `pnpm exec playwright install chromium`. The same harness also verifies root-only
+first with `pnpm exec playwright install chromium`. The same harness also verifies required first-unit
 onboarding and Settings; `pnpm test:browser:onboarding:structured` verifies a separate fresh
-installation with retained sites/departments. `pnpm test:images:onboarding <api-tag> <web-tag>`
+installation with a required Department, India confirmation and retained nested units. `pnpm test:browser:structure` checks the shared editor and confirmed keyboard/pointer/touch moves. `pnpm test:images:onboarding <api-tag> <web-tag>`
 checks built production packaging/non-root runtime. See the runbook for Nginx image mode.
 
 Builds cover seven projects: four application projects and three shared packages.
@@ -101,7 +101,7 @@ define application, contract/client, tooling, and deployment ownership.
 ## Documentation
 
 - [Web design system](docs/design-system.md): shared component gallery, semantic tokens and designer/developer maintenance workflow.
-- [Onboarding specification](docs/onboarding_specification.md): accepted ONB-R01–12 scope and acceptance; the linked implementation plan sequences delivery. ONB-I03–04 supply canonical audited configuration, protected API handlers, private access/setup operations and backend readiness enforcement; ONB-I05–06 supply resumable onboarding/waiting and canonical Settings. ONB-I07 adds complete-chain verification; ONB-I08 supplies [upgrade/recovery procedures](docs/runbooks/onboarding-release.md) and selected local-installation verification. Production target acceptance remains deployment-specific.
+- [Onboarding specification](docs/onboarding_specification.md): accepted ONB-R01–13 scope and acceptance. ONB-I01–08 deliver v1 setup/Settings, audited configuration, readiness and [upgrade/recovery procedures](docs/runbooks/onboarding-release.md). The [redesign plan](docs/onboarding_redesign_implementation_plan.md) sequences adopted v2 first-unit setup, accessible moves and new layouts; RD02 supplies compatible contracts, RD03 adds v2 persistence/readiness with completed-v1 preservation, and RD04 implements guarded audited moves; RD05 adds dedicated resumable setup/waiting and required first-unit forms; RD06 adds the shared visual structure editor and confirmed keyboard/pointer/touch moves; RD07 adds the completed responsive sidebar, dashboard actions and compact Settings navigation. RD08 adds exact image and archive-upgrade verification and completes the selected local release while preserving completed v1. Actual delivery and verification remain in IN_PROGRESS.md; production acceptance is deployment-specific.
 - [Architecture](architecture.md): single technical reference for DMS and Turnstile components, data/work flows, stack, security, configured defaults, and deployment/recovery design.
 - [Authentication implementation plan](docs/authentication_implementation_plan.md): original audit, official-source research, ordered tasks and acceptance tests. Email/password is the confirmed first login method; AUTH-01–07 implement the authority, BFF, machine enrollment/client, login/recovery UI and local operational checks; actual customer/Dokploy verification remains pending.
 - [Project progress](IN_PROGRESS.md): shared agent handoff, completed milestones, current work, verification, and pending items. Read and update this when working on the repository.

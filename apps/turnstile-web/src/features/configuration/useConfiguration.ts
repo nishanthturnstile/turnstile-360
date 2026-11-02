@@ -21,6 +21,7 @@ export function useConfiguration(reloadKey?: string) {
           setSnapshot((current) =>
             current && current.revision > value.revision ? current : value,
           );
+          setFailure(undefined);
           setLoading(false);
           setLoadedKey(reloadKey);
         }
@@ -39,7 +40,8 @@ export function useConfiguration(reloadKey?: string) {
   }, [reloadKey]);
   async function reload() {
     const value = await loadConfiguration();
-    if (alive.current) setSnapshot(value);
+    if (alive.current)
+      setSnapshot((current) => (current && current.revision > value.revision ? current : value));
     return value;
   }
   async function refresh() {

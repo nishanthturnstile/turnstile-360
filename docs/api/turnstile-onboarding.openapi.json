@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Turnstile organization configuration and onboarding",
-    "version": "1.0.0",
-    "description": "ONB-I03 implements canonical configuration persistence, audited domain operations and these authenticated HTTP handlers. ONB-I04 implements private manager grants and backend readiness enforcement; ONB-I05–06 implement onboarding/waiting and Settings UI; ONB-I07 adds complete-chain verification; ONB-I08 supplies upgrade/recovery procedures and selected local-installation verification. Production target acceptance remains deployment-specific. Same-origin BFF; credentials stay server-side. Generated from shared Zod contracts. JSON Schema captures structural constraints; descriptions record normalization and cross-field invariants enforced by executable schemas/backend services. See architecture.md for limits, authorization and upgrade sequencing."
+    "version": "2.0.0",
+    "description": "ONB-RD02 supplies executable v1/v2 setup contracts and exact Kolkata/Calcutta/UTC support. ONB-RD03 implements v2 initialization, incomplete-only v1 upgrade, canonical readiness, first-unit activation and completed-v2 last-unit deletion protection. Completed v1 preserves version/revision/completion and optional-unit policy. ONB-RD04 implements the guarded, revision-checked parent-change handler and atomic move audit. ONB-RD05 implements dedicated resumable Organization/First unit/Review and ordinary waiting layouts. ONB-RD06 consumes parent changes in a shared visual editor with confirmed Move to/pointer/touch paths and explicit readback. ONB-RD07 supplies persistent responsive completed navigation and canonical ongoing Settings. ONB-RD08 verifies exact packaged migrations/contracts, version-aware archive preservation and the selected local release. Ship compatible migrations/API/web together after full verification; source implementation is not target rollout and old strict clients cannot be assumed to parse v2. Production acceptance is deployment-specific. Same-origin BFF; credentials stay server-side. Generated from shared Zod contracts; JSON Schema records structural rules and descriptions record executable normalization/cross-field rules. See architecture.md for limits, authorization and upgrade sequencing."
   },
   "servers": [{ "url": "/" }],
   "x-configuration-limits": {
@@ -22,6 +22,12 @@
     "auditRetentionDays": 90,
     "maintenanceRows": 1000
   },
+  "x-setup-policy": {
+    "contractVersions": [1, 2],
+    "targetInitializationVersion": 2,
+    "runtimeInitializationVersion": 2,
+    "description": "RD03 initializes v2 after the owning migrations and upgrades only incomplete v1 without changing business revision, saved data or zone. Completed v1 preserves version/revision/completion and optional-unit policy; completed v2 protects its final qualifying direct child. Time-zone-list provenance is independent of setup requirement version."
+  },
   "x-workspace-business-gate": {
     "status": 409,
     "schema": { "$ref": "#/components/schemas/SetupRequired" },
@@ -33,7 +39,7 @@
         "operationId": "getWorkspaceStatus",
         "summary": "Read minimal workspace readiness",
         "description": "Requires current turnstile:access; returns the same minimal projection to managers and ordinary users. Readiness-exempt only; authentication, local access, route permissions and mutation CSRF remain enforced. No query parameters or caller-supplied tenant/application/actor selectors.",
-        "x-implementation-status": "implemented in ONB-I03–04; authenticated configuration handlers are explicitly readiness-exempt",
+        "x-implementation-status": "implemented in ONB-I03–04 with ONB-RD03 version-aware projections, initialization/upgrade and first-unit enforcement; readiness-exempt",
         "security": [{ "ProductCookie": [] }, { "LocalProductCookie": [] }],
         "responses": {
           "200": {
@@ -112,7 +118,7 @@
         "operationId": "getWorkspaceSetup",
         "summary": "Read manager-only requirements and completion",
         "description": "Requires current turnstile:access and turnstile:configuration:manage; never grants account, access, DMS operator or approval authority. Readiness-exempt only; authentication, local access, route permissions and mutation CSRF remain enforced. No query parameters or caller-supplied tenant/application/actor selectors.",
-        "x-implementation-status": "implemented in ONB-I03–04; authenticated configuration handlers are explicitly readiness-exempt",
+        "x-implementation-status": "implemented in ONB-I03–04 with ONB-RD03 version-aware projections, initialization/upgrade and first-unit enforcement; readiness-exempt",
         "security": [{ "ProductCookie": [] }, { "LocalProductCookie": [] }],
         "responses": {
           "200": {
@@ -124,21 +130,64 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Setup" },
-                "example": {
-                  "state": "completed",
-                  "requirementVersion": 1,
-                  "revision": 2,
-                  "requirements": [
-                    { "id": "organization_name", "satisfied": true },
-                    { "id": "time_zone", "satisfied": true },
-                    { "id": "organization_root", "satisfied": true },
-                    { "id": "configuration_manager", "satisfied": true }
-                  ],
-                  "nextStep": null,
-                  "completion": {
-                    "completedAt": "2026-11-01T12:00:00Z",
-                    "completedBy": "example-user",
-                    "requirementVersion": 1
+                "examples": {
+                  "completedV1": {
+                    "summary": "Completed v1 retains four requirements",
+                    "value": {
+                      "state": "completed",
+                      "requirementVersion": 1,
+                      "revision": 2,
+                      "requirements": [
+                        { "id": "organization_name", "satisfied": true },
+                        { "id": "time_zone", "satisfied": true },
+                        { "id": "organization_root", "satisfied": true },
+                        { "id": "configuration_manager", "satisfied": true }
+                      ],
+                      "nextStep": null,
+                      "completion": {
+                        "completedAt": "2026-11-01T12:00:00Z",
+                        "completedBy": "example-user",
+                        "requirementVersion": 1
+                      }
+                    }
+                  },
+                  "firstUnitRequiredV2": {
+                    "summary": "V2 resumes Structure until first unit is saved",
+                    "value": {
+                      "state": "in_progress",
+                      "requirementVersion": 2,
+                      "revision": 1,
+                      "requirements": [
+                        { "id": "organization_name", "satisfied": true },
+                        { "id": "time_zone", "satisfied": true },
+                        { "id": "organization_root", "satisfied": true },
+                        { "id": "first_unit", "satisfied": false },
+                        { "id": "configuration_manager", "satisfied": true }
+                      ],
+                      "nextStep": "structure",
+                      "completion": null
+                    }
+                  },
+                  "completedV2": {
+                    "summary": "V2 completed with five satisfied requirements",
+                    "value": {
+                      "state": "completed",
+                      "requirementVersion": 2,
+                      "revision": 3,
+                      "requirements": [
+                        { "id": "organization_name", "satisfied": true },
+                        { "id": "time_zone", "satisfied": true },
+                        { "id": "organization_root", "satisfied": true },
+                        { "id": "first_unit", "satisfied": true },
+                        { "id": "configuration_manager", "satisfied": true }
+                      ],
+                      "nextStep": null,
+                      "completion": {
+                        "completedAt": "2026-11-01T12:00:00Z",
+                        "completedBy": "example-user",
+                        "requirementVersion": 2
+                      }
+                    }
                   }
                 }
               }
@@ -206,8 +255,8 @@
       "post": {
         "operationId": "completeWorkspaceSetup",
         "summary": "Atomically activate or read back the completed workspace",
-        "description": "Requires current turnstile:access and turnstile:configuration:manage; never grants account, access, DMS operator or approval authority. Readiness-exempt only; authentication, local access, route permissions and mutation CSRF remain enforced. No query parameters or caller-supplied tenant/application/actor selectors. Validate persisted name, confirmed zone, root and current manager at one revision. Concurrent or lost-response repeats return the same completion actor/time/version after current authorization; a syntactically valid stale expectedRevision is ignored only after completion. One lifecycle audit outcome. No DMS HTTP call or automatic activation.",
-        "x-implementation-status": "implemented in ONB-I03–04; authenticated configuration handlers are explicitly readiness-exempt",
+        "description": "Requires current turnstile:access and turnstile:configuration:manage; never grants account, access, DMS operator or approval authority. Readiness-exempt only; authentication, local access, route permissions and mutation CSRF remain enforced. No query parameters or caller-supplied tenant/application/actor selectors. Validate persisted name, confirmed zone, root and current manager at one revision; v2 additionally requires a saved direct-child Site or Department, otherwise 400 CONFIGURATION_INVALID with body/required. Completed v1 remains valid without first_unit. Concurrent or lost-response repeats return the same completion actor/time/version after current authorization; a syntactically valid stale expectedRevision is ignored only after completion. One lifecycle audit outcome. No DMS HTTP call or automatic activation.",
+        "x-implementation-status": "implemented in ONB-I03–04 with ONB-RD03 version-aware projections, initialization/upgrade and first-unit enforcement; readiness-exempt",
         "security": [
           { "ProductCookie": [], "CsrfToken": [] },
           { "LocalProductCookie": [], "CsrfToken": [] }
@@ -241,37 +290,121 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ConfigurationSnapshot" },
-                "example": {
-                  "revision": 2,
-                  "organization": {
-                    "name": "Example Company",
-                    "timeZone": "UTC",
-                    "rootId": "11111111-1111-4111-8111-111111111111"
-                  },
-                  "units": [
-                    {
-                      "id": "11111111-1111-4111-8111-111111111111",
-                      "type": "organization",
-                      "parentId": null,
-                      "name": "Example Company",
-                      "ancestorIds": []
+                "examples": {
+                  "completedV1": {
+                    "summary": "Preserved legacy root-only completion",
+                    "value": {
+                      "revision": 2,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "UTC",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        }
+                      ],
+                      "setup": {
+                        "state": "completed",
+                        "requirementVersion": 1,
+                        "revision": 2,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": null,
+                        "completion": {
+                          "completedAt": "2026-11-01T12:00:00Z",
+                          "completedBy": "example-user",
+                          "requirementVersion": 1
+                        }
+                      }
                     }
-                  ],
-                  "setup": {
-                    "state": "completed",
-                    "requirementVersion": 1,
-                    "revision": 2,
-                    "requirements": [
-                      { "id": "organization_name", "satisfied": true },
-                      { "id": "time_zone", "satisfied": true },
-                      { "id": "organization_root", "satisfied": true },
-                      { "id": "configuration_manager", "satisfied": true }
-                    ],
-                    "nextStep": null,
-                    "completion": {
-                      "completedAt": "2026-11-01T12:00:00Z",
-                      "completedBy": "example-user",
-                      "requirementVersion": 1
+                  },
+                  "firstUnitRequiredV2": {
+                    "summary": "V2 profile saved; resume First unit",
+                    "value": {
+                      "revision": 1,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "Asia/Kolkata",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        }
+                      ],
+                      "setup": {
+                        "state": "in_progress",
+                        "requirementVersion": 2,
+                        "revision": 1,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "first_unit", "satisfied": false },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": "structure",
+                        "completion": null
+                      }
+                    }
+                  },
+                  "completedV2": {
+                    "summary": "V2 completed with a direct-child Department",
+                    "value": {
+                      "revision": 3,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "Asia/Kolkata",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        },
+                        {
+                          "id": "22222222-2222-4222-8222-222222222222",
+                          "type": "department",
+                          "parentId": "11111111-1111-4111-8111-111111111111",
+                          "name": "Operations",
+                          "ancestorIds": ["11111111-1111-4111-8111-111111111111"]
+                        }
+                      ],
+                      "setup": {
+                        "state": "completed",
+                        "requirementVersion": 2,
+                        "revision": 3,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "first_unit", "satisfied": true },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": null,
+                        "completion": {
+                          "completedAt": "2026-11-01T12:00:00Z",
+                          "completedBy": "example-user",
+                          "requirementVersion": 2
+                        }
+                      }
                     }
                   }
                 }
@@ -380,7 +513,7 @@
         "operationId": "getOrganization",
         "summary": "Read the canonical profile and current revision",
         "description": "Requires current turnstile:access and turnstile:configuration:manage; never grants account, access, DMS operator or approval authority. Readiness-exempt only; authentication, local access, route permissions and mutation CSRF remain enforced. No query parameters or caller-supplied tenant/application/actor selectors.",
-        "x-implementation-status": "implemented in ONB-I03–04; authenticated configuration handlers are explicitly readiness-exempt",
+        "x-implementation-status": "implemented in ONB-I03–04 with ONB-RD03 version-aware projections, initialization/upgrade and first-unit enforcement; readiness-exempt",
         "security": [{ "ProductCookie": [] }, { "LocalProductCookie": [] }],
         "responses": {
           "200": {
@@ -464,7 +597,7 @@
         "operationId": "saveOrganization",
         "summary": "Explicitly save profile fields; omission retains current values",
         "description": "Requires current turnstile:access and turnstile:configuration:manage; never grants account, access, DMS operator or approval authority. Readiness-exempt only; authentication, local access, route permissions and mutation CSRF remain enforced. No query parameters or caller-supplied tenant/application/actor selectors.",
-        "x-implementation-status": "implemented in ONB-I03–04; authenticated configuration handlers are explicitly readiness-exempt",
+        "x-implementation-status": "implemented in ONB-I03–04 with ONB-RD03 version-aware projections, initialization/upgrade and first-unit enforcement; readiness-exempt",
         "security": [
           { "ProductCookie": [], "CsrfToken": [] },
           { "LocalProductCookie": [], "CsrfToken": [] }
@@ -498,37 +631,121 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ConfigurationSnapshot" },
-                "example": {
-                  "revision": 2,
-                  "organization": {
-                    "name": "Example Company",
-                    "timeZone": "UTC",
-                    "rootId": "11111111-1111-4111-8111-111111111111"
-                  },
-                  "units": [
-                    {
-                      "id": "11111111-1111-4111-8111-111111111111",
-                      "type": "organization",
-                      "parentId": null,
-                      "name": "Example Company",
-                      "ancestorIds": []
+                "examples": {
+                  "completedV1": {
+                    "summary": "Preserved legacy root-only completion",
+                    "value": {
+                      "revision": 2,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "UTC",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        }
+                      ],
+                      "setup": {
+                        "state": "completed",
+                        "requirementVersion": 1,
+                        "revision": 2,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": null,
+                        "completion": {
+                          "completedAt": "2026-11-01T12:00:00Z",
+                          "completedBy": "example-user",
+                          "requirementVersion": 1
+                        }
+                      }
                     }
-                  ],
-                  "setup": {
-                    "state": "completed",
-                    "requirementVersion": 1,
-                    "revision": 2,
-                    "requirements": [
-                      { "id": "organization_name", "satisfied": true },
-                      { "id": "time_zone", "satisfied": true },
-                      { "id": "organization_root", "satisfied": true },
-                      { "id": "configuration_manager", "satisfied": true }
-                    ],
-                    "nextStep": null,
-                    "completion": {
-                      "completedAt": "2026-11-01T12:00:00Z",
-                      "completedBy": "example-user",
-                      "requirementVersion": 1
+                  },
+                  "firstUnitRequiredV2": {
+                    "summary": "V2 profile saved; resume First unit",
+                    "value": {
+                      "revision": 1,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "Asia/Kolkata",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        }
+                      ],
+                      "setup": {
+                        "state": "in_progress",
+                        "requirementVersion": 2,
+                        "revision": 1,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "first_unit", "satisfied": false },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": "structure",
+                        "completion": null
+                      }
+                    }
+                  },
+                  "completedV2": {
+                    "summary": "V2 completed with a direct-child Department",
+                    "value": {
+                      "revision": 3,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "Asia/Kolkata",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        },
+                        {
+                          "id": "22222222-2222-4222-8222-222222222222",
+                          "type": "department",
+                          "parentId": "11111111-1111-4111-8111-111111111111",
+                          "name": "Operations",
+                          "ancestorIds": ["11111111-1111-4111-8111-111111111111"]
+                        }
+                      ],
+                      "setup": {
+                        "state": "completed",
+                        "requirementVersion": 2,
+                        "revision": 3,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "first_unit", "satisfied": true },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": null,
+                        "completion": {
+                          "completedAt": "2026-11-01T12:00:00Z",
+                          "completedBy": "example-user",
+                          "requirementVersion": 2
+                        }
+                      }
                     }
                   }
                 }
@@ -637,7 +854,7 @@
         "operationId": "listOrganizationUnits",
         "summary": "Read all bounded units with root-to-parent ancestry",
         "description": "Requires current turnstile:access and turnstile:configuration:manage; never grants account, access, DMS operator or approval authority. Readiness-exempt only; authentication, local access, route permissions and mutation CSRF remain enforced. No query parameters or caller-supplied tenant/application/actor selectors.",
-        "x-implementation-status": "implemented in ONB-I03–04; authenticated configuration handlers are explicitly readiness-exempt",
+        "x-implementation-status": "implemented in ONB-I03–04 with ONB-RD03 version-aware projections, initialization/upgrade and first-unit enforcement; readiness-exempt",
         "security": [{ "ProductCookie": [] }, { "LocalProductCookie": [] }],
         "responses": {
           "200": {
@@ -723,9 +940,9 @@
       },
       "post": {
         "operationId": "createOrganizationUnit",
-        "summary": "Create a supported optional unit with bounded retry identity",
+        "summary": "Create a supported unit with bounded retry identity",
         "description": "Requires current turnstile:access and turnstile:configuration:manage; never grants account, access, DMS operator or approval authority. Readiness-exempt only; authentication, local access, route permissions and mutation CSRF remain enforced. No query parameters or caller-supplied tenant/application/actor selectors.",
-        "x-implementation-status": "implemented in ONB-I03–04; authenticated configuration handlers are explicitly readiness-exempt",
+        "x-implementation-status": "implemented in ONB-I03–04 with ONB-RD03 version-aware projections, initialization/upgrade and first-unit enforcement; readiness-exempt",
         "security": [
           { "ProductCookie": [], "CsrfToken": [] },
           { "LocalProductCookie": [], "CsrfToken": [] }
@@ -930,7 +1147,7 @@
         "operationId": "renameOrganizationUnit",
         "summary": "Rename a non-root unit without changing identity, parent or type",
         "description": "Requires current turnstile:access and turnstile:configuration:manage; never grants account, access, DMS operator or approval authority. Readiness-exempt only; authentication, local access, route permissions and mutation CSRF remain enforced. No query parameters or caller-supplied tenant/application/actor selectors.",
-        "x-implementation-status": "implemented in ONB-I03–04; authenticated configuration handlers are explicitly readiness-exempt",
+        "x-implementation-status": "implemented in ONB-I03–04 with ONB-RD03 version-aware projections, initialization/upgrade and first-unit enforcement; readiness-exempt",
         "security": [
           { "ProductCookie": [], "CsrfToken": [] },
           { "LocalProductCookie": [], "CsrfToken": [] }
@@ -974,37 +1191,121 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ConfigurationSnapshot" },
-                "example": {
-                  "revision": 2,
-                  "organization": {
-                    "name": "Example Company",
-                    "timeZone": "UTC",
-                    "rootId": "11111111-1111-4111-8111-111111111111"
-                  },
-                  "units": [
-                    {
-                      "id": "11111111-1111-4111-8111-111111111111",
-                      "type": "organization",
-                      "parentId": null,
-                      "name": "Example Company",
-                      "ancestorIds": []
+                "examples": {
+                  "completedV1": {
+                    "summary": "Preserved legacy root-only completion",
+                    "value": {
+                      "revision": 2,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "UTC",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        }
+                      ],
+                      "setup": {
+                        "state": "completed",
+                        "requirementVersion": 1,
+                        "revision": 2,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": null,
+                        "completion": {
+                          "completedAt": "2026-11-01T12:00:00Z",
+                          "completedBy": "example-user",
+                          "requirementVersion": 1
+                        }
+                      }
                     }
-                  ],
-                  "setup": {
-                    "state": "completed",
-                    "requirementVersion": 1,
-                    "revision": 2,
-                    "requirements": [
-                      { "id": "organization_name", "satisfied": true },
-                      { "id": "time_zone", "satisfied": true },
-                      { "id": "organization_root", "satisfied": true },
-                      { "id": "configuration_manager", "satisfied": true }
-                    ],
-                    "nextStep": null,
-                    "completion": {
-                      "completedAt": "2026-11-01T12:00:00Z",
-                      "completedBy": "example-user",
-                      "requirementVersion": 1
+                  },
+                  "firstUnitRequiredV2": {
+                    "summary": "V2 profile saved; resume First unit",
+                    "value": {
+                      "revision": 1,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "Asia/Kolkata",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        }
+                      ],
+                      "setup": {
+                        "state": "in_progress",
+                        "requirementVersion": 2,
+                        "revision": 1,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "first_unit", "satisfied": false },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": "structure",
+                        "completion": null
+                      }
+                    }
+                  },
+                  "completedV2": {
+                    "summary": "V2 completed with a direct-child Department",
+                    "value": {
+                      "revision": 3,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "Asia/Kolkata",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        },
+                        {
+                          "id": "22222222-2222-4222-8222-222222222222",
+                          "type": "department",
+                          "parentId": "11111111-1111-4111-8111-111111111111",
+                          "name": "Operations",
+                          "ancestorIds": ["11111111-1111-4111-8111-111111111111"]
+                        }
+                      ],
+                      "setup": {
+                        "state": "completed",
+                        "requirementVersion": 2,
+                        "revision": 3,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "first_unit", "satisfied": true },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": null,
+                        "completion": {
+                          "completedAt": "2026-11-01T12:00:00Z",
+                          "completedBy": "example-user",
+                          "requirementVersion": 2
+                        }
+                      }
                     }
                   }
                 }
@@ -1123,8 +1424,8 @@
       "delete": {
         "operationId": "deleteOrganizationUnit",
         "summary": "Remove an unused non-root leaf at the expected revision",
-        "description": "Requires current turnstile:access and turnstile:configuration:manage; never grants account, access, DMS operator or approval authority. Readiness-exempt only; authentication, local access, route permissions and mutation CSRF remain enforced. No query parameters or caller-supplied tenant/application/actor selectors.",
-        "x-implementation-status": "implemented in ONB-I03–04; authenticated configuration handlers are explicitly readiness-exempt",
+        "description": "Requires current turnstile:access and turnstile:configuration:manage; never grants account, access, DMS operator or approval authority. Readiness-exempt only; authentication, local access, route permissions and mutation CSRF remain enforced. No query parameters or caller-supplied tenant/application/actor selectors. ONB-RD03: deleting the last qualifying direct-child unit before v2 completion returns setup to Structure. After v2 completion it returns 409 CONFIGURATION_CONFLICT/required_unit without a state, revision or audit change. Completed v1 retains its optional-unit policy. All versions retain leaf/reference and root-identity protection.",
+        "x-implementation-status": "implemented in ONB-I03–04 with ONB-RD03 version-aware projections, initialization/upgrade and first-unit enforcement; readiness-exempt",
         "security": [
           { "ProductCookie": [], "CsrfToken": [] },
           { "LocalProductCookie": [], "CsrfToken": [] }
@@ -1168,37 +1469,404 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ConfigurationSnapshot" },
-                "example": {
-                  "revision": 2,
-                  "organization": {
-                    "name": "Example Company",
-                    "timeZone": "UTC",
-                    "rootId": "11111111-1111-4111-8111-111111111111"
-                  },
-                  "units": [
-                    {
-                      "id": "11111111-1111-4111-8111-111111111111",
-                      "type": "organization",
-                      "parentId": null,
-                      "name": "Example Company",
-                      "ancestorIds": []
+                "examples": {
+                  "completedV1": {
+                    "summary": "Preserved legacy root-only completion",
+                    "value": {
+                      "revision": 2,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "UTC",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        }
+                      ],
+                      "setup": {
+                        "state": "completed",
+                        "requirementVersion": 1,
+                        "revision": 2,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": null,
+                        "completion": {
+                          "completedAt": "2026-11-01T12:00:00Z",
+                          "completedBy": "example-user",
+                          "requirementVersion": 1
+                        }
+                      }
                     }
-                  ],
-                  "setup": {
-                    "state": "completed",
-                    "requirementVersion": 1,
-                    "revision": 2,
-                    "requirements": [
-                      { "id": "organization_name", "satisfied": true },
-                      { "id": "time_zone", "satisfied": true },
-                      { "id": "organization_root", "satisfied": true },
-                      { "id": "configuration_manager", "satisfied": true }
-                    ],
-                    "nextStep": null,
-                    "completion": {
-                      "completedAt": "2026-11-01T12:00:00Z",
-                      "completedBy": "example-user",
-                      "requirementVersion": 1
+                  },
+                  "firstUnitRequiredV2": {
+                    "summary": "V2 profile saved; resume First unit",
+                    "value": {
+                      "revision": 1,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "Asia/Kolkata",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        }
+                      ],
+                      "setup": {
+                        "state": "in_progress",
+                        "requirementVersion": 2,
+                        "revision": 1,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "first_unit", "satisfied": false },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": "structure",
+                        "completion": null
+                      }
+                    }
+                  },
+                  "completedV2": {
+                    "summary": "V2 completed with a direct-child Department",
+                    "value": {
+                      "revision": 3,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "Asia/Kolkata",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        },
+                        {
+                          "id": "22222222-2222-4222-8222-222222222222",
+                          "type": "department",
+                          "parentId": "11111111-1111-4111-8111-111111111111",
+                          "name": "Operations",
+                          "ancestorIds": ["11111111-1111-4111-8111-111111111111"]
+                        }
+                      ],
+                      "setup": {
+                        "state": "completed",
+                        "requirementVersion": 2,
+                        "revision": 3,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "first_unit", "satisfied": true },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": null,
+                        "completion": {
+                          "completedAt": "2026-11-01T12:00:00Z",
+                          "completedBy": "example-user",
+                          "requirementVersion": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid strict JSON input; finite safe field errors without rejected values.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ConfigurationInvalid" },
+                "example": {
+                  "code": "CONFIGURATION_INVALID",
+                  "fieldErrors": [{ "field": "name", "reason": "invalid" }]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Existing identity/session error; login is required.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthError" } }
+            }
+          },
+          "403": {
+            "description": "Existing local access, route permission or CSRF denial. No setup details are disclosed.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthError" } }
+            }
+          },
+          "404": {
+            "description": "Addressed unit is not available in this installation.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ConfigurationNotFound" },
+                "example": { "code": "CONFIGURATION_NOT_FOUND" }
+              }
+            }
+          },
+          "409": {
+            "description": "Current revision conflict or other safe configuration conflict. Refetch/reconcile rather than overwriting.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ConfigurationConflict" },
+                "example": { "code": "CONFIGURATION_CONFLICT", "reason": "revision", "revision": 2 }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds 4096 UTF-8 bytes.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ConfigurationTooLarge" },
+                "example": { "code": "CONFIGURATION_TOO_LARGE" }
+              }
+            }
+          },
+          "415": {
+            "description": "Mutation requires application/json.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ConfigurationMediaType" },
+                "example": { "code": "CONFIGURATION_MEDIA_TYPE_UNSUPPORTED" }
+              }
+            }
+          },
+          "503": {
+            "description": "Configuration unavailable without revoking a valid session. Live identity verification can independently fail with AUTH_UNAVAILABLE or REFRESH_IN_PROGRESS.",
+            "headers": {
+              "Cache-Control": {
+                "schema": { "type": "string", "enum": ["no-store", "private, no-store"] }
+              },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/ConfigurationUnavailable" },
+                    { "$ref": "#/components/schemas/AuthError" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organization/units/{id}/parent": {
+      "patch": {
+        "operationId": "moveOrganizationUnit",
+        "summary": "Move a non-root subtree to a saved parent at the current revision",
+        "description": "Requires current turnstile:access and turnstile:configuration:manage; never grants account, access, DMS operator or approval authority. Readiness-exempt only; authentication, local access, route permissions and mutation CSRF remain enforced. No query parameters or caller-supplied tenant/application/actor selectors. Lock canonical configuration and recheck live permissions/revision before source/destination validation. Reject missing units (404), root moves (id/unsupported), self/descendant/type relationships (parentId/invalid), subtree depth (parentId/limit_reached), duplicate siblings, implemented reference refusals (409 unit_in_use) and last-required-unit removal (409 required_unit). Existing root/parent references, create receipts, IDs/types, descendant links, completion and grants survive valid moves. Effective moves commit one revision and unit_moved audit atomically; same-parent/current-revision requests are no-ops. Canonical readback after lost responses precedes any explicit retry; no automatic write replay. The sole direct child cannot move below another node without creating a cycle under the current rooted model; the explicit v2 required-unit guard is retained as a backstop.",
+        "x-implementation-status": "implemented in ONB-RD04 with live manage/CSRF checks, guarded parent-column privileges, canonical subtree validation and atomic move audit/revision; readiness-exempt",
+        "security": [
+          { "ProductCookie": [], "CsrfToken": [] },
+          { "LocalProductCookie": [], "CsrfToken": [] }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Origin",
+            "required": true,
+            "schema": { "type": "string", "format": "uri" },
+            "description": "Must exactly equal the configured application origin. Same-origin Fetch Metadata is required when supplied."
+          }
+        ],
+        "x-max-body-bytes": 4096,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UnitMove" },
+              "example": {
+                "expectedRevision": 4,
+                "parentId": "11111111-1111-4111-8111-111111111111"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authoritative current state. Mutations return the committed configuration revision.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ConfigurationSnapshot" },
+                "examples": {
+                  "completedV1": {
+                    "summary": "Preserved legacy root-only completion",
+                    "value": {
+                      "revision": 2,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "UTC",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        }
+                      ],
+                      "setup": {
+                        "state": "completed",
+                        "requirementVersion": 1,
+                        "revision": 2,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": null,
+                        "completion": {
+                          "completedAt": "2026-11-01T12:00:00Z",
+                          "completedBy": "example-user",
+                          "requirementVersion": 1
+                        }
+                      }
+                    }
+                  },
+                  "firstUnitRequiredV2": {
+                    "summary": "V2 profile saved; resume First unit",
+                    "value": {
+                      "revision": 1,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "Asia/Kolkata",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        }
+                      ],
+                      "setup": {
+                        "state": "in_progress",
+                        "requirementVersion": 2,
+                        "revision": 1,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "first_unit", "satisfied": false },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": "structure",
+                        "completion": null
+                      }
+                    }
+                  },
+                  "completedV2": {
+                    "summary": "V2 completed with a direct-child Department",
+                    "value": {
+                      "revision": 3,
+                      "organization": {
+                        "name": "Example Company",
+                        "timeZone": "Asia/Kolkata",
+                        "rootId": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "units": [
+                        {
+                          "id": "11111111-1111-4111-8111-111111111111",
+                          "type": "organization",
+                          "parentId": null,
+                          "name": "Example Company",
+                          "ancestorIds": []
+                        },
+                        {
+                          "id": "22222222-2222-4222-8222-222222222222",
+                          "type": "department",
+                          "parentId": "11111111-1111-4111-8111-111111111111",
+                          "name": "Operations",
+                          "ancestorIds": ["11111111-1111-4111-8111-111111111111"]
+                        }
+                      ],
+                      "setup": {
+                        "state": "completed",
+                        "requirementVersion": 2,
+                        "revision": 3,
+                        "requirements": [
+                          { "id": "organization_name", "satisfied": true },
+                          { "id": "time_zone", "satisfied": true },
+                          { "id": "organization_root", "satisfied": true },
+                          { "id": "first_unit", "satisfied": true },
+                          { "id": "configuration_manager", "satisfied": true }
+                        ],
+                        "nextStep": null,
+                        "completion": {
+                          "completedAt": "2026-11-01T12:00:00Z",
+                          "completedBy": "example-user",
+                          "requirementVersion": 2
+                        }
+                      }
                     }
                   }
                 }
@@ -1573,6 +2241,7 @@
           "Asia/Karachi",
           "Asia/Katmandu",
           "Asia/Khandyga",
+          "Asia/Kolkata",
           "Asia/Krasnoyarsk",
           "Asia/Kuala_Lumpur",
           "Asia/Kuching",
@@ -1747,7 +2416,7 @@
           "Pacific/Wallis",
           "UTC"
         ],
-        "description": "Exact shared version-1 time-zone allowlist; an explicitly submitted value confirms the zone. No browser/OS default or offset is accepted."
+        "description": "Exact shared time-zone allowlist, including Asia/Kolkata, retained Asia/Calcutta and UTC. List provenance is independent of setup requirement version. An explicitly submitted value confirms the zone; no browser/OS default or numeric offset is accepted."
       },
       "OrganizationPatch": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1799,6 +2468,21 @@
         "required": ["expectedRevision", "name"],
         "additionalProperties": false
       },
+      "UnitMove": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "expectedRevision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+          "parentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": ["expectedRevision", "parentId"],
+        "additionalProperties": false,
+        "description": "Move a non-root unit to a saved parent. Backend validation checks current authorization/revision, relationships, cycles, full subtree depth, sibling names, references and required-unit preservation. Same-parent/current-revision is a no-op. Reconcile an uncertain response through canonical readback before explicit retry; never automatically replay."
+      },
       "RevisionMutation": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -1847,211 +2531,448 @@
       },
       "Setup": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "oneOf": [
+        "anyOf": [
           {
-            "type": "object",
-            "properties": {
-              "requirementVersion": { "type": "number", "const": 1 },
-              "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
-              "requirements": {
-                "type": "array",
-                "prefixItems": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string", "const": "organization_name" },
-                      "satisfied": { "type": "boolean" }
-                    },
-                    "required": ["id", "satisfied"],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string", "const": "time_zone" },
-                      "satisfied": { "type": "boolean" }
-                    },
-                    "required": ["id", "satisfied"],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string", "const": "organization_root" },
-                      "satisfied": { "type": "boolean" }
-                    },
-                    "required": ["id", "satisfied"],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string", "const": "configuration_manager" },
-                      "satisfied": { "type": "boolean" }
-                    },
-                    "required": ["id", "satisfied"],
-                    "additionalProperties": false
-                  }
-                ],
-                "items": false,
-                "minItems": 4,
-                "maxItems": 4
-              },
-              "state": { "type": "string", "const": "not_started" },
-              "nextStep": { "type": "string", "const": "organization" },
-              "completion": { "type": "null" }
-            },
-            "required": [
-              "requirementVersion",
-              "revision",
-              "requirements",
-              "state",
-              "nextStep",
-              "completion"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "requirementVersion": { "type": "number", "const": 1 },
-              "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
-              "requirements": {
-                "type": "array",
-                "prefixItems": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string", "const": "organization_name" },
-                      "satisfied": { "type": "boolean" }
-                    },
-                    "required": ["id", "satisfied"],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string", "const": "time_zone" },
-                      "satisfied": { "type": "boolean" }
-                    },
-                    "required": ["id", "satisfied"],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string", "const": "organization_root" },
-                      "satisfied": { "type": "boolean" }
-                    },
-                    "required": ["id", "satisfied"],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string", "const": "configuration_manager" },
-                      "satisfied": { "type": "boolean" }
-                    },
-                    "required": ["id", "satisfied"],
-                    "additionalProperties": false
-                  }
-                ],
-                "items": false,
-                "minItems": 4,
-                "maxItems": 4
-              },
-              "state": { "type": "string", "const": "in_progress" },
-              "nextStep": { "type": "string", "enum": ["organization", "review"] },
-              "completion": { "type": "null" }
-            },
-            "required": [
-              "requirementVersion",
-              "revision",
-              "requirements",
-              "state",
-              "nextStep",
-              "completion"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "requirementVersion": { "type": "number", "const": 1 },
-              "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
-              "requirements": {
-                "type": "array",
-                "prefixItems": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string", "const": "organization_name" },
-                      "satisfied": { "type": "boolean" }
-                    },
-                    "required": ["id", "satisfied"],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string", "const": "time_zone" },
-                      "satisfied": { "type": "boolean" }
-                    },
-                    "required": ["id", "satisfied"],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string", "const": "organization_root" },
-                      "satisfied": { "type": "boolean" }
-                    },
-                    "required": ["id", "satisfied"],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string", "const": "configuration_manager" },
-                      "satisfied": { "type": "boolean" }
-                    },
-                    "required": ["id", "satisfied"],
-                    "additionalProperties": false
-                  }
-                ],
-                "items": false,
-                "minItems": 4,
-                "maxItems": 4
-              },
-              "state": { "type": "string", "const": "completed" },
-              "nextStep": { "type": "null" },
-              "completion": {
+            "oneOf": [
+              {
                 "type": "object",
                 "properties": {
-                  "completedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                  "requirementVersion": { "type": "number", "const": 1 },
+                  "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                  "requirements": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "organization_name" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "time_zone" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "organization_root" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "configuration_manager" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 4,
+                    "maxItems": 4
                   },
-                  "completedBy": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,200}$" },
-                  "requirementVersion": { "type": "number", "const": 1 }
+                  "state": { "type": "string", "const": "not_started" },
+                  "nextStep": { "type": "string", "const": "organization" },
+                  "completion": { "type": "null" }
                 },
-                "required": ["completedAt", "completedBy", "requirementVersion"],
+                "required": [
+                  "requirementVersion",
+                  "revision",
+                  "requirements",
+                  "state",
+                  "nextStep",
+                  "completion"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "requirementVersion": { "type": "number", "const": 1 },
+                  "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                  "requirements": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "organization_name" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "time_zone" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "organization_root" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "configuration_manager" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  "state": { "type": "string", "const": "in_progress" },
+                  "nextStep": { "type": "string", "enum": ["organization", "review"] },
+                  "completion": { "type": "null" }
+                },
+                "required": [
+                  "requirementVersion",
+                  "revision",
+                  "requirements",
+                  "state",
+                  "nextStep",
+                  "completion"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "requirementVersion": { "type": "number", "const": 1 },
+                  "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                  "requirements": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "organization_name" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "time_zone" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "organization_root" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "configuration_manager" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  "state": { "type": "string", "const": "completed" },
+                  "nextStep": { "type": "null" },
+                  "completion": {
+                    "type": "object",
+                    "properties": {
+                      "completedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                      },
+                      "completedBy": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,200}$" },
+                      "requirementVersion": { "type": "number", "const": 1 }
+                    },
+                    "required": ["completedAt", "completedBy", "requirementVersion"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "requirementVersion",
+                  "revision",
+                  "requirements",
+                  "state",
+                  "nextStep",
+                  "completion"
+                ],
                 "additionalProperties": false
               }
-            },
-            "required": [
-              "requirementVersion",
-              "revision",
-              "requirements",
-              "state",
-              "nextStep",
-              "completion"
-            ],
-            "additionalProperties": false
+            ]
+          },
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "requirementVersion": { "type": "number", "const": 2 },
+                  "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                  "requirements": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "organization_name" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "time_zone" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "organization_root" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "first_unit" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "configuration_manager" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 5,
+                    "maxItems": 5
+                  },
+                  "state": { "type": "string", "const": "not_started" },
+                  "nextStep": { "type": "string", "const": "organization" },
+                  "completion": { "type": "null" }
+                },
+                "required": [
+                  "requirementVersion",
+                  "revision",
+                  "requirements",
+                  "state",
+                  "nextStep",
+                  "completion"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "requirementVersion": { "type": "number", "const": 2 },
+                  "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                  "requirements": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "organization_name" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "time_zone" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "organization_root" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "first_unit" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "configuration_manager" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 5,
+                    "maxItems": 5
+                  },
+                  "state": { "type": "string", "const": "in_progress" },
+                  "nextStep": { "type": "string", "enum": ["organization", "structure", "review"] },
+                  "completion": { "type": "null" }
+                },
+                "required": [
+                  "requirementVersion",
+                  "revision",
+                  "requirements",
+                  "state",
+                  "nextStep",
+                  "completion"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "requirementVersion": { "type": "number", "const": 2 },
+                  "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                  "requirements": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "organization_name" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "time_zone" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "organization_root" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "first_unit" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "const": "configuration_manager" },
+                          "satisfied": { "type": "boolean" }
+                        },
+                        "required": ["id", "satisfied"],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 5,
+                    "maxItems": 5
+                  },
+                  "state": { "type": "string", "const": "completed" },
+                  "nextStep": { "type": "null" },
+                  "completion": {
+                    "type": "object",
+                    "properties": {
+                      "completedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                      },
+                      "completedBy": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,200}$" },
+                      "requirementVersion": { "type": "number", "const": 2 }
+                    },
+                    "required": ["completedAt", "completedBy", "requirementVersion"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "requirementVersion",
+                  "revision",
+                  "requirements",
+                  "state",
+                  "nextStep",
+                  "completion"
+                ],
+                "additionalProperties": false
+              }
+            ]
           }
         ],
-        "description": "Version-1 setup; fixed requirements in order. Not-started is revision 0 with no saved profile; saved/completed revisions are positive. Review requires saved name, confirmed zone and root; completed requires all checks. These cross-field invariants are enforced by executable validation."
+        "description": "Versioned setup: v1 retains its four requirements and valid root-only completion. V2 adds first_unit before configuration_manager; Review additionally requires a saved direct-child Site/Department. Resume Organization for profile/root gaps, Structure for a v2 first-unit gap, otherwise Review. Not-started is revision 0 with no saved business values; saved/completed revisions are positive. Completion matches the setup version and requires every check. Cross-field rules are enforced by executable validation."
       },
       "Organization": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2625,411 +3546,8 @@
             }
           },
           "setup": {
-            "oneOf": [
+            "anyOf": [
               {
-                "type": "object",
-                "properties": {
-                  "requirementVersion": { "type": "number", "const": 1 },
-                  "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
-                  "requirements": {
-                    "type": "array",
-                    "prefixItems": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "const": "organization_name" },
-                          "satisfied": { "type": "boolean" }
-                        },
-                        "required": ["id", "satisfied"],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "const": "time_zone" },
-                          "satisfied": { "type": "boolean" }
-                        },
-                        "required": ["id", "satisfied"],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "const": "organization_root" },
-                          "satisfied": { "type": "boolean" }
-                        },
-                        "required": ["id", "satisfied"],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "const": "configuration_manager" },
-                          "satisfied": { "type": "boolean" }
-                        },
-                        "required": ["id", "satisfied"],
-                        "additionalProperties": false
-                      }
-                    ],
-                    "items": false,
-                    "minItems": 4,
-                    "maxItems": 4
-                  },
-                  "state": { "type": "string", "const": "not_started" },
-                  "nextStep": { "type": "string", "const": "organization" },
-                  "completion": { "type": "null" }
-                },
-                "required": [
-                  "requirementVersion",
-                  "revision",
-                  "requirements",
-                  "state",
-                  "nextStep",
-                  "completion"
-                ],
-                "additionalProperties": false
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "requirementVersion": { "type": "number", "const": 1 },
-                  "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
-                  "requirements": {
-                    "type": "array",
-                    "prefixItems": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "const": "organization_name" },
-                          "satisfied": { "type": "boolean" }
-                        },
-                        "required": ["id", "satisfied"],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "const": "time_zone" },
-                          "satisfied": { "type": "boolean" }
-                        },
-                        "required": ["id", "satisfied"],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "const": "organization_root" },
-                          "satisfied": { "type": "boolean" }
-                        },
-                        "required": ["id", "satisfied"],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "const": "configuration_manager" },
-                          "satisfied": { "type": "boolean" }
-                        },
-                        "required": ["id", "satisfied"],
-                        "additionalProperties": false
-                      }
-                    ],
-                    "items": false,
-                    "minItems": 4,
-                    "maxItems": 4
-                  },
-                  "state": { "type": "string", "const": "in_progress" },
-                  "nextStep": { "type": "string", "enum": ["organization", "review"] },
-                  "completion": { "type": "null" }
-                },
-                "required": [
-                  "requirementVersion",
-                  "revision",
-                  "requirements",
-                  "state",
-                  "nextStep",
-                  "completion"
-                ],
-                "additionalProperties": false
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "requirementVersion": { "type": "number", "const": 1 },
-                  "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
-                  "requirements": {
-                    "type": "array",
-                    "prefixItems": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "const": "organization_name" },
-                          "satisfied": { "type": "boolean" }
-                        },
-                        "required": ["id", "satisfied"],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "const": "time_zone" },
-                          "satisfied": { "type": "boolean" }
-                        },
-                        "required": ["id", "satisfied"],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "const": "organization_root" },
-                          "satisfied": { "type": "boolean" }
-                        },
-                        "required": ["id", "satisfied"],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "const": "configuration_manager" },
-                          "satisfied": { "type": "boolean" }
-                        },
-                        "required": ["id", "satisfied"],
-                        "additionalProperties": false
-                      }
-                    ],
-                    "items": false,
-                    "minItems": 4,
-                    "maxItems": 4
-                  },
-                  "state": { "type": "string", "const": "completed" },
-                  "nextStep": { "type": "null" },
-                  "completion": {
-                    "type": "object",
-                    "properties": {
-                      "completedAt": {
-                        "type": "string",
-                        "format": "date-time",
-                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                      },
-                      "completedBy": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,200}$" },
-                      "requirementVersion": { "type": "number", "const": 1 }
-                    },
-                    "required": ["completedAt", "completedBy", "requirementVersion"],
-                    "additionalProperties": false
-                  }
-                },
-                "required": [
-                  "requirementVersion",
-                  "revision",
-                  "requirements",
-                  "state",
-                  "nextStep",
-                  "completion"
-                ],
-                "additionalProperties": false
-              }
-            ],
-            "description": "Version-1 setup; fixed requirements in order. Not-started is revision 0 with no saved profile; saved/completed revisions are positive. Review requires saved name, confirmed zone and root; completed requires all checks. These cross-field invariants are enforced by executable validation."
-          }
-        },
-        "required": ["revision", "organization", "units", "setup"],
-        "additionalProperties": false,
-        "description": "One consistent canonical revision. Snapshot/setup revisions agree, root identity/name match the profile, and the first three requirements reflect saved values. Parent/reference/uniqueness authorization rules remain backend domain validation."
-      },
-      "UnitCreateResponse": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "configuration": {
-            "type": "object",
-            "properties": {
-              "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
-              "organization": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "allOf": [
-                          { "pattern": "[\\p{L}\\p{N}]" },
-                          { "pattern": "^[^\\p{Cc}\\p{Cf}\\p{Cs}]*$" }
-                        ],
-                        "minLength": 1,
-                        "maxLength": 160,
-                        "description": "Canonical NFC name with collapsed Unicode whitespace; display case and accents preserved."
-                      },
-                      { "type": "null" }
-                    ]
-                  },
-                  "timeZone": {
-                    "anyOf": [{ "$ref": "#/components/schemas/TimeZone" }, { "type": "null" }]
-                  },
-                  "rootId": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "allOf": [
-                          {
-                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                          },
-                          { "pattern": "^[0-9a-f-]+$" }
-                        ]
-                      },
-                      { "type": "null" }
-                    ]
-                  }
-                },
-                "required": ["name", "timeZone", "rootId"],
-                "additionalProperties": false,
-                "description": "Canonical partial profile. Name and rootId are either both null or both present; saved timeZone means explicitly confirmed."
-              },
-              "units": {
-                "maxItems": 500,
-                "type": "array",
-                "items": {
-                  "oneOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "allOf": [
-                            {
-                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                            },
-                            { "pattern": "^[0-9a-f-]+$" }
-                          ]
-                        },
-                        "type": { "type": "string", "const": "organization" },
-                        "parentId": { "type": "null" },
-                        "name": {
-                          "type": "string",
-                          "allOf": [
-                            { "pattern": "[\\p{L}\\p{N}]" },
-                            { "pattern": "^[^\\p{Cc}\\p{Cf}\\p{Cs}]*$" }
-                          ],
-                          "minLength": 1,
-                          "maxLength": 160,
-                          "description": "Canonical NFC name with collapsed Unicode whitespace; display case and accents preserved."
-                        },
-                        "ancestorIds": {
-                          "type": "array",
-                          "prefixItems": [],
-                          "items": false,
-                          "maxItems": 0
-                        }
-                      },
-                      "required": ["id", "type", "parentId", "name", "ancestorIds"],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "allOf": [
-                            {
-                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                            },
-                            { "pattern": "^[0-9a-f-]+$" }
-                          ]
-                        },
-                        "type": { "type": "string", "const": "site" },
-                        "parentId": {
-                          "type": "string",
-                          "allOf": [
-                            {
-                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                            },
-                            { "pattern": "^[0-9a-f-]+$" }
-                          ]
-                        },
-                        "name": {
-                          "type": "string",
-                          "allOf": [
-                            { "pattern": "[\\p{L}\\p{N}]" },
-                            { "pattern": "^[^\\p{Cc}\\p{Cf}\\p{Cs}]*$" }
-                          ],
-                          "minLength": 1,
-                          "maxLength": 120,
-                          "description": "Canonical NFC name with collapsed Unicode whitespace; display case and accents preserved."
-                        },
-                        "ancestorIds": {
-                          "type": "array",
-                          "prefixItems": [
-                            {
-                              "type": "string",
-                              "allOf": [
-                                {
-                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                },
-                                { "pattern": "^[0-9a-f-]+$" }
-                              ]
-                            }
-                          ],
-                          "items": false,
-                          "minItems": 1,
-                          "maxItems": 1
-                        }
-                      },
-                      "required": ["id", "type", "parentId", "name", "ancestorIds"],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "allOf": [
-                            {
-                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                            },
-                            { "pattern": "^[0-9a-f-]+$" }
-                          ]
-                        },
-                        "type": { "type": "string", "const": "department" },
-                        "parentId": {
-                          "type": "string",
-                          "allOf": [
-                            {
-                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                            },
-                            { "pattern": "^[0-9a-f-]+$" }
-                          ]
-                        },
-                        "name": {
-                          "type": "string",
-                          "allOf": [
-                            { "pattern": "[\\p{L}\\p{N}]" },
-                            { "pattern": "^[^\\p{Cc}\\p{Cf}\\p{Cs}]*$" }
-                          ],
-                          "minLength": 1,
-                          "maxLength": 120,
-                          "description": "Canonical NFC name with collapsed Unicode whitespace; display case and accents preserved."
-                        },
-                        "ancestorIds": {
-                          "minItems": 1,
-                          "maxItems": 7,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "allOf": [
-                              {
-                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                              },
-                              { "pattern": "^[0-9a-f-]+$" }
-                            ]
-                          }
-                        }
-                      },
-                      "required": ["id", "type", "parentId", "name", "ancestorIds"],
-                      "additionalProperties": false
-                    }
-                  ]
-                }
-              },
-              "setup": {
                 "oneOf": [
                   {
                     "type": "object",
@@ -3233,13 +3751,902 @@
                     ],
                     "additionalProperties": false
                   }
+                ]
+              },
+              {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "requirementVersion": { "type": "number", "const": 2 },
+                      "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                      "requirements": {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "organization_name" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "time_zone" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "organization_root" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "first_unit" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "configuration_manager" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 5,
+                        "maxItems": 5
+                      },
+                      "state": { "type": "string", "const": "not_started" },
+                      "nextStep": { "type": "string", "const": "organization" },
+                      "completion": { "type": "null" }
+                    },
+                    "required": [
+                      "requirementVersion",
+                      "revision",
+                      "requirements",
+                      "state",
+                      "nextStep",
+                      "completion"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "requirementVersion": { "type": "number", "const": 2 },
+                      "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                      "requirements": {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "organization_name" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "time_zone" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "organization_root" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "first_unit" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "configuration_manager" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 5,
+                        "maxItems": 5
+                      },
+                      "state": { "type": "string", "const": "in_progress" },
+                      "nextStep": {
+                        "type": "string",
+                        "enum": ["organization", "structure", "review"]
+                      },
+                      "completion": { "type": "null" }
+                    },
+                    "required": [
+                      "requirementVersion",
+                      "revision",
+                      "requirements",
+                      "state",
+                      "nextStep",
+                      "completion"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "requirementVersion": { "type": "number", "const": 2 },
+                      "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                      "requirements": {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "organization_name" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "time_zone" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "organization_root" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "first_unit" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "const": "configuration_manager" },
+                              "satisfied": { "type": "boolean" }
+                            },
+                            "required": ["id", "satisfied"],
+                            "additionalProperties": false
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 5,
+                        "maxItems": 5
+                      },
+                      "state": { "type": "string", "const": "completed" },
+                      "nextStep": { "type": "null" },
+                      "completion": {
+                        "type": "object",
+                        "properties": {
+                          "completedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          },
+                          "completedBy": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,200}$" },
+                          "requirementVersion": { "type": "number", "const": 2 }
+                        },
+                        "required": ["completedAt", "completedBy", "requirementVersion"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "requirementVersion",
+                      "revision",
+                      "requirements",
+                      "state",
+                      "nextStep",
+                      "completion"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            ],
+            "description": "Versioned setup: v1 retains its four requirements and valid root-only completion. V2 adds first_unit before configuration_manager; Review additionally requires a saved direct-child Site/Department. Resume Organization for profile/root gaps, Structure for a v2 first-unit gap, otherwise Review. Not-started is revision 0 with no saved business values; saved/completed revisions are positive. Completion matches the setup version and requires every check. Cross-field rules are enforced by executable validation."
+          }
+        },
+        "required": ["revision", "organization", "units", "setup"],
+        "additionalProperties": false,
+        "description": "One consistent canonical revision. Snapshot/setup revisions agree, root identity/name match the profile and the first three requirements reflect saved values. V2 first_unit agrees with a saved direct-child Site/Department; completed v1 needs no first unit. Graph/reference/uniqueness authorization rules remain backend domain validation."
+      },
+      "UnitCreateResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "configuration": {
+            "type": "object",
+            "properties": {
+              "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+              "organization": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "allOf": [
+                          { "pattern": "[\\p{L}\\p{N}]" },
+                          { "pattern": "^[^\\p{Cc}\\p{Cf}\\p{Cs}]*$" }
+                        ],
+                        "minLength": 1,
+                        "maxLength": 160,
+                        "description": "Canonical NFC name with collapsed Unicode whitespace; display case and accents preserved."
+                      },
+                      { "type": "null" }
+                    ]
+                  },
+                  "timeZone": {
+                    "anyOf": [{ "$ref": "#/components/schemas/TimeZone" }, { "type": "null" }]
+                  },
+                  "rootId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "allOf": [
+                          {
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          { "pattern": "^[0-9a-f-]+$" }
+                        ]
+                      },
+                      { "type": "null" }
+                    ]
+                  }
+                },
+                "required": ["name", "timeZone", "rootId"],
+                "additionalProperties": false,
+                "description": "Canonical partial profile. Name and rootId are either both null or both present; saved timeZone means explicitly confirmed."
+              },
+              "units": {
+                "maxItems": 500,
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "allOf": [
+                            {
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            { "pattern": "^[0-9a-f-]+$" }
+                          ]
+                        },
+                        "type": { "type": "string", "const": "organization" },
+                        "parentId": { "type": "null" },
+                        "name": {
+                          "type": "string",
+                          "allOf": [
+                            { "pattern": "[\\p{L}\\p{N}]" },
+                            { "pattern": "^[^\\p{Cc}\\p{Cf}\\p{Cs}]*$" }
+                          ],
+                          "minLength": 1,
+                          "maxLength": 160,
+                          "description": "Canonical NFC name with collapsed Unicode whitespace; display case and accents preserved."
+                        },
+                        "ancestorIds": {
+                          "type": "array",
+                          "prefixItems": [],
+                          "items": false,
+                          "maxItems": 0
+                        }
+                      },
+                      "required": ["id", "type", "parentId", "name", "ancestorIds"],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "allOf": [
+                            {
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            { "pattern": "^[0-9a-f-]+$" }
+                          ]
+                        },
+                        "type": { "type": "string", "const": "site" },
+                        "parentId": {
+                          "type": "string",
+                          "allOf": [
+                            {
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            { "pattern": "^[0-9a-f-]+$" }
+                          ]
+                        },
+                        "name": {
+                          "type": "string",
+                          "allOf": [
+                            { "pattern": "[\\p{L}\\p{N}]" },
+                            { "pattern": "^[^\\p{Cc}\\p{Cf}\\p{Cs}]*$" }
+                          ],
+                          "minLength": 1,
+                          "maxLength": 120,
+                          "description": "Canonical NFC name with collapsed Unicode whitespace; display case and accents preserved."
+                        },
+                        "ancestorIds": {
+                          "type": "array",
+                          "prefixItems": [
+                            {
+                              "type": "string",
+                              "allOf": [
+                                {
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                { "pattern": "^[0-9a-f-]+$" }
+                              ]
+                            }
+                          ],
+                          "items": false,
+                          "minItems": 1,
+                          "maxItems": 1
+                        }
+                      },
+                      "required": ["id", "type", "parentId", "name", "ancestorIds"],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "allOf": [
+                            {
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            { "pattern": "^[0-9a-f-]+$" }
+                          ]
+                        },
+                        "type": { "type": "string", "const": "department" },
+                        "parentId": {
+                          "type": "string",
+                          "allOf": [
+                            {
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            { "pattern": "^[0-9a-f-]+$" }
+                          ]
+                        },
+                        "name": {
+                          "type": "string",
+                          "allOf": [
+                            { "pattern": "[\\p{L}\\p{N}]" },
+                            { "pattern": "^[^\\p{Cc}\\p{Cf}\\p{Cs}]*$" }
+                          ],
+                          "minLength": 1,
+                          "maxLength": 120,
+                          "description": "Canonical NFC name with collapsed Unicode whitespace; display case and accents preserved."
+                        },
+                        "ancestorIds": {
+                          "minItems": 1,
+                          "maxItems": 7,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "allOf": [
+                              {
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              { "pattern": "^[0-9a-f-]+$" }
+                            ]
+                          }
+                        }
+                      },
+                      "required": ["id", "type", "parentId", "name", "ancestorIds"],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "setup": {
+                "anyOf": [
+                  {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "requirementVersion": { "type": "number", "const": 1 },
+                          "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                          "requirements": {
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "organization_name" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "time_zone" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "organization_root" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "configuration_manager" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              }
+                            ],
+                            "items": false,
+                            "minItems": 4,
+                            "maxItems": 4
+                          },
+                          "state": { "type": "string", "const": "not_started" },
+                          "nextStep": { "type": "string", "const": "organization" },
+                          "completion": { "type": "null" }
+                        },
+                        "required": [
+                          "requirementVersion",
+                          "revision",
+                          "requirements",
+                          "state",
+                          "nextStep",
+                          "completion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "requirementVersion": { "type": "number", "const": 1 },
+                          "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                          "requirements": {
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "organization_name" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "time_zone" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "organization_root" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "configuration_manager" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              }
+                            ],
+                            "items": false,
+                            "minItems": 4,
+                            "maxItems": 4
+                          },
+                          "state": { "type": "string", "const": "in_progress" },
+                          "nextStep": { "type": "string", "enum": ["organization", "review"] },
+                          "completion": { "type": "null" }
+                        },
+                        "required": [
+                          "requirementVersion",
+                          "revision",
+                          "requirements",
+                          "state",
+                          "nextStep",
+                          "completion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "requirementVersion": { "type": "number", "const": 1 },
+                          "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                          "requirements": {
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "organization_name" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "time_zone" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "organization_root" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "configuration_manager" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              }
+                            ],
+                            "items": false,
+                            "minItems": 4,
+                            "maxItems": 4
+                          },
+                          "state": { "type": "string", "const": "completed" },
+                          "nextStep": { "type": "null" },
+                          "completion": {
+                            "type": "object",
+                            "properties": {
+                              "completedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              },
+                              "completedBy": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{1,200}$"
+                              },
+                              "requirementVersion": { "type": "number", "const": 1 }
+                            },
+                            "required": ["completedAt", "completedBy", "requirementVersion"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "requirementVersion",
+                          "revision",
+                          "requirements",
+                          "state",
+                          "nextStep",
+                          "completion"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "requirementVersion": { "type": "number", "const": 2 },
+                          "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                          "requirements": {
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "organization_name" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "time_zone" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "organization_root" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "first_unit" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "configuration_manager" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              }
+                            ],
+                            "items": false,
+                            "minItems": 5,
+                            "maxItems": 5
+                          },
+                          "state": { "type": "string", "const": "not_started" },
+                          "nextStep": { "type": "string", "const": "organization" },
+                          "completion": { "type": "null" }
+                        },
+                        "required": [
+                          "requirementVersion",
+                          "revision",
+                          "requirements",
+                          "state",
+                          "nextStep",
+                          "completion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "requirementVersion": { "type": "number", "const": 2 },
+                          "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                          "requirements": {
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "organization_name" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "time_zone" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "organization_root" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "first_unit" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "configuration_manager" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              }
+                            ],
+                            "items": false,
+                            "minItems": 5,
+                            "maxItems": 5
+                          },
+                          "state": { "type": "string", "const": "in_progress" },
+                          "nextStep": {
+                            "type": "string",
+                            "enum": ["organization", "structure", "review"]
+                          },
+                          "completion": { "type": "null" }
+                        },
+                        "required": [
+                          "requirementVersion",
+                          "revision",
+                          "requirements",
+                          "state",
+                          "nextStep",
+                          "completion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "requirementVersion": { "type": "number", "const": 2 },
+                          "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                          "requirements": {
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "organization_name" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "time_zone" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "organization_root" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "first_unit" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "const": "configuration_manager" },
+                                  "satisfied": { "type": "boolean" }
+                                },
+                                "required": ["id", "satisfied"],
+                                "additionalProperties": false
+                              }
+                            ],
+                            "items": false,
+                            "minItems": 5,
+                            "maxItems": 5
+                          },
+                          "state": { "type": "string", "const": "completed" },
+                          "nextStep": { "type": "null" },
+                          "completion": {
+                            "type": "object",
+                            "properties": {
+                              "completedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              },
+                              "completedBy": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{1,200}$"
+                              },
+                              "requirementVersion": { "type": "number", "const": 2 }
+                            },
+                            "required": ["completedAt", "completedBy", "requirementVersion"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "requirementVersion",
+                          "revision",
+                          "requirements",
+                          "state",
+                          "nextStep",
+                          "completion"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
                 ],
-                "description": "Version-1 setup; fixed requirements in order. Not-started is revision 0 with no saved profile; saved/completed revisions are positive. Review requires saved name, confirmed zone and root; completed requires all checks. These cross-field invariants are enforced by executable validation."
+                "description": "Versioned setup: v1 retains its four requirements and valid root-only completion. V2 adds first_unit before configuration_manager; Review additionally requires a saved direct-child Site/Department. Resume Organization for profile/root gaps, Structure for a v2 first-unit gap, otherwise Review. Not-started is revision 0 with no saved business values; saved/completed revisions are positive. Completion matches the setup version and requires every check. Cross-field rules are enforced by executable validation."
               }
             },
             "required": ["revision", "organization", "units", "setup"],
             "additionalProperties": false,
-            "description": "One consistent canonical revision. Snapshot/setup revisions agree, root identity/name match the profile, and the first three requirements reflect saved values. Parent/reference/uniqueness authorization rules remain backend domain validation."
+            "description": "One consistent canonical revision. Snapshot/setup revisions agree, root identity/name match the profile and the first three requirements reflect saved values. V2 first_unit agrees with a saved direct-child Site/Department; completed v1 needs no first unit. Graph/reference/uniqueness authorization rules remain backend domain validation."
           },
           "unitId": {
             "type": "string",
@@ -3301,7 +4708,13 @@
           "code": { "type": "string", "const": "CONFIGURATION_CONFLICT" },
           "reason": {
             "type": "string",
-            "enum": ["revision", "duplicate_name", "unit_in_use", "idempotency_mismatch"]
+            "enum": [
+              "revision",
+              "duplicate_name",
+              "unit_in_use",
+              "idempotency_mismatch",
+              "required_unit"
+            ]
           },
           "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 }
         },

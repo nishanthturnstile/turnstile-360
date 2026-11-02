@@ -17,9 +17,11 @@ export function ScrollRegion({
   const { pathname } = useLocation();
   const region = useRef<HTMLElement>(null);
   const previousPath = useRef(pathname);
+  const previouslyReset = useRef(resetOnNavigate);
   useLayoutEffect(() => {
-    if (previousPath.current === pathname) return;
+    if (previousPath.current === pathname && previouslyReset.current === resetOnNavigate) return;
     previousPath.current = pathname;
+    previouslyReset.current = resetOnNavigate;
     if (!resetOnNavigate) return;
     region.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     region.current?.focus({ preventScroll: true });

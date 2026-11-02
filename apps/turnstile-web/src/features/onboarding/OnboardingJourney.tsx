@@ -2,9 +2,10 @@ import type { UserSessionDto } from '@thaarei/turnstile-contracts';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
-import { ContentLoading } from '@/components/content-loading';
+import { PendingContent } from '@/components/content-loading';
 import { Notice } from '@/components/notice';
-import { Badge } from '@/components/ui/badge';
+import { ScrollRegion } from '@/components/scroll-region';
+import { SetupProgress } from '@/components/setup-progress';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -18,7 +19,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { ProductError } from '../auth/product';
 import { completeSetup } from '../configuration/api';
 import { OrganizationForm, SavedProfile, Structure } from '../configuration/ConfigurationEditors';
-import { resumePath, setupPaths } from '../configuration/routes';
+import { resumePath, setupPaths, setupRedirect } from '../configuration/routes';
 import { type EditorProps, needsSession, notice, useMounted } from '../configuration/shared';
 import { useConfiguration } from '../configuration/useConfiguration';
 
@@ -26,34 +27,24 @@ export function OnboardingJourney({
   session,
   path,
   onCheck,
+  pending = false,
+  checking = false,
 }: {
   session: UserSessionDto;
   path: string;
   onCheck: () => void;
+  pending?: boolean;
+  checking?: boolean;
 }) {
   const navigate = useNavigate();
   const { snapshot, setSnapshot, failure, loading, reload, refresh } = useConfiguration(path);
+  const redirect = snapshot && !loading && !failure ? setupRedirect(snapshot, path) : undefined;
   useEffect(() => {
-    if (!snapshot) return;
-    if (snapshot.setup.state === 'completed') {
-      onCheck();
-      void navigate('/', { replace: true });
-      return;
-    }
-    if (
-      !setupPaths.some((value) => value === path) ||
-      (path === '/onboarding/review' && snapshot.setup.nextStep === 'organization') ||
-      (path === '/onboarding/structure' && !snapshot.organization.rootId)
-    )
-      void navigate(resumePath(snapshot), { replace: true });
-  }, [snapshot, path, navigate, onCheck]);
-  const pending =
-    loading ||
-    (snapshot &&
-      (snapshot.setup.state === 'completed' ||
-        !setupPaths.includes(path as (typeof setupPaths)[number]) ||
-        (path === '/onboarding/review' && snapshot.setup.nextStep === 'organization') ||
-        (path === '/onboarding/structure' && !snapshot.organization.rootId)));
+    if (!redirect) return;
+    if (redirect === '/') onCheck();
+    void navigate(redirect, { replace: true });
+  }, [redirect, navigate, onCheck]);
+  const reading = loading || !!redirect;
   const unavailable = (
     <div className="flex flex-col gap-5">
       <h1 className="page-title">We couldn’t load setup</h1>
@@ -72,67 +63,67 @@ export function OnboardingJourney({
       </div>
     </div>
   );
-  const props = snapshot
-    ? { snapshot, session, reload, onSnapshot: setSnapshot, onCheck }
-    : undefined;
+  const props =
+    snapshot && !reading && !failure
+      ? { snapshot, session, reload, onSnapshot: setSnapshot, onCheck }
+      : undefined;
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <span className="eyebrow">WORKSPACE SETUP</span>
-        <p className="account-label">
-          Signed in as <strong>{session.user.email}</strong>
-        </p>
-      </div>
-      <nav aria-label="Setup steps" className="flex flex-wrap gap-2">
-        {[
-          ['Organization', setupPaths[0]],
-          ['Structure (optional)', setupPaths[1]],
-          ['Review', setupPaths[2]],
-        ].map(([label, href]) => (
-          <ButtonLink
-            key={href}
-            href={href ?? '/'}
-            variant={path === href ? 'secondary' : 'ghost'}
-            aria-current={path === href ? 'step' : undefined}
+    <div className="setup-journey">
+      <SetupProgress
+        currentPath={path}
+        steps={[
+          { label: 'Organization', href: setupPaths[0] },
+          { label: 'First unit', href: setupPaths[1] },
+          { label: 'Review', href: setupPaths[2] },
+        ]}
+      />
+      <ScrollRegion label="Setup content" className="entry-page">
+        <div className="entry-content flex flex-col gap-6">
+          <PendingContent
+            pending={pending || reading}
+            label="Loading setup…"
+            shape={path === setupPaths[0] || path === setupPaths[1] ? 'form' : 'cards'}
           >
-            {label}
-          </ButtonLink>
-        ))}
-      </nav>
-      {pending ? (
-        <ContentLoading
-          label="Loading setup…"
-          shape={path === setupPaths[1] ? 'list' : path === setupPaths[0] ? 'form' : 'cards'}
-        />
-      ) : !props ? (
-        unavailable
-      ) : path === setupPaths[0] ? (
-        <OrganizationForm {...props} />
-      ) : path === setupPaths[1] ? (
-        <Structure {...props} />
-      ) : path === setupPaths[2] ? (
-        <Review {...props} />
-      ) : (
-        <>
-          <h1 className="page-title">Setup saved for later</h1>
-          <p className="intro">
-            Your saved progress is shared with your organization. Resume whenever you’re ready.
-          </p>
-          <SavedProfile snapshot={props.snapshot} />
-          <ButtonLink href={resumePath(props.snapshot)}>Resume setup</ButtonLink>
-        </>
-      )}
+            {!props ? (
+              unavailable
+            ) : path === setupPaths[0] ? (
+              <OrganizationForm {...props} />
+            ) : path === setupPaths[1] ? (
+              <Structure {...props} />
+            ) : path === setupPaths[2] ? (
+              <Review {...props} ready={!pending && !checking} />
+            ) : (
+              <>
+                <h1 className="page-title">Setup saved for later</h1>
+                <p className="intro">
+                  Your saved progress is shared with your organization. Resume whenever you’re
+                  ready.
+                </p>
+                <SavedProfile snapshot={props.snapshot} />
+                <ButtonLink href={resumePath(props.snapshot)}>Resume setup</ButtonLink>
+              </>
+            )}
+          </PendingContent>
+        </div>
+      </ScrollRegion>
     </div>
   );
 }
-function Review({ snapshot, session, reload, onSnapshot, onCheck }: EditorProps) {
+function Review({
+  snapshot,
+  session,
+  reload,
+  onSnapshot,
+  onCheck,
+  ready,
+}: EditorProps & { ready: boolean }) {
   const mounted = useMounted();
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
   const [message, setMessage] = useState('');
   const [reconcile, setReconcile] = useState(false);
   async function activate() {
-    if (busy || reconcile) return;
+    if (busy || reconcile || !ready || snapshot.setup.nextStep !== 'review') return;
     setBusy(true);
     setMessage('');
     try {
@@ -142,7 +133,11 @@ function Review({ snapshot, session, reload, onSnapshot, onCheck }: EditorProps)
     } catch (error) {
       if (!mounted.current) return;
       setMessage(notice(error));
-      setReconcile(error instanceof ProductError && error.code === 'CONFIGURATION_CONFLICT');
+      setReconcile(
+        !(error instanceof ProductError) ||
+          error.code === 'CONFIGURATION_CONFLICT' ||
+          error.status >= 500,
+      );
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -156,8 +151,8 @@ function Review({ snapshot, session, reload, onSnapshot, onCheck }: EditorProps)
       setReconcile(false);
       setMessage(
         value.setup.state === 'completed'
-          ? 'Activation confirmed. Opening your workspace…'
-          : 'Latest saved data loaded. Review it before activating.',
+          ? 'Setup confirmed. Opening your workspace…'
+          : 'Latest saved data loaded. Review it before finishing setup.',
       );
     } catch (error) {
       if (!mounted.current) return;
@@ -169,80 +164,76 @@ function Review({ snapshot, session, reload, onSnapshot, onCheck }: EditorProps)
       }
     }
   }
-  const labels = {
-    organization_name: 'Organization name saved',
-    time_zone: 'Time zone confirmed',
-    organization_root: 'Organization root created',
-    configuration_manager: 'Your configuration access verified',
-  };
+  const directUnits = snapshot.units.filter(
+    (unit) => unit.parentId === snapshot.organization.rootId,
+  );
   return (
     <>
       <div>
+        <span className="eyebrow">REVIEW YOUR SETUP</span>
         <h1 className="page-title">Ready to open your workspace?</h1>
         <p className="intro">
-          Review the saved details below. An organization with no sites or departments is ready to
-          activate.
+          Check your saved organization, time zone and first unit. You can continue making changes
+          in Settings after setup.
         </p>
       </div>
       {message && <Notice message={message} />}
       <SavedProfile snapshot={snapshot} />
-      <div className="flex flex-wrap gap-3">
-        <ButtonLink variant="outline" href={setupPaths[0]}>
-          Edit organization
-        </ButtonLink>
-        <ButtonLink variant="outline" href={setupPaths[1]}>
-          Edit structure
-        </ButtonLink>
-      </div>
+      <ButtonLink className="self-start" variant="outline" href={setupPaths[0]}>
+        Edit organization
+      </ButtonLink>
       <Card>
         <CardHeader>
           <CardTitle>
-            <h2>Setup checklist</h2>
+            <h2>First unit</h2>
           </CardTitle>
-          <CardDescription>
-            {snapshot.units.length - 1} optional sites or departments saved. Document features have
-            their own availability and permissions.
-          </CardDescription>
+          <CardDescription>Saved directly under {snapshot.organization.name}.</CardDescription>
         </CardHeader>
         <CardContent>
           <ul
             // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users must be able to scroll this bounded list.
             tabIndex={0}
-            className="mb-6 flex max-h-60 flex-col gap-2 overflow-auto"
-            aria-label="Saved scope"
+            className="flex max-h-60 flex-col gap-3 overflow-auto"
+            aria-label="Saved first units"
           >
-            {snapshot.units.map((unit) => (
+            {directUnits.map((unit) => (
               <li key={unit.id} className="break-words">
-                {unit.type === 'organization'
-                  ? 'Organization'
-                  : unit.type === 'site'
-                    ? 'Site'
-                    : 'Department'}
-                : {unit.name}
+                <strong>{unit.name}</strong>
+                <p className="text-sm text-muted-foreground">
+                  {unit.type === 'site' ? 'Site / Plant' : 'Department'}
+                </p>
               </li>
             ))}
           </ul>
-          <ul className="flex flex-col gap-3">
-            {snapshot.setup.requirements.map((item) => (
-              <li key={item.id} className="flex flex-wrap items-center justify-between gap-2">
-                <span>{labels[item.id]}</span>
-                <Badge variant="secondary">{item.satisfied ? 'Ready' : 'Needed'}</Badge>
-              </li>
-            ))}
-          </ul>
+          {directUnits.length === 0 && <p>No first unit saved.</p>}
         </CardContent>
         <CardFooter>
-          <Button
-            disabled={
-              busy || reconcile || snapshot.setup.requirements.some((item) => !item.satisfied)
-            }
-            onClick={() => void activate()}
-          >
-            {busy && !reading && <Spinner aria-hidden="true" data-icon="inline-start" />}
-            {busy && !reading ? 'Activating…' : 'Activate workspace'}
-          </Button>
+          <ButtonLink variant="outline" href={setupPaths[1]}>
+            Edit first unit
+          </ButtonLink>
         </CardFooter>
       </Card>
+      <div className="flex flex-wrap gap-3">
+        <Button
+          disabled={
+            busy ||
+            reconcile ||
+            !ready ||
+            snapshot.setup.nextStep !== 'review' ||
+            snapshot.setup.requirements.some((item) => !item.satisfied)
+          }
+          onClick={() => void activate()}
+        >
+          {busy && !reading && <Spinner aria-hidden="true" data-icon="inline-start" />}
+          {busy && !reading ? 'Finishing…' : 'Finish setup'}
+        </Button>
+        <ButtonLink variant="outline" href={setupPaths[1]}>
+          Back
+        </ButtonLink>
+        <ButtonLink variant="ghost" href={setupPaths[3]}>
+          Save and exit
+        </ButtonLink>
+      </div>
       {message && (
         <div className="flex flex-wrap gap-3">
           <Button variant="outline" disabled={busy} onClick={() => void latest()}>
@@ -254,9 +245,6 @@ function Review({ snapshot, session, reload, onSnapshot, onCheck }: EditorProps)
           </Button>
         </div>
       )}
-      <ButtonLink variant="ghost" href={setupPaths[3]}>
-        Save and exit
-      </ButtonLink>
     </>
   );
 }

@@ -61,7 +61,12 @@ export async function configurationOperator(
       applicationId: installed.application_id as string,
     };
     if (operation === 'initialize')
-      return { ...base, alreadyInitialized: initialized, revision: record.revision };
+      return {
+        ...base,
+        alreadyInitialized: initialized,
+        revision: record.revision,
+        requirementVersion: record.requirement_version,
+      };
     if (operation === 'prune') {
       const audit = await client.query(
         `DELETE FROM turnstile.configuration_audit WHERE tenant_id = $1 AND id IN
@@ -119,6 +124,7 @@ export async function configurationOperator(
     return {
       ...base,
       revision: record.revision,
+      requirementVersion: record.requirement_version,
       state: record.completed_at ? 'completed' : record.revision ? 'in_progress' : 'not_started',
       completion: record.completed_at
         ? {

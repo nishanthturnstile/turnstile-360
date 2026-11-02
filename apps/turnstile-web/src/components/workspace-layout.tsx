@@ -1,18 +1,19 @@
 import type { ReactNode } from 'react';
 import { PendingContent } from '@/components/content-loading';
 import { ScrollRegion } from '@/components/scroll-region';
+import { type WorkspaceDestination, WorkspaceNavigation } from '@/components/workspace-navigation';
 import { cn } from '@/lib/utils';
 
 /** Persistent chrome surrounds the page; Settings owns its nested navigation/content panes. */
 export function WorkspaceLayout({
   header,
-  navigation,
+  destinations,
   settings,
   pending,
   children,
 }: {
   header: ReactNode;
-  navigation: ReactNode;
+  destinations: WorkspaceDestination[];
   settings: boolean;
   pending: boolean;
   children: ReactNode;
@@ -21,7 +22,7 @@ export function WorkspaceLayout({
     <div className="workspace">
       {header}
       <main className="workspace-main">
-        {navigation}
+        <WorkspaceNavigation destinations={destinations} />
         <ScrollRegion
           label="Workspace content"
           resetOnNavigate={!settings}

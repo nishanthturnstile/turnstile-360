@@ -5,6 +5,7 @@ import { ButtonLink } from '@/components/button-link';
 import { ContentLoading } from '@/components/content-loading';
 import { Notice } from '@/components/notice';
 import { ScrollRegion } from '@/components/scroll-region';
+import { SetupProgress } from '@/components/setup-progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,7 +29,9 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { WorkspaceNavigation, workspaceDestinations } from '@/components/workspace-navigation';
 import { cn } from '@/lib/utils';
+import { StructureGallery } from './StructureGallery';
 
 const swatches = [
   {
@@ -77,36 +80,55 @@ export default function DesignSystem() {
           </Button>
         </header>
         <Separator />
+        <StructureGallery />
+        <Separator />
+        <section aria-labelledby="setup-progress-heading" className="flex flex-col gap-4">
+          <h2 id="setup-progress-heading" className="section-title">
+            Setup progress
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Keep the three setup steps visible while the form scrolls or saved data loads. The
+            current step is announced independently of its color.
+          </p>
+          <SetupProgress
+            currentPath="#example-first-unit"
+            steps={[
+              { label: 'Organization', href: '#example-organization' },
+              { label: 'First unit', href: '#example-first-unit' },
+              { label: 'Review', href: '#example-review' },
+            ]}
+          />
+        </section>
+        <Separator />
         <section aria-labelledby="navigation-heading" className="flex flex-col gap-4">
           <h2 id="navigation-heading" className="section-title">
             Independent navigation and content
           </h2>
           <p className="text-sm text-muted-foreground">
-            Keep navigation in place while the content pane scrolls. Tab into the pane to scroll
-            with the keyboard.
+            Collapse the sidebar to an icon rail, or open the navigation overlay on narrow screens.
+            Navigation and content scroll independently. These links use gallery anchors only.
           </p>
-          <div className="grid h-72 grid-cols-[8rem_minmax(0,1fr)] overflow-hidden rounded-xl border">
-            <nav
-              aria-label="Example settings sections"
-              className="flex flex-col gap-2 overflow-auto border-r p-3"
+          <div className="workspace-main workspace-gallery">
+            <WorkspaceNavigation
+              destinations={workspaceDestinations('/', true).map((item) => ({
+                ...item,
+                href: item.href === '/' ? '#gallery-pane-start' : '#gallery-settings',
+              }))}
+            />
+            <ScrollRegion
+              label="Example settings content"
+              className="flex flex-1 flex-col gap-4 p-4"
             >
-              <ButtonLink variant="secondary" href="#gallery-pane-start">
-                Overview
-              </ButtonLink>
-              <ButtonLink variant="ghost" href="#gallery-pane-start">
-                Organization
-              </ButtonLink>
-              <ButtonLink variant="ghost" href="#gallery-pane-start">
-                Structure
-              </ButtonLink>
-            </nav>
-            <ScrollRegion label="Example settings content" className="flex flex-col gap-4 p-4">
               <h3 id="gallery-pane-start" className="section-title">
                 Workspace overview
               </h3>
               {['Organization profile', 'Regional preferences', 'Sites and departments'].map(
                 (title) => (
-                  <Card key={title} className="shrink-0">
+                  <Card
+                    key={title}
+                    className="shrink-0"
+                    id={title === 'Organization profile' ? 'gallery-settings' : undefined}
+                  >
                     <CardHeader>
                       <CardTitle>
                         <h4>{title}</h4>

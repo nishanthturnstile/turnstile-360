@@ -34,7 +34,7 @@ export function configurationActor(request: FastifyRequest): ConfigurationActor 
 export function registerConfigurationHttp(server: FastifyInstance) {
   server.addHook('onRoute', (route) => {
     if (
-      !/^\/api\/(?:workspace\/status|setup(?:\/complete)?|organization(?:\/units(?:\/:id)?)?)\/?$/.test(
+      !/^\/api\/(?:workspace\/status|setup(?:\/complete)?|organization(?:\/units(?:\/:id(?:\/parent)?)?)?)\/?$/.test(
         route.url,
       )
     )

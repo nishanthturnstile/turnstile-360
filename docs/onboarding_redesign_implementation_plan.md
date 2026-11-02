@@ -1,7 +1,9 @@
 # Turnstile 360 onboarding redesign implementation plan
 
-**Date:** 2026-11-02. **Status:** Implementation plan ready; no delivery package
-below is implemented by this document. **Owner:** Thaarei.
+**Date:** 2026-11-02. **Status:** Implementation underway with baseline adoption and
+versioned contract foundations;
+actual delivery and verification are tracked in [IN_PROGRESS.md](../IN_PROGRESS.md).
+This plan does not itself implement any delivery package. **Owner:** Thaarei.
 
 Deliver the owner's requested onboarding redesign through the packages below. Keep this
 plan separate from the [original v1 implementation plan](onboarding_implementation_plan.md),
@@ -16,11 +18,11 @@ in [IN_PROGRESS.md](../IN_PROGRESS.md).
   experience and rationale. The concept is illustrative, with no production persistence
   or drag/move implementation.
 - [Onboarding specification](onboarding_specification.md): accepted product requirements.
-  RD01 updates this baseline for the redesign; do not treat its current optional-structure
-  acceptance journey as the new target.
+  RD01 adopts the redesign baseline, including required first units and preserved completed
+  v1 setup; historical optional-structure acceptance is not the fresh-v2 target.
 - [Architecture](../architecture.md#onboarding-implementation-baseline): authoritative
   technical boundaries, contracts, limits, persistence and deployment. Record adopted
-  redesign decisions there during RD01; this plan identifies delivery work rather than
+  redesign decisions there; this plan identifies delivery work rather than
   creating a second architecture reference.
 - [Design-system guide](design-system.md), root/app AGENTS.md, and
   [workspace standards](standards/workspace.md): implementation conventions.
@@ -56,8 +58,8 @@ ordering, Version 1 source/data migration and a mobile application are outside t
 ## Implementation defaults
 
 The first-unit choice is owner confirmed. The following are the recommended implementation
-defaults from the design discussion; record them in the specification/architecture in RD01
-before writing feature code. They need no additional discovery of the old source app.
+defaults from the design discussion, adopted in the specification/architecture by RD01
+before feature code. They need no additional discovery of the old source app.
 
 | Decision                        | Implementation direction                                                                                                                                                                                      |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -272,7 +274,7 @@ dragging. Duplicate names under different parents remain distinguishable.
 
 ## ONB-RD07 Dashboard layout and ongoing Settings
 
-Primary files: `App.tsx`, `components/workspace-layout.tsx`, navigation/scroll primitives,
+Primary files: `App.tsx`, `components/workspace-layout.tsx`, `components/workspace-navigation.tsx`, navigation/scroll primitives,
 `features/settings/Settings.tsx`, shared CSS/tokens and the design gallery.
 
 Add persistent collapsible left navigation after confirmed completion. Use the design

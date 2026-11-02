@@ -147,9 +147,7 @@ function Overview({ snapshot }: { snapshot: ConfigurationSnapshotDto }) {
           <CardTitle>
             <h2>Organization structure</h2>
           </CardTitle>
-          <CardDescription>
-            {snapshot.units.length - 1} optional sites or departments saved.
-          </CardDescription>
+          <CardDescription>{snapshot.units.length - 1} sites or departments saved.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <ul
@@ -169,7 +167,7 @@ function Overview({ snapshot }: { snapshot: ConfigurationSnapshotDto }) {
               </li>
             ))}
           </ul>
-          {snapshot.units.length === 1 && (
+          {snapshot.setup.requirementVersion === 1 && snapshot.units.length === 1 && (
             <p>Add sites or departments whenever you need them. Your workspace is ready to use.</p>
           )}
           <ButtonLink variant="outline" className="self-start" href={settingsPaths[2]}>

@@ -39,7 +39,7 @@ export const organizationConfiguration = productSchema
       name: text(),
       timeZone: text('time_zone'),
       rootId: uuid('root_id'),
-      requirementVersion: integer('requirement_version').notNull().default(1),
+      requirementVersion: integer('requirement_version').notNull().default(2),
       completedAt: timestamp('completed_at', { withTimezone: true }),
       completedBy: text('completed_by'),
     },
@@ -63,7 +63,7 @@ export const organizationConfiguration = productSchema
         sql`${table.timeZone} IS NULL OR (octet_length(${table.timeZone}) = char_length(${table.timeZone}) AND char_length(${table.timeZone}) BETWEEN 1 AND 100)`,
       ),
       check('configuration_root_pair', sql`(${table.name} IS NULL) = (${table.rootId} IS NULL)`),
-      check('configuration_version', sql`${table.requirementVersion} = 1`),
+      check('configuration_version', sql`${table.requirementVersion} IN (1, 2)`),
       check(
         'configuration_completion',
         sql`(${table.completedAt} IS NULL AND ${table.completedBy} IS NULL) OR (${table.completedAt} IS NOT NULL AND ${table.completedBy} IS NOT NULL AND ${table.completedBy} ~ '^[A-Za-z0-9_-]{1,200}$' AND ${table.name} IS NOT NULL AND ${table.timeZone} IS NOT NULL AND ${table.rootId} IS NOT NULL AND ${table.revision} > 0)`,
@@ -192,7 +192,7 @@ export const configurationAudit = productSchema
       ),
       check(
         'audit_action',
-        sql`${table.action} IN ('initialized', 'profile_saved', 'unit_created', 'unit_renamed', 'unit_deleted', 'setup_completed', 'access_changed')`,
+        sql`${table.action} IN ('initialized', 'profile_saved', 'unit_created', 'unit_renamed', 'unit_moved', 'unit_deleted', 'setup_completed', 'access_changed')`,
       ),
       check(
         'audit_fields',
