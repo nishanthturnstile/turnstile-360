@@ -1,6 +1,8 @@
 import type { UserSessionDto } from '@thaarei/turnstile-contracts';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
+import { ContentLoading } from '@/components/content-loading';
 import { Notice } from '@/components/notice';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { ProductError } from '../auth/product';
 import { completeSetup } from '../configuration/api';
 import { OrganizationForm, SavedProfile, Structure } from '../configuration/ConfigurationEditors';
@@ -28,11 +31,13 @@ export function OnboardingJourney({
   path: string;
   onCheck: () => void;
 }) {
-  const { snapshot, setSnapshot, failure, loading, reload, refresh } = useConfiguration();
+  const navigate = useNavigate();
+  const { snapshot, setSnapshot, failure, loading, reload, refresh } = useConfiguration(path);
   useEffect(() => {
     if (!snapshot) return;
     if (snapshot.setup.state === 'completed') {
-      window.location.replace('/');
+      onCheck();
+      void navigate('/', { replace: true });
       return;
     }
     if (
@@ -40,37 +45,36 @@ export function OnboardingJourney({
       (path === '/onboarding/review' && snapshot.setup.nextStep === 'organization') ||
       (path === '/onboarding/structure' && !snapshot.organization.rootId)
     )
-      window.location.replace(resumePath(snapshot));
-  }, [snapshot, path]);
-  if (
+      void navigate(resumePath(snapshot), { replace: true });
+  }, [snapshot, path, navigate, onCheck]);
+  const pending =
     loading ||
     (snapshot &&
       (snapshot.setup.state === 'completed' ||
         !setupPaths.includes(path as (typeof setupPaths)[number]) ||
         (path === '/onboarding/review' && snapshot.setup.nextStep === 'organization') ||
-        (path === '/onboarding/structure' && !snapshot.organization.rootId)))
-  )
-    return <p role="status">Loading setup…</p>;
-  if (!snapshot)
-    return (
-      <div className="flex flex-col gap-5">
-        <h1 className="page-title">We couldn’t load setup</h1>
-        <Notice
-          message={
-            needsSession(failure)
-              ? notice(failure)
-              : 'Saved setup is unavailable. Try again or check your session.'
-          }
-        />
-        <div className="flex flex-wrap gap-3">
-          <Button onClick={() => void refresh()}>Try again</Button>
-          <Button variant="outline" onClick={onCheck}>
-            Check session
-          </Button>
-        </div>
+        (path === '/onboarding/structure' && !snapshot.organization.rootId)));
+  const unavailable = (
+    <div className="flex flex-col gap-5">
+      <h1 className="page-title">We couldn’t load setup</h1>
+      <Notice
+        message={
+          needsSession(failure)
+            ? notice(failure)
+            : 'Saved setup is unavailable. Try again or check your session.'
+        }
+      />
+      <div className="flex flex-wrap gap-3">
+        <Button onClick={() => void refresh()}>Try again</Button>
+        <Button variant="outline" onClick={onCheck}>
+          Check session
+        </Button>
       </div>
-    );
-  const props = { snapshot, session, reload, onSnapshot: setSnapshot, onCheck };
+    </div>
+  );
+  const props = snapshot
+    ? { snapshot, session, reload, onSnapshot: setSnapshot, onCheck }
+    : undefined;
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -95,7 +99,14 @@ export function OnboardingJourney({
           </ButtonLink>
         ))}
       </nav>
-      {path === setupPaths[0] ? (
+      {pending ? (
+        <ContentLoading
+          label="Loading setup…"
+          shape={path === setupPaths[1] ? 'list' : path === setupPaths[0] ? 'form' : 'cards'}
+        />
+      ) : !props ? (
+        unavailable
+      ) : path === setupPaths[0] ? (
         <OrganizationForm {...props} />
       ) : path === setupPaths[1] ? (
         <Structure {...props} />
@@ -107,8 +118,8 @@ export function OnboardingJourney({
           <p className="intro">
             Your saved progress is shared with your organization. Resume whenever you’re ready.
           </p>
-          <SavedProfile snapshot={snapshot} />
-          <ButtonLink href={resumePath(snapshot)}>Resume setup</ButtonLink>
+          <SavedProfile snapshot={props.snapshot} />
+          <ButtonLink href={resumePath(props.snapshot)}>Resume setup</ButtonLink>
         </>
       )}
     </div>
@@ -116,8 +127,9 @@ export function OnboardingJourney({
 }
 function Review({ snapshot, session, reload, onSnapshot, onCheck }: EditorProps) {
   const mounted = useMounted();
-  const [busy, setBusy] = useState(false),
-    [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState(false);
+  const [message, setMessage] = useState('');
   const [reconcile, setReconcile] = useState(false);
   async function activate() {
     if (busy || reconcile) return;
@@ -127,7 +139,6 @@ function Review({ snapshot, session, reload, onSnapshot, onCheck }: EditorProps)
       const value = await completeSetup(snapshot.revision, session.csrfToken);
       if (!mounted.current) return;
       onSnapshot(value);
-      if (value.setup.state === 'completed') window.location.replace('/');
     } catch (error) {
       if (!mounted.current) return;
       setMessage(notice(error));
@@ -138,6 +149,7 @@ function Review({ snapshot, session, reload, onSnapshot, onCheck }: EditorProps)
   }
   async function latest() {
     setBusy(true);
+    setReading(true);
     try {
       const value = await reload();
       if (!mounted.current) return;
@@ -151,7 +163,10 @@ function Review({ snapshot, session, reload, onSnapshot, onCheck }: EditorProps)
       if (!mounted.current) return;
       setMessage(notice(error));
     } finally {
-      if (mounted.current) setBusy(false);
+      if (mounted.current) {
+        setBusy(false);
+        setReading(false);
+      }
     }
   }
   const labels = {
@@ -223,13 +238,15 @@ function Review({ snapshot, session, reload, onSnapshot, onCheck }: EditorProps)
             }
             onClick={() => void activate()}
           >
-            {busy ? 'Activating…' : 'Activate workspace'}
+            {busy && !reading && <Spinner aria-hidden="true" data-icon="inline-start" />}
+            {busy && !reading ? 'Activating…' : 'Activate workspace'}
           </Button>
         </CardFooter>
       </Card>
       {message && (
         <div className="flex flex-wrap gap-3">
           <Button variant="outline" disabled={busy} onClick={() => void latest()}>
+            {reading && <Spinner aria-hidden="true" data-icon="inline-start" />}
             Check saved setup
           </Button>
           <Button variant="outline" disabled={busy} onClick={onCheck}>

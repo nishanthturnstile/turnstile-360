@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { ProductError } from '../auth/product';
 import { deleteUnit, renameUnit } from './api';
 import {
@@ -42,6 +43,7 @@ export function UnitEditor({
   const [name, setName] = useState(unit?.name ?? '');
   const [revision, setRevision] = useState(snapshot.revision);
   const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState(false);
   const [reconcile, setReconcile] = useState(false);
   const [message, setMessage] = useState('');
   const [statusNotice, setStatusNotice] = useState(false);
@@ -102,6 +104,7 @@ export function UnitEditor({
   }
   async function latest() {
     setBusy(true);
+    setReading(true);
     setStatusNotice(false);
     try {
       const value = await reload();
@@ -119,7 +122,10 @@ export function UnitEditor({
     } catch (error) {
       if (mounted.current) setMessage(notice(error));
     } finally {
-      if (mounted.current) setBusy(false);
+      if (mounted.current) {
+        setBusy(false);
+        setReading(false);
+      }
     }
   }
   const nameError = fieldError(errors, 'name');
@@ -191,7 +197,12 @@ export function UnitEditor({
                 variant={action === 'delete' ? 'destructive' : 'default'}
                 disabled={busy || reconcile || !unit || (action === 'delete' && !removable)}
               >
-                {busy ? 'Saving…' : action === 'rename' ? 'Save unit name' : 'Remove unit'}
+                {busy && !reading && <Spinner aria-hidden="true" data-icon="inline-start" />}
+                {busy && !reading
+                  ? 'Saving…'
+                  : action === 'rename'
+                    ? 'Save unit name'
+                    : 'Remove unit'}
               </Button>
               <Button type="button" variant="outline" disabled={busy} onClick={onClose}>
                 Cancel
@@ -202,6 +213,7 @@ export function UnitEditor({
         {message && (
           <div className="flex flex-wrap gap-3">
             <Button variant="outline" disabled={busy} onClick={() => void latest()}>
+              {reading && <Spinner aria-hidden="true" data-icon="inline-start" />}
               Load latest saved data
             </Button>
             <Button variant="outline" disabled={busy} onClick={onCheck}>

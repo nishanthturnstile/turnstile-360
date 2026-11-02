@@ -4,6 +4,7 @@ import type {
   UserSessionDto,
 } from '@thaarei/turnstile-contracts';
 import { useEffect, useRef } from 'react';
+import { useNavigationEntries } from '@/components/navigation';
 import { ProductError } from '../auth/product';
 export function notice(error: unknown) {
   if (!(error instanceof ProductError))
@@ -83,6 +84,7 @@ export function useMounted() {
 }
 const discardChecks = new WeakSet<Event>();
 export function useUnsavedEntries(changed: boolean) {
+  const markSaved = useNavigationEntries(changed);
   useEffect(() => {
     if (!changed) return;
     const leave = (event: MouseEvent) => {
@@ -114,4 +116,5 @@ export function useUnsavedEntries(changed: boolean) {
     document.addEventListener('click', leave);
     return () => document.removeEventListener('click', leave);
   }, [changed]);
+  return markSaved;
 }

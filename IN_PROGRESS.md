@@ -61,6 +61,139 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
+ONB-REDESIGN-PLAN-001 — **Completed** (owner: Codex, 2026-11-02). Scope: create a
+separate implementation plan for the owner's onboarding redesign, carrying forward the
+confirmed Site/Plant-or-Department first-unit rule. Reconcile the proposed delivery order
+with current contracts, persistence, web navigation and existing verification/release
+tooling; provide file-level work, dependencies, acceptance and a start-work handoff.
+Planning only; do not begin feature implementation or change accepted runtime behavior.
+The separate `docs/onboarding_redesign_implementation_plan.md` is written and linked
+from the design proposal. ONB-RD01–08 cover adoption, versioned contracts/time zones,
+persistence/readiness, audited moves, dedicated setup, the shared visual editor,
+dashboard/Settings and coordinated verification/release. All nine document links resolve.
+The plan includes file-level work, recommended version/upgrade defaults, focused boundary
+acceptance, CLI/tooling guidance and a reusable start-work prompt. The original v1 plan
+and accepted specification/architecture remain unchanged; RD01 owns their later adoption.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. Build/unit tasks reuse valid Turbo caches; integration
+executes 19 Fastify and 71 disposable PostgreSQL cases. Targeted Biome, whitespace and
+document-link/package-presence checks pass. No application browser/image/production
+verification was repeated for this documentation-only change. No feature implementation,
+migration, persistent local-data change, deployment, commit or push occurred.
+
+Handoff: begin future implementation with ONB-RD01 in the new plan, then follow its
+dependency sequence. Record the actual package and owner before starting feature work;
+preserve pre-existing worktree changes. No blocker remains for this planning task.
+Logs: `/tmp/turnstile-onboarding-redesign-plan-{check,build,test,integration}.log`.
+
+ONB-REDESIGN-001 — **Completed** (owner: Codex, 2026-11-02). Scope: owner-requested
+planning/design review of fresh-install onboarding, organization/workspace terminology,
+India-first time-zone defaults, mandatory first operational structure level, visual
+hierarchy editing and the completed-dashboard shell. Reviewed current entry gating,
+onboarding/shared editors, contracts, accepted architecture/specification and the recorded
+2026-11-01 source-application inspection. Added a dated recommendation to
+`docs/onboarding_design_proposal.md` and the separate transient interactive concept
+`docs/presentations/onboarding-redesign-concept.html`, preserving the adopted v1 rationale.
+The owner confirmed either Site/Plant or Department can satisfy the first operational
+level. The proposal covers the three-screen setup, contextual/read-only information,
+India business time versus UTC instants, the Kolkata/Calcutta allowlist mismatch,
+visual creation and accessible transactional moves, dashboard collapse, and versioned
+compatibility for already-completed root-only installations. Existing completion stays
+valid under the recommended compatibility policy. No application/schema/accepted
+architecture or requirement change, dependency, deployment, commit or push was made.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass; build/unit tasks reuse valid Turbo caches. Integration
+executes 19 Fastify and 71 disposable PostgreSQL cases. Initial concept button/callback
+lint and document formatting findings were fixed; final targeted Biome and whitespace
+checks pass. The concept renders at 728px and 390px without console errors. Those
+illustrations are not application browser, production deployment or customer acceptance
+verification. Existing local installation/accounts/data were not changed.
+
+Handoff: review the dated redesign recommendation and concept. Implementation remains
+future work: adopt the requirement/resume/upgrade changes, settle the time-zone contract
+compatibility, extend first-unit readiness and audited move behavior, then deliver the
+dedicated setup/editor/dashboard layouts with focused integration/browser verification.
+No blocker remains for this planning task. Logs: `/tmp/turnstile-onboarding-redesign-`
+`{check,build,test,integration}.log`.
+
+WEB-LOAD-001 — **Completed** (owner: Codex, 2026-11-02). Scope: localized skeletons
+and spinners for server-backed content while retaining shared layout/navigation and drafts.
+
+Implemented generated shadcn Spinner (pinned CLI, existing Hugeicons) with compatible
+component props and reduced-motion support; shared form/list/card ContentLoading,
+PendingContent and LoadingStatus compositions; stable Settings and onboarding navigation
+during initial/retry reads; localized route skeletons; and action-specific spinners for
+configuration save/readback, auth, session, document connection and logout operations.
+Saves/readback retain entries; pending navigation content stays mounted and hidden, while
+headers/navigation remain available. Loading is announced once per panel and skeletons/
+adjacent spinner SVGs are decorative. No artificial delay, new dependency, backend/schema,
+credential or deployment-topology change. Architecture, design guide and fixture gallery
+are updated. Existing work and root/third-party licenses are preserved.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass (19 Fastify and 71 PostgreSQL cases; unchanged unit tasks use
+valid caches). Full `pnpm test:browser:auth` passes design-system/CSP/font/reduced-motion
+checks, onboarding, Settings, 20 reloads and all three auth/recovery/logout journeys.
+New held-response assertions prove a Settings skeleton/spinner during configuration reads,
+persistent header/sidebar through loading and loaded states, a content-only skeleton
+during navigation checks and a save spinner with preserved form values/navigation.
+Final whitespace checks pass. No remaining blocker in this scope.
+
+Local runtime: restarted the cancelled Compose Watch; source synchronization is active,
+all existing services are running, and health-checked services are healthy. Host/container
+loading-composition and Settings hashes match. Authenticated verification used disposable
+HTTPS fixtures; local accounts/data were retained. No production image/Dokploy/customer
+verification, commit or push. Logs: `/tmp/turnstile-web-load-{check,build,test,integration,
+browser,watch}.log`. Handoff: use the existing local web application; slow server reads
+now show loading feedback in their content region while shared navigation stays visible.
+
+
+WEB-NAV-001 — **Completed** (owner: Codex, 2026-11-02). Scope: shared web layout,
+client navigation and independent content/navigation scrolling, starting at
+`/settings/organization`.
+
+Implemented React Router 8.5.1 and shared AppLink/ButtonLink, persistent WorkspaceLayout,
+canonical Settings state across sections, isolated editor lifecycles, named keyboard
+scroll panes and a responsive Settings sidebar/horizontal section row. Header, workspace
+navigation and footer stay outside page scrolling. One unsaved-entry blocker aggregates
+all editors and protects links plus Back/Forward; cancelled navigation retains drafts.
+Router updates are synchronous so blocker dismissal does not defer form interactions.
+Session/readiness checks accept the destination before replacing content, without
+remounting chrome or returning to the startup skeleton. Onboarding steps wait for fresh
+canonical reads, fencing late older revisions; successful saves clear only their own dirty
+marker before navigation. Auth/identity exchanges retain full document navigation.
+No backend, permission, schema, port or persistent browser-state change.
+
+Files: web router/App, new navigation/scroll-region/workspace-layout compositions,
+ButtonLink, auth text link, configuration editors/shared hook, onboarding/Settings,
+shared CSS/gallery, web manifest/lockfile/notices, architecture/design guide and focused
+Settings/onboarding browser assertions/diagnostics. Verification actually run (2026-11-02):
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` pass (19 Fastify and
+71 PostgreSQL cases; unchanged unit tasks reuse valid caches). Full `pnpm test:browser:auth`
+passes design-system/CSP/font checks, onboarding, Settings, 20 refresh-fenced reloads and
+all three auth/recovery/logout journeys. New browser assertions prove zero document
+navigation, stable header/navigation/sidebar/content-pane DOM nodes, content scroll reset,
+320px/desktop independent scrolling without document overflow, and accepted/cancelled
+Back/Forward/link navigation with correct draft handling. Initial browser failures exposed
+an access-check/permission-transition overlap and asynchronous confirmation test races;
+verified destination gating, fresh onboarding reads and explicit dialog waits resolve them.
+Final whitespace/Biome checks pass.
+
+Local runtime: rebuilt only the development web image/service for the routing dependency;
+all existing services remain running and health-checked services are healthy. Compose
+Watch is active; host/container App and router hashes match. The live gallery's independent
+scroll pane is verified in the shared browser. The preview profile has no authenticated
+local account session; authenticated Settings verification uses the real disposable HTTPS
+fixture, preserving local accounts/data. No production Nginx image, Dokploy or customer
+rollout verification was performed. No commit or push. No remaining blocker in this scope.
+Logs: `/tmp/turnstile-web-nav-{check,build,test,integration,browser,local,watch}.log`.
+Handoff: use the existing `http://localhost:23600/settings/organization`; refresh a previously
+open tab once if it still has the old application bundle. Subsequent internal navigation
+keeps the shell mounted.
+
+
 ONB-REVIEW-FIXES staged-onboarding review follow-ups are completed (owner: DeepSeek V4.1
 Flash, 2026-11-02). Scope: GPT-6.1 Sol (high) advised the fix/validation plan; addressed all
 seven low-severity findings without changing contracts, routes, permissions, schema or

@@ -1,7 +1,10 @@
 import type { ConfigurationSnapshotDto, UserSessionDto } from '@thaarei/turnstile-contracts';
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
+import { PendingContent } from '@/components/content-loading';
 import { Notice } from '@/components/notice';
+import { ScrollRegion } from '@/components/scroll-region';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,65 +17,88 @@ export function Settings({
   session,
   path,
   onCheck,
+  pending = false,
+  requestedPath = path,
 }: {
   session: UserSessionDto;
   path: string;
   onCheck: () => void;
+  pending?: boolean;
+  requestedPath?: string;
 }) {
+  const navigate = useNavigate();
   const { snapshot, setSnapshot, failure, loading, reload, refresh } = useConfiguration();
   useEffect(() => {
     if (snapshot && snapshot.setup.state !== 'completed')
-      window.location.replace(resumePath(snapshot));
-  }, [snapshot]);
-  if (loading || (snapshot && snapshot.setup.state !== 'completed'))
-    return <p role="status">Loading settings…</p>;
-  if (!snapshot)
-    return (
-      <div className="flex flex-col gap-5">
-        <h1 className="page-title">Settings are temporarily unavailable</h1>
-        <Notice
-          message={
-            needsSession(failure)
-              ? notice(failure)
-              : 'We couldn’t load saved configuration. Try again or check your session.'
-          }
-        />
-        <div className="flex flex-wrap gap-3">
-          <Button onClick={() => void refresh()}>Try again</Button>
-          <Button variant="outline" onClick={onCheck}>
-            Check session
-          </Button>
-          <ButtonLink variant="ghost" href="/">
-            Return to Home
-          </ButtonLink>
-        </div>
-      </div>
-    );
-  const props = { snapshot, session, reload, onSnapshot: setSnapshot, onCheck };
+      void navigate(resumePath(snapshot), { replace: true });
+  }, [snapshot, navigate]);
+  const props = snapshot
+    ? { snapshot, session, reload, onSnapshot: setSnapshot, onCheck }
+    : undefined;
   return (
-    <div className="flex flex-col gap-6">
-      <span className="eyebrow">SETTINGS</span>
-      <nav aria-label="Settings sections" className="flex flex-wrap gap-2">
-        {['Setup overview', 'Organization', 'Structure', 'Workspace'].map((label, index) => (
-          <ButtonLink
-            key={label}
-            href={settingsPaths[index] ?? '/settings'}
-            variant={path === settingsPaths[index] ? 'secondary' : 'ghost'}
-            aria-current={path === settingsPaths[index] ? 'page' : undefined}
-          >
-            {label}
-          </ButtonLink>
-        ))}
-      </nav>
-      {path === settingsPaths[1] ? (
-        <OrganizationForm {...props} mode="organization" />
-      ) : path === settingsPaths[2] ? (
-        <Structure {...props} manage />
-      ) : path === settingsPaths[3] ? (
-        <OrganizationForm {...props} mode="workspace" />
-      ) : (
-        <Overview snapshot={snapshot} />
-      )}
+    <div className="settings-layout">
+      <aside className="settings-sidebar">
+        <span className="eyebrow">SETTINGS</span>
+        <nav aria-label="Settings sections" className="settings-navigation">
+          {['Setup overview', 'Organization', 'Structure', 'Workspace'].map((label, index) => (
+            <ButtonLink
+              key={label}
+              href={settingsPaths[index] ?? '/settings'}
+              variant={requestedPath === settingsPaths[index] ? 'secondary' : 'ghost'}
+              aria-current={requestedPath === settingsPaths[index] ? 'page' : undefined}
+            >
+              {label}
+            </ButtonLink>
+          ))}
+        </nav>
+      </aside>
+      <ScrollRegion label="Settings content" className="settings-content">
+        <PendingContent
+          pending={pending || loading || !!(snapshot && snapshot.setup.state !== 'completed')}
+          label="Loading settings…"
+          shape={
+            requestedPath.endsWith('/structure')
+              ? 'list'
+              : requestedPath === '/settings'
+                ? 'cards'
+                : 'form'
+          }
+        >
+          {!props ? (
+            <div className="flex flex-col gap-5">
+              <h1 className="page-title">Settings are temporarily unavailable</h1>
+              <Notice
+                message={
+                  needsSession(failure)
+                    ? notice(failure)
+                    : 'We couldn’t load saved configuration. Try again or check your session.'
+                }
+              />
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={() => void refresh()}>Try again</Button>
+                <Button variant="outline" onClick={onCheck}>
+                  Check session
+                </Button>
+                <ButtonLink variant="ghost" href="/">
+                  Return to Home
+                </ButtonLink>
+              </div>
+            </div>
+          ) : (
+            <div key={path} className="settings-section flex flex-col gap-6">
+              {path === settingsPaths[1] ? (
+                <OrganizationForm {...props} mode="organization" />
+              ) : path === settingsPaths[2] ? (
+                <Structure {...props} manage />
+              ) : path === settingsPaths[3] ? (
+                <OrganizationForm {...props} mode="workspace" />
+              ) : (
+                <Overview snapshot={props.snapshot} />
+              )}
+            </div>
+          )}
+        </PendingContent>
+      </ScrollRegion>
     </div>
   );
 }

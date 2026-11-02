@@ -107,15 +107,29 @@ heading inside `CardTitle` when it introduces a page section. Use `Notice` for s
 error/status callouts, `Badge` for short status labels, `Separator` for dividers, and
 `Skeleton` for pending content. Announce loading once, mark decorative skeletons
 `aria-hidden`, and keep authenticated startup neutral until the backend verifies the
-session. Changing presentation must preserve existing auth/session/permission behavior.
+session. Use shared `ContentLoading` for form, list and overview placeholders, and
+`PendingContent` to retain mounted content/drafts during navigation or a read retry.
+Keep navigation outside these boundaries. Use `LoadingStatus` for small server checks;
+compose a decorative `Spinner` into the active action for saves/readback. Do not add
+artificial delays or replace existing form entries with skeletons during a save. All
+loading indicators respect reduced motion. The gallery includes all three shapes and
+an action spinner. Changing presentation must preserve existing auth/session/permission behavior.
 
 This project uses Base UI. Navigation uses the shared `ButtonLink` composition,
-which renders a native anchor with the same `buttonVariants` as actions:
+which renders a router link with native anchor semantics and the same `buttonVariants` as actions:
 `<ButtonLink href="/path" variant="outline">…</ButtonLink>`. Base UI's non-native
 Button applies button semantics even to rendered anchors, so reserve it for actions
 and custom action triggers. Use real links for navigation and buttons for actions.
 Check current component documentation before adding a new interaction; Radix `asChild`
 examples use a different API.
+
+Workspace layout and scroll ownership follow the
+[architecture](../architecture.md#web-navigation-and-scroll-ownership). Use `AppLink`
+for ordinary text navigation and `ButtonLink` for button appearance; reserve
+`window.location` for full auth/identity navigation. Place page content in `ScrollRegion`
+and keep persistent navigation outside its scrolling area. Settings owns its nested
+sidebar/content layout; avoid adding a document scrollbar or keying the whole shell
+by URL. The gallery's bounded navigation example demonstrates independent scrolling.
 
 ## Designer and developer handoff
 

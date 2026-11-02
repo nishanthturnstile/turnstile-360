@@ -10,6 +10,7 @@ import {
   unitCreateSchema,
 } from '@thaarei/turnstile-contracts';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
 import { Notice } from '@/components/notice';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { Spinner } from '@/components/ui/spinner';
 import { ProductError } from '../auth/product';
 import { createUnit, saveOrganization } from './api';
 import { resumePath, setupPaths } from './routes';
@@ -66,15 +68,18 @@ export function OrganizationForm({
   onCheck,
   mode = 'onboarding',
 }: EditorProps & { mode?: 'onboarding' | 'organization' | 'workspace' }) {
+  const navigate = useNavigate();
   const mounted = useMounted();
   const [name, setName] = useState(snapshot.organization.name ?? '');
   const [zone, setZone] = useState(snapshot.organization.timeZone ?? '');
-  useUnsavedEntries(
+  const markSaved = useUnsavedEntries(
     (mode !== 'workspace' && name !== (snapshot.organization.name ?? '')) ||
       (mode !== 'organization' && zone !== (snapshot.organization.timeZone ?? '')),
   );
   const [revision, setRevision] = useState(snapshot.revision);
   const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState(false);
+  const [exiting, setExiting] = useState(false);
   const [message, setMessage] = useState('');
   const [statusNotice, setStatusNotice] = useState(false);
   const [errors, setErrors] = useState<ConfigurationErrorDto>();
@@ -101,7 +106,8 @@ export function OrganizationForm({
       mode !== 'workspace' && (!exit || normalizeConfigurationName(name) !== '') ? { name } : {};
     const zoneField = mode !== 'organization' && (!exit || zone !== '') ? { timeZone: zone } : {};
     if (exit && !('name' in nameField) && !('timeZone' in zoneField)) {
-      window.location.assign(setupPaths[3]);
+      markSaved();
+      void navigate(setupPaths[3]);
       return;
     }
     const parsed = organizationPatchSchema.safeParse({
@@ -116,6 +122,7 @@ export function OrganizationForm({
       return;
     }
     setBusy(true);
+    setExiting(exit);
     setMessage('');
     setErrors(undefined);
     try {
@@ -124,8 +131,10 @@ export function OrganizationForm({
       onSnapshot(value);
       setRevision(value.revision);
       setSessionChanged(false);
-      if (mode === 'onboarding') window.location.assign(exit ? setupPaths[3] : setupPaths[1]);
-      else {
+      if (mode === 'onboarding') {
+        markSaved();
+        void navigate(exit ? setupPaths[3] : setupPaths[1]);
+      } else {
         setName(value.organization.name ?? '');
         setZone(value.organization.timeZone ?? '');
         // The server bumps the revision only when a submitted value actually changed.
@@ -157,6 +166,7 @@ export function OrganizationForm({
   }
   async function latest() {
     setBusy(true);
+    setReading(true);
     setStatusNotice(false);
     try {
       const value = await reload();
@@ -169,7 +179,10 @@ export function OrganizationForm({
       if (!mounted.current) return;
       setMessage(notice(error));
     } finally {
-      if (mounted.current) setBusy(false);
+      if (mounted.current) {
+        setBusy(false);
+        setReading(false);
+      }
     }
   }
   const nameError = fieldError(errors, 'name'),
@@ -258,10 +271,20 @@ export function OrganizationForm({
           )}
           <div className="flex flex-wrap gap-3">
             <Button type="submit" disabled={busy || reconcile}>
-              {busy ? 'Saving…' : mode === 'onboarding' ? 'Save and continue' : 'Save changes'}
+              {busy && !reading && !exiting && (
+                <Spinner aria-hidden="true" data-icon="inline-start" />
+              )}
+              {busy && !reading && !exiting
+                ? 'Saving…'
+                : mode === 'onboarding'
+                  ? 'Save and continue'
+                  : 'Save changes'}
             </Button>
             {mode === 'onboarding' && (
               <Button variant="outline" type="submit" value="exit" disabled={busy || reconcile}>
+                {busy && !reading && exiting && (
+                  <Spinner aria-hidden="true" data-icon="inline-start" />
+                )}
                 Save and exit
               </Button>
             )}
@@ -274,6 +297,7 @@ export function OrganizationForm({
       {(reconcile || message) && (
         <div className="flex flex-wrap gap-3">
           <Button variant="outline" disabled={busy} onClick={() => void latest()}>
+            {reading && <Spinner aria-hidden="true" data-icon="inline-start" />}
             Load latest saved data
           </Button>
           {sessionChanged && (
@@ -301,6 +325,7 @@ export function Structure({
   const [type, setType] = useState<'site' | 'department'>('site');
   const [parent, setParent] = useState(snapshot.organization.rootId ?? '');
   const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState(false);
   const [pending, setPending] = useState<{ body: UnitCreate; key: string }>();
   const [reconcile, setReconcile] = useState(false);
   const [inspected, setInspected] = useState(false);
@@ -375,6 +400,7 @@ export function Structure({
   }
   async function latest() {
     setBusy(true);
+    setReading(true);
     try {
       await reload();
       if (!mounted.current) return;
@@ -388,7 +414,10 @@ export function Structure({
       if (!mounted.current) return;
       setMessage(notice(error));
     } finally {
-      if (mounted.current) setBusy(false);
+      if (mounted.current) {
+        setBusy(false);
+        setReading(false);
+      }
     }
   }
   const parents = snapshot.units.filter(
@@ -583,7 +612,8 @@ export function Structure({
               snapshot.units.length >= CONFIGURATION_LIMITS.units
             }
           >
-            {busy ? 'Saving…' : 'Add unit'}
+            {busy && !reading && <Spinner aria-hidden="true" data-icon="inline-start" />}
+            {busy && !reading ? 'Saving…' : 'Add unit'}
           </Button>
         </FieldGroup>
       </form>
@@ -595,6 +625,7 @@ export function Structure({
             </Button>
           )}
           <Button variant="outline" disabled={busy} onClick={() => void latest()}>
+            {reading && <Spinner aria-hidden="true" data-icon="inline-start" />}
             Load latest saved data
           </Button>
           {pending && inspected && (

@@ -101,15 +101,110 @@ export async function testSettings({
   try {
     await login('member');
     await heading(page, 'Welcome, member.');
+    console.log('Settings verification: persistent shell, client routing and scroll ownership.');
+    let documentNavigations = 0;
+    const observeDocument = (request) => {
+      if (request.isNavigationRequest() && request.frame() === page.mainFrame())
+        documentNavigations++;
+    };
+    page.on('request', observeDocument);
+    await page.evaluate(() => {
+      window.settingsNavigationProbe = {
+        header: document.querySelector('.workspace-header'),
+        navigation: document.querySelector('[aria-label="Workspace navigation"]'),
+      };
+    });
     const before = await page.evaluate(async () => ({
       profile: await (await fetch('/api/organization')).json(),
       setup: await (await fetch('/api/setup')).json(),
     }));
+    let releaseConfiguration;
+    const configurationGate = new Promise((resolve) => {
+      releaseConfiguration = resolve;
+    });
+    const delayedConfiguration = async (route) => {
+      if (route.request().method() === 'GET') await configurationGate;
+      await route.continue();
+    };
+    for (const path of ['/api/organization', '/api/organization/units', '/api/setup'])
+      await page.route(`**${path}`, delayedConfiguration);
     await page
       .getByRole('navigation', { name: 'Workspace navigation' })
       .getByRole('link', { name: 'Settings', exact: true })
       .click();
+    await page.getByRole('navigation', { name: 'Settings sections' }).waitFor();
+    const settingsPane = page.getByRole('region', { name: 'Settings content', exact: true });
+    await settingsPane.locator('[data-slot="content-loading"]').waitFor();
+    assert.equal(await settingsPane.locator('[data-slot="spinner"]').count(), 1);
+    assert.ok((await settingsPane.locator('[data-slot="skeleton"]').count()) > 0);
+    assert.equal(
+      await page.evaluate(() => {
+        window.loadingSidebar = document.querySelector('.settings-sidebar');
+        return (
+          window.settingsNavigationProbe.header === document.querySelector('.workspace-header')
+        );
+      }),
+      true,
+      'The shared header is available while configuration reads are pending',
+    );
+    releaseConfiguration();
     await heading(page, 'Setup overview');
+    for (const path of ['/api/organization', '/api/organization/units', '/api/setup'])
+      await page.unroute(`**${path}`, delayedConfiguration);
+    assert.equal(await settingsPane.locator('[data-slot="content-loading"]').count(), 0);
+    assert.equal(
+      await page.evaluate(
+        () => window.loadingSidebar === document.querySelector('.settings-sidebar'),
+      ),
+      true,
+    );
+
+    assert.equal(documentNavigations, 0, 'Home to Settings must not load another document');
+    assert.equal(
+      await page.evaluate(() => {
+        const probe = window.settingsNavigationProbe;
+        probe.sidebar = document.querySelector('.settings-sidebar');
+        probe.pane = document.querySelector('[aria-label="Settings content"]');
+        return (
+          probe.header === document.querySelector('.workspace-header') &&
+          probe.navigation === document.querySelector('[aria-label="Workspace navigation"]')
+        );
+      }),
+      true,
+      'The workspace header/navigation must retain their DOM nodes',
+    );
+    const desktop = page.viewportSize();
+    for (const viewport of [
+      { width: 1280, height: 640 },
+      { width: 320, height: 640 },
+    ]) {
+      await page.setViewportSize(viewport);
+      const panes = await page.evaluate(() => {
+        const pane = document.querySelector('[aria-label="Settings content"]');
+        const header = document.querySelector('.workspace-header');
+        const sidebar = document.querySelector('.settings-sidebar');
+        const headerTop = header.getBoundingClientRect().top;
+        const sidebarTop = sidebar.getBoundingClientRect().top;
+        pane.scrollTop = pane.scrollHeight;
+        return {
+          scrollable: pane.scrollHeight > pane.clientHeight && pane.scrollTop > 0,
+          headerFixed: header.getBoundingClientRect().top === headerTop,
+          sidebarFixed: sidebar.getBoundingClientRect().top === sidebarTop,
+          documentFixed:
+            document.scrollingElement.scrollTop === 0 &&
+            document.documentElement.scrollHeight <= innerHeight,
+          noHorizontalOverflow: document.documentElement.scrollWidth <= innerWidth,
+        };
+      });
+      assert.deepEqual(panes, {
+        scrollable: true,
+        headerFixed: true,
+        sidebarFixed: true,
+        documentFixed: true,
+        noHorizontalOverflow: true,
+      });
+    }
+    await page.setViewportSize(desktop);
     await page.getByText('Activated', { exact: true }).waitFor();
     await page.getByText(before.setup.completion.completedBy, { exact: true }).waitFor();
     assert.equal(
@@ -123,11 +218,80 @@ export async function testSettings({
       )
       .waitFor();
 
+    let releaseNavigation;
+    const navigationGate = new Promise((resolve) => {
+      releaseNavigation = resolve;
+    });
+    const delayedNavigation = async (route) => {
+      await navigationGate;
+      await route.continue();
+    };
+    await page.route('**/api/workspace/status', delayedNavigation);
     await page
       .getByRole('navigation', { name: 'Settings sections' })
       .getByRole('link', { name: 'Organization', exact: true })
       .click();
+    await settingsPane.locator('[data-slot="content-loading"]').waitFor();
+    assert.equal(
+      await page.getByRole('navigation', { name: 'Settings sections' }).isVisible(),
+      true,
+    );
+    assert.equal(
+      await page.evaluate(
+        () => window.loadingSidebar === document.querySelector('.settings-sidebar'),
+      ),
+      true,
+    );
+    releaseNavigation();
     await heading(page, 'Organization');
+    await page.unroute('**/api/workspace/status', delayedNavigation);
+
+    assert.equal(documentNavigations, 0);
+    assert.equal(
+      await page.evaluate(() => {
+        const probe = window.settingsNavigationProbe;
+        return (
+          probe.header === document.querySelector('.workspace-header') &&
+          probe.sidebar === document.querySelector('.settings-sidebar') &&
+          probe.pane === document.querySelector('[aria-label="Settings content"]') &&
+          probe.pane.scrollTop === 0
+        );
+      }),
+      true,
+      'Only the section content changes, and its scroll resets',
+    );
+    await page.getByLabel('Organization name', { exact: true }).fill('Retained navigation draft');
+    const rejectedLink = page.waitForEvent('dialog');
+    const clickWorkspace = page
+      .getByRole('navigation', { name: 'Settings sections' })
+      .getByRole('link', { name: 'Workspace', exact: true })
+      .click();
+    await (await rejectedLink).dismiss();
+    await clickWorkspace;
+    assert.equal(
+      await page.getByLabel('Organization name', { exact: true }).inputValue(),
+      'Retained navigation draft',
+    );
+    const rejectedBack = page.waitForEvent('dialog');
+    await page.evaluate(() => history.back());
+    await (await rejectedBack).dismiss();
+    await page.waitForURL(`${origin}/settings/organization`);
+    assert.equal(
+      await page.getByLabel('Organization name', { exact: true }).inputValue(),
+      'Retained navigation draft',
+    );
+    const acceptedBack = page.waitForEvent('dialog');
+    await page.evaluate(() => history.back());
+    await (await acceptedBack).accept();
+    await heading(page, 'Setup overview');
+    await page.evaluate(() => history.forward());
+    await heading(page, 'Organization');
+    assert.equal(
+      await page.getByLabel('Organization name', { exact: true }).inputValue(),
+      before.profile.organization.name,
+    );
+    assert.equal(documentNavigations, 0, 'Back/Forward must also use client routing');
+    page.off('request', observeDocument);
     await page.getByLabel('Organization name', { exact: true }).fill('');
     await page.getByRole('button', { name: 'Save changes', exact: true }).click();
     assert.equal(
@@ -153,8 +317,31 @@ export async function testSettings({
     await page.goto(`${origin}/settings/organization`);
     await heading(page, 'Organization');
     await page.getByLabel('Organization name', { exact: true }).fill('Settings organization');
+    let releaseSave;
+    const saveGate = new Promise((resolve) => {
+      releaseSave = resolve;
+    });
+    const delayedSave = async (route) => {
+      if (route.request().method() === 'PATCH') await saveGate;
+      await route.continue();
+    };
+    await page.route('**/api/organization', delayedSave);
     await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'Saving…', exact: true })
+      .locator('[data-slot="spinner"]')
+      .waitFor();
+    assert.equal(
+      await page.getByLabel('Organization name', { exact: true }).inputValue(),
+      'Settings organization',
+    );
+    assert.equal(
+      await page.getByRole('navigation', { name: 'Settings sections' }).isVisible(),
+      true,
+    );
+    releaseSave();
     await page.getByText('Organization name saved.', { exact: true }).waitFor();
+    await page.unroute('**/api/organization', delayedSave);
     await page.reload();
     await heading(page, 'Organization');
     assert.equal(

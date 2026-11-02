@@ -2,7 +2,9 @@ import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useState } from 'react';
 import { ButtonLink } from '@/components/button-link';
+import { ContentLoading } from '@/components/content-loading';
 import { Notice } from '@/components/notice';
+import { ScrollRegion } from '@/components/scroll-region';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +26,7 @@ import {
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
@@ -74,6 +77,66 @@ export default function DesignSystem() {
           </Button>
         </header>
         <Separator />
+        <section aria-labelledby="navigation-heading" className="flex flex-col gap-4">
+          <h2 id="navigation-heading" className="section-title">
+            Independent navigation and content
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Keep navigation in place while the content pane scrolls. Tab into the pane to scroll
+            with the keyboard.
+          </p>
+          <div className="grid h-72 grid-cols-[8rem_minmax(0,1fr)] overflow-hidden rounded-xl border">
+            <nav
+              aria-label="Example settings sections"
+              className="flex flex-col gap-2 overflow-auto border-r p-3"
+            >
+              <ButtonLink variant="secondary" href="#gallery-pane-start">
+                Overview
+              </ButtonLink>
+              <ButtonLink variant="ghost" href="#gallery-pane-start">
+                Organization
+              </ButtonLink>
+              <ButtonLink variant="ghost" href="#gallery-pane-start">
+                Structure
+              </ButtonLink>
+            </nav>
+            <ScrollRegion label="Example settings content" className="flex flex-col gap-4 p-4">
+              <h3 id="gallery-pane-start" className="section-title">
+                Workspace overview
+              </h3>
+              {['Organization profile', 'Regional preferences', 'Sites and departments'].map(
+                (title) => (
+                  <Card key={title} className="shrink-0">
+                    <CardHeader>
+                      <CardTitle>
+                        <h4>{title}</h4>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>Example saved configuration. Only this pane scrolls.</CardContent>
+                  </Card>
+                ),
+              )}
+            </ScrollRegion>
+          </div>
+        </section>
+        <section aria-labelledby="loading-heading" className="flex flex-col gap-4">
+          <h2 id="loading-heading" className="section-title">
+            Localized loading
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Keep the surrounding navigation visible. Match skeletons to the pending content; keep
+            existing entries in place during a save or explicit readback.
+          </p>
+          <div className="grid items-start gap-6 lg:grid-cols-3">
+            <ContentLoading label="Loading organization…" shape="form" />
+            <ContentLoading label="Loading structure…" shape="list" />
+            <ContentLoading label="Loading overview…" shape="cards" />
+          </div>
+          <Button disabled className="self-start">
+            <Spinner aria-hidden="true" data-icon="inline-start" />
+            Saving…
+          </Button>
+        </section>
         <section aria-labelledby="select-heading" className="flex flex-col gap-4">
           <h2 id="select-heading" className="section-title">
             Native selection

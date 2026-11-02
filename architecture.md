@@ -259,6 +259,7 @@ The subsequent selected-technology section covers feature dependencies not yet i
 | Validation                 | Zod 4.6.7 in both APIs and DMS/Turnstile contracts                                               | Environment and executable shared payload/response/error validation                                       |
 | Web UI                     | React / React DOM 19.3.1                                                                         | Product presentation and interaction                                                                      |
 | Web design system          | shadcn 4.23.0, Base UI 1.9.0, Tailwind CSS / Vite plugin 4.3.3                                   | Owner-selected preset and source-owned UI; see [web design system](#web-design-system)                    |
+| Web navigation             | React Router 8.5.1                                                                               | Client links/history, persistent workspace layout and shared unsaved-entry blocker                        |
 | Web build                  | Vite 8.3.5; `@vitejs/plugin-react` 6.1.2                                                         | Frontend development server, React integration, production asset build                                    |
 | API generation             | Nest CLI 12.0.11; schematics 12.0.12                                                             | CLI-generated modules/controllers/providers; no hand-built replacement for available scaffolding commands |
 | JavaScript quality         | Biome 2.6.4; dependency-cruiser 18.7.0                                                           | Formatting/lint/import organization and architecture import checks; ESLint/Prettier are not configured    |
@@ -284,7 +285,7 @@ tooling. Authority/BFF and real browser-to-DMS evidence are recorded in progress
 deployment and customer provisioning remain separate. Python currently has no runtime dependencies.
 The S3 SDK, Celery/processing engines, OpenAPI generation, OpenTelemetry and
 React Testing Library remain later additions. The web design system is now selected
-and installed as documented below; no router, client-state/form library, mobile library,
+and installed as documented below; React Router owns web navigation. No client-state/form library, mobile library,
 or Turnstile domain dependency has been added.
 
 ## Turnstile application architecture
@@ -332,9 +333,10 @@ The web manifest pins shadcn 4.23.0 (CLI and theme CSS), `@base-ui/react` 1.9.0,
 `@hugeicons/core-free-icons` 4.4.0, `@hugeicons/react` 1.1.10,
 `class-variance-authority` 0.7.1, `cn` 0.5.1 and `tw-animate-css` 1.4.0.
 Generated primitives live in `src/components/ui`; product compositions live in
-`src/components` and owning features. The shared `ButtonLink` uses a native anchor
-and the Button variant styles, preserving navigation semantics that Base UI's
-non-native Button does not supply. Components use semantic colors and shared
+`src/components` and owning features. The shared `ButtonLink` composes `AppLink` and the Button variant styles, preserving
+anchor semantics that Base UI's non-native Button does not supply. `AppLink` uses
+React Router for same-origin product navigation; auth/identity endpoints, external links,
+modified clicks, downloads and new tabs retain browser navigation. Components use semantic colors and shared
 variants; feature instances use classes for layout. Existing authentication and
 workspace screens consume these primitives without moving business or auth authority
 into presentation. No UI package is shared with contracts, APIs or future mobile.
@@ -543,8 +545,8 @@ existing live session, then current minimal status before rendering business con
 Managers resume Organization while required saved values are missing, otherwise Review;
 ordinary users see Waiting for setup with explicit Retry/Sign out. Known onboarding and
 waiting paths redirect Home only after backend completion. Unknown paths render not-found
-rather than Home. Native links and the browser's navigation provide deep links/Back,
-with session/readiness checks on each load and BFCache restoration. Restoration resets
+rather than Home. React Router links/history provide client navigation and deep links/Back,
+with session/readiness checks on entry, route changes and BFCache restoration. Restoration resets
 transient connection-check state; in-flight status sharing is scoped to the verified user.
 I06 adds the Settings composition below.
 
@@ -599,8 +601,7 @@ submit only their own field with the captured revision, report an unchanged subm
 no change instead of a save, show confirmed saves in place,
 retain drafts through recoverable errors and require deliberate reload/comparison after
 a stale or uncertain write. Cancel returns to the current saved overview; unsaved link
-navigation confirms discard. No browser persistence, new dependency or duplicated record
-is added. Setup overview reads the same canonical snapshot, including saved units and
+navigation confirms discard. No browser persistence or duplicated record is added. Setup overview reads the same canonical snapshot, including saved units and
 durable activation actor/time, and offers a nonblocking structure link for a root-only
 organization. It does not replay activation or track recurring optional tasks.
 
@@ -613,6 +614,45 @@ remain editable; stale/unknown rename or delete outcomes require current saved r
 before another deliberate write. Removed units are never recreated by retry. Completion,
 root identity, audit and backend invariants remain unchanged. People, approval, risk,
 access administration, unit moves and label overrides remain outside this feature.
+
+#### Web navigation and scroll ownership
+
+React Router's browser router separates account/development routes from the shared
+workspace route. Router state updates are synchronous (`useTransitions: false`), so
+frequent navigation and blocker dismissal do not defer subsequent form interactions. `Workspace` retains verified session/readiness state across internal
+navigation; `WorkspaceLayout` owns the header, top navigation, footer and bounded page
+pane. It never keys the shell by URL. Route changes display a localized skeleton while
+the session/readiness check accepts the destination, then change only the active page.
+Existing page state stays mounted and hidden during that check. Settings section
+navigation remains visible while its content pane waits; initial configuration reads
+and retries also keep the Settings layout mounted. Onboarding retains its step navigation
+while canonical reads are pending. Form/list/card skeletons and loading announcements
+live in the shared `content-loading` composition, using the generated shadcn Spinner and
+Skeleton primitives. Spinner SVGs are decorative beside a single status label or action
+name; reduced-motion users receive static loading indicators. Explicit readback and saves
+keep existing entries visible and show a spinner on the active action. Background session
+checks use a small header status rather than replacing loaded content.
+Focus and the existing completed-workspace interval also revalidate without returning to
+the startup skeleton. Onboarding step changes wait for a fresh canonical snapshot;
+late older reads cannot replace a newer revision. APIs remain authoritative on every request.
+
+Settings retains its canonical snapshot and sidebar between sections; only the active
+editor is keyed by pathname so draft/error state cannot leak between organization and
+time-zone forms. Returning from Home reloads Settings through the existing transport.
+The viewport is bounded by `100dvh` and flex `min-height: 0` boundaries. The Settings
+sidebar and content pane scroll independently; at narrow widths sections become a
+horizontal scroll row. Header/top navigation/footer remain outside page scrolling.
+`ScrollRegion` resets the changed content pane and moves keyboard focus there on client
+navigation, while surrounding navigation retains its position. Native overflow supplies
+keyboard, wheel and touch scrolling without a second scroll library.
+
+One `NavigationGuard` aggregates transient dirty editors, including simultaneous unit
+and create forms, through React Router's blocker. Link and Back/Forward navigation ask
+before discarding; cancelling leaves the route and drafts intact. Successful onboarding
+saves clear their own dirty marker before client navigation. External/document link
+confirmation retains its existing behavior. Auth redirects and credential exchanges use
+full document navigation, and browser reset-token capture still precedes router creation.
+No session, configuration or draft is persisted in browser storage.
 
 #### Onboarding validation and bounds
 

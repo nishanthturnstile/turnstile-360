@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Turnstile 360 onboarding redesign concept</title>
+    <style>
+      :root { color: var(--foreground, #25272a); font-family: var(--font-sans, system-ui, sans-serif); line-height: 1.5; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      p { margin: 0 0 16px; }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+      button, input, select { border-radius: var(--radius, 12px); }
+      button { min-height: 40px; padding: 8px 14px; border: 1px solid var(--border, #dedee1); background: var(--secondary, #f1f1f3); color: inherit; font-size: 13px; font-weight: 550; transition: transform 140ms ease-out; }
+      button:active { transform: scale(.98); }
+      button:disabled { opacity: .55; cursor: not-allowed; }
+      button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--ring, #0b7959); outline-offset: 3px; }
+      [hidden] { display: none; }
+      .muted { color: var(--muted-foreground, #696a72); }
+      .meta { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 18px; font-size: 12px; }
+      .meta p { margin: 0; }
+      .meta button { background: transparent; font-size: 12px; min-height: 34px; }
+      .header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; background: var(--card, #f8f8fa); border-radius: var(--radius, 12px); }
+      .brand { display: inline-flex; gap: 8px; align-items: center; font-size: 20px; font-weight: 650; letter-spacing: -.7px; }
+      .brand svg { width: 27px; height: 27px; color: var(--primary, #0b7959); }
+      .brand small { color: var(--primary, #0b7959); font-size: 13px; margin-left: 2px; }
+      .account { display: flex; align-items: center; gap: 14px; font-size: 12px; }
+      .primary { background: var(--primary, #0b7959); color: var(--primary-foreground, #fff); border-color: transparent; }
+      .ghost { background: transparent; border-color: transparent; }
+      .steps { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 26px 0; }
+      .steps button { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; background: transparent; border-color: transparent; padding: 10px 4px; }
+      .steps button[aria-current="step"] { color: var(--primary, #0b7959); }
+      .step-number { display: grid; place-items: center; width: 29px; height: 29px; flex-shrink: 0; border: 1px solid var(--border, #dedee1); border-radius: 50%; font-size: 12px; }
+      [aria-current="step"] .step-number { color: var(--primary-foreground, #fff); background: var(--primary, #0b7959); border-color: transparent; }
+      .steps small { display: block; font-size: 10px; font-weight: 400; color: var(--muted-foreground, #696a72); }
+      .scene { background: var(--card, #f8f8fa); border-radius: var(--radius, 12px); padding: 28px; }
+      .eyebrow { color: var(--muted-foreground, #696a72); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; margin: 0 0 10px; }
+      h1 { margin: 0 0 10px; font-size: clamp(25px, 4.8vw, 32px); line-height: 1.2; letter-spacing: -1px; font-weight: 600; }
+      h2 { margin: 0 0 8px; font-size: 17px; font-weight: 600; }
+      .intro { max-width: 490px; font-size: 14px; }
+      .fields { display: grid; gap: 20px; margin: 28px 0; }
+      label { display: block; font-size: 13px; font-weight: 550; }
+      input, select { display: block; margin: 7px 0 5px; width: 100%; padding: 11px 13px; border: 1px solid var(--border, #dedee1); color: inherit; background: var(--background, #fff); font-size: 14px; }
+      .help { display: block; font-size: 12px; font-weight: 400; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 24px; }
+      .actions .push { margin-left: auto; }
+      .note { margin-top: 18px; font-size: 12px; }
+      .status { font-size: 12px; min-height: 18px; margin: 12px 0 0; }
+      .structure { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); gap: 22px; margin-top: 25px; }
+      .tree { padding: 0; }
+      .node { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid var(--border, #dedee1); border-radius: var(--radius, 12px); padding: 14px; background: var(--background, #fff); overflow-wrap: anywhere; }
+      .node strong, .node small { display: block; }
+      .node strong { font-size: 13px; }
+      .node small { font-size: 11px; }
+      .node button { min-height: 32px; padding: 4px 9px; font-size: 12px; }
+      .children { margin: 0 0 0 18px; padding: 16px 0 0 16px; border-left: 1px solid var(--border, #dedee1); display: grid; gap: 10px; }
+      .child { position: relative; }
+      .child::before { content: ''; position: absolute; left: -17px; top: 28px; width: 16px; border-top: 1px solid var(--border, #dedee1); }
+      .placeholder { padding: 18px 12px; font-size: 12px; border: 1px dashed var(--border, #dedee1); border-radius: var(--radius, 12px); }
+      .editor { background: var(--secondary, #eeeeF1); padding: 16px; border-radius: var(--radius, 12px); }
+      .editor .fields { margin: 16px 0; gap: 14px; }
+      .editor p { font-size: 12px; }
+      .editor button { width: 100%; }
+      .badge { display: inline-block; font-size: 10px; font-weight: 550; padding: 3px 8px; background: var(--secondary, #eeeef1); border-radius: var(--radius, 12px); white-space: nowrap; }
+      .summary { display: grid; gap: 0; margin: 24px 0 0; }
+      .summary > div { display: flex; justify-content: space-between; gap: 16px; padding: 17px 0; border-bottom: 1px solid var(--border, #dedee1); }
+      .summary dt { font-size: 12px; margin-bottom: 5px; }
+      .summary dd { font-size: 14px; font-weight: 550; margin: 0; overflow-wrap: anywhere; }
+      .summary button { align-self: center; }
+      .readiness { font-size: 12px; padding: 16px; border-radius: var(--radius, 12px); background: var(--secondary, #eeeef1); margin-top: 18px; }
+      .dash-layout { display: grid; grid-template-columns: 172px minmax(0, 1fr); gap: 18px; margin-top: 18px; }
+      .dash-layout.collapsed { grid-template-columns: 58px minmax(0, 1fr); }
+      .sidebar { background: var(--card, #f8f8fa); padding: 12px; border-radius: var(--radius, 12px); display: flex; flex-direction: column; gap: 6px; }
+      .sidebar button { text-align: left; border-color: transparent; background: transparent; white-space: nowrap; }
+      .sidebar .active { background: var(--secondary, #eeeef1); }
+      :where(.collapsed) .nav-label, :where(.collapsed) .nav-caption { display: none; }
+      .collapsed .sidebar { padding: 6px; }
+      :where(.collapsed) .sidebar button { padding: 8px; text-align: center; }
+      .nav-caption { padding: 5px 8px 12px; overflow-wrap: anywhere; font-size: 11px; }
+      .sidebar .collapse { margin-top: auto; }
+      .dashboard { padding: 24px; background: var(--card, #f8f8fa); border-radius: var(--radius, 12px); min-width: 0; }
+      .dashboard h1 { font-size: 26px; }
+      .welcome { background: var(--secondary, #eeeef1); padding: 18px; border-radius: var(--radius, 12px); margin-top: 24px; }
+      .welcome p { font-size: 13px; }
+      .footer { margin-top: 20px; font-size: 11px; text-align: center; }
+      @media (max-width: 520px) { .account .email { display: none; } .scene { padding: 20px 16px; } .steps { gap: 3px; } .steps button { gap: 6px; font-size: 11px; } .steps small { font-size: 9px; } .step-number { width: 25px; height: 25px; } .structure { grid-template-columns: 1fr; } .dash-layout { grid-template-columns: 58px minmax(0, 1fr); gap: 10px; } .sidebar { padding: 6px; } .sidebar button { padding: 8px; text-align: center; } .nav-label, .nav-caption { display: none; } .dashboard { padding: 18px 14px; } .actions .push { margin-left: 0; } .header { padding: 12px; } }
+      @media (prefers-reduced-motion: reduce) { button { transition: none; } button:active { transform: none; } }
+    </style>
+  </head>
+  <body>
+    <div class="meta muted"><p>Interactive design concept · fictional data · nothing is saved</p><div><button type="button" id="explore-setup">Setup</button> <button type="button" id="explore-dashboard">Dashboard preview</button></div></div>
+    <header class="header">
+      <div class="brand"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M7 7h18M16 7v18M7 25l9-9 9 9" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg><span>turnstile<small>360</small></span></div>
+      <div class="account"><span class="email muted">admin@example.test</span><button type="button" class="ghost" id="sign-out">Sign out</button></div>
+    </header>
+    <div id="setup">
+      <nav aria-label="Setup progress"><ol class="steps"><li><button type="button" data-step="1" aria-current="step"><span class="step-number">1</span><span>Organization<small>Your business details</small></span></button></li><li><button type="button" data-step="2"><span class="step-number">2</span><span>First unit<small>Where your team works</small></span></button></li><li><button type="button" data-step="3"><span class="step-number">3</span><span>Review<small>Ready to begin</small></span></button></li></ol></nav>
+      <main>
+        <section class="scene" id="step-1" aria-labelledby="title-1">
+          <p class="eyebrow">A place for your organization</p><h1 id="title-1">Let's set up your organization.</h1><p class="intro muted">Start with the essentials. You can build out the rest as your team gets going.</p>
+          <form id="organization-form"><div class="fields"><label for="organization">Organization name<input id="organization" value="Example Industries" required maxlength="160" autocomplete="organization" aria-describedby="organization-help" /><span id="organization-help" class="help muted">Use the name your team knows.</span></label><label for="time-zone">Organization time zone<select id="time-zone" aria-describedby="zone-help"><option value="Asia/Kolkata">Indian Standard Time · Kolkata · UTC+05:30</option><option value="UTC">Coordinated Universal Time · UTC</option></select><span id="zone-help" class="help muted">Used for shared dates and reporting. Suggested for India.</span></label></div><div class="actions"><button type="button" class="ghost" id="save-exit">Save and exit</button><button class="primary push" type="submit">Save and continue →</button></div></form>
+          <p class="note muted">Your administrator account is already set up. No need to enter it again.</p>
+        </section>
+        <section class="scene" id="step-2" hidden aria-labelledby="title-2">
+          <p class="eyebrow">Start with one real place or team</p><h1 id="title-2">Where does your team work?</h1><p class="intro muted">Add your first site or department. Other units and deeper levels can come later.</p>
+          <div class="structure"><div class="tree"><div class="node"><div><strong id="root-name">Example Industries</strong><small class="muted">Organization</small></div><span class="badge">Root</span></div><div class="children" id="unit-tree"></div><p class="note muted" id="unit-count">One first-level unit is required.</p></div><form class="editor" id="unit-form"><h2 id="editor-title">Add first unit</h2><p class="muted" id="parent-label">Under your organization</p><div class="fields"><label for="unit-type">Unit type<select id="unit-type"><option value="site">Site / Plant / Office</option><option value="department">Department</option></select></label><label for="unit-name">Unit name<input id="unit-name" placeholder="e.g. Chennai plant" required maxlength="120" /></label></div><button type="submit" class="primary">Add unit</button><button type="button" class="ghost" id="reset-parent" hidden>Add under organization instead</button></form></div>
+          <div class="actions"><button type="button" class="ghost" data-step="1">← Back</button><button type="button" class="primary push" id="continue-review" disabled>Continue to review →</button></div><p class="note muted">The full editor adds inline rename, expand/collapse, drag-to-move and Move to… controls.</p>
+        </section>
+        <section class="scene" id="step-3" hidden aria-labelledby="title-3">
+          <p class="eyebrow">A quick final look</p><h1 id="title-3">You're ready to get started.</h1><p class="intro muted">Check your details. Everything here can be managed in Settings later.</p>
+          <dl class="summary"><div><div><dt class="muted">Organization</dt><dd id="review-name">Not confirmed yet</dd></div><button type="button" class="ghost" data-step="1">Edit</button></div><div><div><dt class="muted">Time zone</dt><dd id="review-zone">Not confirmed yet</dd></div><button type="button" class="ghost" data-step="1">Edit</button></div><div><div><dt class="muted">First-level units</dt><dd id="review-units">Add your first unit</dd></div><button type="button" class="ghost" data-step="2">Edit</button></div></dl>
+          <div class="readiness" id="ready-message">Confirm your organization and add a first unit before finishing.</div><div class="actions"><button type="button" class="ghost" data-step="2">← Back</button><button type="button" class="primary push" id="finish" disabled>Finish setup →</button></div>
+        </section>
+        <section class="scene" id="paused" hidden><p class="eyebrow">Pick up where you left off</p><h1>Setup paused.</h1><p class="intro muted">The application will retain confirmed saves across sign-in sessions. This concept retains them only while this page stays open.</p><button type="button" class="primary" id="resume">Resume setup →</button></section>
+      </main>
+    </div>
+    <div id="dashboard-view" hidden><div class="dash-layout" id="dash-layout"><nav class="sidebar" aria-label="Application navigation"><p class="nav-caption muted" id="nav-organization">Example Industries</p><button type="button" class="active" aria-label="Dashboard"><span aria-hidden="true">⌂</span><span class="nav-label"> Dashboard</span></button><button type="button" id="settings-preview" aria-label="Settings"><span aria-hidden="true">⚙</span><span class="nav-label"> Settings</span></button><button type="button" class="collapse" id="collapse" aria-expanded="true" aria-label="Collapse navigation"><span aria-hidden="true">⇤</span><span class="nav-label"> Collapse</span></button></nav><main class="dashboard"><p class="eyebrow">Dashboard</p><h1>A good place to begin.</h1><p class="intro muted" id="dashboard-organization">Your organization is ready.</p><div class="welcome"><span class="badge">Essential setup complete</span><h2 style="margin-top: 14px">Build your structure at your pace.</h2><p class="muted">Add departments and other units whenever you're ready. Your organization details are in Settings.</p><button type="button" id="manage-structure">Manage structure →</button></div><p class="note muted">Only delivered features appear here. Your dashboard starts with useful actions and clear empty states.</p></main></div></div>
+    <p class="status muted" id="status" role="status" aria-live="polite"></p><p class="footer muted">Turnstile 360 · Thaarei</p>
+    <script>
+      const byId = (id) => document.getElementById(id);
+      const profile = { name: '', zone: '' };
+      const units = [];
+      let parent = null;
+      let currentStep = 1;
+      function announce(message) { byId('status').textContent = message; }
+      function firstUnits() { return units.filter((unit) => unit.parent === null); }
+      function ready() { return Boolean(profile.name && profile.zone && firstUnits().length); }
+      function showStep(number) {
+        currentStep = number;
+        byId('setup').hidden = false;
+        byId('dashboard-view').hidden = true;
+        byId('paused').hidden = true;
+        for (const step of [1, 2, 3]) byId(`step-${step}`).hidden = step !== number;
+        document.querySelectorAll('.steps button').forEach((button) => {
+          if (Number(button.dataset.step) === number) button.setAttribute('aria-current', 'step');
+          else button.removeAttribute('aria-current');
+        });
+        byId('root-name').textContent = profile.name || byId('organization').value;
+        byId('review-name').textContent = profile.name || 'Not confirmed yet';
+        byId('review-zone').textContent = profile.zone ? (profile.zone === 'UTC' ? 'Coordinated Universal Time · UTC' : 'Indian Standard Time · UTC+05:30') : 'Not confirmed yet';
+        byId('review-units').textContent = firstUnits().map((unit) => unit.name).join(', ') || 'Add your first unit';
+        byId('finish').disabled = !ready();
+        byId('ready-message').textContent = ready() ? '✓ Organization details confirmed · First unit added' : 'Confirm your organization and add a first unit before finishing.';
+        announce(`Step ${number} of 3`);
+      }
+      function setParent(id) {
+        parent = id;
+        const selected = units.find((unit) => unit.id === id);
+        byId('editor-title').textContent = selected ? `Add below ${selected.name}` : units.length ? 'Add another unit' : 'Add first unit';
+        byId('parent-label').textContent = selected ? `Parent: ${selected.name}` : 'Under your organization';
+        byId('unit-type').value = selected ? 'department' : 'site';
+        byId('unit-type').disabled = Boolean(selected);
+        byId('reset-parent').hidden = !selected;
+        byId('unit-name').placeholder = selected ? 'e.g. Production' : 'e.g. Chennai plant';
+      }
+      function drawChildren(id, element) {
+        const children = units.filter((unit) => unit.parent === id);
+        for (const unit of children) {
+          const branch = document.createElement('div');
+          branch.className = 'child';
+          const node = document.createElement('div');
+          node.className = 'node';
+          const text = document.createElement('div');
+          const name = document.createElement('strong');
+          name.textContent = unit.name;
+          const type = document.createElement('small');
+          type.className = 'muted';
+          type.textContent = unit.type === 'site' ? 'Site' : 'Department';
+          text.append(name, type);
+          const add = document.createElement('button');
+          add.type = 'button';
+          add.textContent = '+';
+          add.setAttribute('aria-label', `Add below ${unit.name}`);
+          add.addEventListener('click', () => { setParent(unit.id); byId('unit-name').focus(); });
+          node.append(text, add);
+          branch.append(node);
+          if (units.some((child) => child.parent === unit.id)) {
+            const descendants = document.createElement('div');
+            descendants.className = 'children';
+            drawChildren(unit.id, descendants);
+            branch.append(descendants);
+          }
+          element.append(branch);
+        }
+      }
+      function drawTree() {
+        const tree = byId('unit-tree');
+        tree.replaceChildren();
+        if (!units.length) { const empty = document.createElement('div'); empty.className = 'placeholder muted'; empty.textContent = '+ Your first site or department'; tree.append(empty); }
+        drawChildren(null, tree);
+        byId('continue-review').disabled = !firstUnits().length;
+        byId('unit-count').textContent = firstUnits().length ? '✓ First level added. Deeper levels are optional.' : 'One first-level unit is required.';
+      }
+      function dashboard() {
+        byId('setup').hidden = true;
+        byId('dashboard-view').hidden = false;
+        byId('nav-organization').textContent = profile.name || 'Example Industries';
+        byId('dashboard-organization').textContent = `${profile.name || 'Example Industries'} · Organization overview`;
+      }
+      document.querySelectorAll('[data-step]').forEach((button) => { button.addEventListener('click', () => showStep(Number(button.dataset.step))); });
+      byId('organization-form').addEventListener('submit', (event) => { event.preventDefault(); profile.name = byId('organization').value.trim(); profile.zone = byId('time-zone').value; if (profile.name) showStep(2); });
+      byId('unit-form').addEventListener('submit', (event) => { event.preventDefault(); const name = byId('unit-name').value.trim(); if (!name) return; if (units.some((unit) => unit.parent === parent && unit.name.toLocaleLowerCase() === name.toLocaleLowerCase())) { announce('A unit with this name already exists under this parent.'); return; } units.push({ id: units.length + 1, parent, type: byId('unit-type').value, name }); byId('unit-name').value = ''; drawTree(); setParent(parent); announce('Unit added in the concept. Nothing is persisted.'); });
+      byId('reset-parent').addEventListener('click', () => setParent(null));
+      byId('continue-review').addEventListener('click', () => showStep(3));
+      byId('finish').addEventListener('click', () => { if (ready()) { dashboard(); announce('Setup complete in this concept. The application will wait for server confirmation.'); } });
+      byId('collapse').addEventListener('click', () => { const collapsed = byId('dash-layout').classList.toggle('collapsed'); byId('collapse').setAttribute('aria-expanded', String(!collapsed)); byId('collapse').setAttribute('aria-label', collapsed ? 'Expand navigation' : 'Collapse navigation'); });
+      byId('explore-setup').addEventListener('click', () => showStep(currentStep));
+      byId('explore-dashboard').addEventListener('click', () => { dashboard(); announce('Preview of the completed dashboard layout.'); });
+      byId('manage-structure').addEventListener('click', () => { setParent(null); showStep(2); announce('Concept reuse of the editor. Completed organizations will manage it in Settings.'); });
+      byId('settings-preview').addEventListener('click', () => { showStep(1); announce('Concept reuse of the organization form. Completed organizations will edit it in Settings.'); });
+      byId('save-exit').addEventListener('click', () => { const name = byId('organization').value.trim(); if (name) profile.name = name; profile.zone = byId('time-zone').value; for (const step of [1, 2, 3]) byId(`step-${step}`).hidden = true; byId('paused').hidden = false; announce('Concept paused. No server or browser storage is used.'); });
+      byId('resume').addEventListener('click', () => showStep(!profile.name || !profile.zone ? 1 : !firstUnits().length ? 2 : 3));
+      byId('sign-out').addEventListener('click', () => announce('Illustrative Sign out control. This concept has no account session.'));
+      drawTree();
+    </script>
+  </body>
+</html>

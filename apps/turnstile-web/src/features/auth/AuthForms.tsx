@@ -2,6 +2,8 @@ import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { type FormEvent, useEffect, useState } from 'react';
 import { ButtonLink } from '@/components/button-link';
+import { LoadingStatus } from '@/components/content-loading';
+import { AppLink } from '@/components/navigation';
 import { Notice } from '@/components/notice';
 import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -12,6 +14,7 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from '@/components/ui/input-group';
+import { Spinner } from '@/components/ui/spinner';
 import { authMessage, beginSignIn, identity } from './client';
 
 export function SignIn() {
@@ -20,6 +23,7 @@ export function SignIn() {
   const [password, setPassword] = useState('');
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [resending, setResending] = useState(false);
   const [message, setMessage] = useState('');
   const [unverified, setUnverified] = useState(false);
   useEffect(() => {
@@ -50,6 +54,7 @@ export function SignIn() {
   }
   async function resend() {
     setBusy(true);
+    setResending(true);
     try {
       const result = await identity.sendVerificationEmail({
         email,
@@ -64,6 +69,7 @@ export function SignIn() {
       setMessage('Email delivery is temporarily unavailable. Please try again.');
     } finally {
       setBusy(false);
+      setResending(false);
     }
   }
   return (
@@ -90,9 +96,9 @@ export function SignIn() {
             <Field data-disabled={busy}>
               <div className="flex items-baseline justify-between gap-3">
                 <FieldLabel htmlFor="password">Password</FieldLabel>
-                <a className="text-link text-xs" href="/forgot-password">
+                <AppLink className="text-link text-xs" href="/forgot-password">
                   Forgot password?
-                </a>
+                </AppLink>
               </div>
               <InputGroup data-disabled={busy}>
                 <InputGroupInput
@@ -120,17 +126,19 @@ export function SignIn() {
             {message && <Notice message={message} />}
             {unverified && (
               <Button type="button" variant="link" disabled={busy} onClick={() => void resend()}>
+                {resending && <Spinner aria-hidden="true" data-icon="inline-start" />}
                 Resend verification email
               </Button>
             )}
             <Button size="lg" className="w-full" type="submit" disabled={busy}>
-              {busy ? 'Signing in…' : 'Sign in'}
+              {busy && !resending && <Spinner aria-hidden="true" data-icon="inline-start" />}
+              {busy && !resending ? 'Signing in…' : 'Sign in'}
               <HugeiconsIcon icon={ArrowUpRight01Icon} data-icon="inline-end" aria-hidden="true" />
             </Button>
           </FieldGroup>
         </form>
       ) : (
-        <p role="status">Preparing secure sign-in…</p>
+        <LoadingStatus>Preparing secure sign-in…</LoadingStatus>
       )}
       <p className="footnote">
         Access is provided by your organization.
@@ -194,6 +202,7 @@ export function ForgotPassword() {
             </Field>
             {message && <Notice message={message} />}
             <Button size="lg" className="w-full" disabled={busy} type="submit">
+              {busy && <Spinner aria-hidden="true" data-icon="inline-start" />}
               {busy ? 'Sending…' : 'Send reset link'}
               <HugeiconsIcon icon={ArrowUpRight01Icon} data-icon="inline-end" aria-hidden="true" />
             </Button>
@@ -284,6 +293,7 @@ export function ResetPassword({ token, clear }: { token: string | undefined; cle
             </Field>
             {message && <Notice message={message} />}
             <Button size="lg" className="w-full" type="submit" disabled={busy}>
+              {busy && <Spinner aria-hidden="true" data-icon="inline-start" />}
               {busy ? 'Updating…' : 'Update password'}
               <HugeiconsIcon icon={ArrowUpRight01Icon} data-icon="inline-end" aria-hidden="true" />
             </Button>

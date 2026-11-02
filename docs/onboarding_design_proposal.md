@@ -2,6 +2,17 @@
 
 **Status:** Design source; first-release baseline adopted by ONB-I01. **Date:** 2026-11-01.
 
+**New review, 2026-11-02:** The [redesign recommendation](#redesign-recommendation-2026-11-02)
+and [new interactive concept](presentations/onboarding-redesign-concept.html) address the
+owner's subsequent request for dedicated onboarding, a mandatory first operational unit,
+India-first defaults and a visual structure editor. They are proposed changes, not the
+accepted v1 implementation baseline described below. The accepted specification and
+architecture remain authoritative until the redesign is adopted.
+
+The separate [redesign implementation plan](onboarding_redesign_implementation_plan.md)
+sequences ONB-RD01–08, including affected components, acceptance, verification and
+existing-installation compatibility. It does not replace the completed v1 delivery history.
+
 Recommend a short, resumable setup for the installation's existing organization:
 confirm its name and time zone, optionally add operating units, then review and
 activate the workspace. Create the organization root automatically. Require
@@ -468,3 +479,211 @@ relationship between approved business revisions and DMS binary versions. The
 Version 1 RACI display does not settle those choices. Neither a complete staff
 directory nor every Version 1 configuration should become a prerequisite while
 those feature requirements are being agreed.
+
+## Redesign recommendation, 2026-11-02
+
+**Status:** Proposed for product/design review; planning only. This recommendation
+responds to the owner's new onboarding brief. It supersedes the earlier optional-first-unit
+recommendation for this discussion, without silently rewriting the accepted ONB-R01–12
+requirements or claiming the redesign is implemented. Actual work and verification are in
+[progress](../IN_PROGRESS.md).
+
+### Evidence and the change being proposed
+
+The [recorded source inspection](onboarding_v1_discovery.md#organization-structure), dated
+2026-11-01, documents five node levels, 23 unit types, conflicting five/nine-level Settings
+labels and an Employee tree level alongside separate person-to-unit mapping. This is
+observed UI evidence; source writes, storage and fresh-install behavior were not verified.
+The source application was not newly logged into for this planning review.
+
+The current repository has more of the onboarding foundation than the owner's description
+suggests. `App.tsx` reads live session and setup status before business content, hides
+Home/Settings navigation while setup is incomplete, and displays `OnboardingJourney`.
+The backend also enforces readiness. Organization, optional Structure and Review are
+already separate destinations. The remaining experience uses the common workspace shell,
+shared Settings-style editors, technical checklist wording and a flat indented structure
+list. A full dedicated setup layout and a visual editor are worthwhile changes; retain
+the existing saved-progress, conflict, retry and permission protections.
+
+| Before                                                                  | After                                                                                                        | Why                                                                                               |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| Setup uses the common workspace layout and shared administrative forms. | A dedicated setup layout with brand, signed-in identity, Sign out and a three-step progress indicator.       | Establish a focused first-use journey before mounting dashboard navigation/content.               |
+| Root-only activation is valid; Structure is optional.                   | Require at least one real operational unit immediately below the organization. Deeper units remain optional. | Match the owner's new first-level requirement without demanding a complete hierarchy.             |
+| The initial time-zone field is empty; the contract lists Asia/Calcutta. | Suggest Indian Standard Time with explicit confirmation and compatible Kolkata/Calcutta handling.            | Reduce effort for the intended market without breaking validation or overwriting existing values. |
+| A flat unit list and a generic type/name/parent form.                   | Connected cards, contextual addition, inline rename, selected-node details, and accessible move actions.     | Make relationships visible and remove unnecessary parent selection.                               |
+| Review lists internal root and permission checks.                       | Review the organization, regional setting and saved first units; label the primary action Finish setup.      | Ask the customer to confirm business information while the server checks technical prerequisites. |
+| Completed workspace has horizontal Home/Settings navigation.            | Persistent collapsible left navigation and an independently scrolling main content region.                   | Give the content most of the available width and establish the requested application layout.      |
+
+### Organization, workspace and registration
+
+An **organization** is the customer's business identity and operational structure: its
+display name, shared regional default and units. **Workspace** describes that organization's
+Turnstile 360 working environment: dashboard, available features and settings. Under the
+accepted [customer deployment model](../architecture.md#customer-deployment-and-application-model),
+there is one installed customer context. These terms do not mean two separately created
+business entities, two names to enter, or a selector for multiple customer accounts.
+
+Use Organization in customer-facing setup and Settings. Use Dashboard/Home for the main
+landing destination. Workspace may remain a descriptive term in supporting copy; do not
+ask for a workspace name or workspace activation setting. “Register your organization”
+means completing the business profile of the already provisioned installation. This is
+an authenticated setup journey resembling signup, with account creation remaining in
+the existing controlled provisioning process.
+
+The scenario assumes migrations, installation initialization, account verification,
+product access and explicit configuration-management permission have been provisioned.
+A bootstrapped email/account alone is not sufficient. A missing installation is an
+operator fault; an account without setup permission must never become administrator
+because it signed in first.
+
+### Inputs and contextual information
+
+| Information                                                                 | Ask during onboarding?           | Proposed treatment                                                                                                              |
+| --------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Organization display name                                                   | Required                         | One familiar business name. Renaming preserves installed identity and the canonical root.                                       |
+| Organization time zone                                                      | Required, preselected suggestion | Indian Standard Time · Kolkata · UTC+05:30; Save and continue explicitly confirms it. Existing saved values take precedence.    |
+| First operational unit name                                                 | Required                         | A real first site/plant, office location or department; no fictional Default Plant.                                             |
+| First unit type                                                             | Required choice, owner confirmed | Site (plant, office or other location) or Department, using the existing types. The owner confirmed both choices on 2026-11-02. |
+| Parent and numerical level                                                  | No                               | Infer the organization as the first unit's parent. Infer deeper placement from the selected card.                               |
+| Signed-in administrator                                                     | Read-only context                | Show the verified account email; do not request it again.                                                                       |
+| Unit summary and setup completion                                           | Read-only on Review              | Show saved information. Completion time/actor appear only after success, in the later setup summary.                            |
+| Root ID, installation IDs and configuration grants                          | No ordinary form fields          | Check internally; show safe diagnostic details only where support needs them.                                                   |
+| Deeper sites/departments                                                    | Optional                         | Allow addition now or through the same editor in Settings after setup.                                                          |
+| GST/PAN, legal/address/industry/size, logo, owner contacts, effective dates | No initial requirement           | Collect only when an implemented business feature needs them. Avoid onboarding-only upload/tax/HR scope.                        |
+| Invitations, memberships, roles, RACI, approval and module configuration    | Later or feature-specific        | Keep people outside the unit tree. Feature-specific prerequisites belong with their feature.                                    |
+| SMTP, OAuth, DMS enrollment, infrastructure and service credentials         | Operator-owned                   | Reuse private runbooks. Setup completion cannot configure infrastructure.                                                       |
+
+“First level” here means **at least one direct child of the organization root**, not the
+automatically created root itself and not all sites the customer will ever have. The
+owner confirmed that either a Site or a Department qualifies, so office-only customers
+can complete setup. Deeper levels are optional.
+
+### India-first time-zone decision
+
+Recommend **Asia/Kolkata** as the business-facing India default. Render the full label,
+not the ambiguous abbreviation IST alone. Keep UTC and other supported zones available.
+Preference order is an existing saved zone, otherwise the explicit product suggestion
+for India. Never overwrite saved UTC or choose a different default from the operator's
+browser, server location or IP address. Persist the suggestion only on an explicit save.
+
+The organization zone determines business-day boundaries and future scheduling/display
+defaults. Preserve UTC instants for events and audit/API timestamps; keep date-only
+business values as dates. Changing the organization's zone must not rewrite historical
+event instants. PostgreSQL's time-zone-aware timestamps store instants internally in
+UTC, so an Indian business default is compatible with UTC storage
+([PostgreSQL date/time documentation](https://www.postgresql.org/docs/current/datatype-datetime.html)).
+
+Current compatibility issue: the generated shared list contains `Asia/Calcutta`, not
+`Asia/Kolkata`, and validation requires exact membership. IANA identifies Calcutta as
+a compatibility link to Kolkata
+([IANA backward links](https://data.iana.org/time-zones/tzdb/backward)). During adoption,
+choose and document a versioned compatible contract change that accepts Kolkata and
+retains existing Calcutta records/clients. Update the generator, provenance, executable
+validation and generated OpenAPI together. Until then, a presentational India label must
+submit the currently supported identifier; changing only the default string would fail.
+Do not bulk-rewrite existing saved zones as part of this UI redesign.
+
+### Three screens before the dashboard
+
+1. **Organization — “Let's set up your organization.”** A focused form asks for name
+   and time zone, with one sentence explaining the shared time zone. Show account identity
+   as context. Save and continue commits both values. Save and exit preserves valid saved
+   progress and offers Resume/Sign out. Do not create an extra welcome-only page.
+2. **First unit — “Where does your team work?”** Show the named organization card and
+   an attached Add first unit action. Choose Site/Department and enter a name; parent is
+   implicit. Save the real unit, then enable Continue. Offer Add another unit and Add below
+   for optional expansion. Make “You can add departments and other levels later” clear.
+   There is no skip that bypasses the required first unit.
+3. **Review — “You're ready to get started.”** Summarize saved organization, full time-zone
+   label and first units, with Edit actions returning to the correct step. “Finish setup”
+   is the sole main action. Backend checks saved business requirements, root and live
+   permission atomically; only confirmed completion opens the dashboard. No editable
+   activation switch, root checkbox or request to confirm internal permissions.
+
+Before the first readiness result, render neutral setup/loading content. Incomplete
+administrators receive this setup layout even when opening a direct dashboard/Settings
+URL. Other permitted users receive the existing waiting experience. Retain backend
+readiness enforcement for direct API calls and future native clients. Resume the earliest
+unmet required step: Organization, then First unit, otherwise Review. Back navigation
+retains committed values; clearly distinguish unsaved drafts from confirmed saves.
+
+### Visual organization editor
+
+Use a readable connected tree of cards in a bounded content area, with expand/collapse
+and a compact outline for larger structures. The named organization root is anchored.
+Selecting a node reveals contextual actions and a detail inspector on wide screens;
+on narrow screens use an inline editor or accessible sheet. This optional inspector is
+an editing aid, not the onboarding navigation or a return to a Settings side panel.
+
+Each card shows name and meaningful type. Add below derives the parent and valid child
+types, inline rename has explicit Save/Cancel, and removal names the unit and explains
+any restriction. Search includes ancestry so identical names under different parents
+remain understandable. Do not ask customers to coordinate a separate Level 1–9 label
+form, a second unit taxonomy and a person tree.
+
+Support drag-to-move **and** a visible Move to… action with a searchable destination and
+confirmation of the old/new paths. The latter must work with clicks/taps and keyboard;
+keyboard drag alone does not satisfy the single-pointer alternative described in
+[WCAG 2.2 dragging guidance](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements).
+Highlight only valid destinations. Preserve root identity, prohibit cycles and invalid
+parents/depth, and validate sibling naming conflicts and implemented references on the
+backend. A failed or stale move restores the canonical tree and preserves the intended
+destination for explicit reconciliation. Node identity/type and referenced records must
+survive a move. Movement never silently grants permissions.
+
+Moving a unit is a new business operation: current parent/type are immutable and there
+is no move endpoint. Specify a transactional revision-checked, audited move operation
+before exposing this control. Dragging changes parent relationships; arbitrary sibling
+sorting is a separate scope choice because current ordering is deterministic by name.
+Do not imply card coordinates or browser-only sorting are persisted structure.
+
+Initially retain Site and Department, their permitted relationships and the existing
+[validation/bounds](../architecture.md#onboarding-validation-and-bounds). A Department
+can contain another Department; named numerical levels are unnecessary. Richer unit
+types, terminology overrides and people assignments need separate confirmed use cases.
+
+Apply the current design system's typography, emerald primary actions, semantic surfaces
+and visible focus. Use subtle, purposeful transitions for added/moved nodes and step
+changes; respect reduced motion and keep repeated keyboard interactions immediate.
+Keep actions obvious without requiring hover, precision dragging or a large canvas.
+
+### Dashboard and ongoing Settings
+
+After successful completion mount the persistent application layout: slim brand/account
+header, collapsible left application navigation, and independently scrolling main content.
+Use approximately 224–240px expanded and 56–64px collapsed navigation. On common desktop
+widths the main content receives about 80–90% of the space with navigation expanded,
+and more when collapsed. Adapt at smaller widths instead of enforcing a percentage that
+makes navigation unusable. Tablet/phone navigation opens as an accessible overlay.
+
+Start with actual delivered destinations: Dashboard/Home and authorized Settings.
+Add business modules only when implemented and permitted. First-use content should use
+honest empty states and relevant available actions; fabricated KPI charts and inoperative
+module links would misrepresent product capability. Organization settings contain profile,
+regional default and the shared structure editor. Nested Settings sections should remain
+compact so a second wide sidebar does not consume the content region.
+
+### Implementation sequence and acceptance
+
+| Order                                      | Reviewable implementation outcome                                                                                                                                                                                                                  | Required evidence                                                                                                                                                     |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Adopt product decisions                 | Amend ONB-R03/04/10–12 and the release/acceptance journeys for mandatory first units, resume behavior and existing-installation handling; update architecture and the delivery plan together. Decide first-unit types and time-zone compatibility. | Accepted requirement/contract change map, with no claim that a planning entry authorizes code.                                                                        |
+| 2. Extend backend readiness/contracts      | Version the first-unit requirement and time-zone support; keep server completion authoritative and reuse canonical organization records.                                                                                                           | Direct HTTP activation without a unit fails; saved valid unit allows activation; partial/resume/conflict/concurrent completion remain correct.                        |
+| 3. Deliver dedicated setup and visual CRUD | New setup layout, focused forms and connected editor with contextual add, rename/delete, Review and waiting/recovery states.                                                                                                                       | Fresh and resumed real-browser journeys; no dashboard/sidebar flash; touch/keyboard/narrow/reduced-motion checks.                                                     |
+| 4. Deliver moves and completed layout      | Backend move capability with drag and Move to… UI; persistent collapsible dashboard navigation and the same ongoing structure editor.                                                                                                              | Integration coverage for cycle/depth/name/reference/revision failures and move integrity; browser coverage for click/keyboard alternatives and independent scrolling. |
+| 5. Verify coordinated release              | Run workspace-required check/build/test/integration, focused browser journeys and local runtime verification.                                                                                                                                      | Separate static/build evidence, container-backed evidence and actual deployed/customer acceptance.                                                                    |
+
+Decide compatibility before implementation. Recommended policy: new/incomplete setups
+adopt the new requirement through an explicit versioned upgrade; **already completed**
+root-only installations retain completion and get a non-blocking request to add a real
+unit. Never invent a site, reset completion or overwrite existing time-zone choices.
+If the business instead requires retroactive blocking, approve and document that migration
+as a separate product decision. Under the new requirement, prevent deletion/movement
+that would remove the last qualifying direct child in an installation using the new
+policy. Unrelated edits and feature outages must not reopen onboarding.
+
+The [interactive redesign concept](presentations/onboarding-redesign-concept.html) uses
+fictional data and transient memory only. It illustrates the three-step flow, contextual
+unit creation and dashboard collapse; it does not implement authentication, persistence,
+drag/move semantics, services or the complete production editor. No new dependencies,
+database schema, runtime behavior or deployment changes are included in this planning work.

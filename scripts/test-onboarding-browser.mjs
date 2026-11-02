@@ -78,8 +78,10 @@ export async function testOnboarding({
     await page.getByRole('link', { name: 'Resume setup', exact: true }).click();
     await heading(page, 'Tell us about your organization');
     await page.getByLabel('Organization name', { exact: true }).fill('Unsaved draft');
-    page.once('dialog', (dialog) => dialog.dismiss());
-    await page.getByRole('link', { name: 'Cancel', exact: true }).click();
+    const rejectedCancel = page.waitForEvent('dialog');
+    const cancel = page.getByRole('link', { name: 'Cancel', exact: true }).click();
+    await (await rejectedCancel).dismiss();
+    await cancel;
     assert.equal(
       await page.getByLabel('Organization name', { exact: true }).inputValue(),
       'Unsaved draft',
@@ -497,6 +499,21 @@ export async function testOnboarding({
     console.log(
       'Onboarding browser journey passed: ordinary waiting, partial save/exit/resume across restart, shared administrators, revision reconciliation, retained optional units, exact-key lost-response retry, root-only activation/readback, logout fencing, deep links/Back, no implicit POST retries and 320px/reduced-motion layouts.',
     );
+  } catch (error) {
+    console.error(
+      'Onboarding failure location:',
+      error instanceof Error
+        ? error.stack?.match(/test-onboarding-browser\.mjs:\d+:\d+/g)
+        : 'unknown',
+    );
+    await page.screenshot({ path: '/tmp/turnstile-web-nav-onboarding-failure.png' });
+    await waiting.screenshot({ path: '/tmp/turnstile-web-nav-waiting-failure.png' });
+    console.error(
+      'Waiting fixture status:',
+      new URL(waiting.url()).pathname,
+      await waiting.getByRole('heading').allTextContents(),
+    );
+    throw error;
   } finally {
     await ordinary.close();
   }
