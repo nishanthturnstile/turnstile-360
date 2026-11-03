@@ -9,7 +9,7 @@ and processing coordination are implemented in their respective modules as work 
 `GET /v1` returns application identity. `GET /health/live` reports process liveness;
 it does not imply database, storage, scanner, or processing readiness.
 
-Run `pnpm dev:dms` from the repository root. The default port is 3001. See the root
+Run `docker compose up --build --watch` from the repository root. The private container port is 3001. See the root
 README and workspace implementation plan for setup, checks, and capability status.
 
 This is proprietary Thaarei software under the root LICENSE.
@@ -37,3 +37,6 @@ machine clients and manages enrollment keys/status/ceilings. See the
 [machine boundary](../../architecture.md#dms-machine-authorization-and-guarded-enrollment)
 and [OpenAPI contract](../../docs/api/dms-auth.openapi.json). Apply the committed DMS
 migrations before starting the updated runtime. No real installation is provisioned by tests.
+
+Local host testing uses fixed port 23601. Browser authentication uses
+http://localhost:23600. See the [reserved ports](../../architecture.md#reserved-local-ports).

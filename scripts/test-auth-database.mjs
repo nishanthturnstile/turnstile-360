@@ -8,7 +8,13 @@ import { parse } from 'yaml';
 import { provisionDatabase } from './provision-auth-database.mjs';
 
 function run(command, args, env = process.env) {
-  const result = spawnSync(command, args, { env, encoding: 'utf8', timeout: 120000 });
+  const result = spawnSync(command, args, {
+    env,
+    encoding: 'utf8',
+    // The expanded browser scenarios deliberately respect the real authority's
+    // request windows; database-only commands retain the shorter deadline.
+    timeout: args[0] === 'scripts/test-auth-browser.mjs' ? 240000 : 120000,
+  });
   assert.equal(result.status, 0, `${command} failed: ${result.stdout}\n${result.stderr}`);
   return result.stdout.trim();
 }
@@ -72,6 +78,7 @@ try {
     ...process.env,
     NODE_ENV: 'test',
     AUTH_PROFILE: 'test',
+    ONBOARDING_ARCHIVE_CONTAINER: name,
     PROVISION_DATABASE_URL: `postgresql://postgres:${password}@127.0.0.1:${port}/auth_fixture`,
     INSTALLATION_TENANT_ID: randomUUID(),
     INSTALLATION_CUSTOMER_KEY: 'auth-fixture',
@@ -141,7 +148,18 @@ try {
       await pool.end();
     }
   }
-  if (browser) console.log(run('node', ['scripts/test-auth-browser.mjs'], env));
+  if (browser)
+    console.log(
+      run(
+        'node',
+        [
+          'scripts/test-auth-browser.mjs',
+          ...(process.argv.includes('--structured-onboarding') ? ['--structured-onboarding'] : []),
+          ...(process.argv.includes('--structure-editor') ? ['--structure-editor'] : []),
+        ],
+        env,
+      ),
+    );
   else
     for (const application of ['dms-api', 'turnstile-api']) {
       console.log(run('pnpm', ['--filter', `@thaarei/${application}`, 'test:database'], env));

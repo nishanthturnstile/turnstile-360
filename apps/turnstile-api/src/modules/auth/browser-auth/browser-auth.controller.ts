@@ -9,6 +9,7 @@ import {
   UseFilters,
 } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { WorkspaceReadinessExempt } from '../../../infrastructure/workspace-access.js';
 import { PublicEndpoint, RequirePermissions } from '../user-session/access-policy.js';
 import { AuthExceptionFilter } from './auth-errors.js';
 import { BrowserAuthService } from './browser-auth.service.js';
@@ -52,6 +53,7 @@ export class BrowserAuthController {
   }
 
   @Get('session')
+  @WorkspaceReadinessExempt()
   @RequirePermissions('turnstile:access')
   session(@Req() request: FastifyRequest) {
     return this.auth.session(request);

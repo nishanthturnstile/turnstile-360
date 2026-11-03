@@ -1,0 +1,17 @@
+FROM node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20
+ENV TURBO_TELEMETRY_DISABLED=1
+RUN npm install --global pnpm@12.16.1
+WORKDIR /workspace
+RUN chown node:node /workspace
+USER node
+COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY --chown=node:node patches/ ./patches/
+COPY --chown=node:node apps/dms-processing/package.json ./apps/dms-processing/package.json
+COPY --chown=node:node apps/dms-api/package.json ./apps/dms-api/package.json
+COPY --chown=node:node apps/turnstile-api/package.json ./apps/turnstile-api/package.json
+COPY --chown=node:node apps/turnstile-web/package.json ./apps/turnstile-web/package.json
+COPY --chown=node:node packages/dms-contracts/package.json ./packages/dms-contracts/package.json
+COPY --chown=node:node packages/dms-client/package.json ./packages/dms-client/package.json
+COPY --chown=node:node packages/turnstile-contracts/package.json ./packages/turnstile-contracts/package.json
+RUN --mount=type=cache,target=/home/node/.local/share/pnpm/store,uid=1000,gid=1000 pnpm install --frozen-lockfile
+COPY --chown=node:node . .

@@ -10,8 +10,8 @@ services:
       MP_QUIET: "true"
       MP_MAX_MESSAGE_SIZE: "1"
     ports:
-      - 127.0.0.1:1025:1025
-      - 127.0.0.1:8025:8025
+      - 127.0.0.1:23604:1025
+      - 127.0.0.1:23605:8025
     healthcheck:
       test: [CMD, /mailpit, readyz]
       interval: 10s
@@ -25,7 +25,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env}
       POSTGRES_DB: postgres
     ports:
-      - 127.0.0.1:5432:5432
+      - 127.0.0.1:23603:5432
     volumes:
       - postgres-data:/var/lib/postgresql
     healthcheck:
@@ -41,8 +41,8 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in the root .env}
       RABBITMQ_DEFAULT_VHOST: dms
     ports:
-      - 127.0.0.1:5672:5672
-      - 127.0.0.1:15672:15672
+      - 127.0.0.1:23606:5672
+      - 127.0.0.1:23607:15672
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
@@ -55,7 +55,7 @@ services:
     image: chrislusf/seaweedfs:4.51@sha256:f7a49e3f3972ebed5be2ed4befa4a0c68eb7bdddba6e692d42729ceb545134b8
     command: [mini, -dir=/data]
     ports:
-      - 127.0.0.1:8333:8333
+      - 127.0.0.1:23608:8333
     volumes:
       - seaweedfs-data:/data
 

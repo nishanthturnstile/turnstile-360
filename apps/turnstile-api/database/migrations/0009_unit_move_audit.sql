@@ -1,0 +1,2 @@
+ALTER TABLE "turnstile"."configuration_audit" DROP CONSTRAINT "audit_action";--> statement-breakpoint
+ALTER TABLE "turnstile"."configuration_audit" ADD CONSTRAINT "audit_action" CHECK ("turnstile"."configuration_audit"."action" IN ('initialized', 'profile_saved', 'unit_created', 'unit_renamed', 'unit_moved', 'unit_deleted', 'setup_completed', 'access_changed'));

@@ -8,14 +8,21 @@ authentication screens use the supported Better Auth client and signed OAuth con
 Login, verification resend, recovery/reset, expiry/access/outage states and an authenticated
 entry are implemented. Business screens remain separate scope.
 
-Run `pnpm dev:turnstile` from the repository root. Vite uses port 5173 and proxies `/api`
+Run `docker compose up --build --watch` from the repository root for the complete local stack. The browser uses http://localhost:23600; Vite listens on private container port 5173 and proxies `/api`
 to the local Turnstile backend on port 3002. `/identity` and the required root OAuth
 metadata path proxy to DMS on port 3001. Use `localhost`
-consistently and `pnpm dev:auth` for the combined development workflow. Production serves built assets through
+consistently and `pnpm dev` as an alias for the same Compose workflow. Production serves built assets through
 Nginx inside the Dokploy-managed frontend container, with Traefik routing `/api` to the
-backend. VITE_* settings are public build values.
+backend. API requests use the current origin; no frontend `.env` or API-base build
+argument is required. Any future VITE_* settings are public build values.
 
-This is proprietary Thaarei software under the root LICENSE.
+The shared [design system](../../docs/design-system.md) supplies the preset, semantic
+tokens and reusable UI. Designers and developers can review the actual components at
+http://localhost:23600/design-system in development, including light/dark states. The
+catalogue is excluded from production. Follow the guide when adding/updating primitives.
+
+This is proprietary Thaarei software under the root LICENSE. Bundled third-party
+component, font and icon notices ship in `public/third-party-notices.txt`.
 
 Sessions/CSRF stay in memory; HttpOnly cookies and the BFF own authorization. Passwords go
 only to the authority, reset tokens are removed from the address bar before rendering,

@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-10-31
+Last updated: 2026-11-03
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -22,7 +22,40 @@ use a separate machine token over real HTTP. Login/recovery/reset and safe sessi
 bounded security telemetry and Mailpit development/pilot configuration are implemented.
 Real client provisioning/enrollment,
 document/processing/business capabilities and source/data migration remain incomplete.
-Only disposable fixture provisioning was performed; no real customer was onboarded.
+A persistent local-development authentication installation has now been provisioned and
+passes live login/recovery/logout and machine-enrollment/capability checks. Earlier feature
+verification used disposable fixtures; no real customer has been onboarded.
+The web design system and shared designer/developer guide are implemented and locally
+verified; review the live development catalogue at /design-system.
+The owner-prioritized onboarding discovery and design proposal informed the accepted
+[onboarding specification](docs/onboarding_specification.md) established in ONB-I01.
+The [implementation plan](docs/onboarding_implementation_plan.md) defines delivery,
+acceptance, verification and upgrade sequencing. ONB-I02–03 implement executable shared
+contracts/generated documentation, product persistence composition and canonical audited
+organization/setup operations with guarded HTTP and private maintenance commands.
+ONB-I04 adds protected private manager grants and backend readiness enforcement.
+ONB-I05 adds guarded resumable onboarding and ordinary waiting with typed transport.
+ONB-I06 adds ongoing canonical Settings; ONB-I07 complete-chain verification and ONB-I08
+upgrade/recovery implementation with the selected existing local release are complete.
+Production/customer target acceptance remains separate. Document Approval
+still requires separate product agreement.
+ONB-RD01 adopts the authorized redesign's versioned first-unit, move and layout baseline;
+ONB-RD02 implements compatible v1/v2 contracts, exact Kolkata/Calcutta support and the
+adopted move payload/generated API documentation. ONB-RD03 adds v2 initialization,
+incomplete-only v1 upgrades, canonical first-unit readiness and completion/deletion
+protection while retaining completed v1. ONB-RD04 implements guarded transactional
+subtree moves with atomic audit/revision and canonical ancestry. ONB-RD05 adds dedicated
+setup/waiting layouts, saved-gap Organization/First unit/Review resume, explicit India
+confirmation and guarded Finish setup with readback. ONB-RD06 adds the shared visual
+structure editor, contextual CRUD/search and confirmed keyboard/pointer/touch moves.
+ONB-RD07 adds completed-workspace collapsible navigation, an accessible mobile overlay,
+compact Settings sections, available dashboard actions and the optional legacy unit prompt.
+ONB-RD08 completes exact image/archive verification and the selected local release of the
+[redesign plan](docs/onboarding_redesign_implementation_plan.md). The existing local
+installation is migrated through 0010, retains completed v1 and all saved configuration,
+and passes real administrator Settings/connection/logout/relogin checks. Fresh v2 and
+upgrade variants are verified in isolated fixtures. Production/customer DNS/TLS, external
+email and rollout acceptance remain separate.
 The technical design is maintained in [architecture.md](architecture.md).
 
 ## Updating this file
@@ -45,6 +78,1594 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
+ONB-STRUCTURE-PR — **In progress** (owner: Codex, 2026-11-03). Scope: review and commit
+the authorized organization-structure changes, create/review a PR, resolve CI issues and
+merge to main after passing checks. Reviewing the full uncommitted change set and remote
+branch state. The new UI review found no blocking defect in canonical command fencing,
+retained drafts/readback, gesture ownership, outline rendering or zoom cadence. The main
+branch lacks the previously reviewed onboarding baseline from PR #3; this promotion
+includes that baseline and explicitly identifies it in the PR. Created the isolated
+feature branch; local check/build/unit/integration and visual-structure evidence remains
+passing from ONB-CHART-ZOOM-STEPS, with the earlier full auth/onboarding suites recorded
+above. Next: commit, reconcile main ancestry and create/review the PR, then gate merge on
+remote CI. Preserve all prior feature records and unrelated work.
+
+ONB-CHART-ZOOM-STEPS — **Completed** (owner: Codex, 2026-11-03). Scope: replace
+oversensitive modifier-wheel chart zoom with the owner's requested 10-percentage-point
+steps, shared with buttons/keyboard, while preserving pointer anchoring and touch pinch.
+Implemented one shared additive step for modifier-wheel, buttons and keyboard. Large wheel
+events produce at most one step; small trackpad deltas accumulate with pause/reversal/
+modifier-release resets. Direct touch pinch and pointer anchoring remain intact. Added
+three focused regressions for arbitrary Fit percentages, large notches and smooth input;
+all 13 web tests pass. Verification (2026-11-03): `pnpm check`, `pnpm build`, `pnpm test`
+and `pnpm test:integration` pass, including 19 Fastify integration and 91 real PostgreSQL
+checks. The isolated visual-structure HTTPS suite passes exact 10-point large Ctrl-wheel,
+Cmd-wheel, button and keyboard assertions, pointer anchoring and existing pan/pinch/move/
+draft/recovery regressions. The running development web source has the stepped handler
+and no exponential wheel calculation; its temporary watcher is stopped. Logs:
+`/tmp/turnstile-zoom-steps-*.log`. All prior uncommitted work is preserved; no installation
+data was changed. No remaining work/blockers in scope; no commit, push or production deploy.
+
+ONB-CHART-NAVIGATION — **Completed** (owner: Codex, 2026-11-03). Scope: design and
+implement whiteboard-style chart pan/zoom with discoverable controls and keyboard/touch
+alternatives. Preserve automatic hierarchy layout, confirmed unit moves, outline behavior
+and all editing/recovery state. Implemented a separate transient camera presentation with
+blank/Hand/Space/middle drag, wheel pan, anchored modifier-wheel zoom, real touch pinch,
+focused keyboard controls and an always-available zoom/reset/Fit bar. Pointer capture,
+extra-touch guards and blur/Escape cleanup separate navigation from confirmed unit moves.
+Added camera geometry tests and runtime assertions of zero navigation writes; updated the
+wide navigation gallery example and accepted design references. Runtime coverage caught
+filtered cards falling outside the camera and a reused camera transform scaling the
+outline. Search now fits its results; camera/native-list render paths have separate keys,
+and no-result messaging remains fixed and clickable after gestures.
+
+Verification (2026-11-03): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass, including ten web regressions, 19 Fastify integration and
+91 real PostgreSQL checks. Auth/Settings and structured-onboarding HTTPS suites pass.
+The final camera/outline/move journey passes, including explicit empty-filter clearing
+after a gesture, zero navigation writes and all existing draft/readback protections.
+Shared preview review confirms light/
+dark controls, active Hand mode, wide-chart Fit, proper outline scale and controls bounded
+at 320px. The development web files are synchronized and its temporary watcher is stopped;
+no installation data was changed. Logs: `/tmp/turnstile-navigation-*.log`. The existing
+Vite bundle-size advisory remains. No dependencies, contracts, schemas or deployment
+topology changed. All existing uncommitted work is preserved. No remaining work/blockers
+in this scope; no commit, push or production deployment.
+
+ONB-OUTLINE-UX — **Completed** (owner: Codex, 2026-11-03). Scope: improve the
+Compact outline's density, hierarchy, alignment and actions while preserving the accepted
+connected chart and canonical editing/recovery behavior. Implemented a single list with
+52–56px rows, ancestry guides/leading chevrons, aligned types/direct-child counts and
+horizontal actions. Narrow lists stack type below the name; long/deep identities retain
+full named paths and bounded canvas scrolling; a separate totals footer never overlays
+rows. Added four inert outline gallery fixtures and density/alignment/keyboard browser
+regressions. Corrected a Tailwind display-layer conflict caught by runtime coverage.
+
+Verification (2026-11-03): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass, including seven web regressions, 19 Fastify integration
+checks and 91 real PostgreSQL checks. Final visual-structure and structured-onboarding
+HTTPS browser suites pass. Shared preview review covers light/dark, long names, canonical
+depth eight, full selected paths and 320px overflow/footer separation. The development
+web service has the current files and remains healthy; no installation data was written.
+The auth/Settings suite passes on retry after a disposable Mailpit startup failure;
+all three isolated HTTPS browser suites pass, including retained drafts, recovery,
+keyboard selection and confirmed mouse/touch moves. Logs: `/tmp/turnstile-outline-*.log`.
+The existing Vite bundle-size advisory remains. All prior uncommitted changes are
+preserved. No remaining work/blocker in this scope; no commit, push or production deploy.
+
+ONB-STRUCTURE-POLISH — **Completed** (owner: Codex, 2026-11-02). Scope: owner feedback
+on the new connected chart: use the available Settings workspace for the chart, consolidate
+operations into one collapsible floating panel, remove the annotated persistent generic
+success banner and polish duplicated controls/spacing. Preserve prior uncommitted work,
+canonical mutations, accessible feedback, drafts, recovery and onboarding behavior.
+Implemented the viewport-filling Settings canvas, compact heading/navigation and one
+collapsible floating operations panel. Removed the repeated map title/global Add button,
+permanent side column and guidance below the chart. Card + shortcuts open the same create
+form with inferred parent; Settings supports an explicit valid-parent selector and repeated
+additions. Routine save feedback is announced without the annotated persistent generic
+Alert or routine recovery buttons. Errors/readback remain visible in the panel.
+
+The pinned CLI generated the dependency-free Collapsible wrapper over installed Base UI.
+`keepMounted` retains create/rename/move state while collapsed; failed hidden writes reopen
+their editor. Shared Card gains an embedded variant to avoid nested surfaces. Live review
+confirms the canvas fills Settings and the tools remain bounded at 320px with independent
+scrolling and no page overflow. No saved installation was changed by verification.
+The gallery now includes explicit open-tools, adding and retained-draft states. Embedded
+cards avoid nested rings, and disabled chart cards retain readable text while their actions
+remain fenced. A collapsed panel identifies active drafts and filters. Architecture and
+design guidance describe the new canvas/panel scroll ownership and feedback conventions.
+
+Verification (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass, including seven web regressions, 19 Fastify and 91 real
+PostgreSQL checks. All three isolated HTTPS browser suites pass: auth/Settings, structured
+onboarding and visual structure. New checks cover the canvas occupying the Settings area,
+collapsed default tools, absence of routine success Alerts/recovery buttons, retained
+create/move drafts, and a committed rename response lost after collapsing its pending
+editor; the failure automatically reopens recovery without losing the draft or replaying
+the write. Existing permission, CRUD/conflict/readback, keyboard/pointer/touch move,
+dirty-navigation, session/logout, 320px and reduced-motion coverage is retained. The initial
+visual fixture attempted a card action beneath the open panel; its interaction now
+collapses tools before chart gestures. The final suite passes.
+
+Live visual review confirms the available-width/height canvas, a single new-unit form and
+submit action, no generic visible success banner, bounded 320px panel scrolling and no
+document overflow. The fixture-only gallery verifies retained drafts and semantic dark
+surfaces; disabled cards remain readable. The existing >500kB web-bundle warning remains.
+Logs: `/tmp/turnstile-structure-polish-{check,build,test,integration,browser-auth,browser-structured,browser-structure}.log`.
+
+Handoff: requested UI refinement and verification are complete and available through the
+existing local Watch stack. Settings opens with tools collapsed; a card or + opens the
+same panel, which can remain open for consecutive additions. All prior changes remain
+uncommitted. No backend/schema, dependency/lockfile, credential, saved installation,
+LICENSE/notice or deployment change was made. No commit or push was requested.
+
+ONB-STRUCTURE-UX — **Completed** (owner: Codex, 2026-11-02). Scope: owner-requested
+complete presentation/interaction redesign of Settings organization structure, using the
+Emil design engineering and shadcn skills. Improve purpose, hierarchy scanning, selection
+and contextual editing while preserving canonical CRUD/moves, permissions, recovery and
+onboarding behavior. No schema, deployment, account or saved-organization changes.
+Implemented an automatic top-down connected chart with transient zoom/Fit, branch collapse,
+search with ancestor context and a compact outline. Selection opens a responsive inspector
+with purpose, full path, unit counts and contextual actions; creation uses a focused panel.
+Root-only guidance and Site/Plant/Department explanations clarify the page's purpose.
+The shared composition serves Settings and onboarding. Editors retain draft/readback state
+outside chart rows, including lost responses and removed units. Settings uses the available
+page width; the gallery includes empty, long-name, wide and narrow examples.
+
+Verification (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` (including two focused
+chart-layout regressions; seven web tests total) and `pnpm test:integration` pass; real
+integration includes 19 Fastify and 91 PostgreSQL checks. All three HTTPS browser suites
+pass: `pnpm test:browser:auth`, `pnpm test:browser:onboarding:structured` and
+`pnpm test:browser:structure`. They retain live permissions, canonical readback, exact-key
+creation retries, rename/delete conflict and uncertain-response recovery, dirty navigation,
+keyboard/pointer/touch moves, session/logout and 320px/reduced-motion coverage. New chart
+checks verify connections, zoom and fitting every card within the viewport. Existing
+fixtures now select a unit before using its inspector actions; an initial structured test
+still addressed the old row action, and passes after that selector was corrected.
+
+The shared local preview has an expired session; visual review used the development
+gallery, and authenticated flows used isolated HTTPS fixtures without modifying the saved
+local organization. Reviewed light/dark, long-name, empty and 16-unit wide states; Fit chart
+contains all cards and the page has no horizontal overflow. The 500-unit layout regression
+checks bounds/non-overlap. The existing >500kB production web-bundle warning remains.
+Logs: `/tmp/turnstile-structure-ux-{check,build,test,integration,browser-auth,browser-structured,browser-structure}.log`.
+
+Handoff: implementation and requested verification are complete. Source changes are
+available through the existing local Watch stack; refresh Settings → Structure. The shared
+chart/controller, responsive styles, Button surface variant, gallery, existing browser
+fixtures, design guidance and architecture record are current. No backend/schema,
+dependency/lockfile, credential, saved installation or deployment change was made. Root
+LICENSE and third-party notices are preserved. No commit or push was requested.
+
+ONB-RD-CI — **Completed** (owner: Codex, 2026-11-02). Scope: correct and verify hosted
+checks for [PR #3](https://github.com/nishanthturnstile/turnstile-360/pull/3).
+The owner also authorized merging the redesign after CI succeeds. On `f645dee`, both hosted checks jobs passed the
+workspace suites and smoke checks but failed local Compose validation: the runner's
+bundled Compose rejects `develop.watch.initial_sync`. All five image builds passed in
+both workflow events. The architecture already requires Compose 5.6.1 or later; local
+verification uses 5.6.1.
+
+The checks job now installs exactly Compose v5.6.1 through Docker's setup action pinned
+to commit `54042514f505b273907334ae2b9cdbb9a0213c1a`. The explicit version replaces
+an incompatible preinstalled runner binary. Architecture records that CI tool boundary;
+application code, Compose topology and Watch semantics are unchanged.
+
+Verification (2026-11-02): workflow YAML/step ordering and immutable action pin validated;
+`pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` and both real Compose
+configurations pass under Compose 5.6.1. Logs use `/tmp/turnstile-redesign-ci-*`.
+Hosted verification (2026-11-02): both push and pull-request workflows pass on
+`e4c168e20f060130302fe250b893af0d1b9e866c`: workspace checks, owning PostgreSQL/archive
+integration, smoke checks, both Compose validations and all five container builds.
+The PR is mergeable with no outstanding review comments. CI runs:
+[push](https://github.com/nishanthturnstile/turnstile-360/actions/runs/41487662023) and
+[pull request](https://github.com/nishanthturnstile/turnstile-360/actions/runs/41487672401).
+
+Handoff: all implementation, regression verification and the hosted Compose correction
+are complete. PR #3 is the authoritative integration record for final-head checks and
+the merge into `development`. This final record changes documentation only; application
+code, runtime configuration and migrations remain the verified candidate. Customer and
+production rollout remain separate from this authorized repository integration.
+
+ONB-RD-REVIEW — **Completed** (owner: Codex, 2026-11-02). Scope: fix and locally verify the three
+redesign review findings: untouched India suggestions after concurrent zone saves,
+filtered inline-editor recovery, and large-tree move eligibility cost. Preserve all
+staged ONB-RD01–08 implementation and add focused regressions. The owner now authorizes
+committing the redesign and fixes, creating a PR, resolving CI failures and merging once
+the PR is ready. No customer deployment, persistent database reset or release replay.
+
+Implemented untouched-zone projection from canonical readback while retaining explicit
+zone drafts, kept filtered active editors/ancestry visible through rename reconciliation,
+and indexed/cached move validation by canonical unit snapshot. The maximum-width model
+regression passes; the 500-unit eligibility calculation now takes about 20–32 ms locally
+instead of roughly 700 ms, and transient typing reuses the cached eligibility set.
+Added real HTTPS regressions for concurrent UTC confirmation followed by Save and exit,
+and a lost rename response that stops matching the filter while recovery remains usable.
+Architecture and affected delivery references are current. All prior staged work remains.
+
+Verification (2026-11-02): focused web tests/typecheck, `pnpm check`, `pnpm build`,
+`pnpm test` and `pnpm test:integration` pass, including 19 Fastify and 91 PostgreSQL
+checks and real synthetic upgrade archives. All three browser suites pass: auth,
+structured onboarding and the extended structure editor. The new recovery cases passed
+on their initial run; a later touch-fixture geometry assumption was corrected by restoring
+its original alphabetical name before the existing drag checks, and the full suite then
+passed. Existing explicit drafts, dirty blocking, keyboard/pointer/touch moves, session
+refresh/recovery/revocation and logout are retained.
+
+Built `turnstile360-api:rd-review-20261102` and `turnstile360-web:rd-review-20261102`
+from monorepo-root contexts; isolated candidate image checks pass for exact packaged
+migrations/contracts, SPA/privacy policy, non-root and read-only runtime. `pnpm test:smoke`
+and both local/Dokploy Compose configurations pass. Logs use
+`/tmp/turnstile-redesign-fix-*`. The existing >500kB web bundle warning remains.
+
+Handoff: source fixes and local verification are complete. Deliver the preserved redesign
+and corrections through `feat/onboarding-redesign` → `development`; the associated GitHub
+PR records hosted CI/review and merge status. The owner authorized resolving CI and merging.
+No persistent installation migration, credential change or customer/production deployment
+was performed by this task; retain RD08's recovery evidence and running Watch installation.
+
+ONB-RD08 — **Completed** (owner: Codex, 2026-11-02). Scope: final redesign verification,
+exact candidate image checks, version-aware archive rehearsal and the previously selected
+existing local-development release. RD01–07 changes and staged/uncommitted work are preserved.
+No customer/production rollout, account reset, tenant bootstrap or live database restoration.
+
+Updated `test-onboarding-images.mjs` to compare every packaged migration journal entry and
+SQL hash (including 0007–0010), verify packaged v1/v2 contracts/private commands, and retain
+non-root/read-only/fail-closed runtime and SPA/CSP/notices checks. The backup helper can
+record the matching candidate pair plus installed images, product journal and nonsecret
+role inventory. Local archive rehearsal allows only the intended incomplete-v1 metadata
+transition; all other saved configuration is compared exactly. The existing six upgrade
+cases now dump/restore their synthetic v1 database before migration, validating empty,
+partial, saved Calcutta/Kolkata, completed root-only and completed-structure preservation.
+Synthetic cases use an identified disposable cluster and their own database. Failed
+subprocess details are retained only in protected diagnostics outside the checkout.
+
+The local release verifier follows Organization/First unit/Review and Finish setup, requires
+an explicit protected approved-unit input only when missing in incomplete v2, preserves
+existing saved zones, and performs exact canonical readback for completed installations.
+It never invents a unit or replays activation to manufacture a fresh journey. Runbook,
+architecture, README and generated OpenAPI implementation notes are current. No prior
+I08 pair is approved for v2/move rollback: retain maintenance and fix forward unless a
+specific immutable compatible pair is separately verified; do not undo parent guards.
+
+Verification (2026-11-02):
+
+- `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` pass. Integration
+  includes 19 Fastify and 91 PostgreSQL checks; the six upgrade cases include real archives.
+  The final regenerated OpenAPI and architecture formatting check passes.
+- `pnpm test:browser:auth`, `pnpm test:browser:onboarding:structured` and
+  `pnpm test:browser:structure` pass: required Site/Department, waiting/resume/readback,
+  manager permissions and canonical Settings, responsive sidebar/focus/dirty blocking,
+  real keyboard/pointer/touch moves, 20 reloads, recovery/revocation and full/partial logout.
+- Built `turnstile360-api:rd08-20261102` (image `sha256:6c3dc09471ee25ec9bc66eefd33a0b5304376dc4006b3fe11c7597751ac3687d`)
+  and `turnstile360-web:rd08-20261102` (image `sha256:5fed7ae6dfd916cc4b85745a5ff0541a9f9d0c3f3cd638c6387517997977ce74`)
+  from monorepo-root contexts. `pnpm test:images:onboarding` passes with no credentials,
+  external network or host bindings. The existing >500kB web bundle warning remains.
+- Both the retained pre-onboarding archive and a fresh coherent current-target archive
+  pass isolated restore/owning migration/repeat initialization/grant/isolation plus the
+  six-case matrix. An initial matrix subprocess failure was bounded; the two successful
+  rehearsals and final integration run establish the recorded evidence.
+- Verified the existing administrator login/logout before maintenance. Paused all three
+  application writers, captured the fresh backup, rehearsed it, then applied only pending
+  owning product migrations through 0010 and repeated initialization. Every original table
+  fingerprint and recorded role setting matched before browser admission: identities,
+  accounts, sessions, grants, clients, enrollment, saved UTC/profile/units and completed-v1
+  revision/actor/time were preserved. Runtime authority-read, grant-write and missing-tenant
+  denials plus the new parent-column privilege were verified on the actual target.
+- Rebuilt the matching development images and started the established `docker compose up
+  --watch` entry. All three application services are healthy and non-root on reserved
+  23600/23601/23602; Watch is enabled. No ingress, port or persistent credential changed.
+- The updated credentialed release runner passes on the actual target: direct Home,
+  root-only legacy optional-unit prompt, canonical Settings, machine connection, local
+  host-only HttpOnly SameSite=Lax cookies, logout and same-account relogin. Exact version,
+  revision, profile, zone, units and completion readback remains unchanged. Ordinary waiting
+  and fresh activation were deliberately not repeated on this already completed target.
+  The private password file was removed after verification.
+- 378 relative documentation links resolve, including 149 heading anchors; `git diff --check`
+  passes. Root LICENSE, third-party notices and lockfile remain unchanged by RD08.
+
+Recovery/evidence is retained privately at
+`~/.local/state/thaarei/turnstile-360/onboarding-releases/20261102-rd08`: coherent dump,
+checksum/manifest, original/candidate/runtime image IDs, role/journal inventory, operator
+readbacks, `local-verification.json` and final `release-state.json`. The record distinguishes
+production-image isolation checks from the actual development runtime and marks production
+acceptance false. Original I08 backups remain intact. Public bounded logs are
+`/tmp/turnstile-onboarding-rd08-{check,build,test,integration,images,prior-archive,target-rehearsal,target-migration,browser-auth,browser-department,browser-structure,local-verification,doc-links}.log`;
+Compose build/Watch logs use the same prefix.
+
+Handoff: RD01–08 are complete for the authorized local target. No implementation item
+remains in this redesign plan. Production/customer release still needs its own selected
+backup/rehearsal, compatible deployment, actual DNS/TLS/cookies/runtime evidence, named
+customer administrator handover and external email acceptance. Local HTTP/fixture results
+do not establish those outcomes. Keep the protected recovery point and approved candidate
+pair; leave the healthy local Watch stack running. No commit or push was requested.
+
+ONB-RD07 — **Completed** (owner: Codex, 2026-11-02). Scope: persistent completed
+workspace sidebar with transient collapse and accessible narrow overlay, compact Settings
+navigation, real dashboard actions and a legacy-only optional first-unit prompt. Preserve
+RD01–06 changes, canonical editors, session/readiness boundaries and draft protection.
+Implemented `WorkspaceNavigation` with shared 232px/64px navigation, generated Sheet/Tooltip/Empty compositions,
+compact horizontal Settings sections and manager-only canonical legacy suggestion. Layout
+state remains transient; accepted navigation dismisses the overlay, cancelled dirty
+navigation retains it, and content focus handles return from Settings. The development
+gallery reuses the navigation with inert anchors. `App` exposes only delivered Home and
+authorized Settings actions; ordinary users never request manager configuration. The
+optional prompt requires a completed v1 canonical snapshot with only the organization
+root. Settings reuses the existing controllers and version-specific backend protections;
+the overview no longer describes every v2 unit as optional. Activation is preserved.
+
+Architecture/design guidance and gallery references are current. The pinned shadcn CLI
+generated the three primitives without overwriting Button. Existing MIT notices cover
+them; dependencies, lockfile and proprietary LICENSE are unchanged by RD07.
+
+Verification (2026-11-02):
+
+- `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` pass, including
+  19 Fastify and 91 PostgreSQL checks (30 authority/DMS + 61 product).
+- `pnpm test:browser:auth` passes the full setup/Settings/auth chain. New coverage checks
+  root-only completed-v1 direct entry and optional Settings navigation using read-only
+  canonical projection fixtures, named keyboard icon links/tooltips, persistent chrome,
+  modal focus/expanded state, Escape/desktop-resize dismissal, cancelled draft navigation
+  and accepted navigation/content focus. Existing database upgrade tests separately prove
+  preservation of real completed v1. Ordinary routes still make no configuration reads.
+- Both `pnpm test:browser:onboarding:structured` and `pnpm test:browser:structure` pass:
+  fresh required Department, DMS outage, canonical ongoing CRUD, real keyboard/pointer/touch
+  moves, conflicts/readback, narrow layout and reduced motion.
+- The full auth fixture retains 20 real reloads and one session check per reload. Its
+  private rate counter resets between artificial reload groups to accommodate canonical
+  manager Home reads; production limits and per-request authorization are unchanged.
+  Tooltip assertions follow the installed Base UI visual-label contract, while modal
+  assertions/captures wait for settled focus and the opening transition.
+- Inspected desktop dashboard and 320px Settings/open-menu captures. Relative documentation
+  file links resolve and `git diff --check` passes. The existing >500kB bundle warning remains.
+
+Final logs: `/tmp/turnstile-onboarding-rd07-{check,build,test,integration,browser-auth,browser-department,browser-structure}.log`.
+Captures: `/tmp/turnstile-rd07-{dashboard-desktop,settings-mobile,navigation-mobile}.png`.
+
+Handoff: ONB-RD08 is next: coordinated verification/release, candidate API/web images,
+upgrade/restore rehearsal and installed-target evidence. No persistent installation
+migration, image deployment or target acceptance was performed in RD07. Preserve existing
+RD01–06 worktree changes; do not reset an activated installation to manufacture setup tests.
+
+ONB-RD06 — **Completed** (owner: Codex, 2026-11-02). Scope: one visual structure
+editor for setup/Settings with connected expandable cards, compact outline, contextual
+create/rename/remove, selection/search with ancestry, and confirmed keyboard/touch/pointer
+moves through RD04. Existing RD01–05 worktree changes, canonical revisions, exact create
+receipts, partial save/exit, shared dirty blocking and auth/session boundaries are retained.
+
+Extracted `StructureEditor` owns create/recovery state for both callers. `StructureTree`
+composes connected cards/outline from bounded canonical units, with contextual Add first
+unit/Add below, valid type/parent inference, inline rename/remove and selected details.
+Root naming stays in Organization. Search retains ancestor context/full paths and disables
+filtered dragging without restricting the complete Move to chooser. Last required-unit,
+root, child/reference and type/depth/name protections remain authoritative on the backend;
+client preflight helpers explain restrictions and prevent invalid choices.
+
+Typed parent PATCH plus `UnitMoveEditor` provide one destination search, old/new-path
+preview and explicit Confirm move for keyboard/click/tap and Pointer Event gestures.
+Touch-action is restricted to the handle; native scrolling, valid-target highlighting,
+Escape/pointer cancellation and invalid/outside-drop cancellation stay available. No
+sibling sorting, diagram coordinates, optimistic tree replacement or automatic PATCH
+replay is added. Uncertain/conflicting writes keep the destination and require explicit
+readback before retry; canonical readback can confirm an already-saved destination.
+Stable flat row keys retain inline state across reparenting. If an edited unit disappears,
+a clearly labelled transient row preserves draft/error/readback/Cancel controls, without
+entering canonical units or write payloads. Drag feedback never shifts target geometry.
+
+Files: extracted StructureEditor, new StructureTree/UnitMoveEditor/structure-model,
+configuration API/shared errors/read hook and existing UnitEditor, shared CSS, fixture-only
+StructureGallery and design-system composition, four Node model regressions, new HTTPS
+visual-editor scenario/command and existing structured/Settings fixtures, OpenAPI
+implementation description and affected architecture/design/workspace/release guidance.
+Native Pointer Events require no new dependency; no schema/migration, port, topology,
+LICENSE or third-party notice changes were made by RD06.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. Integration executes 19 Fastify and 91 real PostgreSQL cases
+(30 authority/DMS and 61 product). Four new Node tests cover cycle/type/root relationships,
+whole-subtree depth eight/nine, sibling collisions and version-aware required-unit removal.
+`pnpm test:browser:structure`, `pnpm test:browser:onboarding:structured` and
+`pnpm test:browser:auth` all pass against disposable HTTPS/PostgreSQL/Mailpit fixtures.
+The new suite exercises shared setup/Settings and stable IDs, contextual creation,
+ancestor search/duplicate names, outline/details, keyboard Move to/invalid destinations,
+real revision conflict, exact lost-response GET reconciliation with no write replay,
+pointer cancellation/drop preview/confirmation, native Chromium touch drag and
+320px/reduced motion. Existing suites verify fresh Department/India setup, partial saves,
+restart/resume/dirty navigation, canonical Settings CRUD/concurrent edits/lost deletion,
+live permission removal, twenty authenticated reloads and auth/recovery/reset/logout.
+Desktop/mobile editor captures were inspected. Initial remount and drag-geometry findings
+were corrected; accessible type/path names were restored, and an adapted fixture's stale
+organization-name expectation was fixed. Final static/build/model checks pass after the
+missing-unit copy correction. Unchanged tasks use valid Turbo caches; the existing web
+chunk-size warning remains. Generated contract/example drift, targeted Biome/whitespace
+and 203 local document links/anchors pass.
+
+Handoff: ONB-RD07 is next: completed dashboard/sidebar, compact nested Settings navigation,
+legacy completed-v1 optional-unit prompt and ongoing Settings refinements. Reuse this
+editor and preserve its canonical/draft/readback boundaries. RD08 still owns coordinated
+image/upgrade/restore/installed-target verification and release; local browser success is
+not that rollout. No blocker remains for RD06. No persistent local/customer migration,
+deployment, account/data/zone change, commit or push was performed. Logs:
+`/tmp/turnstile-onboarding-rd06-{check,build,test,integration,docs,browser-department,browser-structure-complete,browser-auth-complete}.log`.
+
+ONB-RD05 — **Completed** (owner: Codex, 2026-11-02). Scope: dedicated setup and
+ordinary waiting layouts, canonical Organization/First unit/Review resume and guarded
+completion, preserving typed transport, draft recovery and shared navigation blocking.
+Existing RD01–04 worktree changes and authentication/session behavior are retained.
+
+Implemented neutral entry and dedicated setup/waiting with `EntryLayout`/`EntryContent`;
+completed `WorkspaceLayout` mounts only after verified session/readiness. Brand, signed-in
+identity and Sign out remain available; shared `SetupProgress` stays outside the bounded
+setup scroll pane. Incomplete dashboard/Settings entry resumes the first saved gap;
+ordinary users receive waiting/Retry. Direct Review cannot bypass a missing profile or
+first unit. Configuration failure stays distinct from identity expiry and DMS outages;
+recoverable checks retain mounted hidden drafts, while successful canonical reads clear
+stale failure state.
+
+Organization suggests Indian Standard Time/Kolkata only without a saved zone. Continue
+explicitly confirms it; untouched empty/partial Save and exit omits that suggestion and
+preserves saved values. First unit creates a real direct-child Site/Plant or Department
+with implicit root, required saved readiness and explicit partial save/exit. Exact
+body/revision/key plus save/exit intent survive uncertain create retries and readback.
+Existing rename/remove editors support actual Review corrections without a new mutation
+path. Business-only Review summarizes saved profile/zone/first units and provides Edit,
+Back and Finish setup; internal root/access checks stay on the server. Completion is
+revision-bound and disabled while unready/checking or after a conflict/uncertain result
+until explicit readback. No automatic mutation replay occurs. Active create/save-exit/
+retry actions have their own pending feedback.
+
+Files: App orchestration, new entry/progress compositions, configuration forms/unit
+editor/routes/read hook, OnboardingJourney, shared CSS, gallery/design guide, existing
+onboarding/structured/Settings HTTPS scripts, OpenAPI generator/output implementation
+status, architecture and package/release references. No dependency, database schema or
+migration changes were added by RD05.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass (19 Fastify and 91 real PostgreSQL cases: 30 authority/DMS,
+61 product). Both `pnpm test:browser:auth` and
+`pnpm test:browser:onboarding:structured` pass against disposable HTTPS/PostgreSQL/
+Mailpit fixtures. Browser evidence covers fresh required Site and Department, empty and
+partial profile/unit saves, India confirmation versus unsaved suggestion, saved UTC,
+restart/relogin resume, Review/Settings deep links, first-unit rename, dirty Back/Forward,
+root-only HTTP/UI rejection, exact-key lost-response create recovery, completion readback
+without replay, ordinary waiting transitions, permission revocation, DMS outage isolation,
+Settings CRUD/concurrency, twenty authenticated reloads, recovery/reset/logout and
+320px/reduced-motion states. Desktop/mobile Review screenshots were inspected. Initial
+expanded fixture runs exhausted the real 100/minute introspection window; only the
+private disposable counter is reset between phases, leaving production limits unchanged.
+An inherited root-only Settings assertion was corrected to check the retained first Site.
+Final static/build/unit checks also pass after the action-feedback adjustment. Unchanged
+tasks use valid Turbo caches; the existing web chunk-size warning remains. Generated
+contract/example drift, targeted Biome/whitespace checks and 196 local documentation
+links/anchors pass.
+
+Handoff: ONB-RD06 is next: shared visual structure editor/contextual CRUD and accessible
+moves consuming RD04, including Setup and Settings integration. RD07 owns completed
+navigation/ongoing Settings refinements. RD08 still owns coordinated image/upgrade/
+restore/installed-target release verification; the new browser evidence alone is not
+that release. No blocker remains for RD05. No persistent local/customer migration,
+deployment, account/data/zone change, commit or push occurred. Logs:
+`/tmp/turnstile-onboarding-rd05-{check,build,test,integration,docs,browser-auth-final,browser-department-latest}.log`.
+
+ONB-RD04 — **Completed** (owner: Codex, 2026-11-02). Scope: implement the adopted
+revision-checked parent-change API with live manage/CSRF/tenant protections, validated
+subtree movement and atomic move audit/revision. Add only the required parent-column
+privilege, preserve immutable identities/types/root and v2 first-unit completion, and
+extend PostgreSQL/Fastify coverage plus generated implementation status. Existing
+RD01–03 worktree changes are retained.
+
+Implemented `PATCH /api/organization/units/:id/parent` through the existing configuration
+lock, live grant and CSRF boundary. Strict input forbids tenant/actor selectors; canonical
+checks reject missing/root units, invalid types, self/descendant cycles, excessive subtree
+depth and duplicate siblings. Valid moves preserve IDs/types, descendant links, existing
+root/parent references and retry receipts, grants and v1/v2 completion. Each effective
+move commits one revision and attributable `unit_moved` event atomically. Current-revision
+same-parent requests are no-ops; stale lost-response retries conflict, with canonical
+readback supporting explicit reconciliation. The completed-v2 required-unit guard remains
+explicit; moving the sole direct child below its own subtree is already rejected as a cycle.
+
+The installed Drizzle CLI generated `0009_unit_move_audit.sql` and custom
+`0010_unit_move_guards.sql` plus metadata. Reviewed SQL grants only parent-column UPDATE
+and replaces the invoker-rights guard with bounded ancestry/subtree validation, retaining
+tenant/identity/type/root/count protections, forced RLS and the existing pool/lock boundary.
+Existing references permit valid moves; no unimplemented business references were added.
+Files: Organization controller/service/repository/schema, configuration HTTP classifier,
+new `configuration-move.database-spec.ts`, existing HTTP/runtime privilege checks, generated
+OpenAPI, architecture and package/deployment/authentication guidance.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. Integration executes 19 Fastify and 91 real PostgreSQL cases
+(30 authority/DMS and 61 product). Nine new move cases cover completed v1/v2 subtree
+preservation, exact depth limits, SQL and bulk-cycle rollback, duplicate siblings,
+audit-failure atomicity, stale/no-op/readback behavior, one-winner contention, permission
+revocation while waiting and authenticated HTTP/CSRF/privacy/response bounds. The separate
+initial database run also passes. One full run encountered an existing BFF capability
+success read returning 503; the complete clean-fixture rerun passes without a code change,
+and its cause remains unconfirmed. The initial tuple `.includes` type error and generated
+journal formatting issue were corrected. Unchanged tasks use valid Turbo caches; the
+existing web chunk-size warning remains. Drizzle metadata checks, generated-document drift,
+195 relative documentation links/anchors and whitespace checks pass. Pre-existing SQL
+0000–0008 and prior new snapshots remain byte-identical; existing committed journal entries
+and the new snapshot chain are preserved.
+
+Handoff: ONB-RD05 is next: dedicated resumable onboarding/waiting layouts and first-unit
+forms. RD06 consumes the move API in the shared visual editor; RD07 completes navigation
+and Settings. Current browser/release helpers still need their planned v2 changes and
+RD08 browser/image/restore/target verification before coordinated rollout. No blocker
+remains for RD04. No persistent local/customer migration, deployment, account/data/zone
+change, commit or push occurred. Logs:
+`/tmp/turnstile-onboarding-rd04-{check,build,test,integration,integration-rerun,database}.log`.
+
+ONB-RD03 — **Completed** (owner: Codex, 2026-11-02). Scope: implement v2 product
+configuration initialization and incomplete-only v1 metadata upgrade, canonical first-unit
+readiness, locked activation and completed-v2 last-unit deletion protection. Preserve
+completed v1, saved zones/revisions, forced RLS and runtime/migrator boundaries; extend
+real PostgreSQL/Fastify verification and generated implementation status. Existing
+RD01/RD02 worktree changes are retained.
+
+Implemented generated `0007_setup_requirement_v2.sql` and reviewed custom
+`0008_setup_v2_guards.sql` using the installed Drizzle CLI, with new journal entries and
+snapshots. New contexts default to v2. The owning migration locks the installed identity
+then tenant configuration and upgrades only incomplete v1 metadata without changing
+profile, units or business revision; empty revision-0 remains not_started. Completed v1
+retains its version, actor/time, revision and optional-unit policy. SQL guards remain
+invoker-rights with fixed search paths/forced RLS; no runtime privilege or new pool is added.
+Only the direct owning login can perform a 1→2 metadata-only change; mixed updates,
+completed conversions, downgrades and runtime attempts are rejected.
+
+Canonical snapshots derive first-unit readiness and Organization/Structure/Review resume
+from saved records. Locked activation requires a saved direct-child Site or Department
+for v2 and returns finite `body/required` without side effects when missing. Completed v2
+cannot lose its last qualifying unit through service or single/bulk SQL deletion; a failed
+bulk statement rolls back earlier row deletions. Incomplete removal resumes Structure.
+Existing leaf/reference, revision, audit, grant and repeat-completion behavior is retained.
+Private initialization/inspection now expose requirementVersion. Generated OpenAPI,
+architecture, README/package guidance and auth/deployment/release references match the
+implemented backend; the move handler remains explicitly planned for RD04.
+
+Files: owning organization schema/repository/service/operator, `0007`/`0008` SQL and
+metadata, configuration and real-BFF PostgreSQL fixtures, the new isolated
+`configuration-upgrade.database-spec.ts`, OpenAPI generator/output and affected docs.
+The upgrade fixture prepares the unmodified 0000–0006 baseline in a separate database
+inside the disposable test cluster; it does not reset the shared or persistent installation.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. Integration executes 19 Fastify and 82 real PostgreSQL
+cases (30 DMS/authority and 52 product, including 11 added cases). Coverage includes six
+empty/partial/completed old-version upgrades, saved UTC/Calcutta/Kolkata preservation,
+repeat migrations/initialization, Site and Department activation, direct HTTP/business
+gating, SQL/runtime/tenant protection, last-unit removal, completion/delete lock ordering
+in both directions and grant revocation queued before valid activation. Existing audit
+rollback checks now use a genuinely ready v2 fixture. A final `pnpm test:database` also
+passes after adding the bulk-delete rollback assertion. The initial crypto import and
+retention receipt-count findings were fixed. Unchanged tasks use valid Turbo caches;
+the existing web chunk-size warning remains. `drizzle-kit check`, generated-document
+drift checks, targeted Biome/whitespace checks and 303 local document links/anchors pass.
+All seven applied SQL migrations and original journal entries are byte/content unchanged;
+the two new snapshot links are consistent.
+
+Handoff: ONB-RD04 is next: implement the adopted parent-change route with guarded parent
+privileges, subtree/reference validation and atomic move audit/revision; retain the v2
+last-unit invariant. RD05–07 still own dedicated setup/resume, shared editor and completed
+navigation. Current v1 browser journeys/release helpers need their planned v2 updates and
+RD08 browser/image/restore/target verification before coordinated rollout; they were not
+claimed or rerun here. No blocker remains for RD03. No persistent local/customer migration,
+account/data/zone change, image deployment, commit or push occurred. Logs:
+`/tmp/turnstile-onboarding-rd03-{check,build,test,integration,database}.log`.
+
+ONB-RD02 — **Completed** (owner: Codex, 2026-11-02). Scope: implement the adopted
+versioned executable setup/completion contracts, v2 first-unit/snapshot agreement,
+Kolkata/Calcutta/UTC compatibility and strict move payload/finite error contracts.
+Regenerate time zones and OpenAPI with the pinned toolchain, distinguish adopted move
+contracts from unimplemented handlers, and add focused contract regressions. Existing
+v1 persistence, completion and browser layout remain until their dependent packages.
+Implemented version-specific requirement tuples and completion metadata, lifecycle/resume
+validation and canonical v2 first-unit agreement while preserving completed root-only v1.
+Exported strict `UnitMove`/schema and finite `required_unit` conflict; no move handler is
+claimed. The generated 420-zone allowlist retains all prior identifiers and adds Kolkata,
+with independent list-version/provenance and explicit compatibility additions. OpenAPI
+2.0.0 validates legacy/v2 named examples, documents parent-change input/snapshot/errors
+and marks the handler planned for RD04. Shared-package guidance and the web review's
+exhaustive label map are updated. Files: `packages/turnstile-contracts` source/tests/README,
+both generation scripts, generated onboarding OpenAPI and `OnboardingJourney.tsx`.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. The contract suite passes 10 cases (4 added focused
+regressions covering v2 Site/Department readiness, mixed-version/nextStep rejection,
+saved-zone/legacy preservation and strict moves). Integration runs 19 Fastify and 71
+real disposable PostgreSQL cases. Generated allowlist/OpenAPI/reference/example drift
+checks pass, including auth permission-catalog agreement. Unchanged build/unit tasks use
+valid Turbo caches. Initial document-table formatting and a missing exhaustive web label
+were corrected; final Biome/whitespace checks pass. Build retains the web chunk-size warning.
+
+Handoff: implement ONB-RD03 next using these contracts: generate/review new migrations,
+default initialization to v2, upgrade incomplete v1 metadata without changing business
+revision, and enforce first-unit activation/deletion under existing locks with PostgreSQL
+upgrade/contention evidence. Update the generator's runtime-initialization/implementation
+status when that behavior is delivered. Then follow RD04–08; do not treat the contract-only
+move route or v2 examples as live handlers/enforcement. No blocker remains for RD02.
+No feature database schema/migration, target data change, image release, production/customer
+rollout, commit or push occurred. Browser/image/target verification was not repeated and
+remains required for the later runtime/layout/release packages. Existing installation
+completion/profile/zone are untouched. Logs:
+`/tmp/turnstile-onboarding-rd01-rd02-{check,build,test,integration}.log`.
+
+ONB-RD01 — **Completed** (owner: Codex, 2026-11-02). Scope: begin the authorized
+onboarding redesign with adoption of its specification and technical baseline. Reconcile
+required direct-child Site/Plant-or-Department setup, version-aware completion/upgrade,
+saved time zones, audited accessible moves and dedicated/completed layouts with the
+existing implementation. Preserve ONB-I01–08 history and all other work entries.
+Milestone: specification preserves ONB-R01–12 and adds ONB-R13 moves; architecture adopts
+v1/v2 projections, migration-only incomplete upgrade, direct-child readiness/deletion,
+Kolkata compatibility, move route/locking/errors/audit and layout/scroll ownership. The
+proposal/original plan are explicitly historical where superseded; redesign plan links
+the adopted target. No configured limit, application boundary or deployment topology
+changed. README, workspace plan and authentication/deployment/release references distinguish
+delivered v1 procedures from the adopted v2 target. No feature schema, runtime behavior,
+persistent installation change or deployment belongs to this package. Initial worktree
+was clean; all other entries and ONB-I01–08 history are preserved.
+
+Verification actually run (2026-11-02): combined RD01/RD02 `pnpm check`, `pnpm build`,
+`pnpm test` and `pnpm test:integration` pass as recorded above; targeted Biome/whitespace
+checks and 234 local document-link/anchor resolutions across 11 affected documents pass.
+No new tests were added for the documentation-only RD01 package. Handoff: adopted target
+is consistent; RD02 contracts are delivered above, and RD03 is next. No blocker remains.
+
+ONB-REDESIGN-PLAN-001 — **Completed** (owner: Codex, 2026-11-02). Scope: create a
+separate implementation plan for the owner's onboarding redesign, carrying forward the
+confirmed Site/Plant-or-Department first-unit rule. Reconcile the proposed delivery order
+with current contracts, persistence, web navigation and existing verification/release
+tooling; provide file-level work, dependencies, acceptance and a start-work handoff.
+Planning only; do not begin feature implementation or change accepted runtime behavior.
+The separate `docs/onboarding_redesign_implementation_plan.md` is written and linked
+from the design proposal. ONB-RD01–08 cover adoption, versioned contracts/time zones,
+persistence/readiness, audited moves, dedicated setup, the shared visual editor,
+dashboard/Settings and coordinated verification/release. All nine document links resolve.
+The plan includes file-level work, recommended version/upgrade defaults, focused boundary
+acceptance, CLI/tooling guidance and a reusable start-work prompt. The original v1 plan
+and accepted specification/architecture remain unchanged; RD01 owns their later adoption.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. Build/unit tasks reuse valid Turbo caches; integration
+executes 19 Fastify and 71 disposable PostgreSQL cases. Targeted Biome, whitespace and
+document-link/package-presence checks pass. No application browser/image/production
+verification was repeated for this documentation-only change. No feature implementation,
+migration, persistent local-data change, deployment, commit or push occurred.
+
+Handoff: begin future implementation with ONB-RD01 in the new plan, then follow its
+dependency sequence. Record the actual package and owner before starting feature work;
+preserve pre-existing worktree changes. No blocker remains for this planning task.
+Logs: `/tmp/turnstile-onboarding-redesign-plan-{check,build,test,integration}.log`.
+
+ONB-REDESIGN-001 — **Completed** (owner: Codex, 2026-11-02). Scope: owner-requested
+planning/design review of fresh-install onboarding, organization/workspace terminology,
+India-first time-zone defaults, mandatory first operational structure level, visual
+hierarchy editing and the completed-dashboard shell. Reviewed current entry gating,
+onboarding/shared editors, contracts, accepted architecture/specification and the recorded
+2026-11-01 source-application inspection. Added a dated recommendation to
+`docs/onboarding_design_proposal.md` and the separate transient interactive concept
+`docs/presentations/onboarding-redesign-concept.html`, preserving the adopted v1 rationale.
+The owner confirmed either Site/Plant or Department can satisfy the first operational
+level. The proposal covers the three-screen setup, contextual/read-only information,
+India business time versus UTC instants, the Kolkata/Calcutta allowlist mismatch,
+visual creation and accessible transactional moves, dashboard collapse, and versioned
+compatibility for already-completed root-only installations. Existing completion stays
+valid under the recommended compatibility policy. No application/schema/accepted
+architecture or requirement change, dependency, deployment, commit or push was made.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass; build/unit tasks reuse valid Turbo caches. Integration
+executes 19 Fastify and 71 disposable PostgreSQL cases. Initial concept button/callback
+lint and document formatting findings were fixed; final targeted Biome and whitespace
+checks pass. The concept renders at 728px and 390px without console errors. Those
+illustrations are not application browser, production deployment or customer acceptance
+verification. Existing local installation/accounts/data were not changed.
+
+Handoff: review the dated redesign recommendation and concept. Implementation remains
+future work: adopt the requirement/resume/upgrade changes, settle the time-zone contract
+compatibility, extend first-unit readiness and audited move behavior, then deliver the
+dedicated setup/editor/dashboard layouts with focused integration/browser verification.
+No blocker remains for this planning task. Logs: `/tmp/turnstile-onboarding-redesign-`
+`{check,build,test,integration}.log`.
+
+WEB-LOAD-001 — **Completed** (owner: Codex, 2026-11-02). Scope: localized skeletons
+and spinners for server-backed content while retaining shared layout/navigation and drafts.
+
+Implemented generated shadcn Spinner (pinned CLI, existing Hugeicons) with compatible
+component props and reduced-motion support; shared form/list/card ContentLoading,
+PendingContent and LoadingStatus compositions; stable Settings and onboarding navigation
+during initial/retry reads; localized route skeletons; and action-specific spinners for
+configuration save/readback, auth, session, document connection and logout operations.
+Saves/readback retain entries; pending navigation content stays mounted and hidden, while
+headers/navigation remain available. Loading is announced once per panel and skeletons/
+adjacent spinner SVGs are decorative. No artificial delay, new dependency, backend/schema,
+credential or deployment-topology change. Architecture, design guide and fixture gallery
+are updated. Existing work and root/third-party licenses are preserved.
+
+Verification actually run (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass (19 Fastify and 71 PostgreSQL cases; unchanged unit tasks use
+valid caches). Full `pnpm test:browser:auth` passes design-system/CSP/font/reduced-motion
+checks, onboarding, Settings, 20 reloads and all three auth/recovery/logout journeys.
+New held-response assertions prove a Settings skeleton/spinner during configuration reads,
+persistent header/sidebar through loading and loaded states, a content-only skeleton
+during navigation checks and a save spinner with preserved form values/navigation.
+Final whitespace checks pass. No remaining blocker in this scope.
+
+Local runtime: restarted the cancelled Compose Watch; source synchronization is active,
+all existing services are running, and health-checked services are healthy. Host/container
+loading-composition and Settings hashes match. Authenticated verification used disposable
+HTTPS fixtures; local accounts/data were retained. No production image/Dokploy/customer
+verification, commit or push. Logs: `/tmp/turnstile-web-load-{check,build,test,integration,
+browser,watch}.log`. Handoff: use the existing local web application; slow server reads
+now show loading feedback in their content region while shared navigation stays visible.
+
+
+WEB-NAV-001 — **Completed** (owner: Codex, 2026-11-02). Scope: shared web layout,
+client navigation and independent content/navigation scrolling, starting at
+`/settings/organization`.
+
+Implemented React Router 8.5.1 and shared AppLink/ButtonLink, persistent WorkspaceLayout,
+canonical Settings state across sections, isolated editor lifecycles, named keyboard
+scroll panes and a responsive Settings sidebar/horizontal section row. Header, workspace
+navigation and footer stay outside page scrolling. One unsaved-entry blocker aggregates
+all editors and protects links plus Back/Forward; cancelled navigation retains drafts.
+Router updates are synchronous so blocker dismissal does not defer form interactions.
+Session/readiness checks accept the destination before replacing content, without
+remounting chrome or returning to the startup skeleton. Onboarding steps wait for fresh
+canonical reads, fencing late older revisions; successful saves clear only their own dirty
+marker before navigation. Auth/identity exchanges retain full document navigation.
+No backend, permission, schema, port or persistent browser-state change.
+
+Files: web router/App, new navigation/scroll-region/workspace-layout compositions,
+ButtonLink, auth text link, configuration editors/shared hook, onboarding/Settings,
+shared CSS/gallery, web manifest/lockfile/notices, architecture/design guide and focused
+Settings/onboarding browser assertions/diagnostics. Verification actually run (2026-11-02):
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` pass (19 Fastify and
+71 PostgreSQL cases; unchanged unit tasks reuse valid caches). Full `pnpm test:browser:auth`
+passes design-system/CSP/font checks, onboarding, Settings, 20 refresh-fenced reloads and
+all three auth/recovery/logout journeys. New browser assertions prove zero document
+navigation, stable header/navigation/sidebar/content-pane DOM nodes, content scroll reset,
+320px/desktop independent scrolling without document overflow, and accepted/cancelled
+Back/Forward/link navigation with correct draft handling. Initial browser failures exposed
+an access-check/permission-transition overlap and asynchronous confirmation test races;
+verified destination gating, fresh onboarding reads and explicit dialog waits resolve them.
+Final whitespace/Biome checks pass.
+
+Local runtime: rebuilt only the development web image/service for the routing dependency;
+all existing services remain running and health-checked services are healthy. Compose
+Watch is active; host/container App and router hashes match. The live gallery's independent
+scroll pane is verified in the shared browser. The preview profile has no authenticated
+local account session; authenticated Settings verification uses the real disposable HTTPS
+fixture, preserving local accounts/data. No production Nginx image, Dokploy or customer
+rollout verification was performed. No commit or push. No remaining blocker in this scope.
+Logs: `/tmp/turnstile-web-nav-{check,build,test,integration,browser,local,watch}.log`.
+Handoff: use the existing `http://localhost:23600/settings/organization`; refresh a previously
+open tab once if it still has the old application bundle. Subsequent internal navigation
+keeps the shell mounted.
+
+
+ONB-REVIEW-FIXES staged-onboarding review follow-ups are completed (owner: DeepSeek V4.1
+Flash, 2026-11-02). Scope: GPT-6.1 Sol (high) advised the fix/validation plan; addressed all
+seven low-severity findings without changing contracts, routes, permissions, schema or
+limits. Onboarding Save and exit now submits only non-empty values, so clearing a saved
+required field preserves the saved data and pauses, while Continue still rejects empty
+required fields; Settings re-saves compare the returned revision and report "No changes to
+save."; the duplicate Structure "Set up later" link is removed in favour of the explicit
+Continue link; configuration request ids fall back once to a server-generated UUID for any
+adapter without the bootstrap generator; the snapshot depth guard uses
+`CONFIGURATION_LIMITS.depth`; and the last-manager/inspection SQL uses
+`CONFIGURATION_MANAGE_PERMISSION` parameters instead of duplicated literals. NativeSelect's
+deliberate wrapper-level `className` is documented. Added focused actor-id unit tests, a
+controller-independent route-classification/body-limit regression, and onboarding
+cleared-field plus Settings no-op browser assertions; the expanded browser journey clears
+only the disposable fixture rate-limit window before unit creation, keeping production
+limits enabled. Files: the organization service/repository/operator, `set-user-access`,
+`configuration-http` and its new spec, the configuration HTTP Fastify and PostgreSQL specs,
+`ConfigurationEditors.tsx`, the onboarding/Settings/auth browser fixtures,
+`verify-local-onboarding-release.mjs`, and the architecture/specification/design-system
+docs. Checks actually run: `pnpm check` (Biome, boundaries, time-zone/OpenAPI drift,
+typechecks, Ruff/mypy, deployment, Better Auth CLI), `pnpm build` and `pnpm test`
+(26 product API units including 4 new) pass; `pnpm test:integration` passes all 15 Fastify
+and 71 PostgreSQL cases; the full `pnpm test:browser:auth` passes under the existing
+`~/.cache/ms-playwright` browsers (onboarding, Settings, 20 reloads, all three auth
+journeys); the focused configuration-http e2e also passes standalone. No contract/OpenAPI
+regeneration was required. Changes remain local/staged; no commit, push, deployment or
+customer-target verification occurred.
+
+ONB-I08 upgrade/recovery implementation and the selected existing local release are
+completed (owner: Codex, 2026-11-02). Production/customer target acceptance remains
+outside this authorized local target. The owner selected the existing local installation
+and approved organization “Turnstile local development” / UTC. Those values are now
+saved through the supported onboarding UI and setup is activated.
+
+Implemented a private pre-onboarding installation preflight, protected local backup,
+isolated restore/upgrade preservation rehearsal and credentialed local release runner.
+The [release runbook](docs/runbooks/onboarding-release.md) supplies exact local and
+one-off production-image migration, initialization, grant, inspection, retention,
+handover and recovery commands; authentication/Dokploy docs link to it. Migrator
+credentials stay out of persistent containers and the browser. No new role, schema,
+permission, ingress service or reserved host port was introduced by I08.
+
+Captured a coherent full database/configuration backup with all three application
+writers paused. The disposable restore/upgrade rehearsal passes: original accounts,
+sessions, clients, enrollment and data survive owning migrations; initialization/grant
+repeats preserve revision/completion and runtime isolation holds. Fixed a clone startup
+race by probing TCP instead of the temporary initialization socket. Local guards reject
+production profiles/origins, remote hosts and mixed installation database names;
+focused synthetic negative checks pass. Permission-denial probes use a false predicate.
+The original installation then passed preflight, migrations and empty initialization;
+all original table digests matched before browser admission. The coordinated Compose
+rebuild leaves the authority and matching product API/web healthy at the reserved ports.
+Actual local runtime authority-read/grant-write/no-tenant denials pass.
+
+The first password was rejected and a private retry expired; neither changed grants or
+profile data. After the owner's renewed private prompt, the valid password established
+the existing account's real login. The first credentialed attempt proved ordinary-user
+waiting and backend 409 before adding manage through the supported private writer,
+preserving the account's existing baseline/capability permissions. It then saved the
+partial name, restarted the API, resumed persisted data, explicitly saved UTC, skipped
+optional structure, activated setup and verified canonical Settings, machine connectivity
+and local HttpOnly/host-only/SameSite=Lax cookies. That attempt stopped during the logout
+handover phase. A fresh supported login/readback run then passed connection/Settings,
+logout and same-account relogin with unchanged completion. Added more precise runner
+stage diagnostics; no production application behavior changed. The private password file
+was deleted after verification. Final operator readback confirms one local manager,
+exact intended permissions and durable completion even after repeat initialization.
+
+Workspace check/build/test, 18 Fastify and 71 PostgreSQL cases, isolated production
+API/web image packaging/runtime, compiled startup smoke and production Nginx/HTTPS
+browser suites pass. Browser coverage includes onboarding, Settings, 20 refresh-fenced
+reloads and all three authentication/recovery journeys. The initial formatting failure
+was repaired. The final resumed-verification rerun of `pnpm check`, `pnpm build`,
+`pnpm test` and `pnpm test:integration` passes (18 Fastify and 71 PostgreSQL cases).
+Final web and both authority/product auth-readiness probes pass.
+
+I08 handoff: retained backup, manifest, protected manager input, private operator outputs,
+candidate image IDs and release/verification records are outside the checkout at
+`~/.local/state/thaarei/turnstile-360/onboarding-releases/20261102T032532277Z`.
+`release-state.json` distinguishes the first full setup attempt from the successful
+completed-state logout/relogin run; the latter deliberately does not repeat activation.
+No re-provisioning, account/password reset, database restoration or readiness bypass
+occurred. All changes remain uncommitted and the pre-existing staged index is preserved.
+Compose Watch services remain healthy. The selected target intentionally uses local HTTP;
+production DNS/TLS, customer administrator handover and external mail delivery have not
+been verified. No production/customer rollout was performed. Detailed development logs
+are `/tmp/turnstile-onb-i08-*.log`; the protected backup is the retained recovery point.
+
+ONB-I07 complete-chain verification is completed (owner: Codex, 2026-11-01).
+Scope: map the accepted boundary evidence to existing provisioning, PostgreSQL,
+Fastify and real HTTPS browser harnesses; add focused missing regressions; verify the
+final local candidate with required suites, production images/runtime and Compose Watch
+at the reserved ports. Preserve existing installation data/credentials and staged work.
+No customer rollout, commit or ONB-I08 release action is included. Existing coverage maps
+fresh provisioning/isolation, audit rollback, idempotent creates, concurrent activation,
+last-manager contention, waiting/resume, auth refresh/logout and canonical Settings to
+the existing harnesses. Added a genuine queued activation/revocation lock barrier,
+contending unit renames with stale delete/required-value checks, explicit verified
+authority-administrator denial without local manage permission, and DMS-outage completion
+metadata readback. The outage scenario now establishes activation through supported HTTP
+instead of depending on test order. Added a separate fresh structured-onboarding browser
+mode and isolated API/web image packaging/runtime check; both reuse existing foundations.
+Added browser assertions distinguishing configuration versus auth outages while retaining
+drafts, and a saved profile that does not claim an unsent time zone was persisted.
+No runtime, schema, contract shape, dependency or permission changes. Check/build/test,
+18 Fastify and 71 PostgreSQL cases pass; only the initial build-concurrent DMS subprocess
+timed out, and the separate fresh integration rerun passes without changing its timeout.
+Both frozen production images build and pass the isolated runtime/packaging checks.
+The structured Nginx browser mode passes. Compose Watch sync/restart, reserved-port
+liveness/auth readiness, SPA/proxy/anonymous boundaries and unchanged private-data
+fingerprints pass. Stopped only the watch session, restored same-content probe timestamps
+and retained healthy local services/volumes. The persistent local database intentionally
+remains pre-onboarding; no migration or initialization was applied. The optional container
+HTTPS fixture probe reports unavailable host-network routing; real target DNS/TLS remains
+I08 verification. The full production-Nginx root-only/Settings/auth browser journey now
+passes, including the added auth/config outage distinction and truthful saved-zone
+assertions. Compiled API smoke and generated contract consistency pass. Final documentation
+formatting is corrected; no production behavior needed a fix for these added regressions.
+
+Executed I07 boundary evidence (2026-11-01):
+
+| Boundary                           | Executed evidence                                                                                                                                                                                                                         |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fresh provisioning                 | Existing disposable harness repeats owned migrations/bootstrap, initializes explicitly and provisions verified accounts/local grants; installation/tenant mismatch and privilege rejection tests pass.                                    |
+| Database integrity                 | Product PostgreSQL cases pass repeat initialization/root/restart, supported ancestry/bounds, absent/wrong tenant context, runtime privilege and transactional audit rollback checks.                                                      |
+| Authorization                      | Real BFF denies a verified authority administrator with ordinary local access but no manage permission; existing Fastify/browser cases pass readiness, permission and CSRF ordering, ordinary waiting and direct API blocking.            |
+| Concurrency and uncertain outcomes | Real lock waiters prove queued activation rechecks earlier revocation; contending rename/stale delete checks pass. Existing same-key create replay, two-manager activation, last-manager contention and lost-response browser cases pass. |
+| Browser journeys                   | Separate fresh installations pass root-only and retained site/nested-department activation. Save/exit/resume, logout/restart, ordinary waiting → available, deep links and Back pass through real HTTPS APIs.                             |
+| Failure recovery                   | Distinct configuration/auth outages retain drafts; unsent UTC is not shown as saved. DMS outage preserves exact completion, canonical configuration and session; revocation removes unauthorized editors.                                 |
+| Existing auth                      | Real refresh overlap/generation, reset/recovery, denial and complete/partial logout pass in database and all three browser journeys, including 20 no-flash reloads.                                                                       |
+| Settings                           | Canonical name/zone/units, identity-preserving rename, rejected required-field clearing, conflict/readback, root/non-leaf protection and unchanged activation pass.                                                                       |
+
+Commands/results on this candidate:
+
+- `pnpm check`: passes Biome, boundaries, generated contracts/time zones, typechecks,
+  Ruff/mypy, deployment checks and offline Better Auth CLI generation. Host build inputs
+  remain unchanged; `pnpm build` uses seven valid task caches. `pnpm test` passes the
+  fresh root routing checks and seven project tasks (six cached, product unit task fresh).
+- `pnpm test:integration`: separate final run executes all 18 Fastify cases fresh
+  (4 DMS + 14 product), then all 71 PostgreSQL cases fresh (30 DMS + 41 product), with
+  repeat owned provisioning/migration/bootstrap and runtime-role isolation checks.
+- `pnpm test:smoke`: both compiled API entry points pass real identity/liveness HTTP checks.
+- `docker build -f apps/turnstile-api/Dockerfile -t thaarei-onb-i07-api .` and
+  `docker build -f apps/turnstile-web/Dockerfile -t thaarei-onb-i07-web .`: pass frozen
+  dependency builds. Runtime image IDs are `sha256:1f93a5000e2c58e396d681d39ab4ac86135eddea180b86466c4450fc9abac418`
+  and `sha256:eef4ecfeae33f088c9811f5235914f5fb2eeeba88846d43451df8f0bc5e63589`.
+- `pnpm test:images:onboarding thaarei-onb-i07-api thaarei-onb-i07-web`: passes
+  non-root/read-only runtime, packaged migration/private-command, liveness, fail-closed
+  unconfigured API, ten SPA entries and actual CSP/referrer headers in isolated containers.
+- `AUTH_BROWSER_WEB_IMAGE=thaarei-onb-i07-web AUTH_BROWSER_API_IMAGE=thaarei-onb-i07-api pnpm test:browser:auth`
+  and the same environment with `pnpm test:browser:onboarding:structured`: both pass
+  against production Nginx assets/CSP and real production-profile HTTPS/STARTTLS APIs.
+  Both keep backend TLS verification and runtime rate-limit enforcement enabled. The optional
+  container-to-fixture discovery probe reports unavailable host-network routing in both
+  runs; actual target container DNS/TLS remains unverified and belongs in I08.
+- `docker compose watch --no-up`: verified existing services at fixed 23600–23608,
+  real same-content API sync/restart and web sync, matching source hashes, API liveness/
+  auth readiness, SPA/proxy responses and anonymous denial. Private read-only fingerprints
+  match before/after for installation, grants and encrypted sessions. No migration,
+  initialization, access grant, credential change or volume removal occurred. Watch-only
+  session stopped and probe timestamps restored; all existing services remain healthy.
+
+Final Biome and staged/unstaged whitespace checks pass; all 201 relative file targets
+in the seven changed documentation files resolve. Detailed local command logs use
+`/tmp/turnstile-onb-i07-*.log`; reports contain no
+credentials or raw signed/recovery URLs. This is local release-candidate evidence, not
+customer/Dokploy rollout evidence. No staging, commit, push or deployment occurred.
+ONB-I08 remains the next separately authorized package; it must apply the supported
+upgrade/initialization/grant sequence and verify actual target DNS/TLS and customer access.
+
+ONB-I06 ongoing Settings and basic structure is completed (owner: Codex, 2026-11-01).
+Scope: completed-workspace Home/Settings navigation, setup overview, canonical organization
+and regional editors, shared unit creation and explicit non-root rename/unused-leaf removal.
+Reuse I05 transport/editors, preserve completion, authorization and session fencing; no
+new database or People/Approval/Risk configuration. Implemented manager-only Home/Settings
+entry, canonical overview and shared name/zone/create editors under features/configuration,
+plus selected-unit rename/removal confirmation and current-readback recovery for stale or
+uncertain writes. Known non-leaves/root have no removal path; backend checks remain
+authoritative. No schema, backend, contract shape or dependencies changed. Typecheck,
+workspace check and build pass. Added a disposable real Settings browser journey covering
+two administrators, permissions, canonical updates, conflict/duplicate recovery, root and
+completion stability, cancellation and lost delete response. Its initial region fixture
+requested an alias outside the accepted pinned allowlist; corrected the fixture to an
+existing supported zone, without changing the contract. The full expanded browser suite
+now passes Settings, onboarding and all three auth journeys.
+The final revocation assertion was corrected to respect existing identity → CSRF → route
+permission precedence: changed grants rotate CSRF, so an old-token write may receive
+CSRF_REJECTED before permission denial; Refresh session then removes the unauthorized
+editor. No auth behavior was changed to accommodate the fixture.
+Verification (2026-11-01): pnpm check/build/test/test:integration and compiled test:smoke
+pass. Build rebuilt web; seven valid unit task caches were reused. Integration reran all
+18 Fastify and 70 PostgreSQL cases fresh. The real production-profile HTTPS/STARTTLS
+browser suite verifies canonical field-only PATCHes, manager-only routes/API denial,
+shared creation, two-manager rename conflict and duplicate recovery, cancel, stable root/
+completion metadata, non-leaf protection, confirmed removal and lost-delete readback,
+live revocation, 20 no-flash reloads and existing recovery/reset/logout regressions.
+Inspected Settings screenshots at desktop and 320px with reduced motion/no overflow.
+The frozen-dependency production web image builds and passes isolated non-root Nginx,
+liveness, all onboarding/Settings SPA deep links and CSP without host bindings/external
+network. Local Markdown file targets (251), the new architecture anchor, Biome and
+staged/unstaged whitespace checks pass. Architecture, plan, runbooks, README and generated
+OpenAPI status describe I06; shared removal confirmation has a fixture-only gallery example.
+DeepSeek V4.1 Flash review completed through the user's subscribed OpenCode Go model.
+It reported no confirmed High/Medium defects and three Low findings: removed parents
+remained selected, an earlier create readback marker survived a later uncertain attempt,
+and a runbook paragraph still called Settings future work. Implemented fixes use one
+current effective parent for display/new submissions, reset reconciliation inspection for
+each create/new entry, and correct the release paragraph. Added browser regressions for
+parent deletion/readback/fallback submission and two sequential uncertain creates.
+Also improved neutral readback notices, cleared the session warning after a successful
+save, added type/ancestry to unit action names, clear corrected field errors without
+stealing focus, and fall back to UTC formatting if browser time-zone formatting fails.
+The failure screen intentionally keeps separate configuration Retry and session-check
+actions; Check session refreshes identity/status while Try again reloads configuration.
+The earlier Free-model attempt stopped at quota with no verdict; the subsequent Go
+connection/catalog repair below enabled the completed requested review. No alternate
+reviewer was used. Post-fix check/build/test and all 18 Fastify/70 PostgreSQL cases pass;
+the final image build/runtime and sequential API smoke check pass. The expanded browser
+regressions exposed the fixture's shared identity introspection budget: status-only
+diagnostics confirmed three authority 429s behind the final configuration GET 503s.
+Added a fixture scenario boundary that waits a full real request window and extended
+only the full-browser command deadline; production limits/auth remain unchanged. The
+final full browser run passes all new regressions, manager revocation/restoration,
+onboarding, 20 reloads and all three authentication journeys. Final check/build/test pass
+(build and seven unit tasks reuse valid caches); the recorded fresh integration and
+final image/runtime/smoke results above remain applicable. Staged/unstaged whitespace
+checks pass. Review fixes and the requested I06 implementation are complete; ONB-I07
+complete-chain acceptance and ONB-I08 coordinated target release remain separate work.
+No commit or live deployment occurred; disposable feature fixtures remain the only
+installation state used for verification.
+
+ONB-I06-REVIEW provider connection repair is completed (owner: Codex, 2026-11-01).
+Diagnosed the actual connection mismatch: normal OpenCode v2 already had Go connected
+and advertised opencode-go/deepseek-v4.1-flash, but T3 runs an isolated OpenCode server
+under separate XDG directories with no Go connection. Using supported OpenCode auth
+export/import, transferred only the existing Go integration locally to that isolated
+server, without printing credentials or importing other accounts. Created a private
+rollback snapshot and verified other integration metadata is unchanged. The T3-owned
+OpenCode server now advertises the subscribed model. No subscription purchase, global
+default-model change, provider replacement or application change was needed. Refreshed
+only the OpenCode provider through T3's existing provider-refresh RPC, using a short-lived
+provider-scoped local session that was revoked afterward. No active session restart was
+needed. Verified the refreshed provider cache is ready with 57 models and orchestration
+capabilities now expose opencode-go/deepseek-v4.1-flash (low/high/max), alongside the
+separate Free model. A first post-import review request was rejected by the stale T3
+catalog before any child started; the catalog refresh resolves that metadata rejection.
+The subsequent requested review successfully completed on that subscribed Go model.
+No credentials or temporary access tokens were printed or added to the repository.
+
+ONB-I05 onboarding web journey is completed (owner: Codex, 2026-11-01).
+Scope: typed configuration transport, current readiness entry/routing, organization,
+optional structure/review, save/exit/resume and ordinary-user waiting. Preserve existing
+session/logout fencing and design-system/auth boundaries; Settings remains I06.
+Implementation, requested DeepSeek V4.1 Flash review, fixes and local verification are
+complete. No commit or live rollout was requested. Implemented typed
+configuration transport, session/readiness entry, Organization/Structure/Review/paused/
+waiting routes, partial save/exit, explicit revision reconciliation, same-key create
+retries and confirmed activation. The pinned shadcn CLI added NativeSelect; its normal/
+invalid states are in the development gallery. Forms use the shared design system and
+contract validation. Async editor/navigation completions are fenced after unmount/logout.
+The first complete browser journey passes: ordinary waiting, partial save/resume across
+API restart, two administrators/shared progress, real revision conflict, uncertain create
+replay, retained optional structure, root-only activation/readback, logout fencing and
+320px/reduced-motion/deep-link/Back checks. Existing auth journeys also pass. Initial
+lost-response fixture issues (route cancellation and API-fetch DNS) were fixed without
+changing runtime networking. Ephemeral fixtures from failed/interrupted runs were cleaned.
+Workspace check/build/test/integration pass, including 18 Fastify and 70 PostgreSQL
+cases. The final expanded browser run also verifies retained drafts across readiness
+outages and neutral startup until readiness returns. Mobile/desktop screenshots were
+inspected. The production web image builds and passes non-root Nginx/liveness, SPA deep
+links and CSP without host bindings. Current docs/contract references, Biome and Git
+whitespace checks pass. Repaired an earlier documentation edit that had overwritten
+the API reserved-port table row; actual Compose bindings remain unchanged.
+DeepSeek V4.1 Flash completed its read-only I05 review with no blocking/high/medium
+findings and three confirmed low-severity issues. Implemented fixes: untouched empty
+Save/exit pauses without PATCH, duplicate sibling names show an editable associated error
+without revision reconciliation, and persisted pageshow resets transient connection busy.
+Also improved first-invalid focus/error ID references, user-scoped in-flight status sharing,
+load-specific messaging, retained new-entry text, optional-step links and scroll-list keyboard
+access; leaving a step through a link confirms discarding unsaved entries. Added focused
+browser regressions for these paths.
+
+Verification (2026-11-01): post-review pnpm check/build/test/test:integration and compiled
+test:smoke pass on the pinned toolchain. The workspace build rebuilt web with six cached
+tasks; unit checks reused seven valid Turbo caches. Integration reran all 18 Fastify and
+70 PostgreSQL cases (30 DMS, 40 product) fresh. The expanded production-profile
+HTTPS/STARTTLS browser suite passes onboarding plus all three auth journeys, including
+20 reloads without a sign-in flash, CSRF, recovery/reset, logout and shared administrator
+regressions. New browser assertions verify no PATCH on untouched pause, invalid-zone focus,
+cancelled discard retaining input, real duplicate-name 409 remaining editable, and a
+synthetic persisted-pageshow event during an in-flight capabilities request restoring
+connection/sign-out controls. The latter deterministically covers the reported ordering;
+it does not claim to reproduce a browser's BFCache fetch-abort timing. Updated desktop/
+320px screenshots were inspected. Rebuilt the final production web image with frozen
+dependencies and verified isolated non-root Nginx, liveness, all setup SPA deep links and
+CSP without host bindings/external network. Biome and staged/unstaged whitespace checks
+pass; contract/documentation consistency checks remain current.
+
+Handoff: no confirmed review finding or I05 blocker remains. ONB-I06 ongoing Settings is
+next when authorized; I07 acceptance and I08 coordinated target rollout remain pending.
+This feature's state/grant/account fixtures were disposable. Existing installation data,
+credentials, ingress/ports and user-staged I01–I04 work remain intact. No commit, push,
+PR, live/customer initialization or deployment occurred. Target Linux/Dokploy DNS/TLS,
+real installation rollout and backup/restore execution remain separate release work.
+
+ONB-I04 access provisioning and backend gate is completed (owner: Codex, 2026-11-01).
+Implementation, requested review, fixes and final verification are complete. Shared strict accessAssignmentSchema requires operator
+attribution and the manage/access dependency. Private grants use the dedicated owning
+operator verifier and exact existing initialized installation, never implicit bootstrap.
+Grant changes serialize with activation, protect the final enabled local manager,
+retain replacement-array semantics, and audit effective changes atomically without
+changing configuration revision. Generated additive migration 0006 adds the bounded
+addressed-user audit subject and enabled field. Runtime grants remain read-only.
+Nest CLI generated ApplicationAccessGuard; AppModule registers it once to compose the
+existing identity/local access, mutation CSRF and route permissions before current
+backend readiness. Explicit setup/status/organization/session exemptions skip only
+readiness; unannotated handlers remain denied. Capabilities calls cannot reach machine
+issuance/DMS while incomplete. Auth/session/logout and authority-role separation remain.
+
+DeepSeek V4.1 Flash (OpenCode) reviewed all uncommitted staged/unstaged/untracked I01–I04
+changes, including new files/migrations/contracts/docs. It found no confirmed correctness,
+security, isolation or contract defects, and identified one actionable contention issue:
+readiness acquired the singleton configuration write lock. Fixed with one committed,
+non-locking completion/local-grant SELECT under tenant context; mutations/private writers
+retain shared locking and authorization rechecks. Role/installation/forced-RLS checks
+remain current, without positive safety caching. Added a real PostgreSQL regression for
+uncommitted activation, concurrent status reads, subsequent commit and live revocation.
+Also addressed optional follow-ups: safe generic 401/403 envelopes, shared retention/batch
+SQL constants, DB receipt-window/contract consistency, and grant-derived manager checklist.
+The reviewer reran 7 DB-free Fastify cases; post-fix verification below was run by Codex.
+I05/I08's web setup/waiting/error experience is deliberately deferred, as reviewed.
+
+Verification (2026-11-01): post-review pnpm check/build/test/test:integration and
+compiled test:smoke pass on the pinned toolchain. Build rebuilt product API/web after
+contract generation with five other caches; final unit run executed 22 product API,
+six contract and two transport cases fresh, with DMS/Python caches. Integration ran
+18 fresh Fastify and 70 PostgreSQL scenarios, including last-manager contention,
+activation locking, audit rollback, private command exits, strict input, committed
+non-locking status and existing BFF/encrypted refresh/logout/machine regressions.
+The initial integration fixture granted an intentionally unprovisioned administrator
+too early; the grant now occurs only at its later setup scenario, preserving that
+regression. Generated SQL/snapshots were formatted before final static checks passed.
+All three post-review production-profile HTTPS/STARTTLS browser journeys pass, including
+real pre-activation denial/API activation/capability success, recovery/reset, CSRF,
+permissions, partial logout, CSP/fonts and 20 reloads without sign-in flash. Schema
+check/no-change generation, dependency boundaries, Biome, Git whitespace, 253 local links
+across 12 changed Markdown files and 28 auth OpenAPI references pass. Architecture,
+OpenAPI status, plan, README, contract guide and runbooks describe the delivered boundary.
+The final post-review production API image builds with frozen dependencies and passes
+isolated non-root startup/liveness plus fail-closed auth readiness/configuration/business/
+session checks without host bindings. Existing local Compose health checks remain healthy.
+Handoff: ONB-I05 is next when authorized: typed browser configuration transport and the
+manager onboarding/ordinary waiting journey. Settings, complete-chain acceptance and
+coordinated target rollout remain I06–08. No actionable review finding remains. No new
+production web image or target/customer rollout was performed; all feature grants/state/migrations
+used disposable fixtures. Existing installation accounts/grants/credentials/data, root
+LICENSE/notices, ingress and ports are preserved. User-staged baseline edits remain
+intact; no commit, push, PR, private customer initialization or live rollout was performed.
+
+ONB-I03 canonical configuration and domain operations is completed (owner: Codex,
+2026-11-01). Scope: product-owned organization/setup schema and reviewed migrations,
+canonical profile/root/optional units, revisioned/audited domain operations and owning
+HTTP adapters, bounded create retries and private initialize/inspect/prune commands.
+Preserve shared auth/persistence boundaries; broad grant provisioning/last-manager policy,
+the business readiness gate and onboarding/Settings UI remain I04 onward.
+Milestone: generated Organization/Onboarding scaffolds and additive product migrations;
+implemented canonical revision/audit operations, bounded create receipts, guarded HTTP
+and private initialize/inspect/prune. The legacy grant writer now coordinates the same
+context lock without issuing configuration permission. Eleven new real-PostgreSQL cases
+and product Fastify checks pass, including contention, root-only activation, audit rollback,
+RLS/privilege limits, hierarchy/receipt bounds, retention and private command execution.
+Tests exposed synchronous validation rejection handling and Nest/Fastify string parser
+exceptions; async domain entry points and finite parser mapping now preserve safe errors.
+SQL is isolated in the repository/private operator path; dependency boundaries pass.
+Full workspace check/build/test and integration now pass: 16 Fastify and 65 PostgreSQL
+cases, including an expired-key reuse regression with more expired receipts than one
+cleanup batch. Cleanup prioritizes that key while preserving the 1,000-row bound.
+Drizzle schema check/no-change generation and compiled API smoke pass. One preceding
+run hit an unchanged DMS enrollment assertion (401 versus expected 403); the full rerun
+passed without changing DMS code. Documentation link and whitespace checks pass.
+Verification (2026-11-01): pnpm check/build/test/test:integration and test:smoke pass on
+the pinned toolchain. The final workspace build used seven caches after the database
+harness rebuilt the changed API; the production API image also rebuilt with frozen
+dependencies. Final unit checks ran 22 product API and two transport cases fresh, with
+22 DMS, six contract and Python checks cached. Integration ran all 16 Fastify and 65
+PostgreSQL cases fresh. All three real production-profile HTTPS/STARTTLS auth browser
+journeys pass, including recovery/reset, CSRF/permissions/logout, CSP/fonts and 20 reloads
+without sign-in flash. The new HTTP/database fixtures exercise the existing global guard
+with identity stubbed only in feature-specific HTTP cases; real auth remains covered by
+the unchanged BFF/browser suites. Database tests include compiled private commands,
+contention, root-only completion, audit rollback, hierarchy/receipt bounds and forced RLS.
+The production API image passes isolated non-root startup/liveness and fail-closed
+unconfigured readiness/configuration access with no host bindings. The existing local
+Compose services remain running, with configured health checks healthy; no new production
+web image or target Dokploy/customer deployment verification was performed. Schema
+check/no-change generation, dependency boundaries, Biome, Git whitespace and 233 relative
+links across 12 changed Markdown files pass. Architecture, OpenAPI status, plan, README,
+contract guide and operator runbook describe the delivered I03 boundary.
+Handoff: ONB-I04 is next when authorized: extend private access provisioning with the
+configuration permission, initialized-context/operator input, transactional access audit
+and last-manager protection, then add backend readiness gating/exemptions. No supported
+configuration-management grant is issued by I03; test-only grants use disposable fixtures.
+UI and coordinated target migration/initialization/release remain later packages. No
+baseline blocker remains. Existing installation accounts/grants/credentials/data, root
+LICENSE/notices, ingress and reserved ports are preserved. User-staged baseline changes
+remain intact; all new work is local/uncommitted, with no commit/push/PR or live rollout.
+
+ONB-I02 contracts and persistence composition is completed (owner: Codex, 2026-11-01).
+Added explicit Zod 4.6.7 to turnstile-contracts with strict configuration request/response
+schemas/DTOs, normalized Unicode names/comparison keys, bounded revisions/units/depth,
+minimal status and detailed setup, safe errors/statuses and a generated 419-zone allowlist
+with pinned Node/ICU/tz/Unicode provenance. Generated contract-only OpenAPI 3.1 and wired
+list/schema/document/reference/example/auth-catalog drift checks into pnpm check.
+The new permission is in shared contracts; current auth:set-access rejects it until I04
+provides initialization/last-manager protection. Existing auth fixture grants now name
+only their intended access/capability permissions rather than every catalog entry.
+Nest CLI generated ProductPersistenceModule/Service with the installed module/service
+schematics (`infrastructure/database/product-persistence --flat --no-spec`). That module
+owns one configured pool, runtime-role/installation checks and shutdown. Auth consumes it
+while retaining encrypted sessions, session/access RLS checks and its availability policy;
+AppModule registers the existing default-deny guard once. Typed ConfigurationException
+preserves safe domain status/envelopes through the existing filter. Architecture, package
+guide, plan, standards, API guidance, README and auth runbook are aligned.
+Verification (2026-11-01): pnpm check/build/test/test:integration and test:smoke pass on
+the pinned toolchain. Final build rebuilt contracts/product API/web; four other builds
+used caches. Final test ran 6 contract, 22 product API unit and 2 transport cases fresh;
+22 DMS unit cases and Python smoke used caches. Integration ran 14 fresh Fastify and
+54 fresh PostgreSQL cases, including shared-pool identity/limit/single shutdown, encrypted
+restart persistence, owned migrations/bootstrap, forced RLS/runtime privilege isolation,
+refresh/logout and real HTTP DMS integration. The initial integration's existing DMS
+private-command child timed out at six seconds while an image build was running; a later
+run exposed the expanded-catalog fixture grants, which were corrected before the final
+full pass. Initial Biome formatting differences and the time-zone test's unlisted alias
+were corrected; validation still uses exactly the adopted generated allowlist.
+All three real production-profile HTTPS/STARTTLS auth browser journeys pass, including
+20 reloads without sign-in flash, CSP/fonts, recovery/reset, permission/CSRF and partial
+logout. Final production API image builds with frozen dependencies; isolated non-root
+startup/liveness and fail-closed unconfigured auth readiness pass without host bindings.
+Scoped/full Biome, Git whitespace and 242 relative document links/anchors pass. No new
+production web image or target Dokploy/customer deployment check was performed; browser
+evidence used disposable database/Mailpit/HTTPS fixtures, not customer provisioning.
+Handoff: ONB-I03 is next when authorized: canonical organization/setup persistence,
+reviewed migrations, audited/revisioned domain operations and private initialization/
+inspection/retention commands. I04 then implements grant protection, feature HTTP access
+and readiness enforcement. I02 adds no domain tables/migrations, organization/setup HTTP
+handlers, gate bypass or private configuration grant. No baseline blocker remains.
+Existing installation accounts/grants/credentials/data, root LICENSE/notices, ingress and
+ports are preserved. User-staged baseline changes are preserved; this work remains local
+and uncommitted, with no commit/push/PR or target deployment operation.
+
+ONB-I01 implementation baseline is completed (owner: Codex, 2026-11-01).
+Created the accepted [onboarding specification](docs/onboarding_specification.md) with
+unchanged ONB-R01–12 IDs and acceptance journeys. Adopted root-only activation, private
+verified administrator provisioning, narrow configuration authority and fixed Site/Department
+labels. architecture.md now owns exact normalization/time-zone/body/unit/depth limits,
+HTTP/permission/error projections, partial saves, revisions, bounded unit-create retries,
+completion/grant locking, audit retention and private initialization/grant/maintenance
+contracts. Aligned the implementation plan, proposal, workspace plan, README and both
+operator/deployment runbooks; future commands/limits are explicitly not installed yet.
+Verification: pnpm check/build/test/test:integration pass on Node 24.21.0, pnpm 12.16.1
+and pinned uv/Python. All seven build tasks and API unit/type tasks used existing caches;
+2 transport cases ran fresh, with 43 API unit cases replayed. Integration ran 13 fresh
+Fastify and 54 fresh PostgreSQL cases plus repeatable owned migration/bootstrap and
+runtime privilege isolation. Initial check found new Markdown table formatting differences;
+scoped Biome formatting corrected them and the full check passed afterward. Relative
+document links/anchors and all twelve requirement/plan mappings resolve; final scoped
+formatting and Git whitespace checks pass. Existing suites establish repository health,
+not implemented onboarding. No new browser, application-image or deployed-runtime check
+was performed for this documentation-only package; target release evidence remains I08.
+Handoff: ONB-I02 is next when authorized: executable shared schemas/time-zone allowlist,
+generated feature OpenAPI/consistency checks and shared product persistence composition,
+preserving auth/session behavior. Feature schema/migrations and private operations start
+in I03; grant/readiness enforcement in I04. No baseline blocker remains. Custom terminology,
+broad IAM, invitations and Document Approval remain separate follow-ons. No application
+code, dependency, schema/migration, installation account/grant/secret/data, deployment or
+commit/push/PR operation changed. Work remains local/uncommitted.
+
+ONB-PLAN-001 planning is completed (owner: Codex, 2026-11-01): audited current
+auth/provider composition, private access grants, runtime privileges, shared contracts,
+web route/request handling and test harness. Created the
+[onboarding implementation plan](docs/onboarding_implementation_plan.md) with ONB-I01–08:
+baseline/specification, contracts/persistence composition, canonical audited configuration,
+private provisioning/backend gate, web onboarding, ongoing Settings, complete-chain
+verification and coordinated existing-installation release. Mapped all ONB-R01–12;
+preserved optional units, shared configuration, separate feature readiness and private
+account management. The proposal and workspace plan now link to the ordered packages.
+Verification: pnpm check/build/test/test:integration pass on the pinned toolchain;
+build/type/API unit tasks used existing caches, 2 transport tests ran fresh, and
+13 Fastify plus 54 PostgreSQL integrations ran fresh with owned migration/bootstrap
+and runtime-role isolation. All 33 relative links/anchors in the plan, proposal and
+workspace plan resolve; package/requirement coverage, final scoped Biome and Git
+whitespace checks pass. Existing suites establish workspace health, not implementation
+of proposed onboarding. No new browser, application-image or deployed-runtime check was
+performed for this documentation-only task.
+Handoff: use ONB-I01 as the implementation starting point when authorized, then follow
+the dependency order. Exact limits/contracts become accepted architecture/specification
+in that package; broad IAM, invitations and Document Approval remain separate follow-ons.
+No planning blocker remains. No application code, schema/migration, account/secret,
+accepted architecture, customer data, deployment or commit/push/PR operation changed.
+
+ONB-001 discovery/design is completed (owner: Codex, 2026-11-01): all four Version 1
+reference areas and eight directly related screens were accessible after authorized login.
+Inspected tabs, create/edit forms, conditional selectors, downloaded CSV template,
+106-permission catalog and all 21 RACI matrix views. The field-level
+[inventory](docs/onboarding_v1_discovery.md) records functionality, overlaps and evidence
+limits. The [proposal](docs/onboarding_design_proposal.md) covers configuration
+classification, minimal organization/time-zone/root setup, optional units, provisioning
+versus bootstrap/onboarding, server readiness and permission gates, resume/waiting-user
+behavior, settings navigation, dependencies, edge cases and phased delivery. Proposed
+ONB-R01–12 are product-review requirements, not accepted implementation. A fictional
+[interactive illustration](docs/presentations/onboarding-concept.html) presents the
+screen grouping without application access or persistence. Existing architecture remains
+authoritative; no new technical decision was silently adopted.
+Verification: final pnpm check passed after document formatting; pnpm build and pnpm test
+passed with existing workspace caches (2 fresh transport cases and 43 cached API unit
+cases). pnpm test:integration passed with 13 fresh Fastify and 54 fresh PostgreSQL cases,
+repeatable owned migrations/bootstrap and runtime-role isolation. All 16 local document
+links/anchors resolve; HTML IDs/script syntax and absence of network/persistence calls
+were checked. Desktop/mobile HTML previews of entry, structure, review and settings
+states show readable layouts and no console errors. No new onboarding runtime behavior
+is implemented or tested; no new application image/deployed/customer-runtime verification
+was performed. V1 writes, SSO authentication/provider delivery, post-upload import and
+fresh-database behavior remain unverified; its SSO page reports missing server credentials.
+No V1 configuration was saved, user provisioned, invitation/test message sent or destructive
+action invoked. The owned browser tab was closed; logout was not confirmed after its
+UI action timed out. No credentials or demo contact records were written to repository docs.
+Handoff: review the proposed minimal activation boundary, setup administrator policy and
+settings grouping; agree separate Document Approval rules before implementation. No
+discovery blocker remains. No application code, schema/migration, installation credentials,
+accepted architecture, commit/push/PR, deployment or source/data migration changed in this task.
+
+Entries below preserve dated handoffs and historical commands. Follow the latest
+completed development entry and [current startup instructions](architecture.md#local-development)
+for operational commands; older entries are verification history.
+
+DS-001 is completed (owner: Codex, 2026-11-01): initialized and applied owner-selected
+shadcn preset `biekTCUvD` through CLI 4.23.0 in the existing Vite web app. Installed
+Tailwind/Vite integration and generated Base UI Maia primitives with exact dependencies.
+The existing src/index.css now owns semantic light/dark colors, local body/heading fonts
+and radius values; authentication/recovery/session states and the workspace consume shared
+controls, cards, notices and skeletons. Shared ButtonLink composes Button variants with a
+native anchor, preserving navigation semantics verified by the recovery browser regression.
+The development-only /design-system gallery renders actual primitives and states without
+account/API access. docs/design-system.md provides one designer/developer handoff and
+maintenance guide; web AGENTS.md, READMEs, workspace/tooling standards and architecture
+references are aligned. Biome supports web Tailwind directives; dependency rules resolve
+the web alias through root tsconfig.boundaries.json without weakening application boundaries.
+UI/font/icon notices ship with built assets; the proprietary root LICENSE is preserved.
+Final pnpm check/build/test/test:integration and test:browser:auth pass: 2 fresh transport
+tests, 43 recorded API unit cases (cached), 13 fresh Fastify and 54 fresh PostgreSQL cases
+plus owned migration/runtime-role isolation. All three production-profile HTTPS/STARTTLS
+browser journeys pass, including bundled fonts under CSP, keyboard access, 320px/desktop
+recovery forms, reduced motion, 20 authenticated reloads without sign-in flash, current
+session/DMS permissions, verification/recovery/reset and logout/retry behavior. Final
+Biome/whitespace checks pass. Development gallery light/dark switching, password reveal,
+320/768/1280px layouts, zero API calls/runtime errors and fixture-only visual inspection
+pass. Production assets exclude gallery code and include both font families and exact
+notices. The final production web image rebuilds; isolated non-root Nginx configuration,
+liveness and notice delivery pass. The development web image was rebuilt to include new
+source files; all seven local services run and configured health checks are healthy.
+Handoff: use http://localhost:23600 and http://localhost:23600/design-system with the
+existing Compose Watch workflow. Designers/developers maintain tokens/primitives and
+review gallery states together using the shared guide. Product pages remain light by
+default; dark preview is available in the gallery. No Figma synchronization is configured.
+No blockers remain in this scope. Existing accounts, secrets, auth authority, data,
+reserved ports and unrelated local changes are preserved. Changes remain local/uncommitted;
+no business/mobile feature, remote CI, push/PR or customer/production rollout was performed.
+
+DEV-009 is completed (owner: Codex, 2026-11-01): fixed authenticated refresh loading
+and a reproduced continuous-traffic authentication rate-limit defect. Startup now renders
+a static neutral workspace shell instead of AuthLayout until the current backend session
+is verified. Concurrent session reads share only their pending HTTP request; completion
+clears it, without persisting identity or caching authorization. /auth-unavailable now
+revalidates the session and restores a verified workspace to the canonical root URL.
+The pinned Better Auth 1.7.14 database limiter advanced lastRequest on every admitted
+request, letting continuous health/introspection traffic exhaust a budget across multiple
+nominal windows and force an idle cooldown. A new real-PostgreSQL regression failed before
+the fix (429 after the configured window) and passes afterward. Added a pnpm-managed patch
+that anchors the database window, retaining the configured maximum, atomic increment,
+persistent counters, denial and reset paths. No limiter is disabled, dependency version
+upgraded, schema/migration added, or account/secret reset. The additional authenticated
+introspection regression passes 110 continuous probes at 86/minute across multiple windows;
+existing denial/restart/forged-forwarding tests pass. Patches are documented and copied
+before development-image locked installation. Patch presence is verified in the running
+DMS container and production DMS image; private runtime settings and fixed ports remain.
+Final check/build/test/test:integration and test:smoke pass: 2 transport tests, 43 recorded
+API unit cases, 13 Fastify plus 54 PostgreSQL integrations and role/DDL isolation. All
+three isolated HTTPS browser journeys pass, including delayed bootstrap, pending-read
+coalescing, 20 authenticated reloads with one session request per reload and no observed
+auth-layout flash, and recovery from the error route to /. Final Biome/whitespace and
+root/production Compose configuration checks pass. All five Docker images rebuild;
+production API non-root/liveness, DMS patch, Nginx configuration and processing CLI checks
+pass. The latest frontend redirect adjustment was rebuilt/rechecked with browser tests.
+Architecture, patch guidance and script documentation are aligned. The owner's desktop
+runtime cannot be directly automated here; a separate preview confirmed unsigned-user
+sign-in access. Credentialed reload verification used isolated browser fixtures, not a
+password reset or new login to the owner's account. The verification preview tab is closed.
+Handoff: Compose Watch remains running at http://localhost:23600, with all seven services
+running and all configured health checks healthy. Refresh the desktop tab to pick up the
+new loading/recovery flow. Required authentication checks and rate limits remain enabled.
+Changes are local/uncommitted; no push/PR, production deployment or remote CI run in this task.
+
+DEV-008 UI recovery is completed (owner: Codex, 2026-11-01); the cause of the
+historical intermittent API 503 remains unconfirmed. The annotated tab is local desktop runtime and
+cannot be automated from this environment. A separate server preview receives the
+expected 401/IDENTITY_REQUIRED and reaches the credential form. Desktop request 503s
+were correlated with the running API; temporary diagnostics located them in OIDC
+active-token introspection rather than cookie decryption. Fresh configured-client
+introspection of the current persisted live token succeeds. The intermittent protocol
+or transport cause remains unconfirmed; no backend fix is claimed. Temporary API
+diagnostics are removed, and those backend files have no remaining changes.
+Reproduced a frontend race under development StrictMode: a delayed older 503 replaces
+a newer 401 and leaves only Try again. Fixed latest-check fencing, one bounded three-second
+automatic retry, visible-tab focus recovery and explicit sign-in access on unavailable
+screens. Existing logout generation fencing remains. Extended the real-browser journey
+with late-failure, sign-in visibility and focus/automatic/manual recovery regressions;
+aligned architecture. Controlled preview reproduction now retains the correct sign-in
+state, and the live credential form opens normally.
+Final pnpm check/build/test/test:integration and test:browser:auth pass: 2 transport tests,
+43 recorded API unit cases (cached), 13 fresh Fastify and 52 fresh PostgreSQL integrations,
+plus all three HTTPS browser journeys with the new recovery checks. Final Biome and
+whitespace checks pass. All seven services run, all configured health checks are healthy,
+and Compose Watch remains running at localhost:23600. No port, account, secret, database,
+auth-validation or production deployment changes were made in DEV-008. No commit/push/PR.
+Owner follow-up (2026-11-01): clicking Try again now shows Sign in in the desktop tab,
+confirming that recovery is accessible there. The owner then confirmed they can log in
+successfully. This is owner-reported desktop login evidence; it does not establish the
+cause of the historical introspection 503. These follow-ups changed only the progress
+record; Biome/whitespace checks passed, with runtime suites not repeated for the
+documentation-only confirmation.
+Handoff: desktop sign-in is working at localhost:23600. If an API 503 recurs, correlate that
+fresh request before claiming its underlying cause is fixed. No current desktop failure
+was reported in the owner's retry result. The temporary server preview tab opened for
+verification is closed; owner desktop tabs remain intact.
+
+DEV-007 verification is completed (owner: Codex, 2026-11-01): ran pnpm dev and
+investigated the reported alternating login 302/503 telemetry. Effective Compose and
+running container bindings use only loopback host ports 23600–23608; API public origins,
+issuer, callback, resource and database URLs match. All configured health checks pass,
+only one repository Compose Watch process runs, and twelve fresh login starts returned
+302. All 41 inspected product session envelopes were readable with the configured key;
+no key mismatch was found. The recorded local account exists, is verified, is not banned
+and has a password. The first private password input was rejected with HTTP 401; after
+the owner confirmed the email and supplied the current password through a new private
+card, the live credential/callback/session flow passed. Five consecutive complete sign-ins
+with retained cookies, current session and authenticated DMS capability checks passed.
+An authenticated session survived a product API restart; logout completed locally and
+at the authority, and subsequent session access correctly returned 401. All three
+isolated HTTPS browser journeys passed in the preceding DEV-007 validation run.
+The original intermittent 503 was not reproduced after correct credentials were supplied;
+its cause remains unconfirmed, so this is verification evidence rather than a claimed
+503 fix. Existing telemetry groups login start and callback under product.login, and
+HTTP 200 token issuance alone does not establish a product session. No speculative auth
+behavior change, account reset, password/secret rotation or deployment was made. Only this
+progress record changed in DEV-007; Biome and whitespace checks pass. Temporary validation
+script and private password input copies are removed after use; installation credentials,
+backups and data remain intact.
+Handoff: pnpm dev remains running at http://localhost:23600. Use a fresh sign-in with the
+confirmed account/password. If 503 recurs, capture its new request ID and the failing
+step/time to correlate with that running API instance; do not infer a port conflict from
+this historical log. No commit/push/PR operation was performed.
+
+DEV-006 is completed (owner: Codex, 2026-11-01): audited development/build/deploy
+callers and removed obsolete per-API Nest watch commands and Turbo overrides, the unused
+root Turbo dev task and infrastructure aliases, frontend preview command, unused
+VITE_API_BASE_URL example/build arguments and Vite host-proxy fallback. Compose Watch is
+the sole full-stack development entry point; production Dockerfiles/Dokploy, CI builds,
+host checks and explicit operator commands remain supported. Updated architecture,
+startup/component/standards/runbook docs and marked original plan/handoff evidence as
+historical. CI now builds the development image alongside all four production images.
+Deployment guards resolve YAML merge anchors (previously inherited builds were skipped),
+validate reserved bindings/project identity and reject obsolete development entry points
+or development watch/ports in production configuration.
+All required pnpm check/build/test/test:integration commands and test:smoke pass locally:
+2 fresh loopback tests, 43 recorded API unit cases (cached), 13 fresh Fastify and 52 fresh
+PostgreSQL integrations plus migration/runtime-role isolation. Root/production Compose
+configuration and final Biome/whitespace checks pass. All five Docker images rebuild;
+both production API images pass non-root compiled-entry HTTP checks, web passes non-root
+Nginx liveness/SPA/assets/CSP checks, and processing passes its packaged CLI check.
+Live validation also found blank required values in both private API runtime files
+(reason for the earlier replacement is unconfirmed). Backed up those files privately and
+restored only missing values from the existing installation backup, translating restored
+local database URLs to reserved port 23603. Kept current nonblank settings, accounts,
+passwords, credentials and installation identity; no database writes/migrations or secret
+rotation were performed by this recovery. Private snapshots remain outside Git with
+restricted permissions. Both API auth readiness checks, canonical discovery/login
+redirect, real machine token/DMS capabilities and Compose source sync/Vite HMR pass.
+All seven local services run; all six configured Docker health checks are healthy.
+No legacy host development processes remain and the original PostgreSQL volume is retained.
+Handoff: Compose Watch remains running at http://localhost:23600. Start with
+`docker compose up --build --watch` or its `pnpm dev` alias. No cleanup blockers remain;
+password login, remote CI and actual Dokploy/pilot deployment were not repeated. Changes
+remain local/uncommitted; no push/PR operation, unrelated resource deletion or backup purge.
+Follow-up notification check (2026-11-01, Codex): the earlier port-change background
+command reported exit 130 (interrupt). Rechecked the current stack: all seven services
+run, all configured health checks are healthy, and web plus both auth readiness endpoints
+return HTTP 200. No repair or restart was needed; the current Compose Watch session remains running.
+
+DEV-005 is completed (owner: Codex, 2026-11-01): reserved fixed loopback host
+ports 23600–23608 for web, DMS API, product API, PostgreSQL, Mailpit SMTP/inbox,
+RabbitMQ AMQP/management and SeaweedFS S3. Docker keeps its isolated private listener
+ports. Added deploy/development-ports.json, aligned Compose/forwarders/examples/docs,
+reserved the range in AGENTS.md and added deployment checks for all bindings and the
+pilot inbox. Startup has no fallback to default/random host ports. All nine host ports
+bound successfully; application containers and configured infrastructure health checks pass.
+Public auth is now http://localhost:23600; DMS audience/transport uses localhost:23601/v1.
+Backed up private runtime/operator files and endpoint bindings before transactionally
+updating only this installation's OAuth metadata, redirect/logout/resource links and DMS
+issuer/enrollment bindings. Immediate foreign keys remained enforced, no persistent DDL,
+new roles, re-enrollment, password or secret rotation was performed. Client credentials,
+scopes, IDs, active status, key/receipt identities and the original PostgreSQL volume are
+preserved; local operator database URLs now use 23603 and SMTP uses 23604. The current
+private installation record is updated; historical reports remain historical.
+New-origin discovery, real machine token/DMS access, browser-style authorization to the
+sign-in form, old-callback rejection, SMTP handshake, AMQP reachability and Vite HMR pass.
+All required workspace checks pass (2 transport checks, 43 recorded API unit cases,
+13 Fastify and 52 fresh PostgreSQL integrations with isolation checks). Password login
+and production/pilot rollout were not repeated. Handoff: Compose Watch remains running;
+use http://localhost:23600 and a fresh sign-in. Start with docker compose up --build --watch
+or pnpm dev; other applications must avoid 23600–23608. Credentials and data are retained,
+and private backups/current binding reports remain outside Git with restricted permissions.
+No blockers, commit/push/PR operation or target deployment in this task.
+
+
+DEV-004 is completed (owner: Codex, 2026-11-01): the owner selected Docker Compose
+with per-service hot reload. Root Compose includes the original infrastructure and a
+separate development overlay/image, preserving the turnstile-local project, PostgreSQL
+volume, accounts, credentials and localhost authentication addresses. pnpm dev aliases
+`docker compose up --build --watch`; removed redundant host dev:auth/dev:dms/dev:turnstile
+entry points and the old auth bootstrap, and discarded the unpublished host supervisor.
+API/shared source sync rebuilds before container restart, web source uses Vite HMR and
+manifest/lockfile changes rebuild images. Local-only loopback routing preserves issuer,
+resource, PostgreSQL and Mailpit connectivity without changing auth validation. Each API
+mounts only its own private .env; frontend/image privacy and unprivileged execution pass.
+Docker Desktop rejected publishing the former host API port; keeping APIs private on the
+Compose network resolved this, with only web/infrastructure ports published to loopback.
+Corrected the image's complete workspace-manifest copy to prevent runtime reinstallation.
+Live API source edits, shared rebuilds, frontend HMR, manifest-triggered image recreation
+and process-crash restart/auth recovery passed; all three application containers are healthy.
+Canonical discovery, real machine token issuance and authenticated DMS capabilities returned
+200. Password login was not repeated in this task; no password or account was changed.
+Required check/build/test/integration commands passed, including 2 new loopback transport
+checks, 43 recorded API unit cases and 65 fresh Fastify/PostgreSQL integration cases with
+role/DDL isolation. Updated architecture, startup/runbooks, component docs and CI Compose
+validation. Handoff: Compose Watch remains running and the web is at localhost:5173.
+Use the single Docker command above (or pnpm dev); stop with Ctrl+C/docker compose stop.
+Private environment edits require service restart, topology edits require restarting the
+Compose command, and migrations remain explicit. Source/dependency changes on compatible
+branches are automatic; broken code/configuration and schema/runtime incompatibility still
+require correction. No runtime credentials, installation data or production deployment
+were changed; no commit, push or PR operation was performed in this task.
+
+
+STATUS-002 is completed (owner: Codex, 2026-11-01): reviewed the recorded auth
+verification, architecture and ordered DMS requirements. The local authentication chain is
+implemented and verified; target customer provisioning and ingress/DNS/TLS/email delivery
+remain rollout work. Recommended next milestone: DMS document foundations, first checking
+and completing applicable API-contract/audit gaps (groups 03–04), then document registry
+(group 05) and admission policies (group 06), before uploads (group 07), durable work,
+security assessment/publication and retrieval. AUTH-01–07 completion does not declare all
+requirements in groups 01–04 complete. Turnstile business screens still require agreement
+on the first workflow and roles. Handoff: recommendation only; no new feature, schema,
+remote publication or deployment started. Only this progress entry changed in this task;
+Biome and whitespace checks passed. Runtime suites were not repeated for planning notes.
+
+AUTH-DEV-003 is completed (owner: Codex, 2026-11-01): restored local auth after
+switching branches while development was running. On branch development, Vite/product
+were listening but the authority on port 3001 was absent; product readiness returned
+503 authority_unavailable. The prior command was plain `pnpm dev`; the exact authority
+crash log was unavailable. Stopped only the identified workspace Turbo process and
+started `pnpm dev:auth`. Both APIs rebuilt with zero compilation errors, both auth
+readiness endpoints returned 200, and the real browser's Try again button followed
+login/authorization redirects to the credential form. Credentialed login was not repeated
+in this task. No auth code, credentials, accounts, roles or installation data changed.
+Required check/build/test/integration commands passed (43 cached API unit cases, 13 fresh
+Fastify and 52 fresh PostgreSQL integration cases plus isolation checks). Updated the
+branch-switch procedure in the authentication runbook. Handoff: development remains
+running under `pnpm dev:auth`; stop it before future branch changes, install locked
+dependencies when manifests/lockfile change, then restart that command and begin a fresh
+login. No remote deployment or PR changes were performed.
+
+STATUS-001 is completed (owner: Codex, 2026-11-01): reviewed the current web UI,
+authentication plan/runbook, architecture and DMS requirement ordering to inventory
+available capabilities. The owner reports sign-in and workspace access working. Current
+UI supports login/recovery/reset/session/logout and a permission-protected DMS connection
+check; the capability projection currently contains empty format/profile/language lists.
+Account provisioning/access grants and application credential/enrollment administration
+are private operator commands. Business screens, document registry/upload/processing/search
+and target deployment remain pending. Handoff: agree the first Turnstile business workflow;
+for a DMS document flow, implement registry/admission boundaries before transfer and
+processing. This is a scope discussion, not authorization for new features or deployment.
+Only this status record changed; Biome/whitespace validation passed, runtime checks were
+not repeated for the documentation-only inventory.
+
+AUTH-LOCAL-002 diagnostic validation is completed (owner: Codex): the owner confirmed
+that a prompt fresh login at `/api/auth/login` in a private window reaches the workspace.
+The reported `/session-expired` route identifies login/callback rejection; redacted logs
+contained a password success followed by a product login 400 before token exchange.
+A browser probe reproduced 400 LOGIN_TRANSACTION_INVALID after a newer login replaced
+the earlier transaction; fresh transactions passed state validation. This points to stale
+sign-in state in the regular browser, but expiry versus replacement (or other profile-specific
+cookie behavior) was not established. No application defect or source/configuration repair
+is claimed. Keep state/cookie validation intact.
+Actual localhost browser login, reload, concurrent reads, DMS access, SSO, complete
+logout/relogin and natural token refresh all passed; required workspace checks passed.
+Handoff: close old sign-in tabs and start a fresh login in the regular browser. If that
+profile still fails, clear only localhost site cookies and retry; a persistent failure
+requires bounded callback diagnostics. Regular-profile recovery has not been confirmed.
+The temporary private password input was deleted; validation records are redacted.
+
+AUTH-LOCAL-001 is completed (owner: Codex): the persistent local-development installation
+is provisioned through the supported role/migration/bootstrap, account, OAuth-client and
+enrollment commands. Both APIs report auth readiness 200. Live SDK/OIDC login, safe session
+cookies/DTOs, product-to-DMS access, recovery/reset revocation, complete logout, idempotent
+enrollment and runtime-role isolation pass. All required workspace checks, 65 integration
+cases and three isolated HTTPS/STARTTLS browser journeys passed. Scope is loopback development
+with Mailpit; no customer deployment or external mail delivery is included. Handoff: services
+are running under `pnpm dev:auth`; use the verified local operator account with the chosen
+password. Runtime/operator credentials remain in ignored mode-0600 files, private backups
+and provisioning records remain outside the repository, and temporary password inputs were
+removed after validation. Restart ordinary development with `pnpm dev:auth`, without
+re-provisioning roles or replacing the fixed installation identity.
+
 AUTH-FIX-001 is completed (owner: Codex): implementation, local verification and remote CI.
 Protected requests overlapping an in-progress or committed refresh now return retryable
 503 while logout and idle/absolute expiry retain their 401 fences. The final session
@@ -63,17 +1684,23 @@ AUTH-07 code and its earlier local verification are complete.
 Real customer/client provisioning, target Mailpit deployment and Dokploy ingress/container
 DNS/TLS verification remain pending; local evidence does not establish deployed readiness.
 
-| ID           | Status    | Owner | Scope / requirement                                                      | Next action                                    | Verification / remaining work                                                                                                                                                                                                         | Updated    |
-| ------------ | --------- | ----- | ------------------------------------------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| AUTH-05      | Completed | Codex | DMS machine authorization and guarded enrollment                         | Handoff recorded below                         | Required workspace checks, 40 API unit cases, 61 integration cases, role/DDL matrix, compiled smoke and contract consistency passed; fixture provisioning only                                                                        | 2026-10-31 |
-| AUTH-06      | Completed | Codex | Typed machine client and real cross-service request                      | Handoff recorded below                         | Required workspace checks, 43 API unit cases, 63 integration cases, role/DDL matrix, compiled smoke and generated-contract consistency passed; fixture provisioning only                                                              | 2026-10-31 |
-| AUTH-07      | Completed | Codex | Login/recovery UI and operational verification                           | Handoff recorded below; target rollout pending | Required checks, 43 API unit cases, 63 integration cases, three production-profile HTTPS/STARTTLS browser journeys, four image builds and isolated runtime checks passed; canonical-container probe unavailable on Docker Desktop/WSL | 2026-10-31 |
-| AUTH-FIX-001 | Completed | Codex | Preserve valid sessions during refresh overlap and fix fresh-checkout CI | PR #1 open for owner review                    | 65 local integration cases and required workspace checks passed; all five remote checks passed on implementation commit c70f294                                                                                                       | 2026-10-31 |
+| ID             | Status    | Owner | Scope / requirement                                                         | Next action                                                                     | Verification / remaining work                                                                                                                                                                                                         | Updated    |
+| -------------- | --------- | ----- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| AUTH-05        | Completed | Codex | DMS machine authorization and guarded enrollment                            | Handoff recorded below                                                          | Required workspace checks, 40 API unit cases, 61 integration cases, role/DDL matrix, compiled smoke and contract consistency passed; fixture provisioning only                                                                        | 2026-10-31 |
+| AUTH-06        | Completed | Codex | Typed machine client and real cross-service request                         | Handoff recorded below                                                          | Required workspace checks, 43 API unit cases, 63 integration cases, role/DDL matrix, compiled smoke and generated-contract consistency passed; fixture provisioning only                                                              | 2026-10-31 |
+| AUTH-07        | Completed | Codex | Login/recovery UI and operational verification                              | Handoff recorded below; target rollout pending                                  | Required checks, 43 API unit cases, 63 integration cases, three production-profile HTTPS/STARTTLS browser journeys, four image builds and isolated runtime checks passed; canonical-container probe unavailable on Docker Desktop/WSL | 2026-10-31 |
+| AUTH-FIX-001   | Completed | Codex | Preserve valid sessions during refresh overlap and fix fresh-checkout CI    | PR #1 open for owner review                                                     | 65 local integration cases and required workspace checks passed; all five remote checks passed on implementation commit c70f294                                                                                                       | 2026-10-31 |
+| AUTH-LOCAL-001 | Completed | Codex | Persistent local auth installation and operational validation               | Local sign-in available; use pnpm dev:auth after stopping services              | Live local login/recovery/logout, DMS enrollment/capabilities and role isolation passed; required checks, 65 integration cases and three browser journeys passed                                                                      | 2026-10-31 |
+| AUTH-LOCAL-002 | Completed | Codex | Diagnose callback rejection and validate real local browser login           | Fresh private-window login confirmed by owner; regular-profile retry available  | Browser login, reload, DMS, logout/relogin and natural refresh passed; required checks passed; stale browser sign-in state indicated, exact trigger unconfirmed                                                                       | 2026-10-31 |
+| AUTH-DEV-003   | Completed | Codex | Restore auth after live branch switching                                    | pnpm dev:auth running; stop/restart before switching branches                   | Missing authority listener restored; both APIs ready 200; browser retry reaches sign-in; required workspace checks and 65 integration cases passed                                                                                    | 2026-11-01 |
+| DEV-004        | Completed | Codex | Container development with Compose Watch and single startup                 | Docker Compose watch running; use pnpm dev or docker compose up --build --watch | Live source/shared/HMR/image rebuild/crash recovery, canonical auth/machine access, required checks and 65 integration cases passed; private runtime files/data preserved                                                             | 2026-11-01 |
+| DEV-005        | Completed | Codex | Reserve non-default local service ports and migrate local endpoint bindings | Web localhost:23600; reserve 23600–23608 for Turnstile                          | All nine bindings, OAuth/issuer/DMS routes, SMTP/AMQP, HMR and required checks passed; credentials/data/active enrollment preserved                                                                                                   | 2026-11-01 |
 
 ## Completed milestones
 
 | ID            | Completed  | Result                                                                                                                                                                                                                                                        | Evidence                                                                                                                                                                                                                                                                                                                                                                         |
 | ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DS-001        | 2026-11-01 | Owner-selected shadcn preset applied to the web app; semantic tokens, reusable UI, local fonts, development gallery and designer/developer maintenance guide established                                                                                      | Required workspace checks, 54 PostgreSQL plus 13 Fastify integrations, all three HTTPS browser journeys, gallery states/layouts, production exclusion and non-root web image checks pass; local changes only                                                                                                                                                                     |
 | WSP-001       | 2026-10-31 | Git repository, pnpm workspace, Turborepo tasks, runtime pins, and lockfiles established                                                                                                                                                                      | [Root manifest](package.json), [workspace](pnpm-workspace.yaml), [task graph](turbo.json)                                                                                                                                                                                                                                                                                        |
 | WSP-002       | 2026-10-31 | DMS API and separate Turnstile API created with the Nest CLI and configured with Fastify                                                                                                                                                                      | [DMS API](apps/dms-api/README.md), [Turnstile API](apps/turnstile-api/README.md)                                                                                                                                                                                                                                                                                                 |
 | WSP-003       | 2026-10-31 | Turnstile Vite/React/TypeScript frontend created; local API proxy configured                                                                                                                                                                                  | [Web application](apps/turnstile-web/README.md), [Vite configuration](apps/turnstile-web/vite.config.ts)                                                                                                                                                                                                                                                                         |
@@ -126,6 +1753,96 @@ DOC-TEST-001 completed on 2026-10-31 (Codex): added one focused testing guidelin
 for this documentation-only change. No blockers or remaining work.
 
 ## Latest recorded verification
+
+DEV-005 verification (2026-11-01, Codex): checked and successfully bound all nine
+reserved host ports 23600–23608 under Docker Desktop/WSL. HTTP checks returned 200 for
+web, both auth-readiness endpoints, Mailpit inbox, RabbitMQ management and SeaweedFS;
+SMTP/AMQP socket handshakes passed. Container-to-public canonical discovery, existing
+client-credentials token issuance and protected DMS capabilities returned 200 at the new
+addresses. Browser-style HTTP authorization redirects use the exact new callback and
+reach the sign-in form; the old callback is rejected with invalid_redirect. Actual Vite
+WebSocket HMR works on 23600 and the temporary source probe was restored. PostgreSQL
+retains turnstile-local_postgres-data; private old/new configuration comparison confirmed
+credentials, role names, database identity and other non-address settings unchanged.
+A bounded single-transaction local metadata update retained FK checks and active enrollment
+state; no account or schema migration was needed. pnpm check/build/test/test:integration
+passed; 2 transport tests, 43 recorded API unit cases, 13 Fastify and 52 fresh PostgreSQL
+integration cases plus role/DDL isolation are recorded in the command logs. Root/default
+Compose configuration, the fixed-port/pilot binding guards and Git whitespace checks pass.
+Credentialed browser login, target deployment and pilot STARTTLS were not rerun. A final
+Docker snapshot briefly showed product readiness unhealthy; it recovered without restart.
+Subsequent direct API/issuer/JWKS requests and successive Docker health checks passed.
+The exact transient trigger was not established; no persistent failure was reproduced.
+Local services/watch remain running on the new addresses, with no outstanding blocker.
+
+DEV-004 verification (2026-11-01, Codex): Docker Engine 29.9.2/Compose 5.6.1 built
+and ran the separate development application images. Real Compose Watch API source sync,
+shared dependency rebuild/restart, Vite WebSocket HMR, manifest-driven image rebuild and
+restoration, and a deliberately killed API process all recovered to three healthy app
+containers. Startup/restarts after the manifest-copy correction performed no runtime
+installation. Canonical public issuer discovery and existing client-credentials/DMS access
+returned 200 from the product container. Frontend private API files/variables are absent,
+containers run as UID 1000, API host ports are unpublished and PostgreSQL retains
+turnstile-local_postgres-data. All temporary source/manifest probes were restored.
+`pnpm check`, `pnpm build` (7 projects, 4 cached), `pnpm test` (2 new transport cases plus
+43 recorded API unit cases/Python check, workspace tasks partly cached) and
+`pnpm test:integration` (13 Fastify + 52 fresh PostgreSQL cases, isolation checks) passed.
+Root/default and existing Compose configuration validation and Git whitespace checks passed.
+Password/browser login, production images/deployment and remote CI were not rerun for this
+development change. Working development containers/watch remain available; no blockers.
+
+AUTH-DEV-003 verification (2026-11-01, Codex): observed connection refusal on authority
+port 3001 and 503 authority_unavailable on product readiness while Vite/product remained
+up under plain pnpm dev. After restarting the verified workspace development process with
+pnpm dev:auth, both APIs compiled without errors and returned auth readiness 200; product
+login returned 302 to the configured authority. Real-browser Try again reached the signed
+credential form through two successful redirects. The diagnostic tab was closed.
+`pnpm check`, `pnpm build`, `pnpm test` (43 cached API unit cases and Python check), and
+`pnpm test:integration` (13 Fastify plus 52 freshly executed PostgreSQL cases and role/DDL
+isolation) passed on Node 24.21.0/pnpm 12.16.1. Build used Turbo cache; no auth source changed.
+The runbook and this handoff are the only repository changes. Full password login and
+remote CI/deployment were not repeated; the existing installation was preserved.
+
+AUTH-LOCAL-002 verification (2026-10-31, Codex): T3 shared Chromium browser drove the
+actual Vite development frontend and persistent local APIs through two email/password
+logins, parallel initial session reads, reload, eight concurrent reads, existing-session
+SSO, live DMS capability access, explicit logout and fresh relogin. Logout returned 200,
+subsequent product session returned 401 and the authority session was null. Fresh relogin
+completed at 17:38:58 UTC. Session polling remained 200 through the first natural refresh;
+at 17:44:20 UTC (past the original five-minute token expiry), four parallel reads and
+DMS capability access remained 200 with the signed-in workspace visible. The private
+password input was deleted after credentialed checks. Required commands passed again:
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` (43 API unit cases and
+13 Fastify integration cases from cache; 52 PostgreSQL cases freshly executed, including
+role/DDL isolation). No app/schema/configuration source changed; only this handoff was
+updated. The reported immediate expiry was not reproduced at the owner's confirmed
+localhost origin. The owner subsequently confirmed `/session-expired`; callback transaction rejection
+was narrowed as described above. The owner confirmed that a fresh private-window login reaches the workspace.
+This points to stale regular-browser sign-in state; the exact trigger remains unconfirmed;
+no repair, new deployment or updated PR checks are claimed.
+
+AUTH-LOCAL-001 verification (2026-10-31, Codex): created a dedicated persistent local
+installation database after confirming no existing installation/owned roles would be
+replaced. Provisioned six least-privilege roles, applied committed auth/DMS/product
+migrations and bootstrapped the same installation repeatedly. Provisioned and Mailpit-verified
+one local operator, issued separate login/machine OAuth clients, assigned explicit product
+access, registered/enrolled the pending DMS consumer, and retained its idempotent receipt.
+Both live auth readiness endpoints return 200; the unsigned session endpoint correctly
+returns 401. The real browser SDK over HTTP completed signed OIDC/PKCE login, safe opaque
+cookie/session projection and a product-permission-protected DMS capability request.
+Missing-CSRF/hostile-origin logout and callback replay were denied. Actual Mailpit recovery
+and reset revoked the old parent/product session while retaining the chosen password;
+relogin and complete local/authority logout passed. Pending machine denial, one-time
+enrollment, identical receipt replay and activated capability read passed. Runtime-role
+cross-schema access and missing-tenant access were denied; installed backend secrets were
+absent from browser production assets. Environment permissions are mode 0600 and temporary
+password input files were removed. No implementation/schema source changes were required.
+`pnpm check`, `pnpm build`, `pnpm test` (43 API cases and Python entry point), and
+`pnpm test:integration` (65 cases plus role/DDL isolation) and `pnpm test:smoke` passed;
+unchanged tasks used Turbo cache. Three isolated production-profile HTTPS/STARTTLS browser journeys passed
+separately from the persistent local HTTP installation. Development remains running with
+frontend/API/authority and Mailpit on their documented loopback ports; real customer and
+Dokploy provisioning remain pending.
 
 AUTH-FIX-001 local verification (2026-10-31, Codex): both new overlap regressions failed
 against the original code with 401 instead of 503, then passed after the fix.

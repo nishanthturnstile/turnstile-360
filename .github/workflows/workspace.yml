@@ -17,6 +17,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Set up supported Docker Compose
+        uses: docker/setup-compose-action@54042514f505b273907334ae2b9cdbb9a0213c1a # v2
+        with:
+          version: v5.6.1
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: .node-version
@@ -32,7 +36,7 @@ jobs:
       - run: pnpm test
       - run: pnpm test:integration
       - run: pnpm test:smoke
-      - run: docker compose --env-file .env.example -f deploy/compose.local.yaml config --quiet
+      - run: docker compose --env-file .env.example config --quiet
       - run: docker compose -f deploy/compose.dokploy.yaml config --quiet
 
   containers:
@@ -41,8 +45,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [dms-api, turnstile-api, turnstile-web, dms-processing]
+        include:
+          - image: dms-api
+            dockerfile: apps/dms-api/Dockerfile
+          - image: turnstile-api
+            dockerfile: apps/turnstile-api/Dockerfile
+          - image: turnstile-web
+            dockerfile: apps/turnstile-web/Dockerfile
+          - image: dms-processing
+            dockerfile: apps/dms-processing/Dockerfile
+          - image: development
+            dockerfile: deploy/Dockerfile.dev
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Build application image
-        run: docker build -f apps/${{ matrix.app }}/Dockerfile -t turnstile-workspace/${{ matrix.app }}:ci .
+        run: docker build -f ${{ matrix.dockerfile }} -t turnstile-workspace/${{ matrix.image }}:ci .

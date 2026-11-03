@@ -1,0 +1,15 @@
+diff --git a/dist/api/rate-limiter/index.mjs b/dist/api/rate-limiter/index.mjs
+index abe4c5e404ae262411252f780b1ab92f619c5b9c..66e4676cec7b71aaaa515f7f8cb7afc4d90f9f8a 100644
+--- a/dist/api/rate-limiter/index.mjs
++++ b/dist/api/rate-limiter/index.mjs
+@@ -158,7 +158,9 @@ function createDatabaseStorageWrapper(ctx) {
+ 				}
+ 			],
+ 			increment: { count: 1 },
+-			set: { lastRequest: now }
++			// Keep the fixed database window anchored at its first request.
++			// Advancing it on success lets continuous health checks exhaust multiple windows.
++			set: {}
+ 		})) return {
+ 			allowed: true,
+ 			retryAfter: null

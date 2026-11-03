@@ -14,6 +14,10 @@ Follow [the Turnstile application architecture](../../architecture.md#turnstile-
 for backend authority, client responsibilities, platform-independent contracts, and future
 mobile compatibility. Do not add a mobile application without an explicit request.
 
+Web presentation follows the [shared design-system guide](../design-system.md) and
+its architecture reference. Reuse configured primitives/tokens and review changes in
+the development gallery; keep designer/developer handoffs consistent with those sources.
+
 ## Toolchain and formatting
 
 Use the pinned [toolchain and library inventory](../../architecture.md#installed-toolchain-and-libraries),
@@ -34,7 +38,9 @@ for interfaces and types with no runtime identity.
 
 Python uses four spaces, Ruff, strict mypy, and a uv lockfile. Add pytest coverage as
 actual processing behavior is introduced. Build/test/typecheck tasks include Python's
-own package files and lockfile as task inputs. Live tests and dev tasks are not cached.
+own package files and lockfile as task inputs. Live tests are not cached. Development
+watching belongs to [Docker Compose](../../architecture.md#local-development); host
+toolchains remain for CI, checks, builds and explicit operator commands.
 
 ## Configuration and runtime
 
@@ -47,7 +53,8 @@ are for one-off operator commands; `.env.provision` is for initial database role
 belongs in a persistent API environment. Future feature settings must be
 validated by the owning process and supplied only to that process.
 
-The browser's VITE_* values are public build-time configuration. Keep machine credentials,
+The browser uses same-origin API requests and needs no API-base environment variable.
+Any future VITE_* values are public build-time configuration. Keep machine credentials,
 enrollment keys, signing secrets, and storage credentials on trusted backends. Validate
 user/business authority in Turnstile's backend before requesting DMS capabilities.
 
@@ -59,8 +66,14 @@ globally by the application configuration.
 ## Verification
 
 `pnpm check` runs Biome, dependency rules, TypeScript checks, Python checks, and deployment
-YAML/path checks and offline Better Auth CLI generation. `pnpm build` builds all seven
-workspace projects. `pnpm test` runs API identity/auth configuration tests and the Python
+YAML/path checks and offline Better Auth CLI generation. `pnpm check:contracts`, included
+in `pnpm check`, verifies the pinned shared time-zone list and generated onboarding
+OpenAPI/examples/references against the
+executable contracts, including the existing auth permission enumeration. Regenerate with
+`pnpm generate:turnstile-time-zones` and `pnpm docs:turnstile-onboarding` after deliberate
+contract changes; generated feature contracts do not imply implemented HTTP handlers.
+`pnpm build` builds all seven workspace projects. `pnpm test` runs shared contract/API
+identity/auth configuration tests, focused web structure-model regressions and the Python
 entry-point smoke check. `pnpm test:integration` runs
 Fastify injection tests using the same application factory as production entry points.
 Auth foundation coverage includes unavailable readiness and Fastify cookie/session plugin
@@ -69,9 +82,14 @@ PostgreSQL container for real authority, recovery, transaction, role and product
 checks. Docker Engine is required and unavailability fails explicitly. Storage and
 processing integration remain pending.
 
-Frontend interaction and browser tests will use Vitest/React Testing Library and
-Playwright when real screens are introduced. Broaden checks when implemented behavior
-or a failure requires it, rather than creating tests for empty placeholder folders.
+Focused web model tests use the pinned Node TypeScript support. The disposable HTTPS
+Playwright fixtures run through `pnpm test:browser:auth`,
+`pnpm test:browser:onboarding:structured` and `pnpm test:browser:structure`; they cover
+real owning HTTP and auth/permissions rather than a second browser-only state model.
+See [architecture.md](../../architecture.md#web-design-system) for component boundaries.
+Vitest/React Testing Library remains a possible later frontend addition when needed.
+Broaden checks when implemented behavior or a failure requires it, rather than creating
+tests for empty placeholder folders.
 
 ## Ownership
 

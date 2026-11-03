@@ -1,0 +1,171 @@
+x-development: &development
+  build:
+    context: ..
+    dockerfile: deploy/Dockerfile.dev
+  init: true
+  restart: unless-stopped
+  healthcheck:
+    test:
+      [
+        CMD,
+        node,
+        -e,
+        "fetch('http://127.0.0.1:'+process.env.PORT+'/health/ready/auth').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+      ]
+    interval: 5s
+    timeout: 3s
+    start_period: 60s
+    retries: 5
+
+x-dependencies: &dependencies
+  action: rebuild
+  path: ..
+  include:
+    - package.json
+    - pnpm-lock.yaml
+    - pnpm-workspace.yaml
+    - .npmrc
+    - .node-version
+    - apps/*/package.json
+    - packages/*/package.json
+    - patches/**
+    - deploy/Dockerfile.dev
+
+x-shared: &shared
+  action: sync+restart
+  path: ../packages
+  target: /workspace/packages
+  initial_sync: true
+  ignore: ["*/package.json", "**/test/**", "**/tests/**", "**/*.spec.ts"]
+
+x-tooling: &tooling
+  action: sync+restart
+  path: ../tooling/typescript
+  target: /workspace/tooling/typescript
+  initial_sync: true
+
+services:
+  dms-api:
+    <<: *development
+    command:
+      [
+        sh,
+        -c,
+        "pnpm exec turbo run build --filter=@thaarei/dms-api... && exec node scripts/dev-container.mjs dms-api",
+      ]
+    environment:
+      DEV_CONTAINER: "1"
+      PORT: "3001"
+    depends_on:
+      postgres: { condition: service_healthy }
+      mailpit: { condition: service_healthy }
+    ports: ["127.0.0.1:23601:3001"]
+    volumes:
+      - type: bind
+        source: ../apps/dms-api/.env
+        target: /workspace/apps/dms-api/.env
+        read_only: true
+        bind: { create_host_path: false }
+    develop:
+      watch:
+        - *dependencies
+        - *shared
+        - *tooling
+        - action: sync+restart
+          path: ../apps/dms-api
+          target: /workspace/apps/dms-api
+          initial_sync: true
+          include: [src/**, tsconfig*.json, nest-cli.json]
+          ignore: ["**/*.spec.ts"]
+        - action: sync+restart
+          path: ../scripts/dev-container.mjs
+          target: /workspace/scripts/dev-container.mjs
+          initial_sync: true
+        - action: sync+restart
+          path: ../deploy/development-ports.json
+          target: /workspace/deploy/development-ports.json
+          initial_sync: true
+        - action: sync+restart
+          path: ../turbo.json
+          target: /workspace/turbo.json
+          initial_sync: true
+
+  turnstile-api:
+    <<: *development
+    command:
+      [
+        sh,
+        -c,
+        "pnpm exec turbo run build --filter=@thaarei/turnstile-api... && exec node scripts/dev-container.mjs turnstile-api",
+      ]
+    environment:
+      DEV_CONTAINER: "1"
+      PORT: "3002"
+    depends_on:
+      postgres: { condition: service_healthy }
+      dms-api: { condition: service_started }
+    ports: ["127.0.0.1:23602:3002"]
+    volumes:
+      - type: bind
+        source: ../apps/turnstile-api/.env
+        target: /workspace/apps/turnstile-api/.env
+        read_only: true
+        bind: { create_host_path: false }
+    develop:
+      watch:
+        - *dependencies
+        - *shared
+        - *tooling
+        - action: sync+restart
+          path: ../apps/turnstile-api
+          target: /workspace/apps/turnstile-api
+          initial_sync: true
+          include: [src/**, tsconfig*.json, nest-cli.json]
+          ignore: ["**/*.spec.ts"]
+        - action: sync+restart
+          path: ../scripts/dev-container.mjs
+          target: /workspace/scripts/dev-container.mjs
+          initial_sync: true
+        - action: sync+restart
+          path: ../deploy/development-ports.json
+          target: /workspace/deploy/development-ports.json
+          initial_sync: true
+        - action: sync+restart
+          path: ../turbo.json
+          target: /workspace/turbo.json
+          initial_sync: true
+
+  turnstile-web:
+    <<: *development
+    command:
+      [
+        sh,
+        -c,
+        "pnpm exec turbo run build --filter=@thaarei/turnstile-contracts && exec pnpm --filter @thaarei/turnstile-web dev",
+      ]
+    depends_on:
+      dms-api: { condition: service_started }
+      turnstile-api: { condition: service_started }
+    ports: ["127.0.0.1:23600:5173"]
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:5173/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      start_period: 30s
+      retries: 5
+    develop:
+      watch:
+        - *dependencies
+        - *shared
+        - *tooling
+        - action: sync
+          path: ../apps/turnstile-web
+          target: /workspace/apps/turnstile-web
+          initial_sync: true
+          ignore: [package.json]

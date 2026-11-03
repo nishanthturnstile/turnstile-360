@@ -9,6 +9,15 @@ basic checks, and deployment configuration. It does not implement DMS capabiliti
 Turnstile business features, identity, database tables, document processing, or migration
 of existing source/data. Turnstile functionality will be specified separately.
 
+For the owner-prioritized onboarding work, the
+[original implementation plan](onboarding_implementation_plan.md) preserves ONB-I01–08
+v1 delivery, informed by the [Version 1 discovery](onboarding_v1_discovery.md) and
+[design proposal](onboarding_design_proposal.md). The
+[redesign plan](onboarding_redesign_implementation_plan.md) sequences the current
+[specification](onboarding_specification.md) and linked architecture baseline adopted by
+ONB-RD01. Planned descriptions do not establish implementation; actual evidence stays in
+IN_PROGRESS.md. The workspace tasks below retain their foundation scope and history.
+
 ## Accepted decisions
 
 The accepted component architecture, stack, ownership boundaries, web/future-mobile design,
@@ -63,6 +72,11 @@ SWC preserves Nest decorator metadata in Vitest; application builds use TypeScri
 
 ## Verification and limits
 
+This section records the original 2026-10-31 foundation snapshot. Later authentication
+and Compose development work supersedes its capability and verification limits. Use
+[IN_PROGRESS.md](../IN_PROGRESS.md) for current evidence and the
+[architecture](../architecture.md#development-and-current-deployment) for current commands.
+
 Run the commands in the README. The seven application/library projects have build tasks.
 Backend tests cover application identity and the actual Fastify application wiring.
 Python's current test task is a packaging/entry-point smoke check; processor tests and
@@ -95,9 +109,11 @@ deployment/routing still have no verification recorded. See the progress file fo
 
 ## Subsequent implementation
 
-Define Turnstile's business functionality and migration source before creating its domain
-modules or data migrations. Implement the DMS in the accepted requirement dependency
-order, beginning with shared identity/provisioning for the installation's one customer
+Define each Turnstile capability and any migration source before creating its domain
+modules or data migrations. Onboarding now has its own accepted specification above;
+Document Approval and source/data migration remain separately unspecified. Implement the
+DMS in the accepted requirement dependency order, beginning with shared identity/provisioning
+for the installation's one customer
 tenant, as defined in the [customer deployment model](../architecture.md#customer-deployment-and-application-model).
 Add real contract schemas, JSON Schema/
 OpenAPI generation, and cross-language fixtures with those capabilities. Add coordinator,

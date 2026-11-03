@@ -38,9 +38,10 @@ runtime directories. Frontend builds are served by an unprivileged Nginx process
 Python image currently runs its processing identification command and exits; it is intentionally absent from
 the long-running Compose services until actual worker roles are implemented.
 
-Dokploy settings must explicitly map required variables into each service. Vite settings
-are public build arguments and require a frontend rebuild. Future secrets must be scoped
-to the relevant service, and must never enter browser build arguments.
+Dokploy settings must explicitly map required variables into each backend service. The
+frontend uses same-origin API requests and has no API-base build argument or runtime
+environment file. Keep secrets scoped to their backend; any future public frontend
+build variables must never contain credentials.
 
 Local infrastructure is in `deploy/compose.local.yaml`: PostgreSQL, Mailpit, RabbitMQ, and SeaweedFS
 with loopback-only development ports and persistent volumes. AUTH-02 supports PostgreSQL connections with owned runtime roles after explicit setup;
@@ -54,16 +55,54 @@ credentials out of persistent API service mappings, and keep recovery tokens/coo
 of ingress/access logs. The
 accepted DMS stack remains unchanged; idle placeholders must not imply readiness.
 
-Validate configuration before deployment:
+Validate local and production configuration separately. The root Compose file is for
+development; select `deploy/compose.dokploy.yaml` explicitly in Dokploy:
 
 ```bash
-docker compose --env-file .env.example -f deploy/compose.local.yaml config --quiet
+docker compose --env-file .env.example config --quiet
 docker compose -f deploy/compose.dokploy.yaml config --quiet
 ```
 
 Image builds and server routing require Docker Engine/Dokploy verification. Keep
 stateful services and backups independent of application redeployments as those services
 are introduced. Use compatible immutable image sets and explicit migration steps.
+
+## Onboarding release boundary
+
+The accepted [onboarding specification](../onboarding_specification.md) and
+[upgrade contract](../../architecture.md#onboarding-operations-and-upgrade) govern the
+coordinated onboarding release. ONB-I02–04 implement contracts, configuration migrations,
+private setup/grant commands and the backend gate. I05–06 deliver onboarding/waiting and
+Settings UI; I07 supplies local complete-chain verification and I08 supplies the
+[executable release and recovery procedure](onboarding-release.md);
+do not expose an intermediate backend as a complete release.
+
+These executable procedures cover preserved v1 and the v2 redesign. The
+[redesign plan](../onboarding_redesign_implementation_plan.md#onb-rd08-verification-and-coordinated-release)
+requires compatible v2 migrations/API/web and extended upgrade verification before target
+rollout. Upgrade incomplete v1 only; preserve completed v1 version/revision/completion,
+units and saved zone. RD03 delivers v2 persistence/readiness and RD04 adds guarded moves;
+RD05 delivers dedicated setup/waiting. RD06 adds the shared editor and confirmed moves;
+RD07 delivers completed navigation and RD08 verifies the coordinated local release.
+Customer/production acceptance still requires evidence from that selected target.
+
+Follow that procedure for coherent backup, paused product
+access, additive owning migrations, explicit incomplete initialization and a verified
+manager grant, followed by a matching API/web release. Preserve existing identities,
+sessions, unrelated permissions and enrollment. Do not deploy a blocking backend gate
+ahead of usable onboarding and Settings. Prove ordinary-user waiting, administrator
+save/restart/activation and the customer's actual login before removing staff grants.
+
+If rollout fails, remain in controlled maintenance or roll back a compatible API/web
+set. An older API alone may reopen incomplete access; preserve committed configuration
+and keys rather than bypassing setup. Destructive database restoration is a separate
+recovery decision. No new ingress service or host port is needed. The
+[authentication runbook](authentication.md#onboarding-release-boundary) identifies the
+private-operations boundary. The selected existing local installation's evidence is
+recorded in IN_PROGRESS.md; production DNS/TLS and customer handover remain separate
+target acceptance.
+
+## Runtime verification references
 
 The Nginx configuration is explained in [Frontend HTTP server](../../deploy/nginx/README.md).
 

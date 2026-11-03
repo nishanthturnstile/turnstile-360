@@ -28,7 +28,9 @@ export class SecurityTelemetryService {
           ? 'product.logout'
           : path === '/api/dms/capabilities'
             ? 'product.machine-request'
-            : undefined;
+            : request.routeOptions?.config?.configurationEndpoint
+              ? 'product.configuration'
+              : undefined;
     if (!event) return;
     const status = request.securityFailureStatus ?? reply.statusCode;
     const outcome =

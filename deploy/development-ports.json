@@ -1,0 +1,11 @@
+{
+  "web": 23600,
+  "dmsApi": 23601,
+  "turnstileApi": 23602,
+  "postgres": 23603,
+  "smtp": 23604,
+  "mailpit": 23605,
+  "amqp": 23606,
+  "rabbitmq": 23607,
+  "s3": 23608
+}

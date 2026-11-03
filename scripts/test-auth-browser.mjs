@@ -12,6 +12,10 @@ import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { chromium } from '@playwright/test';
 import { parse } from 'yaml';
+import { testOnboarding } from './test-onboarding-browser.mjs';
+import { testSettings } from './test-settings-browser.mjs';
+import { testStructuredOnboarding } from './test-structured-onboarding-browser.mjs';
+import { testVisualStructure } from './test-visual-structure-browser.mjs';
 
 assert.equal(process.env.INSTALLATION_CUSTOMER_KEY, 'auth-fixture', 'Disposable harness required');
 const temporary = await mkdtemp(join(tmpdir(), 'thaarei-auth-browser-'));
@@ -24,6 +28,7 @@ let page;
 let callbackStatus;
 let callbackHtml;
 const callbackTransport = [];
+const introspectionStatuses = new Map();
 let authority;
 let product;
 let authorityPort = 0;
@@ -83,6 +88,11 @@ const gateway = createServer({}, async (request, response) => {
           headers: { ...request.headers, connection: 'close' },
         },
         (incoming) => {
+          if (path === '/identity/oauth2/introspect')
+            introspectionStatuses.set(
+              incoming.statusCode,
+              (introspectionStatuses.get(incoming.statusCode) ?? 0) + 1,
+            );
           response.writeHead(incoming.statusCode ?? 503, incoming.headers);
           incoming.pipe(response);
         },
@@ -103,7 +113,9 @@ const gateway = createServer({}, async (request, response) => {
           ? 'text/javascript'
           : file.endsWith('.css')
             ? 'text/css'
-            : 'text/html',
+            : file.endsWith('.woff2')
+              ? 'font/woff2'
+              : 'text/html',
         'referrer-policy': 'no-referrer',
         'content-security-policy': csp,
         'cache-control': 'no-store',
@@ -253,13 +265,26 @@ dns.lookup = function(host, options, callback) {
   environment.AUTH_LOGIN_CLIENT_SECRET = fixture.loginSecret;
   environment.DMS_MACHINE_CLIENT_SECRET = fixture.machineSecret;
   stage = 'product permission assignment';
+  run(
+    process.execPath,
+    ['apps/turnstile-api/dist/modules/organization/configuration-operator.js', 'initialize'],
+    {
+      env: environment,
+      input: JSON.stringify({ operatorId: 'browser-fixture' }),
+    },
+  );
   for (const label of ['member', 'reset', 'unverified']) {
     run(process.execPath, ['apps/turnstile-api/dist/modules/auth/set-user-access.js'], {
       env: environment,
       input: JSON.stringify({
+        operatorId: 'browser-fixture',
         userId: fixture.users[label].id,
         enabled: true,
-        permissions: ['turnstile:access', 'turnstile:dms:capabilities:read'],
+        permissions: [
+          'turnstile:access',
+          'turnstile:dms:capabilities:read',
+          ...(label === 'member' ? ['turnstile:configuration:manage'] : []),
+        ],
       }),
     });
   }
@@ -393,193 +418,412 @@ dns.lookup = function(host, options, callback) {
     return value;
   }
 
-  stage = 'sign-in, secure session, machine proof and recoverable logout';
-  await login('member');
-  await heading('Welcome, member.');
-  const cookies = await context.cookies();
-  const productCookie = cookies.find((cookie) => cookie.name === '__Host-turnstile');
-  assert.ok(
-    productCookie?.secure &&
-      productCookie.httpOnly &&
-      productCookie.sameSite === 'Lax' &&
-      productCookie.path === '/',
-  );
-  assert.ok(
-    await page.evaluate(
-      () =>
-        !document.cookie.includes('turnstile=') &&
-        !document.cookie.includes('session_token') &&
-        localStorage.length === 0 &&
-        sessionStorage.length === 0,
-    ),
-  );
-  const html = await page.content();
-  assert.ok(
-    ![fixture.password, fixture.loginSecret, fixture.machineSecret].some((value) =>
-      html.includes(value),
-    ),
-  );
-  assert.equal(
-    await page.evaluate(
-      async () =>
-        (
-          await fetch('/api/auth/logout', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: '{}',
-          })
-        ).status,
-    ),
-    403,
-  );
-  await page.getByRole('button', { name: 'Check connection' }).click();
-  await page.getByText('Connected. Document features will appear here when available.').waitFor();
-  fault = 'dms';
-  await page.getByRole('button', { name: 'Check connection' }).click();
-  await page
-    .getByText(
-      'The document service is temporarily unavailable. Your sign-in is still active. Try again later.',
-    )
-    .waitFor();
-  fault = 'authority';
-  await page.reload();
-  await heading('We can’t connect right now');
-  fault = 'none';
-  await page.getByRole('button', { name: 'Try again' }).click();
-  await heading('Welcome, member.');
-  fault = 'logout';
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
-  await page.getByRole('button', { name: 'Retry sign-out' }).waitFor();
-  assert.equal(await page.evaluate(async () => (await fetch('/api/dms/capabilities')).status), 401);
-  fault = 'none';
-  await page.getByRole('button', { name: 'Retry sign-out' }).click();
-  await heading('You’re signed out');
-  assert.equal(await page.evaluate(async () => (await fetch('/identity/get-session')).status), 200);
-  console.log(
-    'Browser journey 1 passed: signed continuation, HTTPS cookies, machine request, CSRF and partial/logout recovery.',
-  );
+  async function restartProduct() {
+    product.kill('SIGTERM');
+    await once(product, 'exit');
+    product = spawn(process.execPath, ['apps/turnstile-api/dist/main.js'], {
+      env: productEnvironment,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    for (const stream of [product.stdout, product.stderr])
+      stream.on('data', (chunk) => {
+        productLogs = `${productLogs}${chunk}`.slice(-131072);
+      });
+    await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
+  }
+  if (process.argv.includes('--structure-editor')) {
+    stage = 'visual structure editor';
+    await testVisualStructure({
+      page,
+      context,
+      origin,
+      login,
+      clearRateLimits: () => command('clear-rate-limits'),
+    });
+  } else if (process.argv.includes('--structured-onboarding')) {
+    stage = 'fresh required-Department onboarding web journey';
+    await testStructuredOnboarding({
+      page,
+      origin,
+      login,
+      restartProduct,
+      clearRateLimits: () => command('clear-rate-limits'),
+      setFault: (value) => {
+        fault = value;
+      },
+    });
+  } else {
+    stage = 'design-system fonts, keyboard access and responsive recovery form';
+    await page.goto(`${origin}/forgot-password`);
+    await heading('Forgot your password?');
+    await page.evaluate(() => document.fonts.ready);
+    const typography = await page.evaluate(() => ({
+      body: getComputedStyle(document.body).fontFamily,
+      heading: getComputedStyle(document.querySelector('h1')).fontFamily,
+      loaded: [...document.fonts]
+        .filter((face) => face.status === 'loaded')
+        .map((face) => face.family),
+      external: performance
+        .getEntriesByType('resource')
+        .some((entry) => new URL(entry.name).origin !== location.origin),
+    }));
+    assert.match(typography.body, /IBM Plex Sans Variable/);
+    assert.match(typography.heading, /Noto Sans Variable/);
+    assert.ok(typography.loaded.some((family) => family.includes('IBM Plex Sans Variable')));
+    assert.ok(typography.loaded.some((family) => family.includes('Noto Sans Variable')));
+    assert.equal(typography.external, false);
+    await page.getByLabel('Email address', { exact: true }).focus();
+    await page.keyboard.press('Tab');
+    assert.equal(
+      await page
+        .getByRole('button', { name: 'Send reset link' })
+        .evaluate((node) => node === document.activeElement),
+      true,
+    );
+    for (const width of [320, 1280]) {
+      await page.setViewportSize({ width, height: 850 });
+      assert.equal(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+        true,
+      );
+      assert.equal(await page.getByLabel('Email address', { exact: true }).isVisible(), true);
+    }
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    assert.equal(
+      await page
+        .getByRole('button', { name: 'Send reset link' })
+        .evaluate((node) => Number.parseFloat(getComputedStyle(node).transitionDuration) < 0.01),
+      true,
+    );
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    console.log(
+      'Design-system integration passed: bundled fonts under CSP, keyboard access, narrow/desktop layouts and reduced motion.',
+    );
 
-  stage = 'email verification, recovery and reset revocation';
-  await login('unverified');
-  await page.getByText('Verify your email before signing in.').waitFor();
-  await page.getByRole('button', { name: 'Resend verification email' }).click();
-  await page.getByText('If the account needs verification, a new email is on its way.').waitFor();
-  await page.goto(await mailLink('verify', fixture.users.unverified.email));
-  await page.getByLabel('Email address', { exact: true }).fill(fixture.users.unverified.email);
-  await page.getByLabel('Password', { exact: true }).fill(fixture.password);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await heading('Welcome, unverified.');
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
-  await heading('You’re signed out');
-  await login('reset');
-  await heading('Welcome, reset.');
-  await page.goto(`${origin}/forgot-password`);
-  await page.getByLabel('Email address', { exact: true }).fill(fixture.users.reset.email);
-  await page.getByRole('button', { name: 'Send reset link' }).click();
-  await heading('Check your inbox');
-  const resetLink = await mailLink('reset', fixture.users.reset.email);
-  await page.goto(`${origin}/forgot-password`);
-  await page.getByLabel('Email address', { exact: true }).fill('unknown@example.test');
-  await page.getByRole('button', { name: 'Send reset link' }).click();
-  await heading('Check your inbox');
-  await page.goto(resetLink);
-  await heading('Choose a new password');
-  assert.equal(new URL(page.url()).search, '');
-  const newPassword = randomBytes(24).toString('base64url');
-  await page.getByLabel('New password', { exact: true }).fill(newPassword);
-  await page.getByLabel('Confirm new password', { exact: true }).fill(newPassword);
-  await page.getByRole('button', { name: 'Update password' }).click();
-  await heading('Password updated');
-  await page.goto(origin);
-  await heading('Your session has ended');
-  await page.goto(resetLink);
-  await heading('Request a fresh link');
-  await login('reset', newPassword);
-  await heading('Welcome, reset.');
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
-  await heading('You’re signed out');
-  console.log(
-    'Browser journey 2 passed: real Mailpit verification/reset, generic recovery, token cleanup/replay and old-session revocation.',
-  );
-
-  stage = 'unprovisioned access, signed-context tampering and expiry';
-  await login('operator');
-  stage = 'unauthorized browser callback';
-  await heading('Access isn’t available yet');
-  await page.getByRole('button', { name: 'Sign in with a different account' }).click();
-  stage = 'switch authority account';
-  await page.getByLabel('Email address', { exact: true }).waitFor();
-  const tampered = new URL(page.url());
-  tampered.searchParams.set('state', 'tampered');
-  await page.goto(tampered.href);
-  stage = 'signed-context tamper denial';
-  await page.getByLabel('Email address', { exact: true }).fill(fixture.users.member.email);
-  await page.getByLabel('Password', { exact: true }).fill(fixture.password);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await page.getByRole('alert').waitFor();
-  assert.equal(new URL(page.url()).pathname, '/sign-in');
-  await login('member');
-  stage = 'fresh login after tampered continuation';
-  await heading('Welcome, member.');
-  await page.evaluate(async () =>
-    fetch('/identity/sign-out', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: '{}',
-    }),
-  );
-  stage = 'parent revocation expiry screen';
-  await page.getByRole('button', { name: 'Check connection' }).click();
-  await heading('Your session has ended');
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`${origin}/forgot-password`);
-  await heading('Forgot your password?');
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
-  const metrics = (await command('security-metrics')).metrics;
-  assert.ok(
-    metrics['identity.login.success'] > 0 &&
-      metrics['identity.recovery.success'] > 0 &&
-      metrics['identity.token.success'] > 0 &&
-      metrics['machine.access.success'] > 0,
-  );
-  assert.ok(Object.keys(metrics).length <= 24);
-  const sensitive = [
-    ...continuationSecrets,
-    fixture.password,
-    fixture.loginSecret,
-    fixture.machineSecret,
-    newPassword,
-    new URL(resetLink).pathname.split('/').at(-1),
-  ];
-  assert.ok(
-    !sensitive.some(
-      (value) =>
-        value &&
-        (productLogs.includes(value) ||
-          authorityLogs.includes(value) ||
-          consoleMessages.some((message) => message.includes(value))),
-    ),
-  );
-  const events = `${productLogs}\n${authorityLogs}`
-    .split('\n')
-    .filter((line) => line.startsWith('{"type":"security"'))
-    .map((line) => JSON.parse(line));
-  assert.ok(
-    events.length > 0 &&
-      events.every((event) =>
-        Object.keys(event).every((key) =>
-          ['type', 'event', 'outcome', 'status', 'count', 'requestId'].includes(key),
-        ),
+    const setAccess = async (label, permissions) =>
+      run(process.execPath, ['apps/turnstile-api/dist/modules/auth/set-user-access.js'], {
+        env: environment,
+        input: JSON.stringify({
+          operatorId: 'browser-fixture',
+          userId: fixture.users[label].id,
+          enabled: true,
+          permissions,
+        }),
+      });
+    stage = 'onboarding web journey';
+    await testOnboarding({
+      page,
+      context,
+      browser,
+      origin,
+      login,
+      setAccess,
+      clearRateLimits: () => command('clear-rate-limits'),
+      restartProduct,
+    });
+    stage = 'ongoing settings web journey';
+    await testSettings({
+      page,
+      context,
+      browser,
+      origin,
+      login,
+      setAccess,
+      clearRateLimits: () => command('clear-rate-limits'),
+      waitForAuthorityWindow: async () => {
+        // Keep the full production limiter enabled. Expanded scenarios share its
+        // 100/minute introspection budget; start access-transition checks in a new window.
+        const deadline = Date.now() + 61000;
+        while (Date.now() < deadline) await delay(Math.min(1000, deadline - Date.now()));
+      },
+    });
+    stage = 'sign-in, secure session, machine proof and recoverable logout';
+    await login('member');
+    await heading('Welcome, member.');
+    // StrictMode/focus/visibility share only pending work; completed checks are never cached.
+    const sharedChecks = await page.evaluate(async () => {
+      const original = window.fetch;
+      let calls = 0;
+      let release;
+      const gate = new Promise((resolve) => {
+        release = resolve;
+      });
+      const completed = [];
+      window.fetch = (input, options) => {
+        const path = new URL(typeof input === 'string' ? input : input.url, location.href).pathname;
+        if (path !== '/api/auth/session') return original(input, options);
+        calls++;
+        const response = gate.then(() => original(input, options));
+        completed.push(response.then((value) => value.clone().json()));
+        return response;
+      };
+      try {
+        window.dispatchEvent(new Event('focus'));
+        window.dispatchEvent(new Event('focus'));
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        const concurrent = calls;
+        release();
+        await Promise.all(completed);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        window.dispatchEvent(new Event('focus'));
+        await Promise.all(completed);
+        return { concurrent, total: calls };
+      } finally {
+        window.fetch = original;
+      }
+    });
+    assert.deepEqual(sharedChecks, { concurrent: 1, total: 2 });
+    await page.addInitScript(() => {
+      window.authPageSeen = false;
+      new MutationObserver(() => {
+        if (document.querySelector('.auth-layout')) window.authPageSeen = true;
+      }).observe(document, { childList: true, subtree: true });
+    });
+    let releaseSession;
+    const sessionGate = new Promise((resolve) => {
+      releaseSession = resolve;
+    });
+    const delayedSession = async (route) => {
+      await sessionGate;
+      await route.continue();
+    };
+    await page.route('**/api/auth/session', delayedSession);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByRole('status').filter({ hasText: 'Loading workspace…' }).waitFor();
+    assert.equal(await page.locator('.auth-layout').count(), 0);
+    releaseSession();
+    await heading('Welcome, member.');
+    await page.unroute('**/api/auth/session', delayedSession);
+    let refreshChecks = 0;
+    const observeRefresh = (request) => {
+      if (new URL(request.url()).pathname === '/api/auth/session') refreshChecks++;
+    };
+    page.on('request', observeRefresh);
+    for (let refresh = 0; refresh < 20; refresh++) {
+      // Manager Home also reads canonical configuration for the legacy suggestion.
+      // Give each artificial reload burst a fresh private fixture window; retain
+      // production limits and real authorization on every HTTP request.
+      if (refresh % 5 === 0) await command('clear-rate-limits');
+      await page.reload();
+      await heading('Welcome, member.');
+      assert.equal(await page.evaluate(() => window.authPageSeen), false);
+    }
+    page.off('request', observeRefresh);
+    assert.equal(refreshChecks, 20);
+    await command('clear-rate-limits');
+    console.log(
+      'Authenticated refresh regression passed: neutral startup, 20 reloads, one check per reload and no sign-in flash.',
+    );
+    const cookies = await context.cookies();
+    const productCookie = cookies.find((cookie) => cookie.name === '__Host-turnstile');
+    assert.ok(
+      productCookie?.secure &&
+        productCookie.httpOnly &&
+        productCookie.sameSite === 'Lax' &&
+        productCookie.path === '/',
+    );
+    assert.ok(
+      await page.evaluate(
+        () =>
+          !document.cookie.includes('turnstile=') &&
+          !document.cookie.includes('session_token') &&
+          localStorage.length === 0 &&
+          sessionStorage.length === 0,
       ),
-  );
-  console.log(
-    'Browser journey 3 passed: unauthorized/expired states, signed-context tamper denial, mobile layout and bounded/redacted events.',
-  );
+    );
+    const html = await page.content();
+    assert.ok(
+      ![fixture.password, fixture.loginSecret, fixture.machineSecret].some((value) =>
+        html.includes(value),
+      ),
+    );
+    assert.equal(
+      await page.evaluate(
+        async () =>
+          (
+            await fetch('/api/auth/logout', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: '{}',
+            })
+          ).status,
+      ),
+      403,
+    );
+    stage = 'permission-gated document connection';
+    await page.getByRole('button', { name: 'Check connection' }).click();
+    await page.getByText('Connected. Document features will appear here when available.').waitFor();
+    fault = 'dms';
+    await page.getByRole('button', { name: 'Check connection' }).click();
+    await page
+      .getByText(
+        'The document service is temporarily unavailable. Your sign-in is still active. Try again later.',
+      )
+      .waitFor();
+    stage = 'authority outage navigation and session recovery';
+    fault = 'authority';
+    await page.reload();
+    await heading('We can’t connect right now');
+    await page.getByRole('link', { name: 'Sign in', exact: true }).waitFor();
+    fault = 'none';
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await heading('Welcome, member.');
+    fault = 'authority';
+    await page.reload();
+    await heading('We can’t connect right now');
+    fault = 'none';
+    // The single delayed retry also recovers without a focus event or manual click.
+    await heading('Welcome, member.');
+    fault = 'authority';
+    await page.reload();
+    await heading('We can’t connect right now');
+    fault = 'none';
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await heading('Welcome, member.');
+    await page.goto(`${origin}/auth-unavailable`);
+    await heading('Welcome, member.');
+    assert.equal(new URL(page.url()).pathname, '/');
+    fault = 'logout';
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await page.getByRole('button', { name: 'Retry sign-out' }).waitFor();
+    assert.equal(
+      await page.evaluate(async () => (await fetch('/api/dms/capabilities')).status),
+      401,
+    );
+    fault = 'none';
+    await page.getByRole('button', { name: 'Retry sign-out' }).click();
+    await heading('You’re signed out');
+    assert.equal(
+      await page.evaluate(async () => (await fetch('/identity/get-session')).status),
+      200,
+    );
+    console.log(
+      'Browser journey 1 passed: signed continuation, HTTPS cookies, machine request, CSRF and partial/logout recovery.',
+    );
+
+    stage = 'email verification, recovery and reset revocation';
+    await login('unverified');
+    await page.getByText('Verify your email before signing in.').waitFor();
+    await page.getByRole('button', { name: 'Resend verification email' }).click();
+    await page.getByText('If the account needs verification, a new email is on its way.').waitFor();
+    await page.goto(await mailLink('verify', fixture.users.unverified.email));
+    await page.getByLabel('Email address', { exact: true }).fill(fixture.users.unverified.email);
+    await page.getByLabel('Password', { exact: true }).fill(fixture.password);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await heading('Welcome, unverified.');
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await heading('You’re signed out');
+    await login('reset');
+    await heading('Welcome, reset.');
+    await page.goto(`${origin}/forgot-password`);
+    await page.getByLabel('Email address', { exact: true }).fill(fixture.users.reset.email);
+    await page.getByRole('button', { name: 'Send reset link' }).click();
+    await heading('Check your inbox');
+    const resetLink = await mailLink('reset', fixture.users.reset.email);
+    await page.goto(`${origin}/forgot-password`);
+    await page.getByLabel('Email address', { exact: true }).fill('unknown@example.test');
+    await page.getByRole('button', { name: 'Send reset link' }).click();
+    await heading('Check your inbox');
+    await page.goto(resetLink);
+    await heading('Choose a new password');
+    assert.equal(new URL(page.url()).search, '');
+    const newPassword = randomBytes(24).toString('base64url');
+    await page.getByLabel('New password', { exact: true }).fill(newPassword);
+    await page.getByLabel('Confirm new password', { exact: true }).fill(newPassword);
+    await page.getByRole('button', { name: 'Update password' }).click();
+    await heading('Password updated');
+    await page.goto(origin);
+    await heading('Your session has ended');
+    await page.goto(resetLink);
+    await heading('Request a fresh link');
+    await login('reset', newPassword);
+    await heading('Welcome, reset.');
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await heading('You’re signed out');
+    console.log(
+      'Browser journey 2 passed: real Mailpit verification/reset, generic recovery, token cleanup/replay and old-session revocation.',
+    );
+
+    stage = 'unprovisioned access, signed-context tampering and expiry';
+    await login('operator');
+    stage = 'unauthorized browser callback';
+    await heading('Access isn’t available yet');
+    await page.getByRole('button', { name: 'Sign in with a different account' }).click();
+    stage = 'switch authority account';
+    await page.getByLabel('Email address', { exact: true }).waitFor();
+    const tampered = new URL(page.url());
+    tampered.searchParams.set('state', 'tampered');
+    await page.goto(tampered.href);
+    stage = 'signed-context tamper denial';
+    await page.getByLabel('Email address', { exact: true }).fill(fixture.users.member.email);
+    await page.getByLabel('Password', { exact: true }).fill(fixture.password);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await page.getByRole('alert').waitFor();
+    assert.equal(new URL(page.url()).pathname, '/sign-in');
+    await login('member');
+    stage = 'fresh login after tampered continuation';
+    await heading('Welcome, member.');
+    await page.evaluate(async () =>
+      fetch('/identity/sign-out', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{}',
+      }),
+    );
+    stage = 'parent revocation expiry screen';
+    await page.getByRole('button', { name: 'Check connection' }).click();
+    await heading('Your session has ended');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${origin}/forgot-password`);
+    await heading('Forgot your password?');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    const metrics = (await command('security-metrics')).metrics;
+    assert.ok(
+      metrics['identity.login.success'] > 0 &&
+        metrics['identity.recovery.success'] > 0 &&
+        metrics['identity.token.success'] > 0 &&
+        metrics['machine.access.success'] > 0,
+    );
+    assert.ok(Object.keys(metrics).length <= 24);
+    const sensitive = [
+      ...continuationSecrets,
+      fixture.password,
+      fixture.loginSecret,
+      fixture.machineSecret,
+      newPassword,
+      new URL(resetLink).pathname.split('/').at(-1),
+    ];
+    assert.ok(
+      !sensitive.some(
+        (value) =>
+          value &&
+          (productLogs.includes(value) ||
+            authorityLogs.includes(value) ||
+            consoleMessages.some((message) => message.includes(value))),
+      ),
+    );
+    const events = `${productLogs}\n${authorityLogs}`
+      .split('\n')
+      .filter((line) => line.startsWith('{"type":"security"'))
+      .map((line) => JSON.parse(line));
+    assert.ok(
+      events.length > 0 &&
+        events.every((event) =>
+          Object.keys(event).every((key) =>
+            ['type', 'event', 'outcome', 'status', 'count', 'requestId'].includes(key),
+          ),
+        ),
+    );
+    console.log(
+      'Browser journey 3 passed: unauthorized/expired states, signed-context tamper denial, mobile layout and bounded/redacted events.',
+    );
+  }
   if (webCreated)
     console.log(
-      'Production Nginx assets/CSP served all three browser journeys over the local HTTPS gateway.',
+      'Production Nginx assets/CSP served the requested browser journeys over the local HTTPS gateway.',
     );
 } catch (error) {
+  console.error('Introspection status counts:', Object.fromEntries(introspectionStatuses));
   // Browser exceptions may contain signed or recovery URLs. Do not print raw failures/traces.
   if (page) {
     const path = new URL(page.url()).pathname;
@@ -605,6 +849,16 @@ dns.lookup = function(host, options, callback) {
       'We can’t connect right now',
       'Welcome, member.',
       'Welcome, operator.',
+      'Welcome, reset.',
+      'Settings access required',
+      'Settings are temporarily unavailable',
+      'Setup is temporarily unavailable',
+      'Setup overview',
+      'Organization',
+      'Workspace regional defaults',
+      'Organization structure',
+      'Rename unit',
+      'Remove unit?',
     ];
     console.error(
       JSON.stringify({

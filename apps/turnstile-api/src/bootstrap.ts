@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { LogController } from 'fastify';
 import { AppModule } from './app.module.js';
+import { registerConfigurationHttp } from './infrastructure/configuration-http.js';
 import { SecurityTelemetryService } from './infrastructure/security-telemetry.service.js';
 import { AuthConfigurationService } from './modules/auth/auth-configuration/auth-configuration.service.js';
 import { AuthExceptionFilter } from './modules/auth/browser-auth/auth-errors.js';
@@ -22,6 +23,7 @@ export async function createApplication(logging = true): Promise<NestFastifyAppl
   );
   app.setGlobalPrefix('api', { exclude: ['health/live', 'health/ready/auth'] });
   const server = app.getHttpAdapter().getInstance();
+  registerConfigurationHttp(server);
   const telemetry = app.get(SecurityTelemetryService);
   telemetry.enable(logging);
   server.addHook('onResponse', async (request, reply) => {

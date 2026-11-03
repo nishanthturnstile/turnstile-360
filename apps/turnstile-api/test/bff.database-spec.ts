@@ -1,10 +1,10 @@
 import { type ChildProcess, fork, spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { createServer, request as httpRequest, type IncomingMessage } from 'node:http';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
-import { TURNSTILE_PERMISSIONS } from '@thaarei/turnstile-contracts';
 import Fastify, { type FastifyRequest } from 'fastify';
 import { Pool } from 'pg';
 import { createApplication } from '../src/bootstrap.js';
@@ -14,6 +14,7 @@ import type { BffState } from '../src/modules/auth/browser-auth/bff-state.js';
 import { registerProductSession } from '../src/modules/auth/browser-auth/session-plugin.js';
 import { ProductDatabaseService } from '../src/modules/auth/product-database/product-database.service.js';
 import { setUserAccess } from '../src/modules/auth/set-user-access.js';
+import { configurationOperator } from '../src/modules/organization/configuration-operator.js';
 
 interface Fixture {
   ready: true;
@@ -204,7 +205,12 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
     enabled = true,
     permissions: string[] = ['turnstile:access'],
   ) {
-    return setUserAccess({ userId: fixture.users[label].id, enabled, permissions });
+    return setUserAccess({
+      operatorId: 'bff-fixture',
+      userId: fixture.users[label].id,
+      enabled,
+      permissions,
+    });
   }
   async function authorityLogin(label: keyof Fixture['users'] = 'member') {
     await command('clear-rate-limits');
@@ -328,6 +334,7 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
     vi.stubEnv('DMS_MACHINE_CLIENT_SECRET', fixture.machineSecret);
     await command('enroll-machine');
     app = await start();
+    await configurationOperator('initialize', { operatorId: 'bff-fixture' });
     await grant('member');
     await grant('reset');
     await grant('suspended');
@@ -430,6 +437,7 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
       return { code, output, errors };
     }
     const input = {
+      operatorId: 'bff-fixture',
       userId: fixture.users.member.id,
       enabled: true,
       permissions: ['turnstile:access'],
@@ -842,8 +850,98 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
     expect(denied.statusCode).toBe(403);
     expect(denied.json().code).toBe('PERMISSION_DENIED');
     expect({ tokens: machineCalls, requests: dmsCalls }).toEqual(before);
-    await grant('member', true, [...TURNSTILE_PERMISSIONS]);
+    await grant('member', true, ['turnstile:access', 'turnstile:dms:capabilities:read']);
     const signed = await login();
+    const incomplete = await app.inject({
+      url: '/api/dms/capabilities',
+      headers: { cookie: signed.cookie },
+    });
+    expect(incomplete.statusCode).toBe(409);
+    expect(incomplete.json()).toEqual({ code: 'SETUP_REQUIRED' });
+    expect(incomplete.headers['cache-control']).toBe('private, no-store');
+    expect({ tokens: machineCalls, requests: dmsCalls }).toEqual(before);
+    expect(
+      (
+        await app.inject({ url: '/api/workspace/status', headers: { cookie: signed.cookie } })
+      ).json(),
+    ).toEqual({ status: 'incomplete', canManageConfiguration: false });
+    expect(
+      (await app.inject({ url: '/api/setup', headers: { cookie: signed.cookie } })).statusCode,
+    ).toBe(403);
+    // Authority administration does not imply local configuration permission,
+    // even after this verified account has ordinary product access.
+    await grant('operator');
+    const administrator = await login('operator');
+    expect(administrator.session.permissions).toEqual(['turnstile:access']);
+    expect(
+      (await app.inject({ url: '/api/organization', headers: { cookie: administrator.cookie } }))
+        .statusCode,
+    ).toBe(403);
+    const administratorActivation = await app.inject({
+      method: 'POST',
+      url: '/api/setup/complete',
+      headers: { cookie: administrator.cookie, origin, 'x-csrf-token': administrator.csrf },
+      payload: { expectedRevision: 0 },
+    });
+    expect(administratorActivation.statusCode).toBe(403);
+    expect(administratorActivation.json()).toEqual({ code: 'PERMISSION_DENIED' });
+    await grant('operator', true, ['turnstile:access', 'turnstile:configuration:manage']);
+    const manager = await login('operator');
+    const managerHeaders = { cookie: manager.cookie, origin, 'x-csrf-token': manager.csrf };
+    expect(
+      (
+        await app.inject({
+          method: 'PATCH',
+          url: '/api/organization',
+          headers: { cookie: manager.cookie },
+          payload: { expectedRevision: 0, name: 'BFF workspace', timeZone: 'UTC' },
+        })
+      ).json(),
+    ).toEqual({ code: 'CSRF_REJECTED' });
+    const profile = await app.inject({
+      method: 'PATCH',
+      url: '/api/organization',
+      headers: managerHeaders,
+      payload: { expectedRevision: 0, name: 'BFF workspace', timeZone: 'UTC' },
+    });
+    expect(profile.statusCode).toBe(200);
+    const rootOnly = await app.inject({
+      method: 'POST',
+      url: '/api/setup/complete',
+      headers: managerHeaders,
+      payload: { expectedRevision: profile.json().revision },
+    });
+    expect(rootOnly.statusCode).toBe(400);
+    expect({ tokens: machineCalls, requests: dmsCalls }).toEqual(before);
+    expect(
+      (
+        await app.inject({ url: '/api/dms/capabilities', headers: { cookie: signed.cookie } })
+      ).json(),
+    ).toEqual({ code: 'SETUP_REQUIRED' });
+    const firstUnit = await app.inject({
+      method: 'POST',
+      url: '/api/organization/units',
+      headers: { ...managerHeaders, 'idempotency-key': randomUUID() },
+      payload: {
+        expectedRevision: profile.json().revision,
+        type: 'site',
+        parentId: profile.json().organization.rootId,
+        name: 'First site',
+      },
+    });
+    expect(firstUnit.statusCode).toBe(201);
+    const activated = await app.inject({
+      method: 'POST',
+      url: '/api/setup/complete',
+      headers: managerHeaders,
+      payload: { expectedRevision: firstUnit.json().configuration.revision },
+    });
+    expect(activated.statusCode).toBe(200);
+    expect(
+      (
+        await app.inject({ url: '/api/workspace/status', headers: { cookie: signed.cookie } })
+      ).json(),
+    ).toEqual({ status: 'complete', canManageConfiguration: false });
     const headers = {
       cookie: `${signed.cookie}; ${signed.authority}`,
       authorization: 'Bearer browser-spoof',
@@ -886,7 +984,58 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
   });
 
   it('separates DMS/issuer outages and machine policy denial from browser logout, and observes live disablement', async () => {
-    await grant('member', true, [...TURNSTILE_PERMISSIONS]);
+    // This unrelated integration scenario explicitly activates its own prerequisite
+    // through authenticated owning HTTP, rather than relying on test execution order.
+    await grant('operator', true, ['turnstile:access', 'turnstile:configuration:manage']);
+    const manager = await login('operator');
+    const managerHeaders = { cookie: manager.cookie, origin, 'x-csrf-token': manager.csrf };
+    const profile = await app.inject({ url: '/api/organization', headers: managerHeaders });
+    expect(profile.statusCode).toBe(200);
+    const saved = await app.inject({
+      method: 'PATCH',
+      url: '/api/organization',
+      headers: managerHeaders,
+      payload: {
+        expectedRevision: profile.json().revision,
+        name: 'BFF workspace',
+        timeZone: 'UTC',
+      },
+    });
+    expect(saved.statusCode).toBe(200);
+    let revision = saved.json().revision;
+    const units = await app.inject({ url: '/api/organization/units', headers: managerHeaders });
+    expect(units.statusCode).toBe(200);
+    if (
+      !units
+        .json()
+        .units.some(
+          (unit: { parentId: string | null }) => unit.parentId === saved.json().organization.rootId,
+        )
+    ) {
+      const firstUnit = await app.inject({
+        method: 'POST',
+        url: '/api/organization/units',
+        headers: { ...managerHeaders, 'idempotency-key': randomUUID() },
+        payload: {
+          expectedRevision: revision,
+          type: 'department',
+          parentId: saved.json().organization.rootId,
+          name: 'Operations',
+        },
+      });
+      expect(firstUnit.statusCode).toBe(201);
+      revision = firstUnit.json().configuration.revision;
+    }
+    const activated = await app.inject({
+      method: 'POST',
+      url: '/api/setup/complete',
+      headers: managerHeaders,
+      payload: { expectedRevision: revision },
+    });
+    expect(activated.statusCode).toBe(200);
+    const completion = activated.json().setup.completion;
+    expect(completion).not.toBeNull();
+    await grant('member', true, ['turnstile:access', 'turnstile:dms:capabilities:read']);
     const signed = await login();
     const read = () =>
       app.inject({ url: '/api/dms/capabilities', headers: { cookie: signed.cookie } });
@@ -905,6 +1054,15 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
     expect(unavailable.statusCode).toBe(503);
     expect(unavailable.json()).toEqual({ code: 'DMS_UNAVAILABLE' });
     expect((await session(signed.cookie)).statusCode).toBe(200);
+    const persisted = await app.inject({ url: '/api/setup', headers: managerHeaders });
+    expect(persisted.statusCode).toBe(200);
+    expect(persisted.json()).toMatchObject({ state: 'completed', completion });
+    expect(persisted.json().revision).toBe(activated.json().revision);
+    expect(
+      (
+        await app.inject({ url: '/api/workspace/status', headers: { cookie: signed.cookie } })
+      ).json(),
+    ).toEqual({ status: 'complete', canManageConfiguration: false });
     fault = 'all';
     expect((await read()).json()).toEqual({ code: 'AUTH_UNAVAILABLE' });
     fault = 'none';

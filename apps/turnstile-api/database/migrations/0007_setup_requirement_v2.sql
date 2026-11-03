@@ -1,0 +1,3 @@
+ALTER TABLE "turnstile"."organization_configuration" DROP CONSTRAINT "configuration_version";--> statement-breakpoint
+ALTER TABLE "turnstile"."organization_configuration" ALTER COLUMN "requirement_version" SET DEFAULT 2;--> statement-breakpoint
+ALTER TABLE "turnstile"."organization_configuration" ADD CONSTRAINT "configuration_version" CHECK ("turnstile"."organization_configuration"."requirement_version" IN (1, 2));

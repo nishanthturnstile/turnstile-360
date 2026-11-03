@@ -46,6 +46,10 @@
   },
   "overrides": [
     {
+      "includes": ["apps/turnstile-web/**/*.css"],
+      "css": { "parser": { "tailwindDirectives": true } }
+    },
+    {
       "includes": ["apps/dms-api/**/*.ts", "apps/turnstile-api/**/*.ts"],
       "javascript": {
         "parser": { "unsafeParameterDecoratorsEnabled": true }

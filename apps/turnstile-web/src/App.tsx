@@ -1,13 +1,44 @@
-import type { UserSessionDto } from '@thaarei/turnstile-contracts';
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { ForgotPassword, Notice, ResetPassword, SignIn } from './features/auth/AuthForms';
+import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import type { UserSessionDto, WorkspaceStatusDto } from '@thaarei/turnstile-contracts';
+import { lazy, type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router';
+import { ButtonLink } from '@/components/button-link';
+import { ContentLoading, LoadingStatus } from '@/components/content-loading';
+import { EntryContent, EntryLayout } from '@/components/entry-layout';
+import { AppLink } from '@/components/navigation';
+import { Notice } from '@/components/notice';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
+import { Spinner } from '@/components/ui/spinner';
+import { WorkspaceLayout } from '@/components/workspace-layout';
+import { workspaceDestinations } from '@/components/workspace-navigation';
+import { cn } from '@/lib/utils';
+import { ForgotPassword, ResetPassword, SignIn } from './features/auth/AuthForms';
 import { beginSignIn, captureResetToken, identity } from './features/auth/client';
 import { endSession, loadCapabilities, loadSession, ProductError } from './features/auth/product';
+import { loadWorkspaceStatus } from './features/configuration/api';
+import { settingsPaths, setupPaths } from './features/configuration/routes';
+import { OnboardingJourney } from './features/onboarding/OnboardingJourney';
+import { LegacyUnitPrompt } from './features/settings/LegacyUnitPrompt';
+import { Settings } from './features/settings/Settings';
+
+const DesignSystem = import.meta.env.DEV
+  ? lazy(() => import('./design-system/DesignSystem'))
+  : undefined;
 
 let resetToken = captureResetToken();
 function Brand() {
   return (
-    <a href="/" className="brand" aria-label="Turnstile 360 home">
+    <AppLink href="/" className="brand" aria-label="Turnstile 360 home">
       <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
         <path
           d="M7 7h18M16 7v18M7 25l9-9 9 9"
@@ -20,7 +51,7 @@ function Brand() {
       <span>
         turnstile<span className="brand-number">360</span>
       </span>
-    </a>
+    </AppLink>
   );
 }
 function AuthLayout({ children }: { children: ReactNode }) {
@@ -44,7 +75,7 @@ function AuthLayout({ children }: { children: ReactNode }) {
           <Brand />
         </div>
         <main className="auth-content">{children}</main>
-        <footer>
+        <footer className="app-footer">
           Turnstile 360 <span aria-hidden="true">·</span> Thaarei
         </footer>
       </div>
@@ -54,9 +85,11 @@ function AuthLayout({ children }: { children: ReactNode }) {
 function AccountState({
   kind,
   retry,
+  pending = false,
 }: {
   kind: 'expired' | 'denied' | 'unavailable' | 'signed-out';
   retry?: () => void;
+  pending?: boolean;
 }) {
   const [message, setMessage] = useState('');
   const content = {
@@ -83,75 +116,147 @@ function AccountState({
   return (
     <>
       <span className="eyebrow">YOUR ACCOUNT</span>
-      <h1>{content[0]}</h1>
+      <h1 className="page-title">{content[0]}</h1>
       <p className="intro">{content[1]}</p>
-      {message && <Notice message={message} />}
-      <button
-        className="primary"
+      {message && <Notice className="mb-5" message={message} />}
+      <Button
+        size="lg"
+        className="w-full"
         type="button"
+        disabled={pending}
         onClick={kind === 'unavailable' ? (retry ?? beginSignIn) : beginSignIn}
       >
-        {kind === 'unavailable' ? 'Try again' : 'Sign in'}
-        <span aria-hidden="true">↗</span>
-      </button>
+        {pending && <Spinner aria-hidden="true" data-icon="inline-start" />}
+        {kind === 'unavailable' && retry ? 'Try again' : 'Sign in'}
+        <HugeiconsIcon icon={ArrowUpRight01Icon} data-icon="inline-end" aria-hidden="true" />
+      </Button>
+      {kind === 'unavailable' && retry && (
+        <ButtonLink variant="link" className="-ml-3 mt-4" href="/api/auth/login">
+          Sign in
+        </ButtonLink>
+      )}
       {kind === 'denied' && (
-        <button className="text-button" type="button" onClick={() => void switchAccount()}>
+        <Button
+          variant="link"
+          className="-ml-3 mt-4"
+          type="button"
+          onClick={() => void switchAccount()}
+        >
           Sign in with a different account
-        </button>
+        </Button>
       )}
     </>
   );
 }
-function Workspace() {
+export function Workspace() {
+  const navigate = useNavigate();
   const generation = useRef(0);
+  const checks = useRef(0);
+  const identityId = useRef<string | undefined>(undefined);
+  const [checking, setChecking] = useState(false);
   const [session, setSession] = useState<UserSessionDto>();
+  const [workspace, setWorkspace] = useState<WorkspaceStatusDto>();
+  const { pathname: routePath } = useLocation();
+  const [path, setPath] = useState(routePath);
+  const knownPath =
+    path === '/' ||
+    path === '/auth-unavailable' ||
+    path === '/waiting-for-setup' ||
+    setupPaths.some((value) => value === path) ||
+    settingsPaths.some((value) => value === path);
   const [state, setState] = useState<
-    'loading' | 'ready' | 'expired' | 'denied' | 'unavailable' | 'signed-out'
+    'loading' | 'ready' | 'expired' | 'denied' | 'unavailable' | 'setup-unavailable' | 'signed-out'
   >('loading');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [busyAction, setBusyAction] = useState<'sign-out' | 'connection'>();
   const [connection, setConnection] = useState('');
   const [logout, setLogout] = useState<{ csrf: string; retryUntil: number }>();
   const check = useCallback(async () => {
     const current = generation.current;
+    const requestedPath = window.location.pathname;
+    const checkId = ++checks.current;
+    setChecking(true);
     try {
       const value = await loadSession();
-      if (current !== generation.current) return;
+      if (current !== generation.current || checkId !== checks.current) return;
+      if (identityId.current && identityId.current !== value.user.id) {
+        setWorkspace(undefined);
+        setState('loading');
+      }
+      identityId.current = value.user.id;
       setSession(value);
+      const status = await loadWorkspaceStatus(value.user.id);
+      if (current !== generation.current || checkId !== checks.current) return;
+      setSession(value);
+      setWorkspace(status);
+      setPath(requestedPath);
       setState('ready');
+      if (window.location.pathname === '/auth-unavailable') void navigate('/', { replace: true });
     } catch (error) {
-      if (current !== generation.current) return;
+      if (current !== generation.current || checkId !== checks.current) return;
       if (error instanceof ProductError && error.status === 401) {
         setSession(undefined);
         setState('expired');
       } else if (error instanceof ProductError && error.status === 403) {
         setSession(undefined);
         setState('denied');
-      } else setState('unavailable');
+      } else if (error instanceof ProductError && error.code === 'CONFIGURATION_UNAVAILABLE')
+        setState('setup-unavailable');
+      else setState('unavailable');
+    } finally {
+      if (current === generation.current && checkId === checks.current) setChecking(false);
     }
-  }, []);
+  }, [navigate]);
+  useEffect(() => {
+    if (state !== 'ready' || !workspace || !knownPath) return;
+    if (
+      workspace.status === 'complete' &&
+      (setupPaths.some((value) => value === path) || path === '/waiting-for-setup')
+    )
+      void navigate('/', { replace: true });
+    else if (
+      workspace.status === 'incomplete' &&
+      !workspace.canManageConfiguration &&
+      path !== '/waiting-for-setup'
+    )
+      void navigate('/waiting-for-setup', { replace: true });
+  }, [state, workspace, path, knownPath, navigate]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Revalidate access on client navigation without remounting the shell.
   useEffect(() => {
     void check();
-  }, [check]);
+  }, [check, routePath]);
+  const refreshWorkspace = useCallback(() => void check(), [check]);
   useEffect(() => {
-    if (state !== 'ready') return;
+    if (state !== 'ready' && state !== 'unavailable') return;
     const focus = () => {
       if (!document.hidden) void check();
     };
     window.addEventListener('focus', focus);
     document.addEventListener('visibilitychange', focus);
-    const timer = window.setInterval(focus, 60000);
+    // Retry one transient startup/reload failure, then leave further retries to
+    // tab focus or the user. Do not poll an unavailable authority indefinitely.
+    const timer =
+      state === 'ready' && workspace?.status === 'complete'
+        ? window.setInterval(focus, 60000)
+        : state === 'unavailable'
+          ? window.setTimeout(focus, 3000)
+          : undefined;
     return () => {
       window.removeEventListener('focus', focus);
       document.removeEventListener('visibilitychange', focus);
       window.clearInterval(timer);
+      window.clearTimeout(timer);
     };
-  }, [state, check]);
+  }, [state, check, workspace?.status]);
   async function signOut() {
     const csrf = logout?.csrf ?? session?.csrfToken;
     if (!csrf || busy) return;
     generation.current++;
+    checks.current++;
+    setWorkspace(undefined);
     setBusy(true);
+    setBusyAction('sign-out');
     setMessage('');
     const retryUntil = logout?.retryUntil ?? Date.now() + 300000;
     setSession(undefined);
@@ -179,18 +284,30 @@ function Workspace() {
       setMessage('Sign-out hasn’t been confirmed. Retry to finish safely.');
     } finally {
       setBusy(false);
+      setBusyAction(undefined);
     }
   }
   async function connect() {
+    const current = generation.current;
     setBusy(true);
+    setBusyAction('connection');
     setConnection('');
     try {
       await loadCapabilities();
+      if (current !== generation.current) return;
       setConnection('Connected. Document features will appear here when available.');
     } catch (error) {
+      if (current !== generation.current) return;
       if (error instanceof ProductError && error.status === 401) {
         setSession(undefined);
         setState('expired');
+      } else if (
+        error instanceof ProductError &&
+        (error.code === 'SETUP_REQUIRED' || error.code === 'CONFIGURATION_UNAVAILABLE')
+      ) {
+        setWorkspace(undefined);
+        setState('loading');
+        void check();
       } else if (error instanceof ProductError && error.code === 'AUTH_UNAVAILABLE')
         setState('unavailable');
       else if (error instanceof ProductError && error.code === 'DMS_ACCESS_DENIED')
@@ -205,107 +322,308 @@ function Workspace() {
           'The document service is temporarily unavailable. Your sign-in is still active. Try again later.',
         );
     } finally {
-      setBusy(false);
+      if (current === generation.current) {
+        setBusy(false);
+        setBusyAction(undefined);
+      }
     }
   }
+  useEffect(() => {
+    const restore = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        generation.current++;
+        setBusy(false);
+        setBusyAction(undefined);
+        setWorkspace(undefined);
+        setState('loading');
+        void check();
+      }
+    };
+    window.addEventListener('pageshow', restore);
+    return () => {
+      window.removeEventListener('pageshow', restore);
+      generation.current++;
+    };
+  }, [check]);
   if (state === 'loading')
     return (
-      <AuthLayout>
-        <span className="eyebrow">YOUR WORKSPACE</span>
-        <h1>One moment</h1>
-        <p className="intro" role="status">
-          Checking your session…
-        </p>
-      </AuthLayout>
+      <EntryLayout
+        header={
+          <header className="entry-header">
+            <Brand />
+          </header>
+        }
+      >
+        <EntryContent>
+          <ContentLoading label="Loading workspace…" />
+        </EntryContent>
+      </EntryLayout>
     );
   if (logout)
     return (
       <AuthLayout>
         <span className="eyebrow">YOUR ACCOUNT</span>
-        <h1>Finishing sign-out</h1>
+        <h1 className="page-title">Finishing sign-out</h1>
         <p className="intro" role="status">
           {message || 'Ending your workspace and account sessions…'}
         </p>
         {Date.now() < logout.retryUntil ? (
-          <button className="primary" type="button" disabled={busy} onClick={() => void signOut()}>
+          <Button
+            size="lg"
+            className="w-full"
+            type="button"
+            disabled={busy}
+            onClick={() => void signOut()}
+          >
+            {busy && busyAction === 'sign-out' && (
+              <Spinner aria-hidden="true" data-icon="inline-start" />
+            )}
             {busy ? 'Signing out…' : 'Retry sign-out'}
-          </button>
+          </Button>
         ) : (
           <>
-            <p className="notice">
-              The retry window has ended. Account sign-out could not be confirmed.
-            </p>
-            <a className="back-link" href="/api/auth/login">
+            <Notice message="The retry window has ended. Account sign-out could not be confirmed." />
+            <ButtonLink variant="link" className="-ml-3 mt-4" href="/api/auth/login">
               Return to sign in
-            </a>
+            </ButtonLink>
           </>
         )}
       </AuthLayout>
     );
-  if (state !== 'ready' || !session)
+  if (!session || (state !== 'ready' && state !== 'unavailable' && state !== 'setup-unavailable'))
     return (
       <AuthLayout>
-        <AccountState kind={state === 'ready' ? 'expired' : state} retry={() => void check()} />
+        <AccountState
+          kind={
+            state === 'ready' ? 'expired' : state === 'setup-unavailable' ? 'unavailable' : state
+          }
+          retry={() => void check()}
+          pending={checking}
+        />
       </AuthLayout>
     );
-  return (
-    <div className="workspace">
-      <header>
-        <Brand />
-        <button className="secondary" type="button" disabled={busy} onClick={() => void signOut()}>
+  const header = (
+    <header className={cn('entry-header', workspace?.status === 'complete' && 'workspace-header')}>
+      <Brand />
+      <div className="entry-account">
+        <p className="account-label">
+          Signed in as <strong>{session.user.email}</strong>
+        </p>
+        {checking && routePath === path && <LoadingStatus>Checking session…</LoadingStatus>}
+        <Button variant="outline" type="button" disabled={busy} onClick={() => void signOut()}>
+          {busy && busyAction === 'sign-out' && (
+            <Spinner aria-hidden="true" data-icon="inline-start" />
+          )}
           Sign out
-        </button>
-      </header>
-      <main className="workspace-content">
-        <span className="eyebrow">YOUR WORKSPACE</span>
-        <h1>Welcome, {session.user.name}.</h1>
-        <p className="intro">You’re signed in to Turnstile 360.</p>
-        <section className="entry-card">
-          <div className="entry-icon" aria-hidden="true">
-            ↗
-          </div>
-          <div>
-            <h2>A place to begin</h2>
-            <p>
-              Your workspace is ready. Features will appear here as they become available to your
-              organization.
-            </p>
-            <span className="account-label">
-              Signed in as <strong>{session.user.email}</strong>
-            </span>
-          </div>
-        </section>
-        {session.permissions.includes('turnstile:dms:capabilities:read') && (
-          <section className="connection-card">
-            <div>
-              <h2>Document connection</h2>
-              <p>Check that your workspace can reach its document service.</p>
-            </div>
-            <button
-              className="secondary"
-              type="button"
-              disabled={busy}
-              onClick={() => void connect()}
-            >
-              {busy ? 'Checking…' : 'Check connection'}
-            </button>
-            {connection && (
-              <p className="connection-status" role="status">
-                {connection}
-              </p>
-            )}
-          </section>
-        )}
-      </main>
-      <footer>
-        Turnstile 360 <span aria-hidden="true">·</span> Thaarei
-      </footer>
+        </Button>
+      </div>
+    </header>
+  );
+  const unavailable =
+    state === 'setup-unavailable' ? (
+      <div className="flex flex-col gap-5">
+        <h1 className="page-title">Setup is temporarily unavailable</h1>
+        <p className="intro">
+          We couldn’t check saved setup. Your entries are kept while you retry.
+        </p>
+        <Button className="self-start" disabled={checking} onClick={() => void check()}>
+          {checking && <Spinner aria-hidden="true" data-icon="inline-start" />}
+          {checking ? 'Checking…' : 'Try again'}
+        </Button>
+      </div>
+    ) : state === 'unavailable' ? (
+      <AccountState kind="unavailable" retry={() => void check()} pending={checking} />
+    ) : null;
+  const notFound = (
+    <div className="flex flex-col gap-5">
+      <h1 className="page-title">Page not found</h1>
+      <p className="intro">This page isn’t available.</p>
+      <ButtonLink className="self-start" href="/">
+        Return to workspace
+      </ButtonLink>
     </div>
+  );
+  if (workspace?.status !== 'complete')
+    return (
+      <EntryLayout header={header}>
+        {unavailable && <EntryContent>{unavailable}</EntryContent>}
+        <div className="entry-view" hidden={state !== 'ready'}>
+          {!knownPath ? (
+            <EntryContent>{notFound}</EntryContent>
+          ) : !workspace ? (
+            <EntryContent>
+              <ContentLoading label="Loading workspace…" />
+            </EntryContent>
+          ) : workspace.canManageConfiguration ? (
+            <OnboardingJourney
+              key={session.user.id}
+              session={session}
+              path={path}
+              onCheck={refreshWorkspace}
+              pending={routePath !== path || state !== 'ready'}
+              checking={checking}
+            />
+          ) : (
+            <EntryContent>
+              {path === '/waiting-for-setup' ? (
+                <div className="flex flex-col gap-5">
+                  <span className="eyebrow">WORKSPACE SETUP</span>
+                  <h1 className="page-title">Waiting for setup</h1>
+                  <p className="intro">
+                    Your administrator is preparing this workspace. You can retry when setup is
+                    ready, or sign out.
+                  </p>
+                  <Button
+                    className="self-start"
+                    disabled={busy || checking}
+                    onClick={() => void check()}
+                  >
+                    {checking && <Spinner aria-hidden="true" data-icon="inline-start" />}
+                    {checking ? 'Checking…' : 'Retry'}
+                  </Button>
+                </div>
+              ) : (
+                <ContentLoading label="Loading workspace…" />
+              )}
+            </EntryContent>
+          )}
+        </div>
+      </EntryLayout>
+    );
+  return (
+    <WorkspaceLayout
+      pending={state === 'ready' && routePath !== path}
+      header={header}
+      destinations={workspaceDestinations(path, workspace.canManageConfiguration)}
+      settings={
+        state === 'ready' &&
+        workspace?.status === 'complete' &&
+        workspace.canManageConfiguration &&
+        settingsPaths.some((value) => value === path)
+      }
+    >
+      {unavailable}
+      <div className="workspace-view" hidden={state !== 'ready'}>
+        {!knownPath ? (
+          notFound
+        ) : setupPaths.some((value) => value === path) || path === '/waiting-for-setup' ? (
+          <ContentLoading label="Opening workspace…" />
+        ) : settingsPaths.some((value) => value === path) ? (
+          workspace.canManageConfiguration ? (
+            <Settings
+              key={session.user.id}
+              session={session}
+              path={path}
+              onCheck={refreshWorkspace}
+              pending={state === 'ready' && routePath !== path}
+              requestedPath={routePath}
+            />
+          ) : (
+            <div className="flex flex-col gap-5">
+              <h1 className="page-title">Settings access required</h1>
+              <p className="intro">
+                You need configuration permission to view or change organization settings.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <ButtonLink href="/">Return to Home</ButtonLink>
+                <Button variant="outline" onClick={() => void check()} disabled={checking}>
+                  {checking && <Spinner aria-hidden="true" data-icon="inline-start" />}
+                  Check access
+                </Button>
+              </div>
+            </div>
+          )
+        ) : (
+          <>
+            <span className="eyebrow">YOUR WORKSPACE</span>
+            <h1 className="page-title">Welcome, {session.user.name}.</h1>
+            <p className="intro">You’re signed in to Turnstile 360.</p>
+            <div className="flex flex-col gap-6">
+              <Empty>
+                <EmptyHeader>
+                  <EmptyTitle>
+                    <h2>Your workspace is ready</h2>
+                  </EmptyTitle>
+                  <EmptyDescription>
+                    Business features will appear here as they become available to your
+                    organization.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+              {workspace.canManageConfiguration && (
+                <>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>
+                        <h2>Manage your workspace</h2>
+                      </CardTitle>
+                      <CardDescription>
+                        Update your organization, sites and departments, or time zone in Settings.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardFooter>
+                      <ButtonLink href="/settings" variant="outline">
+                        Open Settings
+                      </ButtonLink>
+                    </CardFooter>
+                  </Card>
+                  <LegacyUnitPrompt key={session.user.id} />
+                </>
+              )}
+              {session.permissions.includes('turnstile:dms:capabilities:read') && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      <h2>Document connection</h2>
+                    </CardTitle>
+                    <CardDescription>
+                      Check that your workspace can reach its document service.
+                    </CardDescription>
+                  </CardHeader>
+                  {busyAction === 'connection' && (
+                    <CardContent>
+                      <LoadingStatus>Checking document connection…</LoadingStatus>
+                    </CardContent>
+                  )}
+                  {connection && (
+                    <CardContent>
+                      <p className="text-sm" role="status">
+                        {connection}
+                      </p>
+                    </CardContent>
+                  )}
+                  <CardFooter>
+                    <Button
+                      variant="outline"
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void connect()}
+                    >
+                      {busyAction === 'connection' && (
+                        <Spinner aria-hidden="true" data-icon="inline-start" />
+                      )}
+                      {busy ? 'Checking…' : 'Check connection'}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </WorkspaceLayout>
   );
 }
 export default function App() {
-  const path = window.location.pathname;
+  const { pathname: path } = useLocation();
   const [token, setToken] = useState(resetToken);
+  if (DesignSystem && path === '/design-system') {
+    return (
+      <Suspense fallback={<ContentLoading label="Loading design system…" />}>
+        <DesignSystem />
+      </Suspense>
+    );
+  }
   if (path === '/sign-in')
     return (
       <AuthLayout>
@@ -340,12 +658,6 @@ export default function App() {
     return (
       <AuthLayout>
         <AccountState kind="expired" />
-      </AuthLayout>
-    );
-  if (path === '/auth-unavailable')
-    return (
-      <AuthLayout>
-        <AccountState kind="unavailable" />
       </AuthLayout>
     );
   return <Workspace />;
