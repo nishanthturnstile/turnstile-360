@@ -78,7 +78,7 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
-WORKSPACE-DEVELOPMENT-PR — **In progress** (owner: Codex, 2026-11-03). The owner
+WORKSPACE-DEVELOPMENT-PR — **Completed** (owner: Codex, 2026-11-03). The owner
 authorized committing and merging the current branch into development. Scope: the
 development-first branch policy and the previously verified Settings navigation consistency
 fix, with their architecture/design guidance and handoffs. Reviewed all six changed files;
@@ -87,9 +87,15 @@ no additional application change is needed. The branch is based on current
 `pnpm test:integration` passed as recorded in WORKSPACE-BRANCH-POLICY. Committed the
 reviewed changes as `8d4eec6`, pushed the branch and opened
 [PR #6](https://github.com/nishanthturnstile/turnstile-360/pull/6) targeting development.
-The PR has no conflicts or review comments. Hosted workspace checks and all five container
-builds are pending; next: merge after they pass and fast-forward local development.
-Main is not a merge target. No production deployment is included.
+At head `1d8b53d`, all push and PR checks and all five container builds passed. The first
+PR integration run passed all 19 Fastify and 91 database tests but reported an unhandled
+PostgreSQL administrative connection termination (`57P01`) during upgrade-fixture cleanup;
+the failed job passed on rerun without source changes (workflow `41603919605`, attempt 2).
+No review comments or conflicts were outstanding. Merged PR #6 into development as
+`f053202` on 2026-11-03 and fast-forwarded/switched local development to that merge.
+This documentation follow-up records the actual result; earlier entries retain their
+historical verification state. `git diff --check` passes. No remaining work/blocker in
+the authorized scope; main was unchanged and no production deployment was performed.
 
 WORKSPACE-BRANCH-POLICY — **Completed** (owner: Codex, 2026-11-03). Recorded the owner's
 development-first policy in root `AGENTS.md` and `docs/standards/workspace.md`: work on
