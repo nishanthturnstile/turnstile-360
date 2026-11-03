@@ -84,9 +84,12 @@ development-first branch policy and the previously verified Settings navigation 
 fix, with their architecture/design guidance and handoffs. Reviewed all six changed files;
 no additional application change is needed. The branch is based on current
 `origin/development` (`2ea23fb`); local `pnpm check`, `pnpm build`, `pnpm test` and
-`pnpm test:integration` passed as recorded in WORKSPACE-BRANCH-POLICY. Next: commit,
-push, open a PR targeting development and merge after hosted checks pass. Main is not a
-merge target. No production deployment is included.
+`pnpm test:integration` passed as recorded in WORKSPACE-BRANCH-POLICY. Committed the
+reviewed changes as `8d4eec6`, pushed the branch and opened
+[PR #6](https://github.com/nishanthturnstile/turnstile-360/pull/6) targeting development.
+The PR has no conflicts or review comments. Hosted workspace checks and all five container
+builds are pending; next: merge after they pass and fast-forward local development.
+Main is not a merge target. No production deployment is included.
 
 WORKSPACE-BRANCH-POLICY — **Completed** (owner: Codex, 2026-11-03). Recorded the owner's
 development-first policy in root `AGENTS.md` and `docs/standards/workspace.md`: work on
