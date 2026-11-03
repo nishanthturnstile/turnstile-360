@@ -417,15 +417,51 @@ export async function testSettings({
       .click();
     await heading(page, 'Organization structure');
     const list = page.getByRole('list', { name: 'Saved units' });
-    const actionButton = (action, name) =>
-      list
+    const expandTools = async () => {
+      const expand = page.getByRole('button', { name: 'Expand structure tools', exact: true });
+      if (await expand.isVisible()) await expand.click();
+    };
+    assert.equal(
+      await page
+        .getByRole('button', { name: 'Expand structure tools', exact: true })
+        .getAttribute('aria-expanded'),
+      'false',
+    );
+    const contentBounds = await page
+      .getByRole('region', { name: 'Settings content', exact: true })
+      .boundingBox();
+    const canvasBounds = await page
+      .getByRole('region', { name: 'Organization chart', exact: true })
+      .boundingBox();
+    assert.ok(
+      contentBounds &&
+        canvasBounds &&
+        canvasBounds.width >= contentBounds.width * 0.95 &&
+        canvasBounds.height >= contentBounds.height * 0.75,
+    );
+
+    const actionButton = async (action, name) => {
+      await list
         .locator('[data-unit-row]')
         .filter({ has: page.getByText(name, { exact: true }) })
+        .getByRole('button', { name: /^Details for / })
+        .click();
+      return page
+        .getByRole('complementary', { name: 'Unit details and actions' })
         .getByRole('button', { name: new RegExp(`^${action} `) });
+    };
     const create = async (name) => {
+      await expandTools();
+      if (!(await page.getByLabel('Unit name', { exact: true }).isVisible()))
+        await page.getByRole('button', { name: 'Add a unit', exact: true }).click();
       await page.getByLabel('Unit name', { exact: true }).fill(name);
       await page.getByRole('button', { name: 'Add unit', exact: true }).click();
       await list.getByText(name, { exact: true }).waitFor();
+      assert.equal(await page.locator('[data-slot=alert][role=status]').count(), 0);
+      assert.equal(
+        await page.getByRole('button', { name: 'Load latest saved data', exact: true }).count(),
+        0,
+      );
     };
     await create('First site');
     await create('Second site');
@@ -435,6 +471,9 @@ export async function testSettings({
           (item) => item.name === 'First site',
         ).id,
     );
+    await expandTools();
+    if (!(await page.getByLabel('Unit type', { exact: true }).isVisible()))
+      await page.getByRole('button', { name: 'Add a unit', exact: true }).click();
     await page.getByLabel('Unit type', { exact: true }).selectOption('department');
     await page
       .locator(`[data-unit-row="${firstId}"]`)
@@ -442,18 +481,18 @@ export async function testSettings({
       .click();
     await create('Child department');
     assert.match(
-      await actionButton('Rename', 'Child department').getAttribute('aria-label'),
+      await (await actionButton('Rename', 'Child department')).getAttribute('aria-label'),
       /Department.*First site/,
     );
-    assert.equal(await actionButton('Remove', 'First site').isEnabled(), false);
-    assert.equal(await actionButton('Rename', 'Settings organization').count(), 0);
-    assert.equal(await actionButton('Remove', 'Settings organization').count(), 0);
+    assert.equal(await (await actionButton('Remove', 'First site')).isEnabled(), false);
+    assert.equal(await (await actionButton('Rename', 'Settings organization')).count(), 0);
+    assert.equal(await (await actionButton('Remove', 'Settings organization')).count(), 0);
 
     await setAccess('reset', managerPermissions);
     console.log('Settings verification: concurrent rename reconciliation.');
     await second.goto(`${origin}/settings/organization`);
     await heading(second, 'Organization');
-    await actionButton('Rename', 'First site').click();
+    await (await actionButton('Rename', 'First site')).click();
     await heading(page, 'Rename unit');
     await page.getByLabel('New unit name', { exact: true }).fill('Renamed site');
     await second
@@ -477,7 +516,7 @@ export async function testSettings({
     await page.getByRole('button', { name: 'Save unit name', exact: true }).click();
     await page.getByText('Unit name saved.', { exact: true }).waitFor();
     await list.getByText('Renamed site', { exact: true }).waitFor();
-    await actionButton('Rename', 'Second site').click();
+    await (await actionButton('Rename', 'Second site')).click();
     await heading(page, 'Rename unit');
     await page.getByLabel('New unit name', { exact: true }).fill('Renamed site');
     await page.getByRole('button', { name: 'Save unit name', exact: true }).click();
@@ -492,7 +531,7 @@ export async function testSettings({
     await list.getByText('Second site', { exact: true }).waitFor();
 
     console.log('Settings verification: confirmed and uncertain removal.');
-    await actionButton('Remove', 'Child department').click();
+    await (await actionButton('Remove', 'Child department')).click();
     await heading(page, 'Remove unit?');
     await page.getByRole('button', { name: 'Cancel', exact: true }).click();
     await list.getByText('Child department', { exact: true }).waitFor();
@@ -519,7 +558,7 @@ export async function testSettings({
       await route.abort('failed');
     };
     await page.route('**/api/organization/units/*', lostDelete);
-    await actionButton('Remove', 'Child department').click();
+    await (await actionButton('Remove', 'Child department')).click();
     await page.getByRole('button', { name: 'Remove unit', exact: true }).click();
     await page.getByText(/We couldn’t confirm this change/).waitFor();
     assert.equal(deletes, 1);
@@ -537,9 +576,10 @@ export async function testSettings({
     await page.getByRole('button', { name: 'Cancel', exact: true }).click();
     await page.unroute('**/api/organization/units/*', lostDelete);
     assert.equal(await list.getByText('Child department', { exact: true }).count(), 0);
+    await page.getByRole('button', { name: 'Add a unit', exact: true }).click();
     assert.equal(
-      await page.getByText('Adding under Second administrator Settings', { exact: true }).count(),
-      1,
+      await page.getByLabel('Parent unit', { exact: true }).inputValue(),
+      before.profile.organization.rootId,
     );
     const secondId = await page.evaluate(
       async () =>
@@ -551,12 +591,13 @@ export async function testSettings({
       .locator(`[data-unit-row="${secondId}"]`)
       .getByRole('button', { name: /^Add below / })
       .click();
-    await actionButton('Remove', 'Second site').click();
+    await (await actionButton('Remove', 'Second site')).click();
     await page.getByRole('button', { name: 'Remove unit', exact: true }).click();
     await page.getByText('Unit removed.', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Add a unit', exact: true }).click();
     assert.equal(
-      await page.getByText('Adding under Second administrator Settings', { exact: true }).count(),
-      1,
+      await page.getByLabel('Parent unit', { exact: true }).inputValue(),
+      before.profile.organization.rootId,
     );
     const replacement = page.waitForResponse(
       (response) =>
@@ -568,7 +609,7 @@ export async function testSettings({
       (await replacement).request().postDataJSON().parentId,
       before.profile.organization.rootId,
     );
-    await actionButton('Remove', 'Replacement department').click();
+    await (await actionButton('Remove', 'Replacement department')).click();
     await page.getByRole('button', { name: 'Remove unit', exact: true }).click();
     await page.getByText('Unit removed.', { exact: true }).waitFor();
 
@@ -584,6 +625,7 @@ export async function testSettings({
       });
     };
     await page.route('**/api/organization/units', unavailableCreate);
+    await page.getByRole('button', { name: 'Add a unit', exact: true }).click();
     for (const name of ['Unconfirmed first entry', 'Unconfirmed second entry']) {
       await page.getByLabel('Unit name', { exact: true }).fill(name);
       await page.getByRole('button', { name: 'Add unit', exact: true }).click();
@@ -603,7 +645,7 @@ export async function testSettings({
     await heading(page, 'Organization structure');
     await list.getByText('Renamed site', { exact: true }).waitFor();
     assert.equal(await list.getByText('Second site', { exact: true }).count(), 0);
-    assert.equal(await actionButton('Remove', 'Renamed site').isEnabled(), true);
+    assert.equal(await (await actionButton('Remove', 'Renamed site')).isEnabled(), true);
 
     await page.setViewportSize({ width: 320, height: 760 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -635,7 +677,7 @@ export async function testSettings({
     // Current authorization is checked on the mutation, then status removes the editor.
     await page.goto(`${origin}/settings/organization/structure`);
     await heading(page, 'Organization structure');
-    await actionButton('Rename', 'Renamed site').click();
+    await (await actionButton('Rename', 'Renamed site')).click();
     await page.getByLabel('New unit name', { exact: true }).fill('Revoked write');
     await setAccess('member', ordinaryPermissions);
     const revokedResponse = page.waitForResponse(

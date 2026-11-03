@@ -33,10 +33,14 @@ export function UnitEditor({
   action,
   onClose,
   onSaved,
+  onAttention,
+  embedded = false,
 }: EditorProps & {
   id: string;
   action: 'rename' | 'delete';
   onClose: () => void;
+  onAttention: () => void;
+  embedded?: boolean;
   onSaved: (value: ConfigurationSnapshotDto) => void;
 }) {
   const mounted = useMounted();
@@ -77,6 +81,7 @@ export function UnitEditor({
     setStatusNotice(false);
     const parsed = unitRenameSchema.safeParse({ expectedRevision: revision, name });
     if (action === 'rename' && !parsed.success) {
+      onAttention();
       setErrors(configurationValidationError(parsed.error));
       setMessage('Check the highlighted name.');
       return;
@@ -92,6 +97,7 @@ export function UnitEditor({
       if (mounted.current) onSaved(value);
     } catch (error) {
       if (!mounted.current) return;
+      onAttention();
       setMessage(notice(error));
       setErrors(errorDetail(error));
       setReconcile(
@@ -123,7 +129,10 @@ export function UnitEditor({
           : 'This unit no longer exists. Cancel to return to the saved structure.',
       );
     } catch (error) {
-      if (mounted.current) setMessage(notice(error));
+      if (mounted.current) {
+        onAttention();
+        setMessage(notice(error));
+      }
     } finally {
       if (mounted.current) {
         setBusy(false);
@@ -133,7 +142,7 @@ export function UnitEditor({
   }
   const nameError = fieldError(errors, 'name');
   return (
-    <Card>
+    <Card variant={embedded ? 'embedded' : 'default'}>
       <CardHeader>
         <CardTitle>
           <h2 ref={headingRef} tabIndex={-1}>

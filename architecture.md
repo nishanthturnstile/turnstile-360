@@ -1,6 +1,6 @@
 # Turnstile 360 and Thaarei DMS architecture
 
-**Updated:** 2026-11-02
+**Updated:** 2026-11-03
 
 **Status:** Accepted technical design with workspace foundations implemented.
 
@@ -734,13 +734,43 @@ access administration and label overrides remain outside this feature. RD03 adds
 version-specific last-unit protection; RD04/RD06 add moves and the shared visual editor.
 
 RD06 implements `StructureEditor` for both setup and Settings, retaining the existing
-create body/revision/key and partial-save recovery. `StructureTree` composes connected expandable cards and a compact outline from the same
-bounded canonical units. Contextual Add first unit/Add below infer parent/valid types;
-inline rename offers Save/Cancel, selection exposes details, and unused-leaf removal
+create body/revision/key and partial-save recovery. The owner-requested structure UX redesign
+uses `StructureTree` to compose an automatic top-down organization chart and a compact outline
+from the same bounded canonical units. `structure-layout.ts` derives transient non-overlapping
+card positions from visible parentage; SVG draws connections without a diagram dependency.
+`StructureViewport` owns a transient transform camera: blank-surface drag, Hand/Space/middle
+drag from cards, wheel/trackpad pan, pointer-anchored Ctrl/Command-wheel zoom, touch pan/pinch,
+focused keyboard navigation and a fixed zoom/reset/Fit bar. Camera scale is bounded to
+0.1%–200%; Fit can show the maximum-width canonical structure. Buttons, keyboard +/− and
+modifier-wheel use additive 10-percentage-point steps. Modifier-wheel caps each event at
+one step, accumulating small deltas to 40 normalized pixels and resetting after 160ms,
+direction changes or modifier release. Direct two-finger touch pinch stays continuous.
+Direct transform writes
+avoid rerendering the unit tree per pan. Camera gestures never change unit coordinates,
+parentage or revisions and cannot submit commands. Native Pointer Events with capture,
+multi-touch ownership and blur/Escape/cancellation cleanup keep unit-move handles separate.
+Keyboard focus/selection reveal hidden cards; filtering fits its visible ancestry. The
+chart clips its camera surface while Compact outline retains bounded native scrolling.
+Compact outline renders dense keyed rows with canonical indentation and branch guides,
+aligned direct-child counts and horizontal actions. Unit types occupy a separate column
+when space permits and a second name line on narrow lists; deeply nested lists retain
+native canvas overflow. This presentation does not change traversal or command behavior.
+Contextual Add first unit/Add below infer parent/valid types; creation and selected-unit details/actions
+occupy one collapsible floating tools panel over the chart. Settings fills its available
+content viewport with the canvas; a compact header replaces the repeated map heading and
+large page margins. Search, the view selector and contextual actions share that panel;
+chart navigation remains available on the canvas while the panel is collapsed.
+Card + shortcuts open the same create form with an inferred parent; Settings also exposes
+an explicit valid-parent selector for consecutive additions. The nonmodal Base UI
+Collapsible keeps editors mounted while collapsed, preserving drafts and readback state.
+Failed hidden writes reopen the panel. Desktop Fit/selection avoid its occupied area;
+narrow widths use the full canvas behind the bounded, independently scrolling panel.
+Routine confirmations are announced without a persistent visible banner; recovery actions
+appear only for errors or uncertain writes. Rename offers Save/Cancel, and unused-leaf removal
 names the unit and restriction explicitly. Root naming continues through the profile.
 Search preserves ancestor context and distinguishes duplicate names under different
 parents. Tree traversal renders a flat list of keyed unit rows with canonical depth/ancestry
-connectors, so changing parent never remounts an inline editor or loses its pending
+connectors; the active editor occupies a stable tools-panel slot, so changing parent or collapsing tools never remounts it or loses its pending
 destination/name. If readback removes an edited unit, keep its clearly labelled transient
 row until explicit cancellation so draft/error/readback controls remain reachable; it
 never enters canonical units or a write body. An active canonical editor and its ancestors
@@ -752,8 +782,9 @@ comparison key then ID. Filtered dragging must not imply ordering hidden/unrelat
 Move to… provides a complete click/tap/keyboard destination selector, old/new-path preview
 and confirmation before submission. Pointer/touch drag uses the same command/validation
 and confirmation, highlights valid targets and supports cancellation; precision dragging
-is never the sole operation. Native Pointer Events capture gestures on the handle only;
-normal card/pane touch scrolling remains native. Movement beyond a small activation
+is never the sole operation. Unit moves capture native Pointer Events on their handle;
+the chart camera has separate surface/pinch gesture ownership and outline scrolling stays
+native outside its move handle. Movement beyond a small activation
 threshold identifies a gesture; pointer cancellation, Escape and invalid/outside drops
 leave canonical structure unchanged. Filtering disables drag while retaining the full
 Move to destination chooser. Drag status does not shift target geometry.
@@ -804,7 +835,10 @@ The viewport is bounded by `100dvh` and flex `min-height: 0` boundaries. The wor
 sidebar and content pane scroll independently; Settings sections use a horizontally
 scrolling row at all widths. Header/navigation/footer remain outside page scrolling.
 `ScrollRegion` resets the changed content pane and moves keyboard focus there on client
-navigation, while surrounding navigation retains its position. Native overflow supplies
+navigation, while surrounding navigation retains its position. Structure uses the full
+Settings content area without a second page scrollbar: its canvas and floating tools panel
+own their independent native overflow. The tools panel collapses without resizing the
+canvas or discarding editor state. Native overflow supplies
 keyboard, wheel and touch scrolling without a second scroll library.
 
 One `NavigationGuard` aggregates transient dirty editors, including simultaneous unit
@@ -2600,6 +2634,10 @@ database changes, mobile code or migration. Actual completion/verification stays
 
 | Date       | Architecture record                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-03 | ONB-CHART-NAVIGATION adds a transient whiteboard camera with surface/Hand/Space/middle pan, wheel pan, anchored modifier-wheel zoom, touch pinch and fixed keyboard-accessible zoom/reset/Fit controls. Separate gesture ownership preserves confirmed unit moves and canonical automatic positions; Compact outline retains native scrolling. No dependency, API or database changes.                                                                                                                                                                    |
+| 2026-11-03 | ONB-OUTLINE-UX renders Compact outline as dense canonical hierarchy rows with aligned metadata, leading branch controls/guides and horizontal actions. Responsive type placement and bounded deep-list overflow preserve existing commands, editor identity, chart geometry and backend contracts.                                                                                                                                                                                                                                                        |
+| 2026-11-02 | ONB-STRUCTURE-POLISH expands the chart to the available Settings viewport and consolidates operations into one collapsible nonmodal floating panel. Base UI keepMounted preserves drafts/recovery; errors reopen hidden editors, routine success uses quiet announcements, and valid-parent selection supports consecutive additions. The canvas and tools own separate native overflow, with no contract/schema, dependency or deployment changes.                                                                                                       |
+| 2026-11-02 | ONB-STRUCTURE-UX replaces repeated action-heavy cards with an automatic top-down chart, SVG connections, transient zoom/Fit and a responsive contextual inspector. Creation and selected-unit actions share the focused panel; canonical CRUD/move contracts, recovery, permissions, limits and deployment are unchanged. No diagram dependency, persistent coordinates or schema is added.                                                                                                                                                               |
 | 2026-11-02 | ONB-RD08 adds exact image migration/contract checks, v1 archive round trips and version-aware local verification. Protected backups record image/role/journal inventory. Completed v1 and saved values survive owning migrations; no prior I08 pair is approved for v2/move rollback. Actual local release and production acceptance remain in IN_PROGRESS.md.                                                                                                                                                                                            |
 | 2026-11-02 | ONB-RD06 implements one connected-card/outline structure editor for setup and Settings, contextual parent/type inference, inline CRUD, canonical selection/search and confirmed Move to/pointer/touch moves. Flat stable row keys retain pending edits across parent changes; typed revision-bound moves require explicit readback after uncertain/conflicting writes, with no optimistic tree or replay. Native Pointer Events add no dependency; filtered dragging is disabled and last-unit/reference protections remain authoritative on the backend. |
 | 2026-11-02 | ONB-RD05 adds dedicated neutral/setup/waiting entry layouts selected after verified session/readiness, persistent setup progress and saved-gap Organization/First unit/Review guards. An unsaved India suggestion, implicit-root first-unit create/save/exit with exact retry receipts, reused unit correction controls and business-only Review/Finish setup preserve canonical state and draft/readback fencing. Completed navigation, visual moves and coordinated rollout remain RD06–08.                                                             |

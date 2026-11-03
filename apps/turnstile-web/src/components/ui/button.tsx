@@ -17,6 +17,9 @@ const buttonVariants = cva(
         destructive:
           'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
         link: 'text-primary underline-offset-4 hover:underline',
+        surface:
+          'border-border bg-card text-card-foreground shadow-xs hover:border-ring hover:bg-muted/50 aria-pressed:border-primary aria-pressed:ring-1 aria-pressed:ring-primary disabled:opacity-100',
+        row: 'text-card-foreground hover:bg-muted/50 aria-pressed:bg-primary/5 disabled:opacity-100',
       },
       size: {
         default:
@@ -28,6 +31,8 @@ const buttonVariants = cva(
         'icon-xs': "size-6 [&_svg:not([class*='size-'])]:size-3",
         'icon-sm': 'size-8',
         'icon-lg': 'size-10',
+        surface: 'h-full w-full justify-start gap-3 rounded-xl p-4 text-left whitespace-normal',
+        row: 'grid h-full w-full min-w-0 justify-start gap-3 rounded-none border-0 ps-3 pe-21 text-left whitespace-normal focus-visible:ring-inset active:not-aria-[haspopup]:scale-100',
       },
     },
     defaultVariants: {

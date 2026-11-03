@@ -69,6 +69,10 @@ export async function testStructuredOnboarding({
   assert.deepEqual(first.ancestorIds, [root]);
   await page.getByRole('link', { name: 'Edit first unit', exact: true }).click();
   await heading('First unit');
+  await page
+    .locator(`[data-unit-row="${first.id}"]`)
+    .getByRole('button', { name: /^Details for / })
+    .click();
   await page.getByRole('button', { name: /^Rename Operations / }).click();
   await heading('Rename unit');
   await page.getByLabel('New unit name', { exact: true }).fill('Operations team');
@@ -76,6 +80,7 @@ export async function testStructuredOnboarding({
   await page.getByText('Unit name saved.', { exact: true }).waitFor();
   before = await read();
   assert.equal(before.structure.units.find((unit) => unit.id === first.id).name, 'Operations team');
+  await page.getByRole('button', { name: 'Add a unit', exact: true }).click();
   await page.getByLabel('Unit name', { exact: true }).fill('Unsent additional unit');
   const blocked = page.waitForEvent('dialog');
   const back = page.goBack();
@@ -125,6 +130,10 @@ export async function testStructuredOnboarding({
   await list.getByText('Operations team', { exact: true }).waitFor();
   assert.deepEqual(await read(), activated);
   async function create(name) {
+    const expand = page.getByRole('button', { name: 'Expand structure tools', exact: true });
+    if (await expand.isVisible()) await expand.click();
+    if (!(await page.getByLabel('Unit name', { exact: true }).isVisible()))
+      await page.getByRole('button', { name: 'Add a unit', exact: true }).click();
     await page.getByLabel('Unit name', { exact: true }).fill(name);
     await page.getByRole('button', { name: 'Add unit', exact: true }).click();
     await list.getByText(name, { exact: true }).waitFor();

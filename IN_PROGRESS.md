@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-11-02
+Last updated: 2026-11-03
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -77,6 +77,166 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+ONB-STRUCTURE-PR — **Completed** (owner: Codex, 2026-11-03). Reviewed and committed the
+authorized organization-structure changes as `e9f6631`, reconciled main ancestry without
+source changes, and created/reviewed [PR #4](https://github.com/nishanthturnstile/turnstile-360/pull/4).
+The promotion explicitly includes the previously reviewed onboarding baseline from PR #3
+that main lacked. Review found no blocking defect in canonical command fencing, retained
+drafts/readback, gesture ownership, outline rendering or zoom cadence. Local verification
+is recorded in ONB-CHART-ZOOM-STEPS and the preceding feature entries. GitHub push and PR
+CI passed all workspace checks and all five container builds at head `abab942`; the PR
+workflow run is `41576371604`. Merged to main as `099c434` on 2026-11-03 after those checks
+passed, and fast-forwarded the local main branch. This documentation follow-up records the
+actual merge outcome. No remaining work/blockers in the requested scope; no production
+deployment was performed. Earlier feature entries describe their state at those milestones.
+
+ONB-CHART-ZOOM-STEPS — **Completed** (owner: Codex, 2026-11-03). Scope: replace
+oversensitive modifier-wheel chart zoom with the owner's requested 10-percentage-point
+steps, shared with buttons/keyboard, while preserving pointer anchoring and touch pinch.
+Implemented one shared additive step for modifier-wheel, buttons and keyboard. Large wheel
+events produce at most one step; small trackpad deltas accumulate with pause/reversal/
+modifier-release resets. Direct touch pinch and pointer anchoring remain intact. Added
+three focused regressions for arbitrary Fit percentages, large notches and smooth input;
+all 13 web tests pass. Verification (2026-11-03): `pnpm check`, `pnpm build`, `pnpm test`
+and `pnpm test:integration` pass, including 19 Fastify integration and 91 real PostgreSQL
+checks. The isolated visual-structure HTTPS suite passes exact 10-point large Ctrl-wheel,
+Cmd-wheel, button and keyboard assertions, pointer anchoring and existing pan/pinch/move/
+draft/recovery regressions. The running development web source has the stepped handler
+and no exponential wheel calculation; its temporary watcher is stopped. Logs:
+`/tmp/turnstile-zoom-steps-*.log`. All prior uncommitted work is preserved; no installation
+data was changed. No remaining work/blockers in scope; no commit, push or production deploy.
+
+ONB-CHART-NAVIGATION — **Completed** (owner: Codex, 2026-11-03). Scope: design and
+implement whiteboard-style chart pan/zoom with discoverable controls and keyboard/touch
+alternatives. Preserve automatic hierarchy layout, confirmed unit moves, outline behavior
+and all editing/recovery state. Implemented a separate transient camera presentation with
+blank/Hand/Space/middle drag, wheel pan, anchored modifier-wheel zoom, real touch pinch,
+focused keyboard controls and an always-available zoom/reset/Fit bar. Pointer capture,
+extra-touch guards and blur/Escape cleanup separate navigation from confirmed unit moves.
+Added camera geometry tests and runtime assertions of zero navigation writes; updated the
+wide navigation gallery example and accepted design references. Runtime coverage caught
+filtered cards falling outside the camera and a reused camera transform scaling the
+outline. Search now fits its results; camera/native-list render paths have separate keys,
+and no-result messaging remains fixed and clickable after gestures.
+
+Verification (2026-11-03): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass, including ten web regressions, 19 Fastify integration and
+91 real PostgreSQL checks. Auth/Settings and structured-onboarding HTTPS suites pass.
+The final camera/outline/move journey passes, including explicit empty-filter clearing
+after a gesture, zero navigation writes and all existing draft/readback protections.
+Shared preview review confirms light/
+dark controls, active Hand mode, wide-chart Fit, proper outline scale and controls bounded
+at 320px. The development web files are synchronized and its temporary watcher is stopped;
+no installation data was changed. Logs: `/tmp/turnstile-navigation-*.log`. The existing
+Vite bundle-size advisory remains. No dependencies, contracts, schemas or deployment
+topology changed. All existing uncommitted work is preserved. No remaining work/blockers
+in this scope; no commit, push or production deployment.
+
+ONB-OUTLINE-UX — **Completed** (owner: Codex, 2026-11-03). Scope: improve the
+Compact outline's density, hierarchy, alignment and actions while preserving the accepted
+connected chart and canonical editing/recovery behavior. Implemented a single list with
+52–56px rows, ancestry guides/leading chevrons, aligned types/direct-child counts and
+horizontal actions. Narrow lists stack type below the name; long/deep identities retain
+full named paths and bounded canvas scrolling; a separate totals footer never overlays
+rows. Added four inert outline gallery fixtures and density/alignment/keyboard browser
+regressions. Corrected a Tailwind display-layer conflict caught by runtime coverage.
+
+Verification (2026-11-03): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass, including seven web regressions, 19 Fastify integration
+checks and 91 real PostgreSQL checks. Final visual-structure and structured-onboarding
+HTTPS browser suites pass. Shared preview review covers light/dark, long names, canonical
+depth eight, full selected paths and 320px overflow/footer separation. The development
+web service has the current files and remains healthy; no installation data was written.
+The auth/Settings suite passes on retry after a disposable Mailpit startup failure;
+all three isolated HTTPS browser suites pass, including retained drafts, recovery,
+keyboard selection and confirmed mouse/touch moves. Logs: `/tmp/turnstile-outline-*.log`.
+The existing Vite bundle-size advisory remains. All prior uncommitted changes are
+preserved. No remaining work/blocker in this scope; no commit, push or production deploy.
+
+ONB-STRUCTURE-POLISH — **Completed** (owner: Codex, 2026-11-02). Scope: owner feedback
+on the new connected chart: use the available Settings workspace for the chart, consolidate
+operations into one collapsible floating panel, remove the annotated persistent generic
+success banner and polish duplicated controls/spacing. Preserve prior uncommitted work,
+canonical mutations, accessible feedback, drafts, recovery and onboarding behavior.
+Implemented the viewport-filling Settings canvas, compact heading/navigation and one
+collapsible floating operations panel. Removed the repeated map title/global Add button,
+permanent side column and guidance below the chart. Card + shortcuts open the same create
+form with inferred parent; Settings supports an explicit valid-parent selector and repeated
+additions. Routine save feedback is announced without the annotated persistent generic
+Alert or routine recovery buttons. Errors/readback remain visible in the panel.
+
+The pinned CLI generated the dependency-free Collapsible wrapper over installed Base UI.
+`keepMounted` retains create/rename/move state while collapsed; failed hidden writes reopen
+their editor. Shared Card gains an embedded variant to avoid nested surfaces. Live review
+confirms the canvas fills Settings and the tools remain bounded at 320px with independent
+scrolling and no page overflow. No saved installation was changed by verification.
+The gallery now includes explicit open-tools, adding and retained-draft states. Embedded
+cards avoid nested rings, and disabled chart cards retain readable text while their actions
+remain fenced. A collapsed panel identifies active drafts and filters. Architecture and
+design guidance describe the new canvas/panel scroll ownership and feedback conventions.
+
+Verification (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass, including seven web regressions, 19 Fastify and 91 real
+PostgreSQL checks. All three isolated HTTPS browser suites pass: auth/Settings, structured
+onboarding and visual structure. New checks cover the canvas occupying the Settings area,
+collapsed default tools, absence of routine success Alerts/recovery buttons, retained
+create/move drafts, and a committed rename response lost after collapsing its pending
+editor; the failure automatically reopens recovery without losing the draft or replaying
+the write. Existing permission, CRUD/conflict/readback, keyboard/pointer/touch move,
+dirty-navigation, session/logout, 320px and reduced-motion coverage is retained. The initial
+visual fixture attempted a card action beneath the open panel; its interaction now
+collapses tools before chart gestures. The final suite passes.
+
+Live visual review confirms the available-width/height canvas, a single new-unit form and
+submit action, no generic visible success banner, bounded 320px panel scrolling and no
+document overflow. The fixture-only gallery verifies retained drafts and semantic dark
+surfaces; disabled cards remain readable. The existing >500kB web-bundle warning remains.
+Logs: `/tmp/turnstile-structure-polish-{check,build,test,integration,browser-auth,browser-structured,browser-structure}.log`.
+
+Handoff: requested UI refinement and verification are complete and available through the
+existing local Watch stack. Settings opens with tools collapsed; a card or + opens the
+same panel, which can remain open for consecutive additions. All prior changes remain
+uncommitted. No backend/schema, dependency/lockfile, credential, saved installation,
+LICENSE/notice or deployment change was made. No commit or push was requested.
+
+ONB-STRUCTURE-UX — **Completed** (owner: Codex, 2026-11-02). Scope: owner-requested
+complete presentation/interaction redesign of Settings organization structure, using the
+Emil design engineering and shadcn skills. Improve purpose, hierarchy scanning, selection
+and contextual editing while preserving canonical CRUD/moves, permissions, recovery and
+onboarding behavior. No schema, deployment, account or saved-organization changes.
+Implemented an automatic top-down connected chart with transient zoom/Fit, branch collapse,
+search with ancestor context and a compact outline. Selection opens a responsive inspector
+with purpose, full path, unit counts and contextual actions; creation uses a focused panel.
+Root-only guidance and Site/Plant/Department explanations clarify the page's purpose.
+The shared composition serves Settings and onboarding. Editors retain draft/readback state
+outside chart rows, including lost responses and removed units. Settings uses the available
+page width; the gallery includes empty, long-name, wide and narrow examples.
+
+Verification (2026-11-02): `pnpm check`, `pnpm build`, `pnpm test` (including two focused
+chart-layout regressions; seven web tests total) and `pnpm test:integration` pass; real
+integration includes 19 Fastify and 91 PostgreSQL checks. All three HTTPS browser suites
+pass: `pnpm test:browser:auth`, `pnpm test:browser:onboarding:structured` and
+`pnpm test:browser:structure`. They retain live permissions, canonical readback, exact-key
+creation retries, rename/delete conflict and uncertain-response recovery, dirty navigation,
+keyboard/pointer/touch moves, session/logout and 320px/reduced-motion coverage. New chart
+checks verify connections, zoom and fitting every card within the viewport. Existing
+fixtures now select a unit before using its inspector actions; an initial structured test
+still addressed the old row action, and passes after that selector was corrected.
+
+The shared local preview has an expired session; visual review used the development
+gallery, and authenticated flows used isolated HTTPS fixtures without modifying the saved
+local organization. Reviewed light/dark, long-name, empty and 16-unit wide states; Fit chart
+contains all cards and the page has no horizontal overflow. The 500-unit layout regression
+checks bounds/non-overlap. The existing >500kB production web-bundle warning remains.
+Logs: `/tmp/turnstile-structure-ux-{check,build,test,integration,browser-auth,browser-structured,browser-structure}.log`.
+
+Handoff: implementation and requested verification are complete. Source changes are
+available through the existing local Watch stack; refresh Settings → Structure. The shared
+chart/controller, responsive styles, Button surface variant, gallery, existing browser
+fixtures, design guidance and architecture record are current. No backend/schema,
+dependency/lockfile, credential, saved installation or deployment change was made. Root
+LICENSE and third-party notices are preserved. No commit or push was requested.
 
 ONB-RD-CI — **Completed** (owner: Codex, 2026-11-02). Scope: correct and verify hosted
 checks for [PR #3](https://github.com/nishanthturnstile/turnstile-360/pull/3).
