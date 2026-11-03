@@ -78,6 +78,46 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
+WORKSPACE-DEVELOPMENT-PR — **In progress** (owner: Codex, 2026-11-03). The owner
+authorized committing and merging the current branch into development. Scope: the
+development-first branch policy and the previously verified Settings navigation consistency
+fix, with their architecture/design guidance and handoffs. Reviewed all six changed files;
+no additional application change is needed. The branch is based on current
+`origin/development` (`2ea23fb`); local `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` passed as recorded in WORKSPACE-BRANCH-POLICY. Next: commit,
+push, open a PR targeting development and merge after hosted checks pass. Main is not a
+merge target. No production deployment is included.
+
+WORKSPACE-BRANCH-POLICY — **Completed** (owner: Codex, 2026-11-03). Recorded the owner's
+development-first policy in root `AGENTS.md` and `docs/standards/workspace.md`: work on
+development or branches created from up-to-date development, target development for change
+PRs, and never commit, push changes or merge directly into main. Moved the checkout to
+`docs/development-branch-policy`, created from freshly fetched `origin/development` at
+`2ea23fb`. Its committed tree matches the previous main checkout; all prior uncommitted
+changes and other agents' entries are preserved. Historical merge records remain unchanged.
+
+Verification (2026-11-03): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass, including real disposable PostgreSQL checks.
+`git diff --check` passes; branch HEAD matches the fetched development base. Logs:
+`/tmp/turnstile-branch-policy-{check,build,test,integration}.log`. Changes remain
+uncommitted; no push, PR or merge was performed. No remaining work/blocker in scope.
+
+ONB-SETTINGS-NAV-CONSISTENCY — **Completed** (owner: Codex, 2026-11-03). Removed the
+Structure-only header flex/spacing overrides and narrow-screen label hiding. All Settings
+sections now share the Settings label above the horizontal section links; Structure keeps
+its existing full canvas/content ownership. Architecture and design guidance record this
+shared layout. No application state, contracts or installation data changed.
+
+Verification (2026-11-03): `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass, including 19 Fastify and 91 PostgreSQL checks. Shared preview
+layout checks at 1280px and 320px confirm the label above the tabs for all four section
+modes, identical header heights and no narrow page overflow. The restarted browser was
+unauthenticated; visual checks used inert shared-header markup and production CSS with
+writes blocked, rather than an account login. The existing Vite bundle advisory remains.
+Restored the cancelled watcher with `docker compose watch --no-up`; source sync succeeded
+and all application services remain healthy. Logs: `/tmp/turnstile-settings-nav-*.log`.
+No remaining work/blocker in scope; changes are uncommitted and Watch remains running.
+
 ONB-STRUCTURE-PR — **Completed** (owner: Codex, 2026-11-03). Reviewed and committed the
 authorized organization-structure changes as `e9f6631`, reconciled main ancestry without
 source changes, and created/reviewed [PR #4](https://github.com/nishanthturnstile/turnstile-360/pull/4).
