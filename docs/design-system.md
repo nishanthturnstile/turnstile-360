@@ -150,25 +150,69 @@ never a second onboarding model or browser storage.
 ## Structure editing
 
 The shared `StructureTree` presentation serves setup and Settings through the owning
-`StructureEditor` controller. Use contextual Add below to infer the parent and allowed
-type. Keep explicit inline rename Save/Cancel and named unused-leaf removal. The root’s
+`StructureEditor` controller. Use contextual + / Add below to infer the parent and allowed
+type. Selecting a connected card opens its details and actions; Add a unit opens the
+same creation form in the floating tools panel. Keep explicit rename Save/Cancel and named unused-leaf removal. The root’s
 name always comes from Organization; show full paths when names repeat.
 
-Connected cards and compact outline use the same canonical hierarchy. Keep unit row keys
-stable across parent changes, preserve selected ancestor paths, and retain the native
-bounded scroll pane. Search shows matching units plus ancestors; disable drag while
-filtered. Selected-node details remain contextual rather than a second navigation sidebar.
+The default chart places parents above their children and draws connections on a quiet
+dotted surface. Settings gives the chart its available content width and height, beneath
+a compact heading and persistent navigation. Avoid a second map title, permanent inspector
+column, page scrollbar or explanatory section below the canvas.
+
+The chart's fixed navigation bar provides a Hand toggle, zoom out/in, clickable zoom
+percentage (reset to 100%) and Fit chart. Drag empty space to pan; Hand mode permits panning
+from cards too. Space plus drag works with the canvas focused, and middle-button drag
+also pans. Scroll/trackpad movement pans; Ctrl/Command plus scroll zooms at the pointer in
+10-percentage-point steps, matching +/− buttons and keys (for example, 74% → 84% → 94%).
+Touch users can drag the canvas or pinch with two fingers. Focus the canvas for arrow-key
+pan, +/− zoom, 0 reset and Home to fit. Escape ends a camera gesture and returns to selection.
+Keep these controls available while tools are collapsed, without moving cards relative
+to their connections. Navigation must never submit an organization mutation. Fit accounts
+for the tools panel; filtered results fit into view. No-result messaging stays fixed.
+
+One nonmodal floating **Structure tools** panel contains search, the view selector and
+selected-unit operations. It starts collapsed in Settings; selecting a card or its + opens
+it. Onboarding opens its first-unit form initially. Use the generated Base UI Collapsible
+with `keepMounted`: collapsing is transient and must preserve create/rename/move drafts,
+validation, pending writes and readback controls. A failed hidden write reopens its editor.
+The panel scrolls independently within the canvas at narrow widths. It takes no layout
+column; Fit chart and selection account for its occupied area on wider canvases.
+
+Automatic positions come only from visible canonical parentage; camera pan/zoom, branch
+collapse and outline scroll are transient. Compact outline uses one bordered list with dense, equal-height rows,
+leading branch chevrons/ancestry guides, aligned direct-child counts and horizontal Add/Move
+controls. Wide lists align unit types in a separate column; narrow lists place the type
+under the name. Truncate long names visually while keeping their full path in the named
+Details button and selected-unit panel. Indent only the identity, preserving action/count
+alignment across depths. Deep lists scroll within the canvas rather than the page; totals
+occupy a separate footer so they never obscure the rows. Keep
+unit row keys stable across parent changes and selected ancestor paths expanded. Search
+shows matches plus ancestors; disable drag while filtered. The selected unit has a concise
+purpose/path and contextual rename/move/remove actions. The creation form supports repeated
+additions and, in Settings, explicit valid-parent selection. Use the Card `embedded` variant
+for these compositions inside the floating surface; avoid nested rings and rounded cards.
+
+Routine create/rename/remove/move confirmations use an accessible quiet announcement and
+the saved chart/input state, without a persistent generic Alert. Errors and uncertain
+writes retain visible contextual Notices and their explicit recovery actions. Never show
+Load latest / Refresh session as routine post-save actions. Unit-type guidance is available
+on demand inside the tools panel; it does not imply membership, access or workflow setup.
 
 Moves always use one old/new-path preview and Confirm move, from either Move to… or a
-pointer/touch handle. Restrict touch-action only on that handle so the rest of the pane
-scrolls normally. Highlight valid targets without moving target geometry. Escape,
+pointer/touch handle. The chart owns touch gestures for its camera; its dedicated move
+handle retains separate gesture ownership. Outline touch scrolling remains native, with
+touch-action restricted on its move handle. Highlight valid targets without moving target geometry. Escape,
 pointer cancellation or dropping outside a valid target cancels without a write. Keep
 Move to… complete for keyboard and click/tap users. Never replace saved cards before a
 server confirmation or announce success before it. A conflict/uncertain response retains
 the destination and requires explicit readback before another confirmation.
 
 The gallery's structure example switches between empty, populated, loading, selected,
-invalid-move, conflict and narrow states. It uses the production presentation with inert
+tools-open, adding, draft, long-name, wide, navigation, invalid-move, conflict and narrow states, plus
+outline, outline-long-name, outline-deep and outline-narrow examples.
+Its draft example preserves the input when tools collapse. Surface buttons keep card
+content readable while editing disables their actions. It uses the production presentation with inert
 fixture commands; it performs no account/API requests. Do not add persistent coordinates,
 sibling sorting, an additional palette or a diagram dependency for this composition.
 
@@ -215,7 +259,7 @@ intended scope before switching presets; do not rerun it as routine maintenance.
 Current local adaptations are explicit label content/association and stable error keys
 for Biome, narrowly explained accessibility lint suppressions for upstream composite
 groups, explicit button/badge transition properties, button press feedback, and
-reduced-motion behavior. Sheet/Tooltip/Empty are generated through the same pinned CLI;
+reduced-motion behavior. Sheet/Tooltip/Empty/Collapsible are generated through the same pinned CLI;
 Sheet uses the semantic foreground overlay token and all three use the shared `cn` helper.
 Existing Button customizations are preserved. Biome enables Tailwind directives for web CSS only.
 Dependency-boundary validation resolves the same `@/` alias as TypeScript and Vite
