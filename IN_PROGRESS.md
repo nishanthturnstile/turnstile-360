@@ -78,17 +78,18 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
-ONB-STRUCTURE-PR — **In progress** (owner: Codex, 2026-11-03). Scope: review and commit
-the authorized organization-structure changes, create/review a PR, resolve CI issues and
-merge to main after passing checks. Reviewing the full uncommitted change set and remote
-branch state. The new UI review found no blocking defect in canonical command fencing,
-retained drafts/readback, gesture ownership, outline rendering or zoom cadence. The main
-branch lacks the previously reviewed onboarding baseline from PR #3; this promotion
-includes that baseline and explicitly identifies it in the PR. Created the isolated
-feature branch; local check/build/unit/integration and visual-structure evidence remains
-passing from ONB-CHART-ZOOM-STEPS, with the earlier full auth/onboarding suites recorded
-above. Next: commit, reconcile main ancestry and create/review the PR, then gate merge on
-remote CI. Preserve all prior feature records and unrelated work.
+ONB-STRUCTURE-PR — **Completed** (owner: Codex, 2026-11-03). Reviewed and committed the
+authorized organization-structure changes as `e9f6631`, reconciled main ancestry without
+source changes, and created/reviewed [PR #4](https://github.com/nishanthturnstile/turnstile-360/pull/4).
+The promotion explicitly includes the previously reviewed onboarding baseline from PR #3
+that main lacked. Review found no blocking defect in canonical command fencing, retained
+drafts/readback, gesture ownership, outline rendering or zoom cadence. Local verification
+is recorded in ONB-CHART-ZOOM-STEPS and the preceding feature entries. GitHub push and PR
+CI passed all workspace checks and all five container builds at head `abab942`; the PR
+workflow run is `41576371604`. Merged to main as `099c434` on 2026-11-03 after those checks
+passed, and fast-forwarded the local main branch. This documentation follow-up records the
+actual merge outcome. No remaining work/blockers in the requested scope; no production
+deployment was performed. Earlier feature entries describe their state at those milestones.
 
 ONB-CHART-ZOOM-STEPS — **Completed** (owner: Codex, 2026-11-03). Scope: replace
 oversensitive modifier-wheel chart zoom with the owner's requested 10-percentage-point
