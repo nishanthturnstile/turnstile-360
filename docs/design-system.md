@@ -139,7 +139,9 @@ Use its transient collapse control, named icon links and generated Tooltip. At n
 widths the generated Sheet supplies focus trapping, dismissal and a visible title.
 Close on accepted router navigation so a cancelled dirty-form warning preserves the menu
 and draft. Keep collapse state in memory. Settings sections remain a horizontal link row
-at every width, outside their content scroll pane. The gallery uses this same navigation
+at every width, with the Settings label on its own preceding line in every section,
+including Structure. Keep this shared header consistent while the chart owns its canvas.
+The gallery uses this same navigation
 with inert anchor destinations; it reads no account or configuration data.
 
 Use the generated Empty composition for honest dashboard availability, with actions only

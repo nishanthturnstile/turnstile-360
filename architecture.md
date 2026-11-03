@@ -834,6 +834,8 @@ time-zone forms. Returning from Home reloads Settings through the existing trans
 The viewport is bounded by `100dvh` and flex `min-height: 0` boundaries. The workspace
 sidebar and content pane scroll independently; Settings sections use a horizontally
 scrolling row at all widths. Header/navigation/footer remain outside page scrolling.
+The Settings label sits above that row consistently across all sections, including
+Structure and narrow screens; only Structure's content pane uses the full canvas layout.
 `ScrollRegion` resets the changed content pane and moves keyboard focus there on client
 navigation, while surrounding navigation retains its position. Structure uses the full
 Settings content area without a second page scrollbar: its canvas and floating tools panel

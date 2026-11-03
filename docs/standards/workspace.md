@@ -1,5 +1,14 @@
 # Workspace standards
 
+## Branch workflow
+
+Work on `development` or create a new work branch from up-to-date `development`.
+Fetch the latest remote state before choosing the branch base. Feature, fix, documentation,
+and other work branches must always start from `development`, never `main`.
+Target `development` when opening pull requests for these changes. Never commit, push
+changes, or merge directly into `main`. Check the current branch before making changes;
+if it is `main`, move to an allowed branch while preserving existing uncommitted work.
+
 ## Ownership and structure
 
 Component ownership, repository layout, package dependencies, and data boundaries are
