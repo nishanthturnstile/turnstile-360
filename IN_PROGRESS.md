@@ -10,6 +10,14 @@ been completed, verified, or left pending.
 
 ## Current position
 
+The owner-authorized 2026-11-04 fresh local reset has now replaced the earlier preserved
+installation: all seven Compose services are recreated, with fresh database/storage and
+server credentials, exactly one verified protected administrator, enrolled machine access
+and empty incomplete v2 company setup for owner testing. No old installation archive was
+restored. Earlier preserved-v1 statements below describe historical release milestones.
+PR #7 is merged to development as ec07a12, with green PR and post-merge CI.
+The local installation is ready for owner login; a documentation-only handoff follows.
+
 The workspace foundation and AUTH-01–07 implementation and local verification are complete. The DMS authority supports
 persisted verified accounts, sessions, signing keys, controlled recovery and managed distinct
 login/machine OAuth clients with private issuance/rotation/suspension commands.
@@ -103,7 +111,7 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
-UM-RELEASE-RESET-01 — **In progress** (owner: Codex, 2026-11-04). Owner explicitly
+UM-RELEASE-RESET-01 — **Completed** (owner: Codex, 2026-11-04). Owner explicitly
 authorized committing the accumulated user-management implementation, creating/merging a
 PR to its parent development branch after green CI, and deleting/recreating this
 application's local runtime containers/test resources and persistent database/storage.
@@ -112,6 +120,38 @@ deliver credentials privately outside Git/logs. Scope resource deletion by this 
 Compose project and verified fixture ownership; preserve other projects, source, private
 configuration access and existing protected release evidence. Inspect actual CI and runtime
 state before mutations; record reset, provisioning, verification and merge results.
+
+Reset/provisioning completed: removed all seven turnstile-local containers and all three
+project data volumes (PostgreSQL, RabbitMQ and SeaweedFS), plus the two verified orphaned
+Turnstile Mailpit test containers. Recreated the entire scoped stack; other projects were
+untouched. Installed fresh dedicated database credentials, cookie/token/invitation secrets
+and an external invitation epoch through private files only. Owning migrations/bootstrap
+create four authority, five DMS and 28 product migration entries, explicit access templates
+and empty revision-0/v2 setup. No old data was imported or restored.
+
+Exactly one authority account was provisioned through the supported private command and
+verified through captured Mailpit mail, without direct verification-flag updates. Issued
+three distinct OAuth clients; registered/enrolled the product machine. Real normal OIDC
+login supplied the proof for private protected-administrator bootstrap and feature opening.
+Retired the temporary canonical legacy bootstrap source: one canonical member remains,
+with one protected administrator, zero active legacy grants, no child units/invitations and
+no company name/zone/completion. Normal login returns the onboarding route and permits
+configuration. The default administrator role correctly receives 403 for the separately
+granted DMS capability-read permission; machine activation was verified independently.
+
+All seven services are running, with each configured healthcheck passing (SeaweedFS has
+no configured healthcheck). The stack uses the prepared exact-image local Compose overlay
+and canonical loopback routing; the root private environment selects it for subsequent
+Compose commands. Credentials and nonsecret verification are retained mode 0600 outside
+the checkout under `/home/dev/.local/state/thaarei/turnstile-360/local-resets/20261104/`.
+No password or service credential is recorded in Git or this progress log.
+
+Committed implementation as aee1c8e and opened PR #7 targeting development. Both original
+push/PR workflows passed their checks job and all five image builds. Local compiled-entrypoint
+smoke and both Compose configuration checks pass. PR #7 merged as ec07a12 after all checks passed, and its development push workflow also
+passed. The reset handoff commit followed that merge and is being delivered through a
+separate documentation-only PR. No application source change or further reset is needed.
+All credentials are available only through the protected local CREDENTIALS.txt handoff.
 
 UM-VERIFY-02 — **Completed** (owner: Codex, 2026-11-04). Owner requested the
 next verification in the accepted release plan. Recheck the retained clock preflight,
