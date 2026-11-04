@@ -143,3 +143,24 @@ export function message(error: unknown) {
     return 'This change is too large. Reduce the assignments or selected units and review again.';
   return 'The service is unavailable. Your draft is kept. Reload current data before trying again.';
 }
+
+/** Presentation only; each operation is independently re-authorized by the backend. */
+export function canManageUnit(session: UserSessionDto, id: string, ancestors: string[]) {
+  return (
+    session.access?.grants.some((g) => {
+      if (g.scope.kind === 'company')
+        return (
+          g.permissions.includes('turnstile:configuration:manage') ||
+          g.permissions.includes('turnstile:units:manage')
+        );
+      return (
+        g.permissions.includes('turnstile:units:manage') &&
+        g.scope.unitIds.some(
+          (anchor) =>
+            anchor === id ||
+            (g.scope.kind === 'units' && g.scope.includeChildren && ancestors.includes(anchor)),
+        )
+      );
+    }) ?? false
+  );
+}

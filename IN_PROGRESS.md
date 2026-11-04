@@ -16,7 +16,8 @@ server credentials, exactly one verified protected administrator, enrolled machi
 and empty incomplete v2 company setup for owner testing. No old installation archive was
 restored. Earlier preserved-v1 statements below describe historical release milestones.
 PR #7 is merged to development as ec07a12, with green PR and post-merge CI.
-The local installation is ready for owner login; a documentation-only handoff follows.
+The local installation is ready for owner login. Documentation PR #8 passed every
+push/PR check on bacf7c4 and merged to development as 266044b (2026-11-04).
 
 The workspace foundation and AUTH-01–07 implementation and local verification are complete. The DMS authority supports
 persisted verified accounts, sessions, signing keys, controlled recovery and managed distinct
@@ -111,6 +112,270 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
+UM-UI-PR-01 — **In progress** (owner: Codex, 2026-11-04). Owner authorized checking
+in the accumulated access navigation/directory/panel redesign, creating a PR to parent
+development, resolving CI/review issues and merging after green checks. Preserve the
+running installation and existing data. Next: inspect final diff/verification, commit and
+open the PR, then verify its exact head and CI/review state before merging.
+Pre-commit review: branch matches current origin/development at 266044b. Accumulated
+changes are web presentation/navigation, focused tests and documentation only; no backend,
+schema, dependency/lockfile, License/notices or private runtime/credential file is included.
+Required check/build/test/integration and expanded People HTTPS browser verification passed
+in UM-PANELS-UI-01; current compiled smoke and both CI Compose configuration validations
+also pass. Final diff review found no blocking issue. All existing progress entries and
+the running local installation are preserved. Remote CI and merge are still pending.
+
+UM-PANELS-UI-01 — **Completed** (owner: Codex, 2026-11-04). Owner requested
+Members Invite person to navigate and open the composer in one action and consistent
+redesign of People/access inspector forms, reviews and follow-up states. Members now
+carries a one-shot router-state intent; the owning Invitations route consumes it with
+history replacement. Cancelling and ordinary tab navigation do not reopen it; another
+Invite person action opens a fresh composer. No invitation or role is created on navigation.
+
+Added the shared Card panel variant, quiet task header/kicker/close control, scrollable
+body and persistent action footer for role/invitation/member forms and structure actions.
+Impact/uncertain-result actions render into the same footer via a portal while their
+owning Review component retains its key/state. Pending/uncertain writes disable header
+close. Dirty header close and role-action switches protect unsaved entries; explicit
+Cancel discards transient form changes. Removed the heavy noninteractive focus outline;
+panels scroll into view at all widths and use natural page scrolling on narrow screens.
+Screenshot inspection corrected primitive spacing, label alignment and panel height.
+
+Permission choices are grouped by purpose with required/company labels and plain-language
+scope explanations; role description uses a textarea. New assignments start with no role
+selected rather than silently choosing the first eligible role. Invalid/incomplete new
+invitations cannot enter review. Routine reload/advanced actor-grant noise was removed
+from normal form entry while failure retries remain. Saved invitations show read-only
+approval/lifecycle/coverage summaries. Reviews explain the current intended change,
+affected access and save uncertainty, with consistent confirmation/readback actions.
+No backend/contract/schema change, permission widening or data migration was made.
+
+Verification, 2026-11-04: pnpm check/build/test/test:integration pass (21 Fastify and all
+218 PostgreSQL cases). Expanded real HTTPS People browser suite passes direct navigation/
+composer opening, cancel/reopen/consumed intent, explicit initial role choice, role create/
+copy, invitation approval and recipient lifecycle, member overview/edit/save/cancel and
+status, stale/uncertain outcomes, close disabled while uncertain, independent loaders,
+dirty/session recovery, scoped structure operations and narrow layouts. Final layout
+browser run passed, with fixture-only screenshots inspected for role creation, invitation
+composition/review and recovery. Final minor permission-count grammar cleanup also passed
+static/build/unit checks. Production web image and Compose configuration validation pass;
+existing chunk-size advisory remains non-fatal. No test timeout or policy was relaxed.
+
+Activated immutable web image
+081e968373f1bd292f03618d91d5e686a4b5cae21bd8d008ccbe445760247fbd
+using the existing private web-only overlay. Protected rollback/container evidence:
+`/home/dev/.local/state/thaarei/turnstile-360/ui-redesign/panels-20261104/`.
+All seven services run and all six configured healthchecks pass; four access entry URLs
+serve HTTP 200 and match final compiled HTML. Only the web container changed; all other
+six identities, including PostgreSQL, remain unchanged. Existing data/accounts/credentials
+are intact. No reset, seed, migration, authority provisioning, PR/push/merge or additional
+agent work occurred. Work remains local on feat/access-workspace-redesign, preserving
+previous changes and other agents' entries. Next: owner tests the updated panel workflows.
+
+UM-MEMBERS-UI-01 — **Completed** (owner: Codex, 2026-11-04). Owner requested a
+functional redesign of the Members screen shown in the attachment (called numbers in
+the request). Implemented compact person/contact/status/role-coverage directory rows and
+a direct Invitations entry. Selection opens a saved-access overview instead of an opaque
+ID and immediately editable form. Explicit Edit access opens stacked role/scope controls;
+Cancel changes restores saved assignments. Membership suspension/reactivation has its own
+explanation and existing impact review. Per-role permission disclosures preserve their
+coverage binding; active imported company grants stay visible. Immutable account IDs,
+identity-display state and retired imported-source history are secondary details. Identity
+availability and membership status remain separate. Routine role-choice refresh controls
+and long permission previews use disclosures. Counts label matching results without
+inventing whole-directory statistics. Added an inert gallery example and design guidance.
+
+The owning browser regression found that reopening immediately after a save could capture
+old list assignments. Directory selection is now fenced through fresh session refresh and
+list loading; explicit reload sets loading synchronously. The owning test checks updated
+saved roles before reopening. No backend, schema, contract or stored permission changed.
+Existing session/draft fencing, status protection, grant ceilings, uncertain-write recovery,
+review/confirmation and independent authorized loaders remain in place. Previous work and
+other agents' progress entries were preserved on feat/access-workspace-redesign.
+
+Verification, 2026-11-04: pnpm check, pnpm build, pnpm test and pnpm test:integration pass
+(21 Fastify and all 218 PostgreSQL cases). Expanded real HTTPS People browser suite passes
+member overview/edit/save/readback/cancel, suspension/reactivation, system-role copy,
+child-coverage defaults, invitations/delivery/recipient verification/acceptance, scoped
+structure, stale/uncertain reviews, independent loaders and draft/session recovery, plus
+narrow Members overflow. A separate attempt failed at disposable Mailpit startup before
+browser requests; bounded command exit/signal/error diagnostics were added without raw
+logs/secrets or timeout changes. The subsequent full browser run passed. Final minor
+copy/count-grammar cleanup also passed static/build/unit checks. Production web image
+build and Compose validation pass; the existing chunk-size advisory remains non-fatal.
+
+Activated web image
+27b7d0420709f69623f1ba1dab0bfd1fe499cd6a43030b794e4ba2065d47687c
+through the existing private web-only overlay. Protected rollback/container evidence:
+`/home/dev/.local/state/thaarei/turnstile-360/ui-redesign/members-20261104/`.
+Only the web container changed; the other six container identities, including PostgreSQL,
+are unchanged. All seven services run, all six configured healthchecks pass, and Members
+returns HTTP 200 with HTML matching the final build. Data/accounts/credentials are intact;
+no reset, seed, migration, PR/push/merge or identity provisioning ran. Next: owner tests
+Members at localhost:23600/people/members using existing credentials.
+
+UM-UX-FIX-01 — **Completed** (owner: Codex, 2026-11-04). Implemented owner-
+authorized navigation/workflow consolidation from UM-UX-AUDIT-01 on the existing
+feat/access-workspace-redesign branch. Sidebar groups Members/Invitations/Roles under
+People & access; sidebar and peer links use requested-route aria-current and explicit
+primary emphasis. Structure is separate, without the misleading People strip. Old Settings
+Structure and Workspace URLs redirect to the canonical Structure and General settings
+pages. General settings combines organization name/time zone. Setup overview and the
+legacy empty-unit prompt link to canonical Structure; onboarding remains independent.
+
+One scoped Structure controller/editor serves chart and outline presentations, site/child
+creation, rename, move impact/confirmation, deletion and uncertain-command readback.
+Company managers can create sites, including completed legacy empty structures using an
+authorized root-context read. Scoped users never fetch that company profile. Read-only
+units show View/details without mutation controls. Editing drafts stay mounted and inert
+when management is revoked, and survive directory filtering. New unit-scope choices default
+Include child units on; existing assignments are copied unchanged. Roles use one selected
+operation (details/permissions/custom copy/delete) with relevant fields and explicit review;
+system templates remain immutable and copy names start distinct. No backend, contract,
+schema, stored grant or product rate-limit changes were made.
+
+Verification, 2026-11-04: pnpm check/build/test/test:integration pass, including the focused
+read/exact/subtree/company control test, all 21 Fastify and 218 PostgreSQL cases. Expanded
+real HTTPS People browser suite passes system-role copy, new child-coverage default,
+sidebar/peer highlighting across all three People routes, old-route redirects, General
+settings presence, chart/outline selection, root site creation/deletion, role creation,
+stale/uncertain review, invitation approval/account verification/acceptance, member status,
+independent loaders, draft/session recovery, scoped moves/collapse and narrow layouts.
+Auth/onboarding/Settings browser suite also passes combined profile/zone persistence,
+dirty navigation, stable activation/root, narrow layouts, permission revocation/restoration,
+authenticated refresh and full login/recovery/logout journeys. Updated obsolete Settings
+editor tests to the consolidated workflow; test:browser:structure now aliases the owning
+People fixture through the existing flag. Removed the retired Settings-only visual test.
+Test fixes wait for confirmed deletion before navigating, clear owning fixture rate buckets
+between added stages and retain a second configuration manager during revocation. Product
+safety invariants, rate limits and timeouts were not relaxed. No failed check remains.
+
+Built and activated web image
+f11e101da2a0c34db0cd9fd7f2f5e7e69ebfde632d79f5ac6f4a347625a44db9
+through the existing private web-only Compose overlay. Rollback/container evidence is
+protected outside Git under
+`/home/dev/.local/state/thaarei/turnstile-360/ui-redesign/workflow-fixes-20261104/`.
+All seven services run and all six configured healthchecks pass; five public entry URLs
+serve HTTP 200 and match the final compiled index. Only the web container changed; all
+other six identities, including PostgreSQL, are unchanged. Existing data/accounts and
+credentials remain intact. No reset, seed, migration, PR/push/merge or authority provisioning
+was performed. Next: owner acceptance testing at localhost:23600 using existing credentials.
+Other agents' entries and prior implementation work were preserved.
+
+UM-UX-AUDIT-01 — **Completed** (assessment; owner: Codex, 2026-11-04).
+Traced current workspace navigation, Settings/People routes, both structure editors and
+controllers/services/repository policy, role catalog, assignments, invitation actions and
+impact/recovery UI. Settings Structure and root Structure edit the same canonical hierarchy;
+the Structure link under Roles is the root route repeated by peer navigation, not another
+structure or a role-owned feature. Settings uses company configuration snapshots/chart
+editing; root uses authorized scoped projections and current impact/receipt commands.
+Confirmed the old Settings move endpoint rejects effective member/invitation coverage
+changes because it has no impact confirmation contract; root provides the required review.
+No bypass or duplicate hierarchy storage was identified in this source assessment.
+
+Recommended one root Organization structure destination with chart/outline presentations,
+a shared permission-aware editor and reviewed completed-workspace mutations; replace the
+Settings structure editor/tab with a link/redirect. Keep onboarding as its own guided entry
+and keep profile/time-zone/setup data company-only. Group Members/Invitations/Roles under
+People & access and remove the repeated cross-section strip from standalone Structure.
+Preserve independently gated child routes/loaders, role-vs-scope separation, additive grants,
+protected roles/members, scoped visibility, audit, impact confirmation and uncertain readback.
+Flagged current UI issues: read-only visible units still expose Manage/actions that the
+server must reject; Include child units initializes false at new unit-scope entry points
+despite D01/UM-R05 requiring a true default; role editor separate details/permission/copy
+review actions and repeated reload controls create unnecessary workflow friction. These
+are findings/recommendations, not implemented changes. Existing saved coverage must never
+be altered to fix a new-assignment default. Four system roles remain useful and distinct;
+manage implies read, but removing the explicitly frozen stored read permission is unnecessary.
+Current permissions administer the workspace and unit tree; no delivered document/business
+permission model is implied by role names or the Document connection capability label.
+
+Verification: read-only source/specification inspection and git diff --check passed.
+No application source, tests, accounts, permissions, containers or data changed for this
+assessment. No build/browser/runtime verification was run; earlier redesign checks remain
+separate evidence. Next: owner considers the consolidation recommendations; implementation
+of this additional navigation/workflow consolidation has not started.
+
+UM-UI-REDESIGN-01 — **Completed** (owner: Codex, 2026-11-04). Owner requested
+a consolidated modern redesign of Roles and scoped Structure. Implemented on
+feat/access-workspace-redesign from current development: shared compact search/filter/
+reload toolbar and adjacent non-modal editor; role comparison table with permission,
+system and protected labels; expandable hierarchy reconstructed solely from scoped page/
+path context. Ancestors remain non-actionable and result counts exclude them. Narrow
+layouts place the editor before its directory. Unit editing now selects one rename,
+child-create, move or delete operation and exposes only relevant fields, with the saved
+unit path in the inspector. Preserved independent permissions, owning APIs, transient
+drafts, dirty navigation, impact review/confirmation and uncertain-write readback.
+Added the installed shadcn Table primitive, inert gallery examples, architecture/design
+guidance and two focused ancestry/projection tests. No backend/schema/contract change.
+
+Verification: final pnpm check, pnpm build, pnpm test and pnpm test:integration passed
+(21 Fastify cases plus all 218 PostgreSQL cases across 15 files). The real HTTPS People
+browser suite passed role creation/system-role inspection, stale/uncertain reviews, invitation approval/
+acceptance, member status changes, independent authority/loaders, same-subject draft
+retention, hierarchy collapse/context isolation, moves and narrow-screen overflow checks.
+Fixed an ambiguous search accessible label found by the first browser run. Final minor
+badge/path presentation cleanup also passed static/build/unit verification. Production
+web image build and Compose configuration validation pass; the existing Vite chunk-size
+advisory remains non-fatal. No identity/security constraint or test timeout was relaxed.
+
+Local web updated using immutable image
+b25d56214261944b4e39fbd40b8b7f8fef058c636bd25dfe185467ae5ebb6bd7.
+A private web-only Compose overlay is appended to the ignored local environment; rollback
+configuration/container evidence is mode-protected outside Git under
+`/home/dev/.local/state/thaarei/turnstile-360/ui-redesign/20261104/`.
+Only the web container changed; all other six container identities, including PostgreSQL,
+are unchanged. All seven services run, all six configured healthchecks pass, and served
+HTTP-200 HTML matches the final build. Existing accounts, credentials and data remain in
+place; no reset/reseed/migration ran. Earlier exact-image release evidence is historical
+and does not certify this new web image. Changes remain local on the feature branch;
+no redesign PR, push or merge was requested/performed. Next: owner reviews Roles and
+Structure at localhost:23600. Other agents' progress/handoff entries were preserved.
+
+NEXT-WORK-01 — **Completed** (assessment; owner: Codex, 2026-11-04).
+Reviewed current position, pending work, accepted architecture/component boundaries,
+workspace plan, DMS capability dependencies and representative DMS/Python source shells.
+Recommended starting a requirement-mapped DMS delivery plan/foundation-gap review,
+Turnstile business-workflow discovery and operational readiness assessment in parallel.
+DMS implementation should advance through registry/policy/upload, durable execution,
+assessment/publication and authorized retrieval before promising usable document storage;
+extraction/OCR/search follow their accepted dependencies. Python runtime preparation can
+proceed independently, but real publisher/worker integration requires agreed private
+job/dispatch contracts and the owning DMS coordinator APIs. Keep shared contracts,
+authority, migration ownership, lockfiles/Compose and shared documentation coordinated.
+The accepted control plane is the DMS TypeScript API/codebase, with a future separate
+coordinator process from the same image; no separate administration frontend is established.
+If the owner means another control-plane application, identify its scope/repository before
+assuming it is this component or implementing a new portal. Other systems need separate
+registrations and product requirements; do not expand to multi-customer provisioning.
+Latest local reset supersedes historical preserved-installation handoffs; customer/production
+acceptance and the recorded Windows time-source freshness follow-up remain separate.
+Verification: read-only documentation/source inspection and `git diff --check` passed.
+No build, tests, runtime mutation, deployment, feature implementation or new branch was
+performed for this planning assessment. Only this entry was added; prior working-tree
+progress edits were preserved. Next implementation requires selection of the workstream;
+this assessment does not authorize planned features.
+
+DMS-PARALLEL-01 — **Completed** (assessment; owner: Codex, 2026-11-04).
+Reviewed README, workspace/app instructions, accepted DMS blueprint, all capability-group
+boundaries/dependencies, relevant architecture and user-management plan, and current source
+scaffolds/contracts/client. DMS document implementation can proceed alongside Turnstile
+People/access work: consumer business authorization stays in Turnstile; DMS authorizes
+registered applications. AUTH-01–07 supply implemented foundations, not completion of
+requirement groups 01–04. Document/upload/storage/processing/search/lifecycle modules remain
+shells and the Python runtime has no processing dependencies or tasks. Full accepted v1
+also requires secure publication, durable jobs, extraction/OCR, optional enabled structured
+processing, search, quotas, operations and recovery; HTTP CRUD alone is insufficient.
+Coordinate shared platform-auth/identity-service contracts and migrations, machine scope
+ceilings/capability contract expansion, root lockfiles/Compose and shared documentation.
+Use a separate worktree/branch from up-to-date development, consume shared authority changes
+through development, and isolate fixtures from the active UM-RELEASE-RESET-01 runtime.
+Recommended next authorized implementation step: a requirement-mapped DMS delivery plan
+with foundation-gap acceptance, ordered vertical increments and verification/recovery gates.
+Verification: read-only source/status inspection and documentation diff review; no runtime,
+lint/build/test commands run for this assessment. Only this handoff entry was changed;
+no feature work, runtime mutation, new worktree/branch or release action was started.
+
 UM-RELEASE-RESET-01 — **Completed** (owner: Codex, 2026-11-04). Owner explicitly
 authorized committing the accumulated user-management implementation, creating/merging a
 PR to its parent development branch after green CI, and deleting/recreating this
@@ -149,8 +414,13 @@ No password or service credential is recorded in Git or this progress log.
 Committed implementation as aee1c8e and opened PR #7 targeting development. Both original
 push/PR workflows passed their checks job and all five image builds. Local compiled-entrypoint
 smoke and both Compose configuration checks pass. PR #7 merged as ec07a12 after all checks passed, and its development push workflow also
-passed. The reset handoff commit followed that merge and is being delivered through a
-separate documentation-only PR. No application source change or further reset is needed.
+passed. The reset handoff followed through documentation-only PR #8, merged as 266044b
+after every push/PR check passed on bacf7c4; no review objections were present. The checkout
+is on development at that merge, preserving the concurrent DMS assessment. Final read-only
+runtime checks confirm all seven services running, all six configured healthchecks healthy
+and the application returning HTTP 200. The documentation merge push workflow
+41800545904 was still running at handoff; its pre-merge push/PR checks passed, and the
+implementation merge workflow 41798766810 passed. No further reset occurred.
 All credentials are available only through the protected local CREDENTIALS.txt handoff.
 
 UM-VERIFY-02 — **Completed** (owner: Codex, 2026-11-04). Owner requested the

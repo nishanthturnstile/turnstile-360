@@ -15,6 +15,12 @@ export async function testPeople({
   restartProduct,
 }) {
   const stage = (name) => console.log(`People browser stage: ${name}`);
+  const capturePanel = async (name) => {
+    // biome-ignore lint/suspicious/noUndeclaredEnvVars: Optional artifacts from this uncached standalone runner.
+    if (process.env.MEMBERS_DESIGN_CAPTURE === '1')
+      await page.screenshot({ path: `/tmp/turnstile-panel-${name}.png` });
+  };
+
   const heading = async (name) => {
     try {
       await page.getByRole('heading', { name, exact: true }).waitFor();
@@ -58,12 +64,70 @@ export async function testPeople({
   await heading('Welcome, member.');
   await page.getByRole('link', { name: 'Roles', exact: true }).first().click();
   await heading('Roles');
+  await page.getByRole('button', { name: 'View Member', exact: true }).click();
+  await page.getByRole('region', { name: 'Role details', exact: true }).waitFor();
+  await page.getByText('System templates are read-only.', { exact: false }).waitFor();
+  await page.getByRole('button', { name: 'Review custom copy', exact: true }).click();
+  await page.getByRole('button', { name: 'Review current impact', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
+  await heading('Member copy');
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await page.setViewportSize({ width: 1440, height: 900 });
   // The administrator Home may load its authorized legacy-configuration prompt.
   // From this point, administration routes must use their independent owning loaders.
   calls.length = 0;
+  stage('consolidated settings and structure navigation');
+  await page.goto(`${origin}/settings/organization`);
+  await heading('General settings');
+  await page.getByLabel('Organization name', { exact: true }).waitFor();
+  await page.getByLabel('Time zone', { exact: true }).waitFor();
+  await page.goto(`${origin}/settings/workspace`);
+  await heading('General settings');
+  assert.equal(new URL(page.url()).pathname, '/settings/organization');
+  await page.goto(`${origin}/settings/organization/structure`);
+  await heading('Structure');
+  assert.equal(new URL(page.url()).pathname, '/structure');
+  assert.equal(await page.getByRole('navigation', { name: 'People sections' }).count(), 0);
+  await page.getByLabel('Structure view', { exact: true }).selectOption('chart');
+  assert.equal(await page.locator('.access-structure-view').getAttribute('data-view'), 'chart');
+  await page.getByRole('button', { name: 'Add site', exact: true }).click();
+  await page.getByLabel('Unit name', { exact: true }).fill('Navigation test site');
+  await page.getByRole('button', { name: 'Review new unit', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
+  await heading('Navigation test site');
+  await page.getByRole('button', { name: 'Manage Navigation test site', exact: true }).click();
+  await page.getByLabel('Action', { exact: true }).selectOption('delete');
+  await page.getByRole('button', { name: 'Review deletion', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
+  await page
+    .getByRole('region', { name: 'Unit details', exact: true })
+    .waitFor({ state: 'detached' });
+  for (const section of ['Members', 'Invitations', 'Roles']) {
+    await page
+      .getByRole('navigation', { name: 'Workspace navigation' })
+      .getByRole('link', { name: section, exact: true })
+      .click();
+    await heading(section);
+    await page
+      .getByRole('navigation', { name: 'Workspace navigation' })
+      .getByRole('link', { name: section, exact: true })
+      .getAttribute('aria-current')
+      .then((v) => assert.equal(v, 'page'));
+    assert.equal(
+      await page
+        .getByRole('navigation', { name: 'People sections' })
+        .getByRole('link', { name: section, exact: true })
+        .getAttribute('aria-current'),
+      'page',
+    );
+  }
+  calls.length = 0;
+  await clearRateLimits();
   stage('role creation');
   await page.getByRole('button', { name: 'Create role', exact: true }).click();
   await page.getByLabel('Name', { exact: true }).fill('Browser reviewer');
+  await capturePanel('create-role');
   await page.getByRole('button', { name: 'Review new role', exact: true }).click();
   await page.getByRole('button', { name: 'Review current impact', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
@@ -75,6 +139,12 @@ export async function testPeople({
   stage('uncertain command recovery');
   setFault('people-outcome');
   await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
+  assert.equal(
+    await page.getByRole('button', { name: 'Close panel', exact: true }).isDisabled(),
+    true,
+    'Uncertain saves must keep the panel mounted',
+  );
+  await capturePanel('uncertain-save');
   await page.getByRole('button', { name: 'Check command status', exact: true }).click();
   await page.getByRole('heading', { name: 'Uncertain reviewer', exact: true }).waitFor();
 
@@ -119,18 +189,48 @@ export async function testPeople({
   await page.getByRole('button', { name: 'Refresh session and access', exact: true }).click();
 
   stage('invitation approval');
+  await clearRateLimits();
+  await page.getByRole('link', { name: 'Members', exact: true }).first().click();
+  await heading('Members');
+  await page.getByRole('button', { name: 'Invite person', exact: true }).click();
+  await heading('Invitations');
+  await page.getByLabel('Recipient email', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Close panel', exact: true }).click();
+  await page.getByRole('link', { name: 'Members', exact: true }).first().click();
+  await heading('Members');
   await page.getByRole('link', { name: 'Invitations', exact: true }).first().click();
   await heading('Invitations');
+  assert.equal(
+    await page.getByLabel('Recipient email', { exact: true }).count(),
+    0,
+    'Consumed intent must not reopen a composer',
+  );
+  await page.getByRole('link', { name: 'Members', exact: true }).first().click();
+  await heading('Members');
   await page.getByRole('button', { name: 'Invite person', exact: true }).click();
+  await heading('Invitations');
   await page.getByLabel('Recipient email', { exact: true }).fill('browser-invite@example.test');
   await page.getByRole('button', { name: 'Add role assignment', exact: true }).click();
   // Later revocation coverage deliberately edits Fixture operator; keep this
   // invitation on the immutable Member template so it remains independently current.
+  assert.equal(
+    await page.getByRole('combobox', { name: /^Role/ }).inputValue(),
+    '',
+    'Adding access requires an explicit role choice',
+  );
   await page.getByRole('combobox', { name: /^Role/ }).selectOption({ label: 'Member' });
+  await page.getByRole('combobox', { name: /^Scope/ }).selectOption('units');
+  assert.equal(
+    await page.getByRole('checkbox', { name: 'Include child units', exact: true }).isChecked(),
+    true,
+  );
+  await page.getByRole('combobox', { name: /^Scope/ }).selectOption('company');
+  await capturePanel('invitation');
   stage('invitation draft ready');
   await page.getByRole('button', { name: 'Review invitation', exact: true }).click();
   stage('invitation command ready');
   await page.getByRole('button', { name: 'Review current impact', exact: true }).click();
+  await capturePanel('invitation-review');
   stage('invitation impact ready');
   await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
   await page.getByRole('heading', { name: 'browser-invite@example.test', exact: true }).waitFor();
@@ -149,24 +249,58 @@ export async function testPeople({
     }),
     true,
   );
+  await clearRateLimits();
   stage('member suspension and reactivation');
   await page.getByRole('link', { name: 'Members', exact: true }).first().click();
   await heading('Members');
   await page.getByLabel('Search', { exact: true }).fill('bff-reset');
   await page.getByLabel('Search', { exact: true }).press('Enter');
   const row = page
-    .locator('[data-slot="card"]')
+    .locator('[data-slot="table-row"]')
     .filter({ has: page.getByRole('heading', { name: 'reset', exact: true }) });
-  await row.getByRole('button', { name: 'View and manage', exact: true }).click();
+  await row.getByRole('button', { name: /^View access for / }).click();
   await page.getByRole('button', { name: 'Review suspension', exact: true }).click();
   await page.getByRole('button', { name: 'Review current impact', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
-  await row.getByText(/suspended · Identity/).waitFor();
-  await row.getByRole('button', { name: 'View and manage', exact: true }).click();
+  await row.getByText('Suspended', { exact: true }).waitFor();
+  await row.getByRole('button', { name: /^View access for / }).click();
   await page.getByRole('button', { name: 'Review reactivation', exact: true }).click();
   await page.getByRole('button', { name: 'Review current impact', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
-  await row.getByText(/active · Identity/).waitFor();
+  await row.getByText('Active', { exact: true }).waitFor();
+  stage('member overview and deliberate access editing');
+  await row.getByRole('button', { name: /^View access for / }).click();
+  const details = page.getByRole('region', { name: 'Access details', exact: true });
+  await details.getByRole('button', { name: 'Edit access', exact: true }).click();
+  await page.getByRole('button', { name: 'Add role assignment', exact: true }).click();
+  await page
+    .getByRole('combobox', { name: 'Role', exact: true })
+    .last()
+    .selectOption({ label: 'Member' });
+  await page.getByRole('button', { name: 'Review assignments', exact: true }).click();
+  await page.getByRole('button', { name: 'Review current impact', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
+  await details.waitFor({ state: 'detached' });
+  await row.getByText('Member', { exact: true }).waitFor();
+  await row.getByRole('button', { name: /^View access for / }).click();
+  await details.getByRole('heading', { name: 'Member', exact: true }).waitFor();
+  await page
+    .getByRole('region', { name: 'Workspace content', exact: true })
+    .evaluate((e) => e.scrollTo({ top: 0, behavior: 'instant' }));
+  // biome-ignore lint/suspicious/noUndeclaredEnvVars: Optional screenshots in this standalone uncached browser runner.
+  if (process.env.MEMBERS_DESIGN_CAPTURE === '1')
+    await page.screenshot({ path: '/tmp/turnstile-members-overview.png' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await details.getByRole('button', { name: 'Edit access', exact: true }).click();
+  await page.getByRole('button', { name: 'Add role assignment', exact: true }).click();
+  await page.getByRole('button', { name: 'Cancel changes', exact: true }).click();
+  assert.equal(await details.getByRole('combobox', { name: 'Role', exact: true }).count(), 0);
+  await details.getByRole('button', { name: 'Close details', exact: true }).click();
+  await clearRateLimits();
+
   const forbidden = () =>
     calls.filter(
       (p) => p === '/api/setup' || p === '/api/organization' || p === '/api/organization/units',
@@ -179,7 +313,10 @@ export async function testPeople({
   calls.length = 0;
   await page.goto(`${origin}/people/members`);
   await heading('Members');
-  await page.getByRole('button', { name: 'View and manage', exact: true }).first().waitFor();
+  await page
+    .getByRole('button', { name: /^View access for / })
+    .first()
+    .waitFor();
   assert.deepEqual(forbidden(), []);
   await page.goto(`${origin}/people/roles`);
   await page
@@ -342,16 +479,36 @@ export async function testPeople({
   await page.goto(`${origin}/structure`);
   await heading('Structure');
   await page.getByRole('heading', { name: 'North', exact: true }).waitFor();
-  await page.getByText('People browser fixture / North / Operations', { exact: true }).waitFor();
+  const northBranch = page
+    .locator('.access-branch')
+    .filter({ has: page.getByRole('heading', { name: 'North', exact: true }) })
+    .last();
+  await northBranch.getByRole('heading', { name: 'Operations', exact: true }).waitFor();
+  assert.equal(
+    await page.getByRole('button', { name: 'Manage People browser fixture', exact: true }).count(),
+    0,
+  );
+  await page.getByRole('button', { name: 'Toggle North branch', exact: true }).click();
+  assert.equal(
+    await page.getByRole('heading', { name: 'Operations', exact: true }).isVisible(),
+    false,
+  );
+  assert.equal(
+    await page.getByRole('button', { name: 'Manage North', exact: true }).isVisible(),
+    true,
+  );
+  await page.getByRole('button', { name: 'Toggle North branch', exact: true }).click();
   assert.equal(await page.getByRole('heading', { name: 'South', exact: true }).count(), 0);
   assert.deepEqual(forbidden(), []);
   await page.getByRole('button', { name: 'Manage North', exact: true }).click();
+  await page.getByLabel('Action', { exact: true }).selectOption('create');
   const longName = `Browser department ${'Long'.repeat(23)}`;
   await page.getByLabel('Unit name', { exact: true }).fill(longName);
   await page.getByRole('button', { name: 'Review new unit', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
   await page.getByRole('heading', { name: longName, exact: true }).waitFor();
   await page.getByRole('button', { name: 'Manage Operations', exact: true }).click();
+  await page.getByLabel('Action', { exact: true }).selectOption('move');
   await page
     .getByLabel('Parent for new unit or move destination', { exact: true })
     .selectOption({ label: `People browser fixture / North / ${longName}` });
@@ -359,7 +516,10 @@ export async function testPeople({
   await page.getByText(/0 members and 0 invitations affected/).waitFor();
   await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
   await page
-    .getByText(`People browser fixture / North / ${longName} / Operations`, { exact: true })
+    .locator('.access-branch')
+    .filter({ has: page.getByRole('heading', { name: longName, exact: true }) })
+    .last()
+    .getByRole('heading', { name: 'Operations', exact: true })
     .waitFor();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });

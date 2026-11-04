@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { commandTarget, PeopleError, request } from '../src/features/people/client.ts';
+import {
+  canManageUnit,
+  commandTarget,
+  PeopleError,
+  request,
+} from '../src/features/people/client.ts';
 
 const id = '20000000-0000-4000-8000-000000000001';
 test('routes strict commands through the frozen method/path catalog', () => {
@@ -58,4 +63,43 @@ test('retains finite conflict and current-state readback without resending mutat
   } finally {
     globalThis.fetch = original;
   }
+});
+
+test('unit edit controls respect read-only, exact-unit and subtree coverage', () => {
+  const session = (permissions: string[], scope: object) =>
+    ({ access: { grants: [{ permissions, scope }] } }) as never;
+  assert.equal(
+    canManageUnit(session(['turnstile:units:read'], { kind: 'company' }), 'child', ['site']),
+    false,
+  );
+  assert.equal(
+    canManageUnit(
+      session(['turnstile:units:manage'], {
+        kind: 'units',
+        unitIds: ['site'],
+        includeChildren: false,
+      }),
+      'child',
+      ['site'],
+    ),
+    false,
+  );
+  assert.equal(
+    canManageUnit(
+      session(['turnstile:units:manage'], {
+        kind: 'units',
+        unitIds: ['site'],
+        includeChildren: true,
+      }),
+      'child',
+      ['site'],
+    ),
+    true,
+  );
+  assert.equal(
+    canManageUnit(session(['turnstile:configuration:manage'], { kind: 'company' }), 'child', [
+      'site',
+    ]),
+    true,
+  );
 });

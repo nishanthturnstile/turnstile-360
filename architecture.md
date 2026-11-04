@@ -1,6 +1,6 @@
 # Turnstile 360 and Thaarei DMS architecture
 
-**Updated:** 2026-11-03
+**Updated:** 2026-11-04
 
 **Status:** Accepted technical design with workspace foundations implemented.
 
@@ -2425,6 +2425,54 @@ revision and company permissions the actor can grant, without organization data 
 These additive fields guide drafts; transactional backend checks remain authoritative.
 Eligible role definitions and unit choices are fetched independently, with bounded paging;
 unit context contains canonical ancestor paths and does not confer management access.
+
+Completed-workspace navigation groups Members, Invitations and Roles under People & access;
+Structure is a separate destination. The requested route drives visible active states in
+both navigation areas while owning loaders still wait for session authorization. The old
+Settings Structure URL redirects to `/structure`; the old Workspace settings URL redirects
+to General settings, which edits organization name/time zone together. Setup overview
+links to the canonical Structure editor. Onboarding retains its dedicated configuration
+journey; company-only profile data is never loaded for scoped structure users.
+Structure offers chart/outline presentations over the same authorized page and one reviewed
+command flow. Read-only units open details without mutation controls. Company unit managers
+can add sites under the root. New unit-scope assignments default child coverage on; saved
+assignments are retained verbatim. Custom role editing selects one intended action at a
+time (details, permissions, copy or deletion), preserving separate backend authorization.
+
+Members Invite person carries a one-shot router-state compose intent to Invitations.
+Only the authorized owning route opens the empty composer; it consumes the intent with
+history replacement, so ordinary tab navigation/Back does not reopen a discarded draft.
+It does not issue invitations, choose a role or bypass the ordinary loader/command checks.
+Access inspectors use the shared Card panel variant: task header/close, independently
+scrolling body and persistent action footer, with natural document scrolling on narrow
+screens. Impact/recovery actions render into the same footer while the owning Review
+component retains its state and idempotency key. Closing is disabled during pending or
+uncertain writes; dirty close and role-action switches require deliberate discard.
+Permissions are grouped by purpose with company-only/required labels. New assignments
+start with no role selected. Saved invitations expose their approved roles/coverage and
+lifecycle rather than an editable-looking disabled form. No authorization semantics change.
+
+Roles and scoped Structure share a compact directory surface, search/filter/reload toolbar
+and adjacent non-modal editor. Wide workspace pages use up to 82rem; at 70rem and below
+the selected editor precedes its directory. Roles use the shared semantic table with
+permission summaries and explicit system/protected labels; narrow screens retain role
+identity/actions and expose permissions through the editor. Structure reconstructs a
+nested outline from only the current authorized page and its supplied ancestor paths.
+Path-only ancestors have collapse controls but no management action; collapsed units keep
+their own label/action visible. Search/page changes expand the new result ancestry and do
+not infer missing siblings or fetch full configuration. The unit editor selects one
+rename/create/move/delete operation at a time. Both editors retain existing owning APIs,
+permission gates, version capture, impact review and confirmation.
+
+The Members directory uses compact person/status/role-and-coverage rows, with a direct
+Invitations link. Selecting a member opens a saved-access overview; role editing is an
+explicit separate state and membership suspension/reactivation has its own explanation
+and review. Roles/permissions remain paired with each assignment's coverage, never merged
+into a misleading global permission summary. Retained imported grants stay visible as an
+independent company-wide source; retired sources and immutable subject IDs are secondary
+account/history details. Identity freshness is separate from membership status. Saved
+writes fence directory selection until fresh session/readback reloads settle. Assignment
+controls stack role/coverage labels and disclose permission previews and refresh tools.
 
 Editors keep drafts in memory, protect dirty navigation and capture saved entity versions.
 Same-subject permission/session failures keep draft owners mounted but hidden and inert;

@@ -160,6 +160,12 @@ export function Workspace() {
   const [workspace, setWorkspace] = useState<WorkspaceStatusDto>();
   const { pathname: routePath } = useLocation();
   const [path, setPath] = useState(routePath);
+  useEffect(() => {
+    if (routePath === '/settings/organization/structure')
+      void navigate('/structure', { replace: true });
+    if (routePath === '/settings/workspace')
+      void navigate('/settings/organization', { replace: true });
+  }, [routePath, navigate]);
   const knownPath =
     path === '/' ||
     peoplePaths.includes(path) ||
@@ -528,7 +534,7 @@ export function Workspace() {
       header={header}
       destinations={
         state === 'ready'
-          ? workspaceDestinations(path, workspace.canManageConfiguration, session)
+          ? workspaceDestinations(routePath, workspace.canManageConfiguration, session)
           : []
       }
       settings={
@@ -549,6 +555,7 @@ export function Workspace() {
             key={session.user.id}
             session={session}
             path={path}
+            requestedPath={routePath}
             onCheck={refreshWorkspace}
             active={state === 'ready'}
           />
