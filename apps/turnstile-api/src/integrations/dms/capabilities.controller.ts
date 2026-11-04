@@ -1,7 +1,7 @@
 import { Controller, Get, Header, Req } from '@nestjs/common';
 import type { FastifyRequest } from 'fastify';
+import { RequirePermissions } from '../../infrastructure/access-policy.js';
 import { authError } from '../../modules/auth/browser-auth/auth-errors.js';
-import { RequirePermissions } from '../../modules/auth/user-session/access-policy.js';
 import { CapabilitiesService } from './capabilities.service.js';
 
 @Controller('dms/capabilities')

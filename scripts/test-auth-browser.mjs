@@ -13,6 +13,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { chromium } from '@playwright/test';
 import { parse } from 'yaml';
 import { testOnboarding } from './test-onboarding-browser.mjs';
+import { testPeople } from './test-people-browser.mjs';
 import { testSettings } from './test-settings-browser.mjs';
 import { testStructuredOnboarding } from './test-structured-onboarding-browser.mjs';
 import { testVisualStructure } from './test-visual-structure-browser.mjs';
@@ -61,7 +62,10 @@ async function waitFor(check) {
 const gateway = createServer({}, async (request, response) => {
   try {
     const path = (request.url ?? '/').split('?')[0];
-    const identity = path.startsWith('/identity/') || path.startsWith('/.well-known/');
+    const identity =
+      path.startsWith('/identity/') ||
+      path.startsWith('/internal/identity/') ||
+      path.startsWith('/.well-known/');
     if (
       (fault === 'authority' && identity) ||
       (fault === 'logout' && /\/(revoke|end-session|sign-out)$/.test(path)) ||
@@ -93,6 +97,16 @@ const gateway = createServer({}, async (request, response) => {
               incoming.statusCode,
               (introspectionStatuses.get(incoming.statusCode) ?? 0) + 1,
             );
+          if (
+            fault === 'people-outcome' &&
+            path === '/api/people/roles' &&
+            request.method === 'POST'
+          ) {
+            fault = 'none';
+            incoming.resume();
+            incoming.once('end', () => response.destroy());
+            return;
+          }
           response.writeHead(incoming.statusCode ?? 503, incoming.headers);
           incoming.pipe(response);
         },
@@ -219,6 +233,10 @@ dns.lookup = function(host, options, callback) {
     AUTH_LOGIN_CLIENT_ID: 'bff-fixture-login',
     DMS_MACHINE_CLIENT_ID: 'bff-fixture-machine',
   };
+  if (process.argv.includes('--people-ui')) {
+    environment.IDENTITY_SERVICE_CLIENT_ID = 'bff-fixture-service';
+    environment.IDENTITY_SERVICE_RESOURCE_URL = `${origin}/identity/services/accounts`;
+  }
   stage = 'authority fixture startup';
   authority = fork('apps/dms-api/test/bff-authority-fixture.mjs', [], {
     env: environment,
@@ -273,6 +291,14 @@ dns.lookup = function(host, options, callback) {
       input: JSON.stringify({ operatorId: 'browser-fixture' }),
     },
   );
+  run(
+    process.execPath,
+    ['apps/turnstile-api/dist/modules/access/access-operator.js', 'initialize'],
+    {
+      env: environment,
+      input: JSON.stringify({ operatorId: 'browser-fixture' }),
+    },
+  );
   for (const label of ['member', 'reset', 'unverified']) {
     run(process.execPath, ['apps/turnstile-api/dist/modules/auth/set-user-access.js'], {
       env: environment,
@@ -286,6 +312,20 @@ dns.lookup = function(host, options, callback) {
           ...(label === 'member' ? ['turnstile:configuration:manage'] : []),
         ],
       }),
+    });
+  }
+  if (process.argv.includes('--people-ui')) {
+    environment.IDENTITY_SERVICE_CLIENT_SECRET = fixture.identitySecret;
+    environment.IDENTITY_SERVICE_API_URL = `${origin}`;
+    environment.TURNSTILE_INVITATION_ENCRYPTION_KEY = randomBytes(32).toString('hex');
+    environment.TURNSTILE_INVITATION_RECOVERY_EPOCH = randomBytes(32).toString('base64url');
+    environment.TURNSTILE_SMTP_HOST = '127.0.0.1';
+    environment.TURNSTILE_SMTP_PORT = String(smtpPort);
+    environment.TURNSTILE_MAIL_FROM = 'turnstile@example.test';
+    stage = 'People owning fixture setup';
+    run(process.execPath, ['apps/turnstile-api/test/people-browser-fixture.mjs', '--setup'], {
+      env: { ...environment, NODE_ENV: 'test' },
+      input: JSON.stringify(fixture.users),
     });
   }
   const reservation = httpServer();
@@ -365,6 +405,7 @@ dns.lookup = function(host, options, callback) {
   const context = await browser.newContext({
     ignoreHTTPSErrors: true,
     viewport: { width: 1280, height: 850 },
+    hasTouch: process.argv.includes('--people-ui'),
   });
   page = await context.newPage();
   page.on('request', (request) => {
@@ -431,7 +472,102 @@ dns.lookup = function(host, options, callback) {
       });
     await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
   }
-  if (process.argv.includes('--structure-editor')) {
+  if (process.argv.includes('--people-ui')) {
+    stage = 'People administration browser journeys';
+    const result = await testPeople({
+      page,
+      context,
+      origin,
+      login,
+      mailUrl,
+      mailLink,
+      fixture,
+      restartProduct,
+      clearRateLimits: () => command('clear-rate-limits'),
+      activateFeature: async () => {
+        const rolesStatus = await page.evaluate(
+          async () => (await fetch('/api/people/roles')).status,
+        );
+        assert.equal(rolesStatus, 403, 'Legacy grants do not promote a People administrator');
+        const invokeRelease = async (operation, input) => {
+          await new Promise((resolve, reject) => {
+            const child = spawn(
+              process.execPath,
+              ['apps/turnstile-api/dist/modules/access/release-operator.js', operation],
+              {
+                env: environment,
+                stdio: ['pipe', 'pipe', 'pipe'],
+              },
+            );
+            let output = '';
+            child.stdout.on('data', (chunk) => {
+              output += chunk;
+              if (output.length > 16384) child.kill();
+            });
+            child.stderr.on('data', () => {});
+            const timer = setTimeout(() => child.kill(), 30000);
+            child.once('error', reject);
+            child.once('exit', (code) => {
+              clearTimeout(timer);
+              code === 0
+                ? resolve(JSON.parse(output))
+                : reject(new Error('Private release command failed'));
+            });
+            child.stdin.end(JSON.stringify(input));
+          });
+        };
+        const proof = async () => {
+          const session = await page.evaluate(async () =>
+            (await fetch('/api/auth/session')).json(),
+          );
+          const cookie = (await context.cookies()).find(
+            (value) => value.name === '__Host-turnstile',
+          );
+          assert.ok(cookie, 'A signed normal product login is required');
+          return {
+            operatorId: fixture.users.member.id,
+            administratorUserId: fixture.users.member.id,
+            administratorCookie: `${cookie.name}=${cookie.value}`,
+            key: randomUUID(),
+            expectedRevision: session.access.accessRevision,
+          };
+        };
+        await invokeRelease('bootstrap-administrator', await proof());
+        await invokeRelease('open', {
+          ...(await proof()),
+          releaseId: 'b'.repeat(64),
+          incompatibleProcessesStopped: true,
+        });
+        const verified = await proof();
+        await invokeRelease('verify-login', {
+          operatorId: verified.operatorId,
+          administratorUserId: verified.administratorUserId,
+          administratorCookie: verified.administratorCookie,
+        });
+        console.log('Real private administrator handover and versioned release opening passed.');
+      },
+      setFault: (value) => {
+        fault = value;
+      },
+    });
+    assert.ok(
+      ![
+        ...continuationSecrets,
+        fixture.password,
+        fixture.loginSecret,
+        fixture.machineSecret,
+        fixture.identitySecret,
+        ...result.secrets,
+      ].some(
+        (value) =>
+          value &&
+          (productLogs.includes(value) ||
+            authorityLogs.includes(value) ||
+            consoleMessages.some((message) => message.includes(value))),
+      ),
+      'Sensitive browser data must not enter application logs',
+    );
+  } else if (process.argv.includes('--structure-editor')) {
     stage = 'visual structure editor';
     await testVisualStructure({
       page,
@@ -824,6 +960,10 @@ dns.lookup = function(host, options, callback) {
     );
 } catch (error) {
   console.error('Introspection status counts:', Object.fromEntries(introspectionStatuses));
+  if (process.argv.includes('--people-ui') && error instanceof Error) {
+    const callsite = error.stack?.match(/test-people-browser\.mjs:\d+:\d+/)?.[0];
+    if (callsite) console.error('People browser callsite:', callsite);
+  }
   // Browser exceptions may contain signed or recovery URLs. Do not print raw failures/traces.
   if (page) {
     const path = new URL(page.url()).pathname;
@@ -855,6 +995,10 @@ dns.lookup = function(host, options, callback) {
       'Setup is temporarily unavailable',
       'Setup overview',
       'Organization',
+      'Join your workspace',
+      'Create your account',
+      'Verify your email',
+      'Welcome, Browser recipient.',
       'Workspace regional defaults',
       'Organization structure',
       'Rename unit',

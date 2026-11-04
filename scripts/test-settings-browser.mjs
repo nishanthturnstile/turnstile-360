@@ -687,9 +687,13 @@ export async function testSettings({
     );
     await page.getByRole('button', { name: 'Save unit name', exact: true }).click();
     const rejected = await revokedResponse;
-    assert.equal(rejected.status(), 403);
-    assert.ok(['CSRF_REJECTED', 'PERMISSION_DENIED'].includes((await rejected.json()).code));
-    // Live permission changes rotate stored CSRF before the route permission check.
+    const revokedCode = (await rejected.json()).code;
+    assert.ok(
+      (rejected.status() === 403 && ['CSRF_REJECTED', 'PERMISSION_DENIED'].includes(revokedCode)) ||
+        (rejected.status() === 409 && revokedCode === 'ACCESS_CONTEXT_CHANGED'),
+      'A revoked writer must fail at the CSRF, live context or permission boundary',
+    );
+    // Live permission changes fence the old context and rotate stored CSRF before re-entry.
     await page
       .getByText(/Your session changed|You no longer have permission to manage configuration/)
       .waitFor();

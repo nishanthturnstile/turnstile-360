@@ -1,0 +1,3 @@
+DROP POLICY "tenant_isolation" ON "turnstile"."access_audit" CASCADE;--> statement-breakpoint
+CREATE POLICY "operator_tenant" ON "turnstile"."access_audit" AS PERMISSIVE FOR ALL TO "thaarei_turnstile_migrator" USING ("turnstile"."access_audit"."tenant_id" = nullif(current_setting('app.tenant_id', true), '')::uuid) WITH CHECK ("turnstile"."access_audit"."tenant_id" = nullif(current_setting('app.tenant_id', true), '')::uuid);--> statement-breakpoint
+CREATE POLICY "runtime_append_user" ON "turnstile"."access_audit" AS PERMISSIVE FOR INSERT TO "thaarei_turnstile_runtime" WITH CHECK ("turnstile"."access_audit"."tenant_id" = nullif(current_setting('app.tenant_id', true), '')::uuid AND "turnstile"."access_audit"."actor_kind" = 'user');

@@ -1,6 +1,7 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import type { TurnstilePermission } from '@thaarei/turnstile-contracts';
+import type { PeoplePermission, UserAccessContextDto } from '@thaarei/turnstile-contracts';
 import type { Session } from 'fastify';
+import type { EffectiveAccess } from '../../access/access-evaluator.js';
 
 export const IDLE_MS = 30 * 60 * 1000;
 export const ABSOLUTE_MS = 8 * 60 * 60 * 1000;
@@ -24,7 +25,25 @@ export interface UserIdentity {
   accessExpiresAt: number;
   absoluteExpiresAt: number;
   idleExpiresAt: number;
-  permissions: TurnstilePermission[];
+  permissions: PeoplePermission[];
+  // Old encrypted sessions acquire their first canonical context on the next
+  // verified request. It is mandatory in every current normal-session response.
+  access?: UserAccessContextDto;
+}
+// Encrypted server-only purpose state. Its identity never authenticates normal routes.
+export interface InvitationContinuation {
+  id: string;
+  invitationId: string;
+  generation: number;
+  credentialDigest: string;
+  recoveryEpoch: string;
+  csrf: string;
+  expiresAt: number;
+  setupOperationId: string;
+  accepted?: boolean;
+  identity?: { kind: 'invitation'; issuer: string; value: UserIdentity; expiresAt: number };
+  parent?: UserIdentity;
+  logout?: { sid: string; identity?: UserIdentity; expiresAt: number; complete: boolean };
 }
 export type BffState =
   | {
@@ -35,9 +54,11 @@ export type BffState =
       nonce: string;
       verifier: string;
       returnTo: string;
+      invitation?: { id: string; invitationId: string; generation: number };
       expiresAt: number;
     }
   | { kind: 'consumed' }
+  | { kind: 'restricted' }
   | {
       kind: 'user';
       csrf: string;
@@ -56,10 +77,11 @@ export type BffState =
 declare module 'fastify' {
   interface Session {
     bff?: BffState;
+    invitation?: InvitationContinuation;
     bffRevision?: number;
   }
   interface FastifyRequest {
-    productUser?: { identity: UserIdentity; csrf: string };
+    productUser?: { identity: UserIdentity; csrf: string; access: EffectiveAccess };
   }
 }
 

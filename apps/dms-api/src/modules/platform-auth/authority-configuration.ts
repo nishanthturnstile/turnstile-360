@@ -63,6 +63,11 @@ const authorityEnvironment = z
     AUTH_SECRET: secret,
     AUTH_LOGIN_CLIENT_ID: clientId,
     DMS_MACHINE_CLIENT_ID: clientId,
+    IDENTITY_SERVICE_CLIENT_ID: z.preprocess(
+      (v) => (v === '' ? undefined : v),
+      clientId.optional(),
+    ),
+    IDENTITY_SERVICE_RESOURCE_URL: z.preprocess((v) => (v === '' ? undefined : v), url.optional()),
     AUTH_SIGNING_ALGORITHM: z.literal('RS256').default('RS256'),
   })
   .superRefine((config, ctx) => {
@@ -116,6 +121,21 @@ const authorityEnvironment = z
     }
     if (config.AUTH_LOGIN_CLIENT_ID === config.DMS_MACHINE_CLIENT_ID)
       issue('DMS_MACHINE_CLIENT_ID');
+    if (!!config.IDENTITY_SERVICE_CLIENT_ID !== !!config.IDENTITY_SERVICE_RESOURCE_URL)
+      issue('IDENTITY_SERVICE_RESOURCE_URL');
+    if (
+      config.IDENTITY_SERVICE_RESOURCE_URL &&
+      config.IDENTITY_SERVICE_RESOURCE_URL !==
+        `${config.AUTH_PUBLIC_ORIGIN}/identity/services/accounts`
+    )
+      issue('IDENTITY_SERVICE_RESOURCE_URL');
+    if (
+      config.IDENTITY_SERVICE_CLIENT_ID &&
+      [config.AUTH_LOGIN_CLIENT_ID, config.DMS_MACHINE_CLIENT_ID].includes(
+        config.IDENTITY_SERVICE_CLIENT_ID,
+      )
+    )
+      issue('IDENTITY_SERVICE_CLIENT_ID');
     const authDb = new URL(config.AUTH_DATABASE_URL);
     const dmsDb = new URL(config.DMS_DATABASE_URL);
     if (authDb.username === dmsDb.username) issue('DMS_DATABASE_URL');

@@ -2,7 +2,7 @@ import { closeSync, fsyncSync, openSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { OAuthClient } from '@better-auth/oauth-provider';
-import { DMS_MACHINE_SCOPES } from '@thaarei/dms-contracts';
+import { DMS_MACHINE_SCOPES, IDENTITY_SERVICE_SCOPES } from '@thaarei/dms-contracts';
 import { z } from 'zod';
 import { assertRuntimeRole, createPool } from '../../infrastructure/database/postgres.js';
 import { DmsDatabaseService } from '../access/dms-database/dms-database.service.js';
@@ -19,14 +19,14 @@ import { createRecoveryDelivery } from './recovery-delivery.js';
 const inputSchema = z
   .object({
     action: z.enum(['issue', 'inspect', 'rotate', 'suspend', 'resume', 'set-scopes']),
-    kind: z.enum(['login', 'machine']),
+    kind: z.enum(['login', 'machine', 'identity_service']),
     clientId: z
       .string()
       .regex(/^[A-Za-z0-9_-]{3,128}$/)
       .optional(),
     applicationId: z.uuid().toLowerCase().optional(),
     scopes: z
-      .array(z.enum(DMS_MACHINE_SCOPES))
+      .array(z.enum([...DMS_MACHINE_SCOPES, ...IDENTITY_SERVICE_SCOPES]))
       .min(1)
       .refine((values) => new Set(values).size === values.length)
       .optional(),
@@ -45,11 +45,26 @@ export async function manageOAuthClient(
   input: unknown,
 ) {
   const request = inputSchema.parse(input);
+  const identity = request.kind === 'identity_service';
+  if (identity && (!config.IDENTITY_SERVICE_CLIENT_ID || !config.IDENTITY_SERVICE_RESOURCE_URL))
+    throw new Error('Identity service is not configured');
+  const allowedScopes: readonly string[] = identity ? IDENTITY_SERVICE_SCOPES : DMS_MACHINE_SCOPES;
+  if (request.scopes?.some((scope) => !allowedScopes.includes(scope)))
+    throw new Error('Scope purpose mismatch');
   const clientId =
     request.clientId ??
-    (request.kind === 'login' ? config.AUTH_LOGIN_CLIENT_ID : config.DMS_MACHINE_CLIENT_ID);
+    (request.kind === 'login'
+      ? config.AUTH_LOGIN_CLIENT_ID
+      : identity
+        ? (config.IDENTITY_SERVICE_CLIENT_ID ?? '')
+        : config.DMS_MACHINE_CLIENT_ID);
   if (
-    (request.kind === 'machine' && clientId === config.AUTH_LOGIN_CLIENT_ID) ||
+    (identity && clientId !== config.IDENTITY_SERVICE_CLIENT_ID) ||
+    (!identity && clientId === config.IDENTITY_SERVICE_CLIENT_ID)
+  )
+    throw new Error('Client purposes must be distinct');
+  if (
+    (request.kind !== 'login' && clientId === config.AUTH_LOGIN_CLIENT_ID) ||
     (request.kind === 'login' && clientId === config.DMS_MACHINE_CLIENT_ID)
   )
     throw new Error('Client purposes must be distinct');
@@ -57,12 +72,12 @@ export async function manageOAuthClient(
     throw new Error('Application identity is required only at issuance');
   if (
     request.scopes !== undefined &&
-    (request.kind !== 'machine' || !['issue', 'set-scopes'].includes(request.action))
+    (request.kind === 'login' || !['issue', 'set-scopes'].includes(request.action))
   )
     throw new Error('Unexpected scope assignment');
-  if (request.action === 'set-scopes' && (!request.scopes || request.kind !== 'machine'))
+  if (request.action === 'set-scopes' && (!request.scopes || request.kind === 'login'))
     throw new Error('Explicit machine scopes are required');
-  if (request.action === 'issue' && request.kind === 'machine' && !request.scopes)
+  if (request.action === 'issue' && request.kind !== 'login' && !request.scopes)
     throw new Error('Explicit machine scopes are required');
   const session = await auth.api.getSession({ headers });
   if (session?.user.role !== 'admin' || !session.user.emailVerified)
@@ -78,9 +93,14 @@ export async function manageOAuthClient(
     await captureAuthorityEvent(config, { ...auditEvent, outcome: 'pending' });
   const managed = await withOAuthOperator(clientId, async () => {
     let result: OAuthClient;
-    const resource = request.kind === 'login' ? userInfoResource(config) : config.DMS_RESOURCE_URL;
+    const resource =
+      request.kind === 'login'
+        ? userInfoResource(config)
+        : identity
+          ? (config.IDENTITY_SERVICE_RESOURCE_URL ?? '')
+          : config.DMS_RESOURCE_URL;
     if (request.action === 'issue') {
-      if (request.kind === 'machine') {
+      if (request.kind !== 'login') {
         const context = await auth.$context;
         const existing = await context.adapter.findOne<{
           accessTokenTtl: number | null;
@@ -93,10 +113,10 @@ export async function manageOAuthClient(
             headers,
             body: {
               identifier: resource,
-              name: 'DMS API',
+              name: identity ? 'Identity invitation service' : 'DMS API',
               accessTokenTtl: 300,
               signingAlgorithm: 'RS256',
-              allowedScopes: [...DMS_MACHINE_SCOPES],
+              allowedScopes: [...allowedScopes],
             },
           });
         else if (
@@ -105,16 +125,19 @@ export async function manageOAuthClient(
           existing.accessTokenTtl > 300 ||
           existing.signingAlgorithm !== 'RS256' ||
           !existing.allowedScopes?.length ||
-          existing.allowedScopes.some(
-            (scope) => !DMS_MACHINE_SCOPES.includes(scope as (typeof DMS_MACHINE_SCOPES)[number]),
-          )
+          existing.allowedScopes.some((scope) => !allowedScopes.includes(scope))
         )
           throw new Error('Existing resource requires operator policy review');
       }
       result = await auth.api.adminCreateOAuthClient({
         headers,
         body: {
-          client_name: request.kind === 'login' ? 'Turnstile login' : 'DMS machine application',
+          client_name:
+            request.kind === 'login'
+              ? 'Turnstile login'
+              : identity
+                ? 'Identity service application'
+                : 'DMS machine application',
           application_type: config.AUTH_PROFILE === 'production' ? 'web' : 'native',
           token_endpoint_auth_method: 'client_secret_basic',
           grant_types:

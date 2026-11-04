@@ -307,6 +307,9 @@ importers:
       '@thaarei/dms-client':
         specifier: workspace:*
         version: link:../../packages/dms-client
+      '@thaarei/dms-contracts':
+        specifier: workspace:*
+        version: link:../../packages/dms-contracts
       '@thaarei/turnstile-contracts':
         specifier: workspace:*
         version: link:../../packages/turnstile-contracts
@@ -316,6 +319,9 @@ importers:
       fastify:
         specifier: 5.12.7
         version: 5.12.7
+      nodemailer:
+        specifier: 10.3.1
+        version: 10.3.1
       openid-client:
         specifier: 6.8.8
         version: 6.8.8
@@ -347,6 +353,9 @@ importers:
       '@types/node':
         specifier: 24.0.0
         version: 24.0.0
+      '@types/nodemailer':
+        specifier: 8.0.2
+        version: 8.0.2
       '@types/pg':
         specifier: 8.20.0
         version: 8.20.0

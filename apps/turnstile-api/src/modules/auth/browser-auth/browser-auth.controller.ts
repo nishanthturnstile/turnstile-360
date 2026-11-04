@@ -9,8 +9,8 @@ import {
   UseFilters,
 } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { PublicEndpoint, RequirePermissions } from '../../../infrastructure/access-policy.js';
 import { WorkspaceReadinessExempt } from '../../../infrastructure/workspace-access.js';
-import { PublicEndpoint, RequirePermissions } from '../user-session/access-policy.js';
 import { AuthExceptionFilter } from './auth-errors.js';
 import { BrowserAuthService } from './browser-auth.service.js';
 

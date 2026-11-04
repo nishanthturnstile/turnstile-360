@@ -1,5 +1,5 @@
 import { getOAuthProviderApi } from '@better-auth/oauth-provider';
-import { DMS_MACHINE_SCOPES } from '@thaarei/dms-contracts';
+import { DMS_MACHINE_SCOPES, IDENTITY_SERVICE_SCOPES } from '@thaarei/dms-contracts';
 import type { GenericEndpointContext } from 'better-auth';
 import { APIError } from 'better-auth/api';
 import { z } from 'zod';
@@ -8,7 +8,7 @@ import type { AuthorityConfiguration } from './authority-configuration.js';
 export const LOGIN_SCOPES = ['openid', 'profile', 'email', 'offline_access'] as const;
 export const clientApproval = z.object({
   version: z.literal(1),
-  kind: z.enum(['login', 'machine']),
+  kind: z.enum(['login', 'machine', 'identity_service']),
   tenantId: z.uuid().toLowerCase(),
   applicationId: z.uuid().toLowerCase(),
   resource: z.string(),
@@ -80,8 +80,23 @@ export async function enforceOAuthPolicy(
   )
     return reject('invalid_client');
   const login = approval.kind === 'login';
-  const resource = login ? userInfoResource(config) : config.DMS_RESOURCE_URL;
-  const allowedScopes: readonly string[] = login ? LOGIN_SCOPES : DMS_MACHINE_SCOPES;
+  const identity = approval.kind === 'identity_service';
+  if (
+    identity &&
+    (!config.IDENTITY_SERVICE_CLIENT_ID || clientId !== config.IDENTITY_SERVICE_CLIENT_ID)
+  )
+    return reject('invalid_client');
+  if (!identity && clientId === config.IDENTITY_SERVICE_CLIENT_ID) return reject('invalid_client');
+  const resource = login
+    ? userInfoResource(config)
+    : identity
+      ? config.IDENTITY_SERVICE_RESOURCE_URL
+      : config.DMS_RESOURCE_URL;
+  const allowedScopes: readonly string[] = login
+    ? LOGIN_SCOPES
+    : identity
+      ? IDENTITY_SERVICE_SCOPES
+      : DMS_MACHINE_SCOPES;
   const grants = login ? ['authorization_code', 'refresh_token'] : ['client_credentials'];
   if (
     approval.resource !== resource ||

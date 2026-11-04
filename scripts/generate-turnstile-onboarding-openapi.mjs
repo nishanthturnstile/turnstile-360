@@ -6,14 +6,19 @@ import {
   CONFIGURATION_LIMITS,
   onboardingJsonSchemas,
   onboardingSchemas,
-  TURNSTILE_PERMISSIONS,
+  PEOPLE_PERMISSIONS,
 } from '../packages/turnstile-contracts/dist/index.js';
 
 const auth = parse(readFileSync('docs/api/turnstile-auth.openapi.yaml', 'utf8'));
 assert.deepEqual(
   auth.components.schemas.UserSession.properties.permissions.items.enum,
-  [...TURNSTILE_PERMISSIONS],
-  'Align the auth document permission catalog without changing the session DTO/protocol',
+  [...PEOPLE_PERMISSIONS],
+  'Align the auth document with canonical session permissions',
+);
+assert.ok(auth.components.schemas.UserSession.required.includes('access'));
+assert.equal(
+  auth.components.schemas.UserSession.properties.access.$ref,
+  'turnstile-people.openapi.json#/components/schemas/UserAccessContext',
 );
 const rootId = '11111111-1111-4111-8111-111111111111';
 const requirements = (satisfied, version = 1) =>
@@ -181,6 +186,10 @@ const authErrors = {
 };
 const common = {
   ...authErrors,
+  409: response(
+    'AccessContextChanged',
+    'Access context changed. Fetch current session/CSRF and deliberately resubmit; keep drafts.',
+  ),
   503: {
     ...response(
       'ConfigurationUnavailable',
@@ -207,10 +216,17 @@ const errors = {
     'ConfigurationInvalid',
     'Invalid strict JSON input; finite safe field errors without rejected values.',
   ),
-  409: response(
-    'ConfigurationConflict',
-    'Current revision conflict or other safe configuration conflict. Refetch/reconcile rather than overwriting.',
-  ),
+  409: {
+    ...response(
+      'ConfigurationConflict',
+      'Current configuration or access context changed. Refetch/reconcile before explicitly resubmitting.',
+    ),
+    content: {
+      'application/json': {
+        schema: { oneOf: [ref('ConfigurationConflict'), ref('AccessContextChanged')] },
+      },
+    },
+  },
   413: response(
     'ConfigurationTooLarge',
     `Body exceeds ${CONFIGURATION_LIMITS.bodyBytes} UTF-8 bytes.`,
@@ -418,7 +434,11 @@ const spec = {
       LocalProductCookie: auth.components.securitySchemes.LocalProductCookie,
       CsrfToken: auth.components.securitySchemes.CsrfToken,
     },
-    schemas: { ...schemas, AuthError: auth.components.schemas.AuthError },
+    schemas: {
+      ...schemas,
+      AuthError: auth.components.schemas.AuthError,
+      AccessContextChanged: auth.components.schemas.AccessContextChanged,
+    },
   },
 };
 // Resolve every emitted local reference, including nested JSON Schema definitions.

@@ -124,9 +124,17 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
     else if (['auth', 'dms'].includes(action ?? '')) await migrateDatabase(action as Owner);
     else throw new Error('Unknown database operation');
     console.log('Owned database operation completed');
-  } catch {
+  } catch (error) {
+    const raw = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+    const code =
+      typeof raw === 'string' &&
+      (/^[0-9A-Z]{5}$/.test(raw) || ['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT'].includes(raw))
+        ? raw
+        : error instanceof z.ZodError
+          ? 'INVALID_CONFIGURATION'
+          : 'OPERATION_REJECTED';
     console.error(
-      'Owned database operation failed; check configuration, role ownership, migrations and installation identity',
+      `Owned database operation failed (${code}); check configuration, role ownership, migrations and installation identity`,
     );
     process.exitCode = 1;
   }

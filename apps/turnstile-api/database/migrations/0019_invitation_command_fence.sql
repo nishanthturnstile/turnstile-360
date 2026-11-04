@@ -1,0 +1,1 @@
+ALTER TABLE "turnstile"."invitation_operation" ADD COLUMN "committed_at" timestamp with time zone;

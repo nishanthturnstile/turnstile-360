@@ -5,7 +5,10 @@ if (existsSync('.env.migrate')) process.loadEnvFile('.env.migrate');
 
 export default defineConfig({
   dialect: 'postgresql',
-  schema: './src/modules/platform-auth/persistence/auth.generated.ts',
+  schema: [
+    './src/modules/platform-auth/persistence/auth.generated.ts',
+    './src/modules/platform-auth/persistence/identity.schema.ts',
+  ],
   out: './database/auth/migrations',
   migrations: { schema: 'auth_migrations' },
   dbCredentials: { url: process.env.AUTH_MIGRATION_DATABASE_URL ?? '' },

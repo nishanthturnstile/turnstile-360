@@ -19,7 +19,8 @@
     "auth:check": "auth check schema --config src/modules/platform-auth/auth.ts",
     "auth:provision-user": "node --env-file-if-exists=.env dist/modules/platform-auth/provision-user.js",
     "auth:manage-client": "node --env-file-if-exists=.env dist/modules/platform-auth/manage-client.js",
-    "dms:manage-application": "node --env-file-if-exists=.env --env-file-if-exists=.env.migrate dist/modules/enrollment/manage-application.js"
+    "dms:manage-application": "node --env-file-if-exists=.env --env-file-if-exists=.env.migrate dist/modules/enrollment/manage-application.js",
+    "auth:prune-identity": "node --env-file-if-exists=.env.migrate dist/modules/platform-auth/prune-identity.js"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.14",

@@ -1,7 +1,10 @@
 import { Injectable, type OnApplicationShutdown } from '@nestjs/common';
 import { Pool } from 'pg';
+import { accessSchemaSafe, canonicalAccessReady } from '../../modules/access/access-safety.js';
 import { parseProductEnvironment } from '../auth-environment.js';
-import { assertRuntimeRole, createPool } from './postgres.js';
+import { invitationSchemaSafe } from './invitation-safety.js';
+import { peopleSchemaSafe } from './people-safety.js';
+import { assertRuntimeRole, createPool, withTenant } from './postgres.js';
 
 @Injectable()
 export class ProductPersistenceService implements OnApplicationShutdown {
@@ -27,10 +30,20 @@ export class ProductPersistenceService implements OnApplicationShutdown {
       const { rows } = await this.pool.query(
         'SELECT tenant_id, customer_key, application_id FROM turnstile.installation WHERE singleton = 1',
       );
-      return (
+      const identityMatches =
         rows[0]?.tenant_id === this.config.INSTALLATION_TENANT_ID &&
         rows[0]?.customer_key === this.config.INSTALLATION_CUSTOMER_KEY &&
-        rows[0]?.application_id === this.config.TURNSTILE_APPLICATION_ID
+        rows[0]?.application_id === this.config.TURNSTILE_APPLICATION_ID;
+      if (!identityMatches) return false;
+      const tenantId = this.config.INSTALLATION_TENANT_ID;
+      return await withTenant(
+        this.pool,
+        this.config.INSTALLATION_TENANT_ID,
+        async (client) =>
+          (await accessSchemaSafe(client)) &&
+          (await canonicalAccessReady(client, tenantId)) &&
+          (await invitationSchemaSafe(client)) &&
+          (await peopleSchemaSafe(client)),
       );
     } catch {
       return false;

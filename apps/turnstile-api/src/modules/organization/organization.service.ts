@@ -14,8 +14,13 @@ import {
   unitRenameSchema,
   type WorkspaceStatusDto,
 } from '@thaarei/turnstile-contracts';
-import { ConfigurationException } from '../../infrastructure/configuration-exception.js';
 import { parseConfiguration } from '../../infrastructure/configuration-validation.js';
+import {
+  validateCreate,
+  validateDelete,
+  validateMove,
+  validateRename,
+} from './organization-rules.js';
 import {
   type ConfigurationActor,
   type ConfigurationTransaction,
@@ -82,6 +87,11 @@ export class OrganizationService {
     return this.repository.transaction(actor, true, async (tx) => {
       // Expired receipt deletion is separately restricted by RLS.
       await this.repository.deleteExpiredReceipts(tx, key);
+      const accessReceipt = await tx.client.query(
+        `SELECT 1 FROM turnstile.access_command_receipt WHERE tenant_id=$1 AND actor_id=$2 AND key=$3 AND expires_at>statement_timestamp()`,
+        [tx.tenantId, actor.userId, key],
+      );
+      if (accessReceipt.rowCount) return configurationConflict(tx.record, 'idempotency_mismatch');
       const receipt = await this.repository.receipt(tx, key);
       if (receipt) {
         if (receipt.actor_id !== actor.userId || receipt.fingerprint !== fingerprint)
@@ -94,22 +104,8 @@ export class OrganizationService {
       }
       this.expected(tx, value.expectedRevision);
       const snapshot = await this.repository.snapshot(tx);
-      const parent = snapshot.units.find((unit) => unit.id === value.parentId);
-      if (!parent) return invalidConfiguration('parentId');
-      if (value.type === 'site' && parent.type !== 'organization')
-        return invalidConfiguration('parentId', 'unsupported');
-      if (
-        parent.ancestorIds.length + 1 >= CONFIGURATION_LIMITS.depth ||
-        snapshot.units.length >= CONFIGURATION_LIMITS.units
-      )
-        return invalidConfiguration('parentId', 'limit_reached');
+      validateCreate(tx.record, snapshot.units, value);
       const nameKey = configurationNameKey(value.name);
-      if (
-        snapshot.units.some(
-          (unit) => unit.parentId === value.parentId && configurationNameKey(unit.name) === nameKey,
-        )
-      )
-        return configurationConflict(tx.record, 'duplicate_name');
       if ((await this.repository.liveReceipts(tx)) >= CONFIGURATION_LIMITS.createReceipts)
         return configurationUnavailable();
       const id = randomUUID();
@@ -136,20 +132,9 @@ export class OrganizationService {
     return this.repository.transaction(actor, true, async (tx) => {
       this.expected(tx, value.expectedRevision);
       const snapshot = await this.repository.snapshot(tx);
-      const unit = snapshot.units.find((row) => row.id === id);
-      if (!unit) throw new ConfigurationException({ code: 'CONFIGURATION_NOT_FOUND' });
-      if (unit.type === 'organization') return invalidConfiguration('id', 'unsupported');
+      const unit = validateRename(tx.record, snapshot.units, id, value.name);
       if (unit.name === value.name) return snapshot;
       const key = configurationNameKey(value.name);
-      if (
-        snapshot.units.some(
-          (row) =>
-            row.id !== id &&
-            row.parentId === unit.parentId &&
-            configurationNameKey(row.name) === key,
-        )
-      )
-        return configurationConflict(tx.record, 'duplicate_name');
       await this.repository.renameUnit(tx, id, value.name, key);
       await this.repository.change(tx, 'unit_renamed', id, ['name']);
       return this.repository.snapshot(tx);
@@ -162,45 +147,8 @@ export class OrganizationService {
     return this.repository.transaction(actor, true, async (tx) => {
       this.expected(tx, value.expectedRevision);
       const snapshot = await this.repository.snapshot(tx);
-      const unit = snapshot.units.find((row) => row.id === id);
-      if (!unit) throw new ConfigurationException({ code: 'CONFIGURATION_NOT_FOUND' });
-      if (unit.type === 'organization') return invalidConfiguration('id', 'unsupported');
-      const parent = snapshot.units.find((row) => row.id === value.parentId);
-      if (!parent) throw new ConfigurationException({ code: 'CONFIGURATION_NOT_FOUND' });
-      if (
-        parent.id === id ||
-        parent.ancestorIds.some((ancestor) => ancestor === id) ||
-        (unit.type === 'site' && parent.type !== 'organization')
-      )
-        return invalidConfiguration('parentId');
-      if (unit.parentId === parent.id) return snapshot;
-      const height = Math.max(
-        1,
-        ...snapshot.units
-          .filter((row) => row.ancestorIds.some((ancestor) => ancestor === id))
-          .map((row) => row.ancestorIds.length - unit.ancestorIds.length + 1),
-      );
-      if (parent.ancestorIds.length + 1 + height > CONFIGURATION_LIMITS.depth)
-        return invalidConfiguration('parentId', 'limit_reached');
-      if (
-        snapshot.units.some(
-          (row) =>
-            row.id !== id &&
-            row.parentId === parent.id &&
-            configurationNameKey(row.name) === configurationNameKey(unit.name),
-        )
-      )
-        return configurationConflict(tx.record, 'duplicate_name');
-      if (
-        snapshot.setup.state === 'completed' &&
-        snapshot.setup.requirementVersion === 2 &&
-        unit.parentId === snapshot.organization.rootId &&
-        parent.id !== snapshot.organization.rootId &&
-        !snapshot.units.some(
-          (row) => row.id !== id && row.parentId === snapshot.organization.rootId,
-        )
-      )
-        return configurationConflict(tx.record, 'required_unit');
+      const { parent, changed } = validateMove(tx.record, snapshot.units, id, value.parentId);
+      if (!changed) return snapshot;
       await this.repository.moveUnit(tx, id, parent.id);
       await this.repository.change(tx, 'unit_moved', id, ['parentId']);
       return this.repository.snapshot(tx);
@@ -213,20 +161,7 @@ export class OrganizationService {
     return this.repository.transaction(actor, true, async (tx) => {
       this.expected(tx, value.expectedRevision);
       const snapshot = await this.repository.snapshot(tx);
-      const unit = snapshot.units.find((row) => row.id === id);
-      if (!unit) throw new ConfigurationException({ code: 'CONFIGURATION_NOT_FOUND' });
-      if (unit.type === 'organization') return invalidConfiguration('id', 'unsupported');
-      if (snapshot.units.some((row) => row.parentId === id))
-        return configurationConflict(tx.record, 'unit_in_use');
-      if (
-        snapshot.setup.state === 'completed' &&
-        snapshot.setup.requirementVersion === 2 &&
-        unit.parentId === snapshot.organization.rootId &&
-        !snapshot.units.some(
-          (row) => row.id !== id && row.parentId === snapshot.organization.rootId,
-        )
-      )
-        return configurationConflict(tx.record, 'required_unit');
+      validateDelete(tx.record, snapshot.units, id);
       await this.repository.deleteUnit(tx, id);
       await this.repository.change(tx, 'unit_deleted', id, []);
       return this.repository.snapshot(tx);

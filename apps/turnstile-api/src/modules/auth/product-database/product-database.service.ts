@@ -25,10 +25,10 @@ export class ProductDatabaseService {
     if (!this.store || !this.pool || !(await this.persistence.ready())) return false;
     try {
       const policies = await this.pool.query(
-        "SELECT count(*) = 2 AND bool_and(relrowsecurity AND relforcerowsecurity) AS safe FROM pg_class WHERE oid IN ('turnstile.session'::regclass, 'turnstile.user_access'::regclass)",
+        "SELECT relrowsecurity AND relforcerowsecurity AS safe FROM pg_class WHERE oid = 'turnstile.session'::regclass",
       );
       if (!policies.rows[0]?.safe) return false;
-      await this.pool.query('SELECT permissions FROM turnstile.user_access LIMIT 0');
+      await this.pool.query('SELECT ciphertext FROM turnstile.session LIMIT 0');
       return true;
     } catch {
       return false;

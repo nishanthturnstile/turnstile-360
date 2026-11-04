@@ -236,6 +236,27 @@ sibling sorting, an additional palette or a diagram dependency for this composit
    `pnpm test:browser:auth` for changes touching authentication controls/layout or bundled
    fonts. Record actual results and any limits in `IN_PROGRESS.md` before handoff.
 
+## People patterns
+
+People uses independent Members, Invitations, Roles and Structure sections within the
+existing workspace shell. Cards expose identity freshness, invitation delivery, actual role
+permissions and all independent grant sources. Scope controls use canonical paths and an
+explicit Include child units checkbox; a role name never substitutes for its permissions.
+The People gallery uses fixed examples without account data or network requests.
+
+Editors keep drafts in memory with explicit discard and dirty-navigation protection. Show
+localized loading and bounded errors, retain input after conflicts, and show saved data only
+after owning-service confirmation. Impact review precedes access changes; uncertain outcomes
+offer command readback without automatic replay.
+Same-subject permission/session recovery retains mounted draft owners while hiding/inerting
+blocked content and pausing loaders. Fresh access invalidates old reviews; sign-out or a
+different subject clears drafts. Full document navigation ends these memory-only entries.
+Use the generated Base UI Checkbox with
+FieldLabel for scope and permission choices. Long names wrap and native controls retain
+keyboard/touch behavior within the existing responsive layout and reduced-motion rules.
+Run `pnpm test:browser:people` for the owning HTTPS/OIDC/SMTP administration, scoped-manager
+and recipient journeys; retain the authentication browser regression check above.
+
 ## CLI maintenance
 
 Run shadcn commands from `apps/turnstile-web`. The installed CLI version and libraries

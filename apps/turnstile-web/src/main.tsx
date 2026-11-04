@@ -17,6 +17,7 @@ const router = createBrowserRouter([
     ),
     children: [
       ...[
+        'invitations/join',
         'sign-in',
         'forgot-password',
         'reset-password',

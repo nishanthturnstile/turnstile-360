@@ -18,3 +18,13 @@ the committed [OpenAPI artifact](../../docs/api/dms-auth.openapi.json). After bu
 `node scripts/generate-dms-auth-openapi.mjs --check` verifies it is current.
 Scope membership does not replace live registration or operation/resource authorization.
 The policy is maintained in [architecture.md](../../architecture.md#dms-machine-authorization-and-guarded-enrollment).
+
+
+UM-I02 adds reusable [invitation identity-service contracts](../../docs/api/identity-invitations.openapi.json)
+for a distinct confidential service purpose/audience and two minimal scopes. These schemas
+do not extend `DMS_MACHINE_SCOPES`, install provider policy or expose general account
+administration. Product membership assertions and purpose-bound setup receipts stay separate
+from browser credentials. Only the owning authority setup-completion request receives a
+recipient password; service preparation rejects credential/role/ban/verification fields.
+Run `pnpm docs:user-management` and `pnpm check:contracts` from the root; the package's
+focused tests validate boundary inputs. UM-I06 implements the owning authority HTTP and product server adapter, verified over separate-process HTTP. UM-I07/I08 compose invitation issuance and browser resume; see [architecture.md](../../architecture.md) for the implemented persistence, token, receipt and maintenance limits.

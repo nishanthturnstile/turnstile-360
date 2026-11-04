@@ -1,5 +1,5 @@
 import { oauthProvider } from '@better-auth/oauth-provider';
-import { DMS_MACHINE_SCOPES } from '@thaarei/dms-contracts';
+import { DMS_MACHINE_SCOPES, IDENTITY_SERVICE_SCOPES } from '@thaarei/dms-contracts';
 import type { BetterAuthOptions } from 'better-auth';
 import { createAuthMiddleware } from 'better-auth/api';
 import { admin } from 'better-auth/plugins/admin';
@@ -76,7 +76,7 @@ export function createAuthorityOptions(
       oauthProvider({
         loginPage: `${config.AUTH_PUBLIC_ORIGIN}/sign-in`,
         consentPage: `${config.AUTH_PUBLIC_ORIGIN}/sign-in`,
-        scopes: [...LOGIN_SCOPES, ...DMS_MACHINE_SCOPES],
+        scopes: [...LOGIN_SCOPES, ...DMS_MACHINE_SCOPES, ...IDENTITY_SERVICE_SCOPES],
         grantTypes: ['authorization_code', 'refresh_token', 'client_credentials'],
         accessTokenExpiresIn: 300,
         m2mAccessTokenExpiresIn: 300,
