@@ -15,7 +15,8 @@ installation: all seven Compose services are recreated, with fresh database/stor
 server credentials, exactly one verified protected administrator, enrolled machine access
 and empty incomplete v2 company setup for owner testing. No old installation archive was
 restored. Earlier preserved-v1 statements below describe historical release milestones.
-The current source change is PR #7 to development; final handoff CI/merge is pending.
+PR #7 is merged to development as ec07a12, with green PR and post-merge CI.
+The local installation is ready for owner login; a documentation-only handoff follows.
 
 The workspace foundation and AUTH-01–07 implementation and local verification are complete. The DMS authority supports
 persisted verified accounts, sessions, signing keys, controlled recovery and managed distinct
@@ -110,7 +111,7 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
-UM-RELEASE-RESET-01 — **In progress** (owner: Codex, 2026-11-04). Owner explicitly
+UM-RELEASE-RESET-01 — **Completed** (owner: Codex, 2026-11-04). Owner explicitly
 authorized committing the accumulated user-management implementation, creating/merging a
 PR to its parent development branch after green CI, and deleting/recreating this
 application's local runtime containers/test resources and persistent database/storage.
@@ -147,8 +148,10 @@ No password or service credential is recorded in Git or this progress log.
 
 Committed implementation as aee1c8e and opened PR #7 targeting development. Both original
 push/PR workflows passed their checks job and all five image builds. Local compiled-entrypoint
-smoke and both Compose configuration checks pass. This final reset/handoff documentation
-will be checked on the PR's final head before merging; merge remains pending that CI.
+smoke and both Compose configuration checks pass. PR #7 merged as ec07a12 after all checks passed, and its development push workflow also
+passed. The reset handoff commit followed that merge and is being delivered through a
+separate documentation-only PR. No application source change or further reset is needed.
+All credentials are available only through the protected local CREDENTIALS.txt handoff.
 
 UM-VERIFY-02 — **Completed** (owner: Codex, 2026-11-04). Owner requested the
 next verification in the accepted release plan. Recheck the retained clock preflight,
