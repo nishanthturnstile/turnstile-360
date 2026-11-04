@@ -4,11 +4,11 @@
 **Original date:** 2026-11-01. **Adoption updated:** 2026-11-02.
 
 **New review, 2026-11-02:** The [redesign recommendation](#redesign-recommendation-2026-11-02)
-and [new interactive concept](presentations/onboarding-redesign-concept.html) address the
+and [new interactive concept](../../presentations/onboarding-redesign-concept.html) address the
 owner's subsequent request for dedicated onboarding, a mandatory first operational unit,
 India-first defaults and a visual structure editor. ONB-RD01 adopts these decisions through
 the [specification](onboarding_specification.md) and
-[architecture](../architecture.md#onboarding-implementation-baseline); those documents are
+[architecture](../../../architecture.md#onboarding-implementation-baseline); those documents are
 authoritative. The concept remains illustrative; adoption is not runtime delivery.
 
 The separate [redesign implementation plan](onboarding_redesign_implementation_plan.md)
@@ -29,13 +29,13 @@ operator workflow.
 
 This proposal covers the nine requested discovery/design deliverables. The
 [Version 1 inventory](onboarding_v1_discovery.md) contains the field-level findings
-and inspection limits. The [interactive design illustration](presentations/onboarding-concept.html)
+and inspection limits. The [interactive design illustration](../../presentations/onboarding-concept.html)
 shows the proposed grouping and conditional screens with fictional data; it has
 no application connection or persistence. No application implementation, schema,
 migration, customer provisioning or Version 1 data migration is included.
 
 The accepted [onboarding specification](onboarding_specification.md) now owns ONB-R01–13
-and the redesigned release boundary. Its [architecture baseline](../architecture.md#onboarding-implementation-baseline)
+and the redesigned release boundary. Its [architecture baseline](../../../architecture.md#onboarding-implementation-baseline)
 finalizes technical decisions; the [original implementation plan](onboarding_implementation_plan.md)
 preserves v1 delivery and the [redesign plan](onboarding_redesign_implementation_plan.md)
 sequences the new delivery and verification. This proposal remains discovery/design rationale,
@@ -44,14 +44,14 @@ In particular, custom terminology, optional-task reminders and broad IAM remain 
 
 ## Product context and scope
 
-The accepted [customer deployment model](../architecture.md#customer-deployment-and-application-model)
+The accepted [customer deployment model](../../../architecture.md#customer-deployment-and-application-model)
 has exactly one customer tenant per installation. Turnstile and other systems are
 independently registered applications under it. There is no public tenant signup,
 tenant switcher or multi-customer control plane. In the proposed scenario,
 “Turnstile staff signs up for a client” therefore means an authorized operator
 provisions that client's installation and account through private tooling.
 
-The repository's [workspace plan](workspace_implementation_plan.md#subsequent-implementation)
+The repository's [workspace plan](../../workspace/workspace_implementation_plan.md#subsequent-implementation)
 requires a Turnstile business specification before its domain implementation.
 The committed product requirements currently describe the reusable DMS, rather
 than a complete Turnstile organization or Document Approval product specification.
@@ -60,15 +60,15 @@ not supply the detailed approval requirements. Document Approval remains a produ
 workflow to specify, not a capability declared complete by authentication or DMS
 versioning.
 
-| Source                                                                                                                                       | Established constraint or evidence                                                                                                                     | Effect on this proposal                                                                                  |
-| -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| [DMS FR-01.01, 01.06, 01.08](headless_dms_functionality_requirements_v1.md#01-shared-identity-tenant-bootstrap-and-application-provisioning) | One fixed tenant, repeat-safe private bootstrap, controlled provisioning                                                                               | Configure an existing installation; never create another tenant from onboarding                          |
-| [DMS FR-02.07–09](headless_dms_functionality_requirements_v1.md#02-machine-authentication-thaarei-enrollment-and-access-boundaries)          | Product permissions are separate from machine authority                                                                                                | Setup rights do not confer DMS operator privileges or expose machine secrets                             |
-| [Current authentication boundary](../architecture.md#turnstile-bff-and-user-authorization-boundary)                                          | Live identity/local access, explicit permissions and CSRF; authority admin does not imply product admin                                                | Bootstrap a local setup administrator explicitly; preserve the current checks                            |
-| [Authentication scope](authentication_implementation_plan.md#scope-and-bootstrap-dependency)                                                 | Administrator-provisioned accounts; broad IAM and external company SSO were outside that slice                                                         | Use existing operator provisioning first; invitations and user-administration UI are separate increments |
-| [Product ownership](../architecture.md#backend-composition-and-data-ownership)                                                               | Turnstile owns business state and authorization; DMS is accessed through authenticated HTTP                                                            | Onboarding is a Turnstile capability, with platform-independent contracts for future clients             |
-| [DMS publication boundary](../architecture.md#independent-state-machines-and-security-coverage)                                              | Security publication and document/processing states are distinct                                                                                       | Business approval must not override the DMS security gate                                                |
-| [Current progress](../IN_PROGRESS.md) and inspected contracts/source                                                                         | Auth and design system exist; product contracts expose access and DMS capability-read permissions; no organization/setup state or business roles exist | This is new product design, not a small frontend redirect over existing setup data                       |
+| Source                                                                                                                                                 | Established constraint or evidence                                                                                                                     | Effect on this proposal                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| [DMS FR-01.01, 01.06, 01.08](../../dms/headless_dms_functionality_requirements_v1.md#01-shared-identity-tenant-bootstrap-and-application-provisioning) | One fixed tenant, repeat-safe private bootstrap, controlled provisioning                                                                               | Configure an existing installation; never create another tenant from onboarding                          |
+| [DMS FR-02.07–09](../../dms/headless_dms_functionality_requirements_v1.md#02-machine-authentication-thaarei-enrollment-and-access-boundaries)          | Product permissions are separate from machine authority                                                                                                | Setup rights do not confer DMS operator privileges or expose machine secrets                             |
+| [Current authentication boundary](../../../architecture.md#turnstile-bff-and-user-authorization-boundary)                                              | Live identity/local access, explicit permissions and CSRF; authority admin does not imply product admin                                                | Bootstrap a local setup administrator explicitly; preserve the current checks                            |
+| [Authentication scope](../../authentication/authentication_implementation_plan.md#scope-and-bootstrap-dependency)                                      | Administrator-provisioned accounts; broad IAM and external company SSO were outside that slice                                                         | Use existing operator provisioning first; invitations and user-administration UI are separate increments |
+| [Product ownership](../../../architecture.md#backend-composition-and-data-ownership)                                                                   | Turnstile owns business state and authorization; DMS is accessed through authenticated HTTP                                                            | Onboarding is a Turnstile capability, with platform-independent contracts for future clients             |
+| [DMS publication boundary](../../../architecture.md#independent-state-machines-and-security-coverage)                                                  | Security publication and document/processing states are distinct                                                                                       | Business approval must not override the DMS security gate                                                |
+| [Current progress](../../../IN_PROGRESS.md) and inspected contracts/source                                                                             | Auth and design system exist; product contracts expose access and DMS capability-read permissions; no organization/setup state or business roles exist | This is new product design, not a small frontend redirect over existing setup data                       |
 
 ## Findings and gap analysis
 
@@ -149,7 +149,7 @@ Keep four processes distinct. Their records and authorization have different own
 ### Fresh installation
 
 1. Staff prepares a separate customer installation using the
-   [existing runbook](runbooks/authentication.md#generate-review-migrate-and-bootstrap).
+   [existing runbook](../../runbooks/authentication.md#generate-review-migrate-and-bootstrap).
    Runtime startup does not auto-migrate, reset identity, create a default admin or
    enable public registration.
 2. Staff runs the fixed tenant and product bootstrap, then provisions the initial
@@ -266,7 +266,7 @@ preserves recoverable user input; an outage shows Retry without false completion
 - A network failure preserves in-memory edits for retry. Refresh/logout warns about
   known unsaved edits where the browser permits; successfully saved progress always
   survives. Do not store sensitive profile drafts or authority in local storage.
-- Reuse the current [design system](design-system.md) for fields, buttons, notices,
+- Reuse the current [design system](../design-system.md) for fields, buttons, notices,
   dialogs, focus, typography and semantic colors. A shared editor uses the same
   validation in onboarding and Settings; layouts and surrounding guidance may differ.
 - Support keyboard operation, visible focus, screen-reader step/status announcements,
@@ -366,7 +366,7 @@ authorization. Those latter dependencies belong to their feature phases.
 
 No database definitions or migration files accompany this proposal. On acceptance,
 record adopted state/contract/security decisions in
-[architecture.md](../architecture.md), which remains the technical source of truth.
+[architecture.md](../../../architecture.md), which remains the technical source of truth.
 The implementation should expose a safe setup read model with status, missing
 requirements, current revision and permitted actions, plus separate save and complete
 operations through the owning Turnstile API. Contracts stay platform-independent.
@@ -495,9 +495,9 @@ Site/Plant or Department for the first unit; the specification/architecture adop
 plan's compatibility, time-zone and interaction defaults. The recommendation below is
 retained as design rationale. Where it asks for adoption/decisions, consult the current
 [specification](onboarding_specification.md) and
-[architecture](../architecture.md#adopted-redesign-and-compatibility) for the adopted target.
+[architecture](../../../architecture.md#adopted-redesign-and-compatibility) for the adopted target.
 It does not claim the redesign is implemented; actual work/verification remain in
-[progress](../IN_PROGRESS.md).
+[progress](../../../IN_PROGRESS.md).
 
 ### Evidence and the change being proposed
 
@@ -530,7 +530,7 @@ the existing saved-progress, conflict, retry and permission protections.
 An **organization** is the customer's business identity and operational structure: its
 display name, shared regional default and units. **Workspace** describes that organization's
 Turnstile 360 working environment: dashboard, available features and settings. Under the
-accepted [customer deployment model](../architecture.md#customer-deployment-and-application-model),
+accepted [customer deployment model](../../../architecture.md#customer-deployment-and-application-model),
 there is one installed customer context. These terms do not mean two separately created
 business entities, two names to enter, or a selector for multiple customer accounts.
 
@@ -649,7 +649,7 @@ sorting is a separate scope choice because current ordering is deterministic by 
 Do not imply card coordinates or browser-only sorting are persisted structure.
 
 Initially retain Site and Department, their permitted relationships and the existing
-[validation/bounds](../architecture.md#onboarding-validation-and-bounds). A Department
+[validation/bounds](../../../architecture.md#onboarding-validation-and-bounds). A Department
 can contain another Department; named numerical levels are unnecessary. Richer unit
 types, terminology overrides and people assignments need separate confirmed use cases.
 
@@ -693,7 +693,7 @@ as a separate product decision. Under the new requirement, prevent deletion/move
 that would remove the last qualifying direct child in an installation using the new
 policy. Unrelated edits and feature outages must not reopen onboarding.
 
-The [interactive redesign concept](presentations/onboarding-redesign-concept.html) uses
+The [interactive redesign concept](../../presentations/onboarding-redesign-concept.html) uses
 fictional data and transient memory only. It illustrates the three-step flow, contextual
 unit creation and dashboard collapse; it does not implement authentication, persistence,
 drag/move semantics, services or the complete production editor. No new dependencies,

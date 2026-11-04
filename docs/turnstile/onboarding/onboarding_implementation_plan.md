@@ -4,7 +4,7 @@
 
 **Historical v1 delivery plan:** ONB-RD01 adopts the redesigned requirement baseline in
 the [current specification](onboarding_specification.md) and
-[architecture](../architecture.md#onboarding-implementation-baseline). The
+[architecture](../../../architecture.md#onboarding-implementation-baseline). The
 [separate redesign plan](onboarding_redesign_implementation_plan.md) sequences new work.
 Optional structure/root-only activation and immutable parents below describe the original
 v1 release; they do not override the adopted v2 first-unit/move policy. Preserve ONB-I01–08
@@ -21,9 +21,9 @@ The [onboarding specification](onboarding_specification.md) now owns accepted ON
 and the first-release scope. ONB-I01 adopts the root-only activation, private provisioning
 and narrow administration baseline from the [design proposal](onboarding_design_proposal.md),
 informed by the [Version 1 inventory](onboarding_v1_discovery.md). Exact technical contracts
-and bounds are recorded in [architecture.md](../architecture.md#onboarding-implementation-baseline).
+and bounds are recorded in [architecture.md](../../../architecture.md#onboarding-implementation-baseline).
 This plan sequences delivery; it does not imply authorization or completion of later
-packages. Actual implementation and checks are recorded in [progress](../IN_PROGRESS.md).
+packages. Actual implementation and checks are recorded in [progress](../../../IN_PROGRESS.md).
 
 ## Scope of the first release
 
@@ -66,11 +66,11 @@ existing controlled account/access tools.
 | Shared web primitives and a development gallery exist                                                | Compose the delivered screens from existing components; extend the gallery only for new reusable patterns.                                                                                                                      |
 
 The governing component, security and deployment decisions remain in
-[architecture.md](../architecture.md). Preserve its
-[single-customer model](../architecture.md#customer-deployment-and-application-model),
-[product ownership](../architecture.md#backend-composition-and-data-ownership),
-[BFF authorization](../architecture.md#turnstile-bff-and-user-authorization-boundary)
-and [design system](../architecture.md#web-design-system).
+[architecture.md](../../../architecture.md). Preserve its
+[single-customer model](../../../architecture.md#customer-deployment-and-application-model),
+[product ownership](../../../architecture.md#backend-composition-and-data-ownership),
+[BFF authorization](../../../architecture.md#turnstile-bff-and-user-authorization-boundary)
+and [design system](../../../architecture.md#web-design-system).
 
 ## Delivery order
 
@@ -96,7 +96,7 @@ The [specification](onboarding_specification.md) carries ONB-R01–12 without re
 DMS FR requirements. It accepts root-only activation, controlled provisioning and narrow
 configuration administration. Custom Site/Department labels are deferred.
 
-The [accepted architecture baseline](../architecture.md#onboarding-implementation-baseline)
+The [accepted architecture baseline](../../../architecture.md#onboarding-implementation-baseline)
 defines field/body/name/time-zone/unit/depth bounds, routes/projections/errors, revisions,
 bounded create retries, audit retention, initialization/grant/maintenance operations and
 upgrade behavior. These are targets for subsequent code, not newly configured runtime
@@ -116,11 +116,11 @@ explicit pinned Zod dependency. Keep contracts independent
 of Nest, PostgreSQL, Node-only APIs and React. Define field validation, mutation
 requests, normalized responses, revisions, setup requirements and errors once.
 
-Implement the finalized [HTTP and access contracts](../architecture.md#onboarding-http-and-access-contracts).
+Implement the finalized [HTTP and access contracts](../../../architecture.md#onboarding-http-and-access-contracts).
 The status, detailed setup, completion, canonical profile and unit endpoints avoid
 separate wizard copies of organization data. Status is minimal for every permitted user;
 managers use the separate detailed projection. Shared schemas also implement the adopted
-[validation bounds and versioned time-zone list](../architecture.md#onboarding-validation-and-bounds).
+[validation bounds and versioned time-zone list](../../../architecture.md#onboarding-validation-and-bounds).
 
 All configuration mutations carry the expected organization revision. A saved
 response returns the authoritative revision and data. Setup progress is derived
@@ -153,11 +153,11 @@ checks pass after the bounded persistence refactor. Session encryption, shutdown
 pool limits and runtime-role validation remain intact.
 
 The implemented foundation exports schemas/DTOs and the configuration permission catalog,
-generates the [OpenAPI contract](api/turnstile-onboarding.openapi.json), and verifies
+generates the [OpenAPI contract](../../api/turnstile-onboarding.openapi.json), and verifies
 drift through `pnpm check:contracts`. Auth consumes the shared product pool and the existing
 guard is registered once by AppModule. I03 now supplies feature modules/tables/HTTP handlers;
 I04 implements the readiness gate and private configuration grants/last-manager protection.
-Actual verification and remaining target-release evidence stay in [progress](../IN_PROGRESS.md).
+Actual verification and remaining target-release evidence stay in [progress](../../../IN_PROGRESS.md).
 
 ## ONB-I03 Canonical configuration and domain operations
 
@@ -178,7 +178,7 @@ onboarding, making a user, or registering an application. Repeating it preserves
 existing profile, units and completion. A mismatched installation is rejected.
 Neither startup nor GET requests perform migrations or implicit operator bootstrap.
 Implement the private inspection and bounded retention commands from the same
-[operator contracts](../architecture.md#onboarding-operations-and-upgrade); maintenance
+[operator contracts](../../../architecture.md#onboarding-operations-and-upgrade); maintenance
 does not remove canonical configuration or durable completion metadata.
 
 The first valid organization save creates or reuses the root in the same transaction.
@@ -206,7 +206,7 @@ a lost response returns the existing completion metadata after current authoriza
 without another activation. Revision conflicts on ordinary saves never overwrite
 another administrator's work. Root/unit creation also needs repeat-safe request
 identity or equivalent documented retry handling; a lost response must not create
-duplicate units. Implement the [accepted receipt and reconciliation rules](../architecture.md#onboarding-consistency-and-audit)
+duplicate units. Implement the [accepted receipt and reconciliation rules](../../../architecture.md#onboarding-consistency-and-audit)
 in I02/I03; the browser never retries POST automatically.
 
 Initial units have immutable type and parent after creation; edits rename them.
@@ -229,13 +229,13 @@ save/resume, revision contention, repeat completion, atomic audit rollback, unit
 integrity and runtime-role/RLS enforcement. Missing initialization/schema is an
 operator availability problem, not evidence of a new tenant or completed setup.
 
-The implementation uses the [canonical persistence boundary](../architecture.md#canonical-configuration-persistence)
-and documented [private commands](runbooks/authentication.md#initialize-inspect-and-maintain-product-configuration).
+The implementation uses the [canonical persistence boundary](../../../architecture.md#canonical-configuration-persistence)
+and documented [private commands](../../runbooks/authentication.md#initialize-inspect-and-maintain-product-configuration).
 Root display derives from the profile; all effective changes and activation share the
 same revision/audit transaction. Owning HTTP adapters preserve existing auth, permissions
 and CSRF, and the legacy grant writer now coordinates its lock. I04 supplies the
 configuration grant/last-manager policy and business gate. Verification and remaining
-release work are recorded in [progress](../IN_PROGRESS.md).
+release work are recorded in [progress](../../../IN_PROGRESS.md).
 
 ## ONB-I04 Access provisioning and backend gate
 
@@ -277,11 +277,11 @@ configuration manager access to setup only with explicit rights, ordinary-user m
 status, CSRF enforcement, last-manager contention, and successful workspace access
 only after committed activation. Existing refresh/logout/local-access regressions pass.
 
-I04 implementation uses the [application guard/private grant composition](../architecture.md#access-provisioning-and-backend-readiness).
+I04 implementation uses the [application guard/private grant composition](../../../architecture.md#access-provisioning-and-backend-readiness).
 The strict operator command and supported recovery are documented in the
-[runbook](runbooks/authentication.md#provision-local-configuration-access). The default
+[runbook](../../runbooks/authentication.md#provision-local-configuration-access). The default
 business gate and explicit setup/session exemptions are delivered; target rollout waits
-for the matching UI. Actual verification and remaining work are in [progress](../IN_PROGRESS.md).
+for the matching UI. Actual verification and remaining work are in [progress](../../../IN_PROGRESS.md).
 
 ## ONB-I05 Onboarding web journey
 
@@ -323,9 +323,9 @@ main workspace; denied/unavailable states remain recoverable and sign-out works.
 Use the existing Base UI/shadcn controls, semantic tokens, keyboard focus and reduced
 motion conventions. Verify narrow layouts and associated field/status announcements.
 
-The I05 implementation follows the [web journey composition](../architecture.md#onboarding-web-journey)
-and existing [design system](design-system.md). Current verification and review findings
-are recorded in [progress](../IN_PROGRESS.md); no target rollout is implied.
+The I05 implementation follows the [web journey composition](../../../architecture.md#onboarding-web-journey)
+and existing [design system](../design-system.md). Current verification and review findings
+are recorded in [progress](../../../IN_PROGRESS.md); no target rollout is implied.
 
 ## ONB-I06 Ongoing Settings and basic structure
 
@@ -357,8 +357,8 @@ Acceptance: changing name, zone or units in Settings is reflected on reload and 
 setup overview; root identity/completion remain stable; ordinary users cannot call
 configuration APIs; invalid/stale changes are rejected with recoverable UI feedback.
 
-I06 follows the [shared Settings composition](../architecture.md#ongoing-settings-and-basic-structure).
-Actual verification and requested review/fixes are recorded in [progress](../IN_PROGRESS.md).
+I06 follows the [shared Settings composition](../../../architecture.md#ongoing-settings-and-basic-structure).
+Actual verification and requested review/fixes are recorded in [progress](../../../IN_PROGRESS.md).
 
 ## ONB-I07 Complete-chain verification
 
@@ -395,12 +395,12 @@ cached results, limitations and handoff in IN_PROGRESS.md rather than copying
 historical test counts into the release claim.
 
 The implemented verification composition is described in
-[architecture.md](../architecture.md#engineering-and-verification-architecture).
+[architecture.md](../../../architecture.md#engineering-and-verification-architecture).
 Run the existing full auth browser journey and `pnpm test:browser:onboarding:structured`
 for a separate fresh optional-structure installation. Use production Nginx image mode
 for both and `pnpm test:images:onboarding <api-tag> <web-tag>` for isolated packaging/
-non-root checks; commands are in the [runbook](runbooks/authentication.md#browser-operation-and-release-verification).
-Actual I07 evidence and remaining target-release work are recorded in [progress](../IN_PROGRESS.md).
+non-root checks; commands are in the [runbook](../../runbooks/authentication.md#browser-operation-and-release-verification).
+Actual I07 evidence and remaining target-release work are recorded in [progress](../../../IN_PROGRESS.md).
 
 ## ONB-I08 Upgrade and release
 
@@ -485,6 +485,6 @@ After the first release, prioritize capabilities against the next real workflow:
 - Import, delegation, advanced organization types/dates, branding, SSO or safety
   configuration only when separately requested and specified.
 
-ONB-I08 executable upgrade/recovery commands are in the [release runbook](runbooks/onboarding-release.md); actual selected-local and production acceptance status is tracked in IN_PROGRESS.md.
+ONB-I08 executable upgrade/recovery commands are in the [release runbook](../../runbooks/onboarding-release.md); actual selected-local and production acceptance status is tracked in IN_PROGRESS.md.
 No need to repeat
 Version 1 discovery or build all of its settings before delivering this release.

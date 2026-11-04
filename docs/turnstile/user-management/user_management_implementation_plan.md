@@ -5,9 +5,9 @@ tracked in IN_PROGRESS.md; final independent review provenance remains UM-REVIEW
 
 The accepted [specification](user_management_specification.md) owns unchanged UM-R01–22
 and confirmed D01–03; the [reviewed proposal](user_management_design_proposal.md) preserves
-discovery and independent-review provenance. The [architecture target](../architecture.md#user-management-implementation-target)
+discovery and independent-review provenance. The [architecture target](../../../architecture.md#user-management-implementation-target)
 owns technical policy, component boundaries, contracts, planned bounds and release
-compatibility. [IN_PROGRESS.md](../IN_PROGRESS.md) records actual implementation and checks.
+compatibility. [IN_PROGRESS.md](../../../IN_PROGRESS.md) records actual implementation and checks.
 This plan sequences the complete feature and names verifiable exit criteria; a planned
 package does not authorize running its migrations or deploying it.
 
@@ -112,7 +112,7 @@ reviewer's suggested package count. No further owner product decision is introdu
 
 Primary outputs: [accepted specification](user_management_specification.md), the reviewed
 proposal references, this plan and the adopted
-[architecture target](../architecture.md#user-management-implementation-target). UM-I01
+[architecture target](../../../architecture.md#user-management-implementation-target). UM-I01
 freezes policy and inventories existing boundaries; executable contracts start in I02.
 Actual completion/checks remain in IN_PROGRESS.md.
 
@@ -496,7 +496,7 @@ Keep the existing `pnpm test:browser:auth`, `pnpm test:browser:onboarding:struct
 `pnpm test:browser:people` and corresponding real-database/HTTP mode through the existing
 harness. The owning commands and recorded execution evidence remain in the workspace and progress record.
 Build the exact affected images and run their actual production entrypoints. Update the
-private [release/recovery runbook](runbooks/user-management-release.md) and verifier alongside the feature instead of recycling
+private [release/recovery runbook](../../runbooks/user-management-release.md) and verifier alongside the feature instead of recycling
 an onboarding-only success claim as user-management acceptance.
 
 ## Complete user journeys and failure acceptance

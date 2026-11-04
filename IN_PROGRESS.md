@@ -39,8 +39,8 @@ verification used disposable fixtures; no real customer has been onboarded.
 The web design system and shared designer/developer guide are implemented and locally
 verified; review the live development catalogue at /design-system.
 The owner-prioritized onboarding discovery and design proposal informed the accepted
-[onboarding specification](docs/onboarding_specification.md) established in ONB-I01.
-The [implementation plan](docs/onboarding_implementation_plan.md) defines delivery,
+[onboarding specification](docs/turnstile/onboarding/onboarding_specification.md) established in ONB-I01.
+The [implementation plan](docs/turnstile/onboarding/onboarding_implementation_plan.md) defines delivery,
 acceptance, verification and upgrade sequencing. ONB-I02–03 implement executable shared
 contracts/generated documentation, product persistence composition and canonical audited
 organization/setup operations with guarded HTTP and private maintenance commands.
@@ -62,12 +62,12 @@ structure editor, contextual CRUD/search and confirmed keyboard/pointer/touch mo
 ONB-RD07 adds completed-workspace collapsible navigation, an accessible mobile overlay,
 compact Settings sections, available dashboard actions and the optional legacy unit prompt.
 ONB-RD08 completes exact image/archive verification and the selected local release of the
-[redesign plan](docs/onboarding_redesign_implementation_plan.md). The existing local
+[redesign plan](docs/turnstile/onboarding/onboarding_redesign_implementation_plan.md). The existing local
 installation is migrated through 0010, retains completed v1 and all saved configuration,
 and passes real administrator Settings/connection/logout/relogin checks. Fresh v2 and
 upgrade variants are verified in isolated fixtures. Production/customer DNS/TLS, external
 email and rollout acceptance remain separate.
-UM-I01 adopts the accepted [user-management specification](docs/user_management_specification.md)
+UM-I01 adopts the accepted [user-management specification](docs/turnstile/user-management/user_management_specification.md)
 and freezes the next feature's architecture/contracts policy. UM-I02 adds strict shared
 contracts and generated API documentation. UM-I03 adds staged canonical access persistence,
 scope-pair evaluation, exact legacy import and private administrator recovery. UM-I04
@@ -113,6 +113,62 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+DOC-ORG-01 — **Completed** (owner: Codex, 2026-11-04).
+Owner requested organizing documentation before DMS implementation and updating references.
+Moved 14 loose documents into docs/dms/, docs/authentication/, docs/workspace/,
+docs/turnstile/onboarding/, docs/turnstile/user-management/ and docs/turnstile/.
+Added docs/README.md as the reading index and linked it from root README/architecture.
+Updated relative and repository-path references across plans/specifications, runbooks,
+progress, architecture, app/package READMEs and AGENTS guidance, the authentication
+presentation and the design-system catalogue/footer CSS comment. Kept generated API
+artifacts, presentations and runbooks in their existing folders; preserved root LICENSE,
+notices, architecture/progress/agent files and the prior DMS planning changes.
+
+Verification: 509 relative Markdown/HTML targets resolve; no original loose-doc paths
+remain in tracked/unignored text files. Biome formatting and git diff --check pass.
+pnpm check/build/test/test:integration all pass; build used 5/7 cached tasks, unit test
+pipeline 6/9 cached tasks, and integration ran uncached (21 Fastify plus 218 PostgreSQL
+cases across 15 database files). No new tests were added for this documentation/path
+change. The existing non-fatal frontend chunk-size advisory remains. No runtime,
+provisioning, schema, dependency, credential or deployment change was made; no commit/PR
+was requested. Existing owner-test installation is preserved. Next: use docs/README.md
+and docs/dms/dms_implementation_plan.md for DMS-I01/I02; implementation has not started.
+
+DMS-PLAN-01 — **Completed** (planning; owner: Codex, 2026-11-04).
+Owner requested a detailed DMS plan (called EMS in parts of the request), independent
+of Turnstile, with external-application integration, Swagger-style manual testing,
+current/selected libraries, standalone completion and a final GPT Astra review.
+Created [the standalone DMS implementation plan](docs/dms/dms_implementation_plan.md):
+20 requirement-mapped delivery packages covering independent authority/provisioning and
+packaging, generated public/private contracts, protected Swagger, secure direct transfer,
+durable work, security/publication, versions/metadata/grants/lifecycle, extraction/OCR/
+optional structure, search, operations, recovery and independent qualification. Inspected
+actual source/manifests/configuration rather than treating reserved modules as complete.
+Architecture records the standalone delivery target; the workspace plan links the sequence.
+
+GPT Astra (`gpt-6-astra`) completed the requested read-only final review and returned two
+P2 planning findings. Both are reconciled: I01/I03 define private tenant-operator commands
+with fresh identity plus explicit DMS authorization, assignment/revocation/recovery and
+negative consumer/session tests; I01 and release acceptance require an independent
+consumer-owned login/consent/verification/reset continuation fixture proving PKCE,
+logout, expiry/revocation and recovery without Turnstile. Review dispositions are in
+section 11 of the plan. The parent checked the corrections; no second review is claimed.
+
+Verification: all four required workspace commands pass (`pnpm check`, `pnpm build`,
+`pnpm test`, `pnpm test:integration`). Build/unit retained normal Turbo caches; integration
+ran uncached and passed 21 Fastify plus 218 PostgreSQL cases across 15 database files.
+An initial Markdown table-formatting check failed and was corrected with Biome before
+the passing checks. Document formatting/whitespace, 83 relative link targets and all
+20 ordered package sections pass. No new tests were added for this documentation-only
+change. The existing suites do not establish future standalone-stack/Swagger/library
+compatibility; those implementation and target checks remain explicit plan gates.
+
+Only this entry, architecture, workspace plan and the new DMS plan changed. No dependency,
+feature code, persistent installation migration, credential/provisioning change, runtime
+reset, deployment, commit or PR was made. Disposable verification fixtures preserve the
+active owner-test installation. Next implementation scope is DMS-I01, then DMS-I02;
+planned entries do not authorize starting the features. No planning blocker remains.
 
 UM-UI-PR-01 — **Completed** (owner: Codex, 2026-11-04). Owner authorized checking
 in the accumulated access UI redesign, creating a PR to parent development, resolving
@@ -1325,7 +1381,7 @@ change was performed.
 
 UM-I01 — **Completed** (owner: Codex, 2026-11-03). Scope: start authorized
 user-management implementation with the specification/architecture prerequisite from the
-linked plan. Added `docs/user_management_specification.md`, preserving UM-R01–22 wording
+linked plan. Added `docs/turnstile/user-management/user_management_specification.md`, preserving UM-R01–22 wording
 and confirmed D01–03, and adopted its product acceptance. Architecture now freezes the
 seven-action versioned permission catalog (keeping the original flat catalog unchanged
 until coordinated runtime replacement), four read-only system starters, protected role,
@@ -1363,7 +1419,7 @@ Both requested models were available and launched with the exact requested Sol x
 setting and `opencode-go/gemini-4-argon`. The Sol review returned 16 concrete gaps; checked
 them against the actual flat-grant/session, organization-response, operator and authority
 boundaries. Added explicit lifecycle/recovery outcomes and UM-R01–22 to the proposal,
-a planned technical target in architecture, and `docs/user_management_implementation_plan.md`
+a planned technical target in architecture, and `docs/turnstile/user-management/user_management_implementation_plan.md`
 with UM-I01–11 dependencies, owners, exit gates, J01–16 acceptance and coordinated release/
 restore policy. Updated the workspace-plan reference. Central targets cover canonical
 legacy grants/evaluation, scoped projections/operation rules, access-changing moves,
@@ -1426,7 +1482,7 @@ discovery proposal to distinguish starter roles from custom roles and supported 
 permissions, and show the visual in the conversation. No live administration, application
 feature, schema or permission grant is authorized by this illustration. Added
 `docs/presentations/user-management-concept.html` with Journey, Create a role and Invite &
-join views. Revised `docs/user_management_design_proposal.md` to recommend custom roles
+join views. Revised `docs/turnstile/user-management/user_management_design_proposal.md` to recommend custom roles
 from a supported permission catalog, starter templates, a protected administrator,
 grant ceilings, shared-edit impact and explicit company-wide scope. Runtime architecture
 and contracts remain unchanged; existing configuration managers are not promoted.
@@ -1453,7 +1509,7 @@ post-authentication/onboarding user journey and existing identity/access boundar
 then prepare the first user-management/invitation/RBAC proposal for product review.
 The owner selected company-wide roles first. Reviewed current private account/access
 provisioning, the three-permission catalog, Settings/readiness guards and the accepted
-onboarding boundary. Added `docs/user_management_design_proposal.md` with the recommended
+onboarding boundary. Added `docs/turnstile/user-management/user_management_design_proposal.md` with the recommended
 People & access journey, proposed fixed roles, invitation/acceptance and administration
 states, existing-grant/first-admin transition and delivery order. Configuration managers
 are not implicitly people administrators; role definitions and lifecycle policy remain
@@ -2162,7 +2218,7 @@ confirmed Site/Plant-or-Department first-unit rule. Reconcile the proposed deliv
 with current contracts, persistence, web navigation and existing verification/release
 tooling; provide file-level work, dependencies, acceptance and a start-work handoff.
 Planning only; do not begin feature implementation or change accepted runtime behavior.
-The separate `docs/onboarding_redesign_implementation_plan.md` is written and linked
+The separate `docs/turnstile/onboarding/onboarding_redesign_implementation_plan.md` is written and linked
 from the design proposal. ONB-RD01–08 cover adoption, versioned contracts/time zones,
 persistence/readiness, audited moves, dedicated setup, the shared visual editor,
 dashboard/Settings and coordinated verification/release. All nine document links resolve.
@@ -2188,7 +2244,7 @@ India-first time-zone defaults, mandatory first operational structure level, vis
 hierarchy editing and the completed-dashboard shell. Reviewed current entry gating,
 onboarding/shared editors, contracts, accepted architecture/specification and the recorded
 2026-11-01 source-application inspection. Added a dated recommendation to
-`docs/onboarding_design_proposal.md` and the separate transient interactive concept
+`docs/turnstile/onboarding/onboarding_design_proposal.md` and the separate transient interactive concept
 `docs/presentations/onboarding-redesign-concept.html`, preserving the adopted v1 rationale.
 The owner confirmed either Site/Plant or Department can satisfy the first operational
 level. The proposal covers the three-screen setup, contextual/read-only information,
@@ -2740,7 +2796,7 @@ ports are preserved. User-staged baseline changes are preserved; this work remai
 and uncommitted, with no commit/push/PR or target deployment operation.
 
 ONB-I01 implementation baseline is completed (owner: Codex, 2026-11-01).
-Created the accepted [onboarding specification](docs/onboarding_specification.md) with
+Created the accepted [onboarding specification](docs/turnstile/onboarding/onboarding_specification.md) with
 unchanged ONB-R01–12 IDs and acceptance journeys. Adopted root-only activation, private
 verified administrator provisioning, narrow configuration authority and fixed Site/Department
 labels. architecture.md now owns exact normalization/time-zone/body/unit/depth limits,
@@ -2769,7 +2825,7 @@ commit/push/PR operation changed. Work remains local/uncommitted.
 ONB-PLAN-001 planning is completed (owner: Codex, 2026-11-01): audited current
 auth/provider composition, private access grants, runtime privileges, shared contracts,
 web route/request handling and test harness. Created the
-[onboarding implementation plan](docs/onboarding_implementation_plan.md) with ONB-I01–08:
+[onboarding implementation plan](docs/turnstile/onboarding/onboarding_implementation_plan.md) with ONB-I01–08:
 baseline/specification, contracts/persistence composition, canonical audited configuration,
 private provisioning/backend gate, web onboarding, ongoing Settings, complete-chain
 verification and coordinated existing-installation release. Mapped all ONB-R01–12;
@@ -2793,8 +2849,8 @@ ONB-001 discovery/design is completed (owner: Codex, 2026-11-01): all four Versi
 reference areas and eight directly related screens were accessible after authorized login.
 Inspected tabs, create/edit forms, conditional selectors, downloaded CSV template,
 106-permission catalog and all 21 RACI matrix views. The field-level
-[inventory](docs/onboarding_v1_discovery.md) records functionality, overlaps and evidence
-limits. The [proposal](docs/onboarding_design_proposal.md) covers configuration
+[inventory](docs/turnstile/onboarding/onboarding_v1_discovery.md) records functionality, overlaps and evidence
+limits. The [proposal](docs/turnstile/onboarding/onboarding_design_proposal.md) covers configuration
 classification, minimal organization/time-zone/root setup, optional units, provisioning
 versus bootstrap/onboarding, server readiness and permission gates, resume/waiting-user
 behavior, settings navigation, dependencies, edge cases and phased delivery. Proposed
@@ -2832,7 +2888,7 @@ and radius values; authentication/recovery/session states and the workspace cons
 controls, cards, notices and skeletons. Shared ButtonLink composes Button variants with a
 native anchor, preserving navigation semantics verified by the recovery browser regression.
 The development-only /design-system gallery renders actual primitives and states without
-account/API access. docs/design-system.md provides one designer/developer handoff and
+account/API access. docs/turnstile/design-system.md provides one designer/developer handoff and
 maintenance guide; web AGENTS.md, READMEs, workspace/tooling standards and architecture
 references are aligned. Biome supports web Tailwind directives; dependency rules resolve
 the web alias through root tsconfig.boundaries.json without weakening application boundaries.
@@ -3161,7 +3217,7 @@ DNS/TLS verification remain pending; local evidence does not establish deployed 
 | ARC-002       | 2026-10-31 | Codex clarified one customer tenant per installation with multiple independent applications; separate installations per customer, shared Turnstile web/mobile backend registration, no SaaS tenant provisioning                                               | [Customer deployment model](architecture.md#customer-deployment-and-application-model), blueprint v1.6, requirements v1.3 (FR-01.01/03/06, FR-06.06), DMS-001 bootstrap acceptance, README/runbook/agent rules; design only                                                                                                                                                      |
 | DOC-001       | 2026-10-31 | Shared progress record and required agent handoff/update workflow established                                                                                                                                                                                 | [Agent instructions](AGENTS.md), this file                                                                                                                                                                                                                                                                                                                                       |
 | DOC-002       | 2026-10-31 | Codex consolidated complete DMS/Turnstile architecture, component ownership, installed/selected stack, diagrams, deployment, and future-mobile boundaries; redirected overlapping docs and required agent reference                                           | [Architecture](architecture.md), blueprint v1.5, requirements v1.2, README/standards/runbook/app/package/tooling links, [agent instructions](AGENTS.md); documentation-only change                                                                                                                                                                                               |
-| AUTH-PLAN-001 | 2026-10-31 | Codex audited absent auth implementation, researched official stable Better Auth/OAuth/Fastify/PostgreSQL/BFF guidance, recorded email/password-first decision and proposed the complete web/user/machine chain with seven work packages and acceptance tests | [Authentication plan](docs/authentication_implementation_plan.md), [architecture proposal](architecture.md#authentication-chain-implementation-proposal), blueprint v1.7, requirements v1.4; planning only, no auth/customer provisioning performed                                                                                                                              |
+| AUTH-PLAN-001 | 2026-10-31 | Codex audited absent auth implementation, researched official stable Better Auth/OAuth/Fastify/PostgreSQL/BFF guidance, recorded email/password-first decision and proposed the complete web/user/machine chain with seven work packages and acceptance tests | [Authentication plan](docs/authentication/authentication_implementation_plan.md), [architecture proposal](architecture.md#authentication-chain-implementation-proposal), blueprint v1.7, requirements v1.4; planning only, no auth/customer provisioning performed                                                                                                               |
 | AUTH-01       | 2026-10-31 | Codex installed exact authentication dependencies, generated Nest configuration/readiness boundaries, added pure plugin-aware CLI options, validated local/test/production profiles, examples and `dev:auth` orchestration                                    | [Authentication foundations](architecture.md#authentication-configuration-foundations); required workspace checks, 39 API unit tests, 10 HTTP/plugin integration tests, CLI/Node ESM/runtime checks passed; persistence and handlers remain AUTH-02                                                                                                                              |
 | DEV-001       | 2026-10-31 | Shared-package rebuilds and consuming API restarts are available through `pnpm dev:auth`; existing separate dev commands remain supported                                                                                                                     | Temporary shared-contract source change rebuilt the package and restarted an isolated-port DMS consumer; HTTP liveness passed, source restored and temporary process tree stopped                                                                                                                                                                                                |
 | AUTH-02       | 2026-10-31 | Codex implemented owned PostgreSQL schemas/pools/migrations, least-privilege roles and tenant bootstrap/RLS, persisted native authority, private verified-account provisioning, controlled SMTP recovery, safe responses and encrypted product sessions       | [Architecture](architecture.md#owned-persistence-and-authority-handler), [operator runbook](docs/runbooks/authentication.md); required workspace checks, 14 real database tests plus 10 Fastify checks, production package startup/migrations and pinned unprivileged Nginx privacy checks passed; no real customer provisioning                                                 |
@@ -3697,7 +3753,7 @@ These are recorded follow-ups, not active tasks or additional release commitment
 | OPS-002    | Planned     | Dokploy deployment verification                                                          | Deploy the implemented services to the intended Linux environment and verify domains, TLS, API routing, and health checks.                                                                                                                                                                                                                                                                                                                                                                                                    |
 | OPS-003    | In progress | Stable host/WSL time for reliable authentication verification                            | UM-VERIFY-02 now passes the 180-second preflight and 573-second runtime observation with no backward intervals/steps above 5 ms, plus complete integration and four browser suites. Prior enrollment failure did not recur; cause is not assigned. Windows latest resync still reports stale time data (error 2) despite leap 0/stratum 5: follow up source freshness and recheck time before cutover/after resume. No additional host setting, kernel clocksource change, WSL restart or target cutover was performed.       |
 | UM-REL-001 | Planned     | Coordinated user-management installation cutover and target acceptance                   | Private bundle and complete UM-VERIFY-02 local suites now pass, including measured clock stability. Before cutover, recheck target time/source freshness and obtain separate target authorization; then follow the user-management runbook: coherent backup/rehearsal, stopped incompatible processes, credential retirement, owning migrations/import, distinct service provisioning, real first-administrator handover, exact-image startup/opening and target verification. No existing-installation cutover has occurred. |
-| DMS-001    | Planned     | DMS requirement group 01: shared identity, one customer tenant, application provisioning | Owned tenant bootstrap and guarded application enrollment are implemented and fixture-tested in AUTH-02/05. Coordinate real client provisioning/enrollment and customer onboarding with the [authentication plan](docs/authentication_implementation_plan.md) and accepted [requirements](docs/headless_dms_functionality_requirements_v1.md#01-shared-identity-tenant-bootstrap-and-application-provisioning); test the minimal single-tenant/client context before onboarding the real customer.                            |
+| DMS-001    | Planned     | DMS requirement group 01: shared identity, one customer tenant, application provisioning | Owned tenant bootstrap and guarded application enrollment are implemented and fixture-tested in AUTH-02/05. Coordinate real client provisioning/enrollment and customer onboarding with the [authentication plan](docs/authentication/authentication_implementation_plan.md) and accepted [requirements](docs/dms/headless_dms_functionality_requirements_v1.md#01-shared-identity-tenant-bootstrap-and-application-provisioning); test the minimal single-tenant/client context before onboarding the real customer.         |
 | AUTH-001   | Planned     | Target authentication rollout and customer provisioning                                  | AUTH-01–07 code/local verification is complete. Provision the intended installation through the tested runbook and verify canonical container DNS/TLS, actual Dokploy routing/proxy/cookies, pilot mail access and recovery/rollback evidence. No target deployment or real customer provisioning has occurred.                                                                                                                                                                                                               |
 | APP-001    | Planned     | Turnstile product functionality                                                          | Agree on the business requirements before creating feature modules, screens, or schemas.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | MIG-001    | Planned     | Source/data migration                                                                    | Identify the source application/data, scope, and migration requirements before implementation. No migration has started.                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -3712,12 +3768,12 @@ as implemented capabilities.
 ## Reference documents
 
 - [Architecture](architecture.md): single technical reference for both products
-- [Authentication implementation plan](docs/authentication_implementation_plan.md): source-backed proposal, execution order, and complete-chain acceptance
-- [User-management specification](docs/user_management_specification.md): accepted UM-R01–22 and D01–03 scope
-- [User-management implementation plan](docs/user_management_implementation_plan.md): UM-I01–11 delivery and acceptance gates
-- [Workspace implementation plan](docs/workspace_implementation_plan.md)
+- [Authentication implementation plan](docs/authentication/authentication_implementation_plan.md): source-backed proposal, execution order, and complete-chain acceptance
+- [User-management specification](docs/turnstile/user-management/user_management_specification.md): accepted UM-R01–22 and D01–03 scope
+- [User-management implementation plan](docs/turnstile/user-management/user_management_implementation_plan.md): UM-I01–11 delivery and acceptance gates
+- [Workspace implementation plan](docs/workspace/workspace_implementation_plan.md)
 - [Workspace standards](docs/standards/workspace.md)
-- [DMS product blueprint](docs/headless_dms_product_blueprint_v1.md)
-- [Sequenced DMS functionality requirements](docs/headless_dms_functionality_requirements_v1.md)
+- [DMS product blueprint](docs/dms/headless_dms_product_blueprint_v1.md)
+- [Sequenced DMS functionality requirements](docs/dms/headless_dms_functionality_requirements_v1.md)
 - [Dokploy runbook](docs/runbooks/dokploy.md)
 - [Development commands](README.md#start-locally)

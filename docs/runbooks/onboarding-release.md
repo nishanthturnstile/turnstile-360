@@ -11,7 +11,7 @@ for coordinated authority/API/web cutover, credential retirement and invitation 
 This onboarding-only procedure does not establish compatibility with those feature writers.
 
 This procedure covers the v2 first-unit/move release and preserved completed v1.
-The [redesign plan](../onboarding_redesign_implementation_plan.md#onb-rd08-verification-and-coordinated-release)
+The [redesign plan](../turnstile/onboarding/onboarding_redesign_implementation_plan.md#onb-rd08-verification-and-coordinated-release)
 defines its release evidence. Build matching API/web candidates, verify their exact
 migration payloads, and rehearse the protected archive before changing the selected target.
 A completed v1 installation stays activated with the same version, revision, profile,

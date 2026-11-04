@@ -47,4 +47,4 @@ in `IN_PROGRESS.md`. Update affected references when the architecture changes.
 - Run `pnpm check`, `pnpm build`, `pnpm test`, and `pnpm test:integration` for workspace changes.
 - Report unavailable container/runtime verification separately from static checks.
 
-See `architecture.md`, `docs/workspace_implementation_plan.md`, and `docs/standards/workspace.md`.
+See `architecture.md`, `docs/workspace/workspace_implementation_plan.md`, and `docs/standards/workspace.md`.

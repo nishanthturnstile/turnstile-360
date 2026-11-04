@@ -10,7 +10,7 @@ satisfies the required first operational level. The compatibility, regional and 
 decisions below adopt the implementation defaults in the
 [redesign plan](onboarding_redesign_implementation_plan.md); they are the implementation
 target, not evidence of delivered behavior. Actual implementation and verification remain
-in [progress](../IN_PROGRESS.md). The [original plan](onboarding_implementation_plan.md)
+in [progress](../../../IN_PROGRESS.md). The [original plan](onboarding_implementation_plan.md)
 preserves ONB-I01–08 delivery history; ONB-RD02–08 deliver this redesign. DMS FR/NFR
 requirements keep their existing IDs and ownership.
 
@@ -95,16 +95,16 @@ The adopted implementation decisions live in architecture.md. Its redesign targe
 normative for ONB-RD02 onward; existing v1 delivery remains identified separately. Accepted
 targets are not claims that new routes, schemas, migrations or layouts are installed:
 
-- [Composition and ownership](../architecture.md#onboarding-composition-and-ownership):
+- [Composition and ownership](../../../architecture.md#onboarding-composition-and-ownership):
   one product pool, organization/setup services and application-level access orchestration.
-- [Validation and bounds](../architecture.md#onboarding-validation-and-bounds): exact
+- [Validation and bounds](../../../architecture.md#onboarding-validation-and-bounds): exact
   name/time-zone rules, bounded bodies, units/depth, revisions and retry retention.
-- [HTTP and access contracts](../architecture.md#onboarding-http-and-access-contracts):
+- [HTTP and access contracts](../../../architecture.md#onboarding-http-and-access-contracts):
   request/response shapes, route permissions, public versus readiness exemptions,
   safe domain errors and browser destinations.
-- [Consistency and audit](../architecture.md#onboarding-consistency-and-audit): shared
+- [Consistency and audit](../../../architecture.md#onboarding-consistency-and-audit): shared
   mutation/grant locking, repeat completion, create receipts and operator retention.
-- [Operations and upgrade](../architecture.md#onboarding-operations-and-upgrade): private
+- [Operations and upgrade](../../../architecture.md#onboarding-operations-and-upgrade): private
   command contracts and coordinated fresh/existing-installation behavior.
 
 The [redesign plan](onboarding_redesign_implementation_plan.md) sequences delivery;

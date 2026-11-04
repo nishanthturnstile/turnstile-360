@@ -69,7 +69,7 @@ are introduced. Use compatible immutable image sets and explicit migration steps
 
 ## Onboarding release boundary
 
-The accepted [onboarding specification](../onboarding_specification.md) and
+The accepted [onboarding specification](../turnstile/onboarding/onboarding_specification.md) and
 [upgrade contract](../../architecture.md#onboarding-operations-and-upgrade) govern the
 coordinated onboarding release. ONB-I02–04 implement contracts, configuration migrations,
 private setup/grant commands and the backend gate. I05–06 deliver onboarding/waiting and
@@ -78,7 +78,7 @@ Settings UI; I07 supplies local complete-chain verification and I08 supplies the
 do not expose an intermediate backend as a complete release.
 
 These executable procedures cover preserved v1 and the v2 redesign. The
-[redesign plan](../onboarding_redesign_implementation_plan.md#onb-rd08-verification-and-coordinated-release)
+[redesign plan](../turnstile/onboarding/onboarding_redesign_implementation_plan.md#onb-rd08-verification-and-coordinated-release)
 requires compatible v2 migrations/API/web and extended upgrade verification before target
 rollout. Upgrade incomplete v1 only; preserve completed v1 version/revision/completion,
 units and saved zone. RD03 delivers v2 persistence/readiness and RD04 adds guarded moves;

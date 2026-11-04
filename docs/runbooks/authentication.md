@@ -13,7 +13,7 @@ Dokploy responsibilities; see the [deployment runbook](dokploy.md).
 ## Onboarding release boundary
 
 ONB-I01 adopted the v1 baseline; ONB-RD01 adopts the current
-[onboarding specification](../onboarding_specification.md). Its
+[onboarding specification](../turnstile/onboarding/onboarding_specification.md). Its
 [technical baseline](../../architecture.md#onboarding-implementation-baseline) defines
 initialization, configuration grants, inspection/retention and readiness contracts.
 ONB-I03–04 supply canonical configuration, guarded HTTP, private setup/maintenance and
@@ -23,7 +23,7 @@ complete-chain verification. ONB-I08 supplies the
 [upgrade, release, handover and recovery procedure](onboarding-release.md).
 
 RD03 implements v2 initialization/readiness and incomplete-only v1 upgrades after the
-owning migrations. The [redesign plan](../onboarding_redesign_implementation_plan.md)
+owning migrations. The [redesign plan](../turnstile/onboarding/onboarding_redesign_implementation_plan.md)
 adds dedicated setup/waiting and first-unit forms in RD05. RD06 adds the shared visual
 editor and confirmed moves; RD07 adds completed navigation and RD08 verifies the
 coordinated local release. RD04 supplies the audited parent-change API. Dated local

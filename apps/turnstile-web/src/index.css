@@ -6,7 +6,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Preset biekTCUvD. Maintain semantic values here; see docs/design-system.md. */
+/* Preset biekTCUvD. Maintain semantic values here; see docs/turnstile/design-system.md. */
 :root {
   --accent: oklch(0.96 0.003 325.6);
   --muted: oklch(0.96 0.003 325.6);

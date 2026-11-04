@@ -19,7 +19,7 @@ Administrators can use predefined roles or create roles in their own terminology
 assign company-wide access or limit access to selected Sites and Departments from the
 existing organization structure. Organization and workspace refer to the same installed
 customer context, as defined by the
-[deployment model](../architecture.md#customer-deployment-and-application-model).
+[deployment model](../../../architecture.md#customer-deployment-and-application-model).
 
 The proposed journey is company setup complete → Settings → People & access → Choose
 or create a role → Select company-wide or Site/Department scope → Invite person →
@@ -47,9 +47,9 @@ person assignments remain separate business capabilities.
   and member-to-unit relationships are not implemented.
 
 These findings follow the current
-[authorization boundary](../architecture.md#turnstile-bff-and-user-authorization-boundary),
-[configuration access policy](../architecture.md#access-provisioning-and-backend-readiness)
-and [onboarding release boundary](onboarding_specification.md#release-boundary).
+[authorization boundary](../../../architecture.md#turnstile-bff-and-user-authorization-boundary),
+[configuration access policy](../../../architecture.md#access-provisioning-and-backend-readiness)
+and [onboarding release boundary](../onboarding/onboarding_specification.md#release-boundary).
 
 ## Proposed first release
 
@@ -183,7 +183,7 @@ over the parent and the resulting child. Leaf deletion needs coverage of affecte
 links and the existing reference/setup protections. Moves need coverage of all affected
 units/relationships; breadcrumbs are not authority to manage an ancestor. The complete
 operation matrix and restricted projections live in the
-[technical target](../architecture.md#user-management-consistency-and-scoped-structure).
+[technical target](../../../architecture.md#user-management-consistency-and-scoped-structure).
 
 Each backend operation must match its required permission and target resource against the
 same current assignment. Never flatten a person's roles and unit lists independently:
@@ -218,7 +218,7 @@ they manage a Site. D03 defers delegated unit-level people administration, which
 require additional scoped grant/assignment rules. The protected administrator
 and last-configuration-manager protections remain company-wide.
 
-The [earlier interactive concept](presentations/user-management-concept.html) illustrates
+The [earlier interactive concept](../../presentations/user-management-concept.html) illustrates
 the company-wide journey, role creation and simulated invitation/acceptance/suspension.
 It predates this scope expansion and does not yet show scoped assignment controls; the
 proposal above supersedes its company-wide-only text. Its data is fictional, held only in
@@ -273,7 +273,7 @@ password setup and login without treating an invitation link as a normal product
 
 The final review closes the following outcomes as part of this release. Detailed state
 versions, wire errors, secret handling, limits and delivery ownership are maintained in the
-[architecture target](../architecture.md#invitation-approval-identity-and-delivery).
+[architecture target](../../../architecture.md#invitation-approval-identity-and-delivery).
 
 | Trigger or situation                                         | Required user-visible result and access outcome                                                                                                                                                                        |
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -373,9 +373,9 @@ No customer/prod rollout or restore is performed by this review/planning task.
 Confirmed by the owner: use the existing Mailpit setup for development invitation,
 verification and password-setup/recovery messages. Reuse the configured transport and
 inbox rather than introducing another mail service, relay or host port. The
-[architecture](../architecture.md#loginrecovery-ui-and-operational-boundary) owns Mailpit
+[architecture](../../../architecture.md#loginrecovery-ui-and-operational-boundary) owns Mailpit
 configuration, capture limits and deployment differences; the
-[reserved ports table](../architecture.md#reserved-local-ports) owns its SMTP/UI addresses.
+[reserved ports table](../../../architecture.md#reserved-local-ports) owns its SMTP/UI addresses.
 Captured mail is development delivery evidence, not delivery to a real recipient inbox.
 Test the actual captured invitation and authority messages together when implementing
 the feature. Production SMTP/provider/domain configuration remains a rollout task; it
@@ -402,7 +402,7 @@ assignments; use expiring single-use invitations, explicit resend invalidating t
 link and cancellation/reapproval when the inviter loses authority. These do not require
 additional approval questions unless the owner wants different behavior. Expiry,
 rate/resource limits and API/error/concurrency targets now live in the
-[adopted architecture target](../architecture.md#user-management-implementation-target);
+[adopted architecture target](../../../architecture.md#user-management-implementation-target);
 UM-I01 adopts them in the [specification](user_management_specification.md) and linked
 architecture rather than leaving implementation policy undecided.
 Select the initial administrator through an explicit private operator grant to the intended
@@ -455,7 +455,7 @@ The [accepted user-management specification](user_management_specification.md) c
 confirmed D01–D03 and UM-R01–22. UM-I01 freezes the role/scope catalog and invitation
 lifecycle in the linked architecture before executable contracts or migrations.
 Technical decisions, configured limits and API/security contracts belong in
-[architecture.md](../architecture.md), not a duplicate design in this proposal.
+[architecture.md](../../../architecture.md), not a duplicate design in this proposal.
 
 The [detailed delivery plan](user_management_implementation_plan.md#dependency-order)
 sequences UM-I01–11: specification/contracts; canonical access and legacy compatibility;
@@ -501,4 +501,4 @@ prove that other registered applications retain their independent access.
 Bulk invites, imports, role inheritance/explicit-deny policies, staff records and workflow
 authorization and delegated unit-level people administration remain separate scope.
 There is no implementation or deployment in this
-discovery task. Actual work and verification are recorded in [IN_PROGRESS.md](../IN_PROGRESS.md).
+discovery task. Actual work and verification are recorded in [IN_PROGRESS.md](../../../IN_PROGRESS.md).

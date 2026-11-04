@@ -8,23 +8,26 @@
 
 ## Documentation ownership and reading guide
 
+The [documentation index](docs/README.md) groups plans and specifications by owning area.
+
 This is the single technical architecture reference for the reusable Document Management
 System (DMS), Turnstile 360, their shared repository, and deployment. It consolidates the
 accepted DMS technical design previously held in blueprint v1.4 and the accepted workspace
 and future-mobile decisions. Consolidation does not change product scope or authorize
 feature implementation.
 
-| Document                                                                             | Owns                                                                                                                                                                                     |
-| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [architecture.md](architecture.md)                                                   | Components, responsibilities, dependencies, data/work flows, technical contracts, selected stack, configured limits, security, deployment topology, recovery, and architecture decisions |
-| [DMS product blueprint](docs/headless_dms_product_blueprint_v1.md)                   | Product promise, included/deferred scope, product correctness, deployment inputs, and product decision history                                                                           |
-| [DMS functionality requirements](docs/headless_dms_functionality_requirements_v1.md) | Stable FR/NFR IDs and capability dependency order                                                                                                                                        |
-| [Onboarding specification](docs/onboarding_specification.md)                         | Accepted ONB-R01–13 product scope and acceptance; delivery packages remain in the linked implementation plans                                                                            |
-| [User-management specification](docs/user_management_specification.md)               | Accepted UM-R01–22 product requirements and D01–03 decisions; the proposal preserves discovery and the linked plan sequences delivery                                                    |
-| [Workspace standards](docs/standards/workspace.md)                                   | Coding, formatting, configuration, and verification conventions                                                                                                                          |
-| [Workspace implementation plan](docs/workspace_implementation_plan.md)               | Workspace setup sequence, CLI provenance, and original validation                                                                                                                        |
-| [Dokploy runbook](docs/runbooks/dokploy.md)                                          | Deployment commands and operator steps                                                                                                                                                   |
-| [IN_PROGRESS.md](IN_PROGRESS.md)                                                     | Actual implementation, verification, active work, gaps, and agent handoffs                                                                                                               |
+| Document                                                                                         | Owns                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [architecture.md](architecture.md)                                                               | Components, responsibilities, dependencies, data/work flows, technical contracts, selected stack, configured limits, security, deployment topology, recovery, and architecture decisions |
+| [DMS product blueprint](docs/dms/headless_dms_product_blueprint_v1.md)                           | Product promise, included/deferred scope, product correctness, deployment inputs, and product decision history                                                                           |
+| [DMS functionality requirements](docs/dms/headless_dms_functionality_requirements_v1.md)         | Stable FR/NFR IDs and capability dependency order                                                                                                                                        |
+| [Standalone DMS implementation plan](docs/dms/dms_implementation_plan.md)                        | Requirement-mapped delivery, independent installation/integration, API explorer and standalone verification gates; planned work is not implementation                                    |
+| [Onboarding specification](docs/turnstile/onboarding/onboarding_specification.md)                | Accepted ONB-R01–13 product scope and acceptance; delivery packages remain in the linked implementation plans                                                                            |
+| [User-management specification](docs/turnstile/user-management/user_management_specification.md) | Accepted UM-R01–22 product requirements and D01–03 decisions; the proposal preserves discovery and the linked plan sequences delivery                                                    |
+| [Workspace standards](docs/standards/workspace.md)                                               | Coding, formatting, configuration, and verification conventions                                                                                                                          |
+| [Workspace implementation plan](docs/workspace/workspace_implementation_plan.md)                 | Workspace setup sequence, CLI provenance, and original validation                                                                                                                        |
+| [Dokploy runbook](docs/runbooks/dokploy.md)                                                      | Deployment commands and operator steps                                                                                                                                                   |
+| [IN_PROGRESS.md](IN_PROGRESS.md)                                                                 | Actual implementation, verification, active work, gaps, and agent handoffs                                                                                                               |
 
 Keep technical design changes here and link from other documents. Update affected
 requirements and runbooks when behavior or deployment steps change. Manifests, lockfiles,
@@ -345,7 +348,7 @@ into presentation. No UI package is shared with contracts, APIs or future mobile
 The development-only `/design-system` catalogue renders the actual primitives and
 representative states with fixture content, no account/API access and an in-memory
 light/dark preview. Its import is guarded by `import.meta.env.DEV`; production builds
-exclude the catalogue module and route. The [design-system guide](docs/design-system.md)
+exclude the catalogue module and route. The [design-system guide](docs/turnstile/design-system.md)
 defines designer/developer handoff, component conventions and CLI maintenance rather
 than duplicating the technical design. Reviewed local adaptations retain upstream
 composition while meeting Biome, explicit transition and reduced-motion conventions.
@@ -393,10 +396,10 @@ the DMS never imports Turnstile business rules.
 
 ### Onboarding implementation baseline
 
-ONB-I01 adopted the original [onboarding specification](docs/onboarding_specification.md)
+ONB-I01 adopted the original [onboarding specification](docs/turnstile/onboarding/onboarding_specification.md)
 and technical decisions for ONB-I02–08. ONB-RD01 now adopts the redesign target from the
-[dated proposal](docs/onboarding_design_proposal.md#redesign-recommendation-2026-11-02)
-and [redesign delivery plan](docs/onboarding_redesign_implementation_plan.md). The existing
+[dated proposal](docs/turnstile/onboarding/onboarding_design_proposal.md#redesign-recommendation-2026-11-02)
+and [redesign delivery plan](docs/turnstile/onboarding/onboarding_redesign_implementation_plan.md). The existing
 v1 implementation and its evidence remain in [progress](IN_PROGRESS.md); RD01 changes
 requirements/technical decisions only. RD02 adds executable versioned contracts, Kolkata
 compatibility and the adopted move contract. RD03 implements v2 persistence, initialization,
@@ -1205,9 +1208,9 @@ Broad IAM and Document Approval remain separate.
 
 Kids tracking, staff, and other Turnstile business areas require the product functionality
 specification before defining feature modules, workflows, screens, permissions, or tables.
-Onboarding now has its own [accepted specification](docs/onboarding_specification.md).
-The accepted [user-management specification](docs/user_management_specification.md) and
-[implementation plan](docs/user_management_implementation_plan.md) define the next
+Onboarding now has its own [accepted specification](docs/turnstile/onboarding/onboarding_specification.md).
+The accepted [user-management specification](docs/turnstile/user-management/user_management_specification.md) and
+[implementation plan](docs/turnstile/user-management/user_management_implementation_plan.md) define the next
 people/access capability; its technical target follows below. Document Approval and other
 business areas remain separate product work. This architecture
 establishes ownership and integration patterns without inventing those features. No mobile
@@ -1216,9 +1219,9 @@ application, business feature code, schema or migration is added by this documen
 ### User-management implementation target
 
 **Accepted implementation target, 2026-11-03 (UM-I01):** the
-[specification](docs/user_management_specification.md) owns unchanged UM-R01–22 and
-confirmed D01–03; the [proposal](docs/user_management_design_proposal.md) preserves review
-provenance and the [plan](docs/user_management_implementation_plan.md) owns package
+[specification](docs/turnstile/user-management/user_management_specification.md) owns unchanged UM-R01–22 and
+confirmed D01–03; the [proposal](docs/turnstile/user-management/user_management_design_proposal.md) preserves review
+provenance and the [plan](docs/turnstile/user-management/user_management_implementation_plan.md) owns package
 dependencies and exit criteria. UM-I02 supplies executable contracts and generated OpenAPI
 for this target; UM-I03 adds staged canonical access persistence and private recovery.
 UM-I04 replaces the live access consumers and normal-session context contract.
@@ -2626,7 +2629,7 @@ Tika and Calamine are selected for the included Office/spreadsheet scope. Instal
 
 Use the NestJS Fastify adapter and compatible Fastify plugins, with exact package/container versions pinned in the implementation. Maintain the lockfile and bill of materials as part of ordinary dependency management. [NestJS adapters](https://docs.nestjs.com/techniques/performance)
 
-The monorepo uses pnpm/Turborepo, Biome, and uv. Turnstile 360 is the consumer product: its Vite/React frontend and separate NestJS/Fastify backend live beside the reusable DMS and Python processing project. Turnstile business functionality and data migration are specified separately. The [workspace implementation plan](docs/workspace_implementation_plan.md) records setup provenance; [workspace standards](docs/standards/workspace.md) define coding rules. Workspace setup precedes capability implementation.
+The monorepo uses pnpm/Turborepo, Biome, and uv. Turnstile 360 is the consumer product: its Vite/React frontend and separate NestJS/Fastify backend live beside the reusable DMS and Python processing project. Turnstile business functionality and data migration are specified separately. The [workspace implementation plan](docs/workspace/workspace_implementation_plan.md) records setup provenance; [workspace standards](docs/standards/workspace.md) define coding rules. Workspace setup precedes capability implementation.
 
 ## Module and contract boundaries
 
@@ -2717,7 +2720,7 @@ persistence/native authority, managed OAuth clients, the Turnstile BFF and DMS m
 authorization/enrollment, typed cross-service capabilities and login/recovery UI. Actual deployed
 operational verification remains pending; see the progress record for verification.
 The ordered tasks, research evidence, dependency candidates, acceptance tests, and
-remaining operator inputs are in the [authentication implementation plan](docs/authentication_implementation_plan.md).
+remaining operator inputs are in the [authentication implementation plan](docs/authentication/authentication_implementation_plan.md).
 Existing one-customer/one-tenant and application-isolation requirements remain in force.
 
 #### Authentication configuration foundations
@@ -3897,6 +3900,45 @@ isolated test fixtures may continue using ephemeral ports; they do not reserve h
 ports or change this manual-development contract. Production ports/domains remain governed
 by the Dokploy deployment, not this development reservation.
 
+### Standalone DMS delivery target
+
+The DMS must also be installable and usable without Turnstile API/web, product-owned
+schemas, product secrets or a product ingress proxy. Independently registered backends
+consume its public HTTP contract; the workspace TypeScript client is optional. Keep
+the one-customer/multiple-application model and existing public/private trust boundaries.
+This is an explicit delivery target, not a claim that the current Compose/configuration
+already provides a complete standalone installation.
+
+The [standalone DMS plan](docs/dms/dms_implementation_plan.md) sequences the remaining work.
+It requires standalone authority/discovery/token routing, explicit auth/DMS-only database
+provisioning, complete stateful/processing packaging and an independent-consumer test
+lane. Preserve current combined-installation issuer/client bindings; changes to an
+existing installation require an explicit coordinated operator procedure. Standalone
+machine use must not require a consumer's user-login callback or screens. Shared-user
+login acceptance separately requires a minimal independent consumer with approved
+per-client login/consent continuation, redirect/logout and verification/reset destinations,
+proving code/PKCE, expiry/revocation and recovery while Turnstile is absent.
+
+Tenant-operator document administration uses private commands with fresh verified authority
+identity plus explicit active DMS operator authorization bound to the installation tenant.
+Bootstrap/assignment/revocation/recovery and attributed owning-use-case execution will be
+implemented in DMS-I01/I03 and extended with each feature. Authority-admin status alone,
+ordinary consumer scopes and browser sessions never supply document operator powers.
+Keep maintenance credentials private, operator contracts outside consumer OpenAPI and
+public machine-resource checks separate. No DMS management UI or end-user ACL model is
+introduced by this operator interface.
+
+Provide generated public OpenAPI 3.1 plus a locally bundled Swagger-style explorer on
+the existing DMS listener. The planned Fastify static-document serving integration must
+consume the shared-schema-generated artifact, keep private contracts separate and prove
+compatible pinned packages during implementation. Documentation is off by default in
+production and enabled only under controlled operator access. Manual requests use a
+short-lived bearer token obtained outside the browser; never embed machine credentials,
+persist authorization, load external validators/assets or bypass resource policy. File
+bytes still use direct signed storage transfers. Exact routes/configuration and executable
+limits are frozen with the implementing capability; no docs service or new host port
+is introduced by this documentation decision.
+
 ### Linux, Dokploy, Traefik, and Nginx
 
 The deployment target runs the stack in containers on a Linux server managed by Dokploy.
@@ -4019,6 +4061,7 @@ database changes, mobile code or migration. Actual completion/verification stays
 
 | Date       | Architecture record                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-04 | Standalone DMS delivery explicitly requires auth/DMS-only installation, direct authority routing, independent machine and user-login acceptance, private tenant-operator authorization and a protected generated-schema API explorer. Delivery gates are in the DMS plan; document/processing implementation and target deployment remain pending.                                                                                                                                                                                                        |
 | 2026-11-03 | ONB-CHART-NAVIGATION adds a transient whiteboard camera with surface/Hand/Space/middle pan, wheel pan, anchored modifier-wheel zoom, touch pinch and fixed keyboard-accessible zoom/reset/Fit controls. Separate gesture ownership preserves confirmed unit moves and canonical automatic positions; Compact outline retains native scrolling. No dependency, API or database changes.                                                                                                                                                                    |
 | 2026-11-03 | ONB-OUTLINE-UX renders Compact outline as dense canonical hierarchy rows with aligned metadata, leading branch controls/guides and horizontal actions. Responsive type placement and bounded deep-list overflow preserve existing commands, editor identity, chart geometry and backend contracts.                                                                                                                                                                                                                                                        |
 | 2026-11-02 | ONB-STRUCTURE-POLISH expands the chart to the available Settings viewport and consolidates operations into one collapsible nonmodal floating panel. Base UI keepMounted preserves drafts/recovery; errors reopen hidden editors, routine success uses quiet announcements, and valid-parent selection supports consecutive additions. The canvas and tools own separate native overflow, with no contract/schema, dependency or deployment changes.                                                                                                       |

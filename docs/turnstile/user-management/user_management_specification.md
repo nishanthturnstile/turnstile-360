@@ -5,9 +5,9 @@
 This specification adopts the [reviewed proposal](user_management_design_proposal.md)
 and preserves UM-R01–22 and confirmed D01–03. It defines product acceptance; technical
 identifiers, contracts, limits, module boundaries and release policy are centralized in
-[architecture.md](../architecture.md#user-management-implementation-target). The
+[architecture.md](../../../architecture.md#user-management-implementation-target). The
 [implementation plan](user_management_implementation_plan.md) sequences UM-I01–11;
-[IN_PROGRESS.md](../IN_PROGRESS.md) alone records actual completion and verification.
+[IN_PROGRESS.md](../../../IN_PROGRESS.md) alone records actual completion and verification.
 Acceptance of this baseline does not claim that roles, invitations, migrations or UI exist.
 
 ## Release boundary
@@ -82,7 +82,7 @@ A role has stable identity, normalized unique name, optional description, versio
 explicit set of supported actions. A title supplies no permission. Unknown/future actions
 grant nothing and cannot be saved. Supported company-only versus scope-aware actions,
 reserved system keys/names and starter permission sets are fixed by the
-[permission catalog](../architecture.md#user-management-permission-and-starter-catalog).
+[permission catalog](../../../architecture.md#user-management-permission-and-starter-catalog).
 DMS connection capability-read remains a separate explicit permission in every role;
 Workspace administrator does not acquire it implicitly.
 
@@ -168,7 +168,7 @@ normalized address/application. A transport retry reuses the original result and
 silently sends another message. Explicit resend rotates the credential before queuing mail;
 delivery failure never revives the previous link. Invitations and email delivery have
 separate lifecycle/status, as frozen in the
-[transition tables](../architecture.md#user-management-state-transitions).
+[transition tables](../../../architecture.md#user-management-state-transitions).
 
 Recipients review the currently approved permissions and scopes, not only role names.
 Permission, selected-scope/contact, or inherited-coverage changes invalidate prior approval
@@ -259,7 +259,7 @@ web/migrations/private commands and prove old readers/writers cannot remain acti
 pre-feature image is not a valid rollback after new writers open. Restore rehearsals rotate
 the external invitation epoch, quarantine restored mail and require explicit reapproval/
 resend so restored credentials cannot undo cancellation or suspension. The
-[release barrier](../architecture.md#user-management-release-compatibility) owns the exact
+[release barrier](../../../architecture.md#user-management-release-compatibility) owns the exact
 technical policy; production/customer rollout remains separately recorded.
 
 The plan's [J01–16 journeys](user_management_implementation_plan.md#complete-user-journeys-and-failure-acceptance)
