@@ -10,12 +10,19 @@ import {
   type WorkspaceStatusDto,
 } from '@thaarei/turnstile-contracts';
 import type { PoolClient } from 'pg';
+import { AccessContextChangedException } from '../../../infrastructure/access-context-exception.js';
+import { authError } from '../../../infrastructure/access-error.js';
 import type { ConfigurationActor } from '../../../infrastructure/configuration-context.js';
 import { ConfigurationException } from '../../../infrastructure/configuration-exception.js';
-import { lockConfiguration } from '../../../infrastructure/database/configuration-lock.js';
 import { withTenant } from '../../../infrastructure/database/postgres.js';
 import { ProductPersistenceService } from '../../../infrastructure/database/product-persistence.service.js';
-import { authError } from '../../auth/browser-auth/auth-errors.js';
+import {
+  covers,
+  type EffectiveAccess,
+  hasShell,
+  readAccess,
+} from '../../access/access-evaluator.js';
+import { StructureAccessService } from '../../access/structure-access.service.js';
 
 export type { ConfigurationActor } from '../../../infrastructure/configuration-context.js';
 export interface ConfigurationRecord {
@@ -41,7 +48,9 @@ export interface ConfigurationTransaction {
   record: ConfigurationRecord;
   actor: ConfigurationActor;
   canManage: boolean;
+  access: EffectiveAccess;
 }
+type OrganizationReadContext = Omit<ConfigurationTransaction, 'access'>;
 
 export function configurationUnavailable(): never {
   throw new ConfigurationException({ code: 'CONFIGURATION_UNAVAILABLE' });
@@ -66,7 +75,7 @@ export function configurationConflict(
   });
 }
 
-function compareCodePoints(left: string, right: string) {
+export function compareCodePoints(left: string, right: string) {
   const a = [...left];
   const b = [...right];
   for (let i = 0; i < Math.min(a.length, b.length); i++) {
@@ -78,7 +87,10 @@ function compareCodePoints(left: string, right: string) {
 
 @Injectable()
 export class OrganizationRepository {
-  constructor(private readonly persistence: ProductPersistenceService) {}
+  constructor(
+    private readonly persistence: ProductPersistenceService,
+    private readonly structureAccess: StructureAccessService,
+  ) {}
 
   private async connection() {
     const { pool, config } = this.persistence;
@@ -93,28 +105,22 @@ export class OrganizationRepository {
   async status(actor: ConfigurationActor): Promise<WorkspaceStatusDto> {
     try {
       const { pool, config } = await this.connection();
-      return await withTenant(pool, config.INSTALLATION_TENANT_ID, async (client) => {
-        // One committed statement snapshot, without queuing readers on mutation locks.
-        const row = (
-          await client.query(
-            `SELECT c.completed_at,a.enabled,a.permissions FROM turnstile.organization_configuration c
-          LEFT JOIN turnstile.user_access a ON a.tenant_id = c.tenant_id AND a.user_id = $2
-          WHERE c.tenant_id = $1`,
-            [config.INSTALLATION_TENANT_ID, actor.userId],
-          )
-        ).rows[0];
-        if (!row) return configurationUnavailable();
-        if (
-          !row.enabled ||
-          !Array.isArray(row.permissions) ||
-          !row.permissions.includes('turnstile:access')
-        )
-          return authError(403, 'PRODUCT_ACCESS_DENIED');
-        return {
-          status: row.completed_at ? 'complete' : 'incomplete',
-          canManageConfiguration: row.permissions.includes(CONFIGURATION_MANAGE_PERMISSION),
-        };
-      });
+      return await withTenant(
+        pool,
+        config.INSTALLATION_TENANT_ID,
+        async (client) => {
+          const access = await readAccess(client, config.INSTALLATION_TENANT_ID, actor.userId);
+          if (!hasShell(access)) return authError(403, 'PRODUCT_ACCESS_DENIED');
+          if (access.workspaceComplete === null) return configurationUnavailable();
+          return {
+            status: access.workspaceComplete ? 'complete' : 'incomplete',
+            canManageConfiguration: covers(access, CONFIGURATION_MANAGE_PERMISSION, {
+              kind: 'company',
+            }),
+          };
+        },
+        actor.deadlineAt,
+      );
     } catch (error) {
       if (error instanceof HttpException) throw error;
       return configurationUnavailable();
@@ -128,33 +134,37 @@ export class OrganizationRepository {
   ): Promise<T> {
     try {
       const { pool, config } = await this.connection();
-      return await withTenant(pool, config.INSTALLATION_TENANT_ID, async (client) => {
-        const record = (await lockConfiguration(client, config.INSTALLATION_TENANT_ID)) as
-          | ConfigurationRecord
-          | undefined;
-        if (!record) return configurationUnavailable();
-        const grant = (
-          await client.query(
-            'SELECT enabled, permissions FROM turnstile.user_access WHERE tenant_id = $1 AND user_id = $2',
-            [record.tenant_id, actor.userId],
-          )
-        ).rows[0];
-        if (
-          !grant?.enabled ||
-          !Array.isArray(grant.permissions) ||
-          !grant.permissions.includes('turnstile:access')
-        )
-          return authError(403, 'PRODUCT_ACCESS_DENIED');
-        if (manage && !grant.permissions.includes(CONFIGURATION_MANAGE_PERMISSION))
-          return authError(403, 'PERMISSION_DENIED');
-        return work({
-          client,
-          tenantId: record.tenant_id,
-          record,
-          actor,
-          canManage: grant.permissions.includes(CONFIGURATION_MANAGE_PERMISSION),
-        });
-      });
+      return await withTenant(
+        pool,
+        config.INSTALLATION_TENANT_ID,
+        async (client) => {
+          await client.query('SELECT turnstile.lock_access_context($1::uuid)', [
+            config.INSTALLATION_TENANT_ID,
+          ]);
+          const record = (
+            await client.query(
+              'SELECT * FROM turnstile.organization_configuration WHERE tenant_id = $1',
+              [config.INSTALLATION_TENANT_ID],
+            )
+          ).rows[0] as ConfigurationRecord | undefined;
+          if (!record) return configurationUnavailable();
+          const access = await readAccess(client, record.tenant_id, actor.userId);
+          if (!hasShell(access)) return authError(403, 'PRODUCT_ACCESS_DENIED');
+          if (actor.accessFingerprint && actor.accessFingerprint !== access.context.fingerprint)
+            throw new AccessContextChangedException(actor.requestId, access.context.accessRevision);
+          const canManage = covers(access, CONFIGURATION_MANAGE_PERMISSION, { kind: 'company' });
+          if (manage && !canManage) return authError(403, 'PERMISSION_DENIED');
+          return work({
+            client,
+            tenantId: record.tenant_id,
+            record,
+            actor,
+            canManage,
+            access,
+          });
+        },
+        actor.deadlineAt,
+      );
     } catch (error) {
       if (error instanceof HttpException) throw error;
       return configurationUnavailable();
@@ -202,7 +212,7 @@ export class OrganizationRepository {
     );
   }
 
-  async units(tx: ConfigurationTransaction): Promise<UnitRecord[]> {
+  async units(tx: OrganizationReadContext): Promise<UnitRecord[]> {
     const rows = (
       await tx.client.query(
         'SELECT id, type, parent_id, name, name_key FROM turnstile.organization_unit WHERE tenant_id = $1 LIMIT $2',
@@ -243,12 +253,32 @@ export class OrganizationRepository {
     );
   }
 
-  async moveUnit(tx: ConfigurationTransaction, id: string, parentId: string) {
+  async moveUnit(
+    tx: ConfigurationTransaction,
+    id: string,
+    parentId: string,
+    review?: { command: unknown; confirmation: string | null },
+  ) {
+    // Every supported structure writer reaches this boundary under the shared
+    // installation/configuration/access locks. The old endpoint has no impact
+    // confirmation contract, so it must never commit a possible coverage change.
+    const units = await this.projectedUnits(tx);
+    const source = units.find((unit) => unit.id === id);
+    const destination = units.find((unit) => unit.id === parentId);
+    if (!source || !destination) return configurationUnavailable();
+    const context = { ...tx, organizationRevision: tx.record.revision };
+    const impact = await this.structureAccess.assess(context, id, parentId);
+    if (review)
+      await this.structureAccess.confirm(context, review.command, impact, review.confirmation);
+    else if (impact.changed) return configurationConflict(tx.record, 'unit_in_use');
+    if (source.parentId === parentId) return impact;
+    await this.structureAccess.invalidate(context, impact);
     try {
       await tx.client.query(
         'UPDATE turnstile.organization_unit SET parent_id = $3 WHERE tenant_id = $1 AND id = $2',
         [tx.tenantId, id, parentId],
       );
+      return impact;
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error) {
         if (error.code === '23503') return configurationConflict(tx.record, 'unit_in_use');
@@ -259,6 +289,12 @@ export class OrganizationRepository {
   }
 
   async deleteUnit(tx: ConfigurationTransaction, id: string) {
+    // Include retained assignments of suspended members. Historical audit has no
+    // live-unit FK and does not pin units after the assignment is removed.
+    if (
+      await this.structureAccess.referenced({ ...tx, organizationRevision: tx.record.revision }, id)
+    )
+      return configurationConflict(tx.record, 'unit_in_use');
     try {
       await tx.client.query(
         'DELETE FROM turnstile.organization_unit WHERE tenant_id = $1 AND id = $2',
@@ -312,7 +348,7 @@ export class OrganizationRepository {
     );
   }
 
-  async snapshot(tx: ConfigurationTransaction): Promise<ConfigurationSnapshotDto> {
+  async projectedUnits(tx: OrganizationReadContext): Promise<OrganizationUnitDto[]> {
     const rows = await this.units(tx);
     const children = new Map<string | null, UnitRecord[]>();
     for (const row of rows) {
@@ -345,6 +381,11 @@ export class OrganizationRepository {
     };
     visit(null, []);
     if (units.length !== rows.length) return configurationUnavailable();
+    return units;
+  }
+
+  async snapshot(tx: OrganizationReadContext): Promise<ConfigurationSnapshotDto> {
+    const units = await this.projectedUnits(tx);
     const { record } = tx;
     const profile = [record.name !== null, record.time_zone !== null, record.root_id !== null];
     const firstUnit = units.some(

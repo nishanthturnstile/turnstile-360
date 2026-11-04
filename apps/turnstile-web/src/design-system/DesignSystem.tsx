@@ -31,6 +31,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { WorkspaceNavigation, workspaceDestinations } from '@/components/workspace-navigation';
 import { cn } from '@/lib/utils';
+import { PeopleGallery } from './PeopleGallery';
 import { StructureGallery } from './StructureGallery';
 
 const swatches = [
@@ -81,6 +82,7 @@ export default function DesignSystem() {
         </header>
         <Separator />
         <StructureGallery />
+        <PeopleGallery />
         <Separator />
         <section aria-labelledby="setup-progress-heading" className="flex flex-col gap-4">
           <h2 id="setup-progress-heading" className="section-title">

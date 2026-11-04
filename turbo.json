@@ -13,6 +13,13 @@
     },
     "test": {
       "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/scripts/fixtures/user-management.mjs",
+        "$TURBO_ROOT$/scripts/generate-user-management-openapi.mjs",
+        "$TURBO_ROOT$/docs/api/turnstile-people.openapi.json",
+        "$TURBO_ROOT$/docs/api/identity-invitations.openapi.json"
+      ],
       "outputs": []
     },
     "test:integration": {

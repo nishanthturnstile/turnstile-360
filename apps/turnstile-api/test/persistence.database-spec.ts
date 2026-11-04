@@ -10,6 +10,8 @@ import { ProductPersistenceModule } from '../src/infrastructure/database/product
 import { ProductPersistenceService } from '../src/infrastructure/database/product-persistence.service.js';
 import { PostgresSessionStore } from '../src/modules/auth/persistence/postgres-session-store.js';
 import { ProductDatabaseService } from '../src/modules/auth/product-database/product-database.service.js';
+import { setUserAccess } from '../src/modules/auth/set-user-access.js';
+import { resetAccessFixture } from './access-fixture.js';
 
 describe('owned product persistence', () => {
   const config = parseProductEnvironment(process.env);
@@ -79,7 +81,10 @@ describe('owned product persistence', () => {
     } as unknown as Parameters<SessionStore['set']>[1];
   }
 
-  beforeAll(start);
+  beforeAll(async () => {
+    await resetAccessFixture(owner);
+    await start();
+  });
   afterAll(async () => {
     await app?.close();
     await runtime.end();
@@ -197,22 +202,26 @@ describe('owned product persistence', () => {
         'Installation identity cannot be replaced',
       );
     }
-    await withTenant(owner, tenantId, (connection) =>
-      connection.query(
-        'INSERT INTO turnstile.user_access (tenant_id, user_id, enabled) VALUES ($1, $2, true)',
-        [tenantId, 'fixture-user'],
-      ),
-    );
-    expect((await runtime.query('SELECT * FROM turnstile.user_access')).rows).toHaveLength(0);
+    await setUserAccess({
+      operatorId: 'persistence-fixture',
+      userId: 'fixture-user',
+      enabled: true,
+      permissions: [],
+    });
+    expect((await runtime.query('SELECT * FROM turnstile.access_member')).rows).toHaveLength(0);
     await withTenant(runtime, tenantId, async (connection) => {
-      expect((await connection.query('SELECT * FROM turnstile.user_access')).rows).toHaveLength(1);
+      expect((await connection.query('SELECT * FROM turnstile.access_member')).rows).toHaveLength(
+        1,
+      );
     });
     await withTenant(runtime, randomUUID(), async (connection) => {
-      expect((await connection.query('SELECT * FROM turnstile.user_access')).rows).toHaveLength(0);
+      expect((await connection.query('SELECT * FROM turnstile.access_member')).rows).toHaveLength(
+        0,
+      );
     });
     await expect(
       withTenant(runtime, tenantId, (connection) =>
-        connection.query('UPDATE turnstile.user_access SET enabled = true'),
+        connection.query("UPDATE turnstile.access_member SET status = 'active'"),
       ),
     ).rejects.toMatchObject({ code: '42501' });
     await expect(runtime.query('DELETE FROM turnstile.installation')).rejects.toMatchObject({
@@ -221,6 +230,8 @@ describe('owned product persistence', () => {
     await expect(
       runtime.query('ALTER TABLE turnstile.session DISABLE ROW LEVEL SECURITY'),
     ).rejects.toMatchObject({ code: '42501' });
-    expect((await runtime.query('SELECT * FROM turnstile.user_access')).rows).toHaveLength(0);
+    await expect(runtime.query('SELECT * FROM turnstile.user_access')).rejects.toMatchObject({
+      code: '42501',
+    });
   });
 });

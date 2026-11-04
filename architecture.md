@@ -1,6 +1,6 @@
 # Turnstile 360 and Thaarei DMS architecture
 
-**Updated:** 2026-11-03
+**Updated:** 2026-11-04
 
 **Status:** Accepted technical design with workspace foundations implemented.
 
@@ -20,6 +20,7 @@ feature implementation.
 | [DMS product blueprint](docs/headless_dms_product_blueprint_v1.md)                   | Product promise, included/deferred scope, product correctness, deployment inputs, and product decision history                                                                           |
 | [DMS functionality requirements](docs/headless_dms_functionality_requirements_v1.md) | Stable FR/NFR IDs and capability dependency order                                                                                                                                        |
 | [Onboarding specification](docs/onboarding_specification.md)                         | Accepted ONB-R01–13 product scope and acceptance; delivery packages remain in the linked implementation plans                                                                            |
+| [User-management specification](docs/user_management_specification.md)               | Accepted UM-R01–22 product requirements and D01–03 decisions; the proposal preserves discovery and the linked plan sequences delivery                                                    |
 | [Workspace standards](docs/standards/workspace.md)                                   | Coding, formatting, configuration, and verification conventions                                                                                                                          |
 | [Workspace implementation plan](docs/workspace_implementation_plan.md)               | Workspace setup sequence, CLI provenance, and original validation                                                                                                                        |
 | [Dokploy runbook](docs/runbooks/dokploy.md)                                          | Deployment commands and operator steps                                                                                                                                                   |
@@ -834,6 +835,8 @@ time-zone forms. Returning from Home reloads Settings through the existing trans
 The viewport is bounded by `100dvh` and flex `min-height: 0` boundaries. The workspace
 sidebar and content pane scroll independently; Settings sections use a horizontally
 scrolling row at all widths. Header/navigation/footer remain outside page scrolling.
+The Settings label sits above that row consistently across all sections, including
+Structure and narrow screens; only Structure's content pane uses the full canvas layout.
 `ScrollRegion` resets the changed content pane and moves keyboard focus there on client
 navigation, while surrounding navigation retains its position. Structure uses the full
 Settings content area without a second page scrollbar: its canvas and floating tools panel
@@ -1202,10 +1205,1391 @@ Broad IAM and Document Approval remain separate.
 
 Kids tracking, staff, and other Turnstile business areas require the product functionality
 specification before defining feature modules, workflows, screens, permissions, or tables.
-Onboarding now has its own [accepted specification](docs/onboarding_specification.md);
-Document Approval and other business areas remain separate product work. This architecture
+Onboarding now has its own [accepted specification](docs/onboarding_specification.md).
+The accepted [user-management specification](docs/user_management_specification.md) and
+[implementation plan](docs/user_management_implementation_plan.md) define the next
+people/access capability; its technical target follows below. Document Approval and other
+business areas remain separate product work. This architecture
 establishes ownership and integration patterns without inventing those features. No mobile
 application, business feature code, schema or migration is added by this documentation change.
+
+### User-management implementation target
+
+**Accepted implementation target, 2026-11-03 (UM-I01):** the
+[specification](docs/user_management_specification.md) owns unchanged UM-R01–22 and
+confirmed D01–03; the [proposal](docs/user_management_design_proposal.md) preserves review
+provenance and the [plan](docs/user_management_implementation_plan.md) owns package
+dependencies and exit criteria. UM-I02 supplies executable contracts and generated OpenAPI
+for this target; UM-I03 adds staged canonical access persistence and private recovery.
+UM-I04 replaces the live access consumers and normal-session context contract.
+UM-I05 implements scoped structure reads/mutations, current command readback and confirmed
+move impact. UM-I06 implements the separate authority service and recipient setup; UM-I07
+implements invitation approvals, lifecycle and durable captured SMTP delivery through that
+owning structure integration boundary. UM-I08–10 implement recipient/admin handlers and
+independent UI. UM-I11 supplies the versioned release barrier, private handover/cutover
+and recovery commands, exact-image inventory and isolated archive rehearsal. Actual
+installation rollout and its evidence remain separate in IN_PROGRESS.md.
+Existing authentication/onboarding descriptions above continue to describe the running
+system until the corresponding packages replace their access readers/writers. Do not reopen feature writers incrementally against
+incompatible readers. No dependency, image, host port or organization model is added here.
+
+#### User-management ownership and effective access
+
+Turnstile owns membership status, product roles, assignments, invitations, delivery work,
+idempotency outcomes and product audit. The authority owns accounts, passwords, email
+verification, bans and identity sessions. Keep subject binding immutable; email/name are
+display/contact projections and never identity keys after acceptance. Obtain bounded
+identity projections for product-linked subjects through authenticated HTTP or persist
+their verified projection locally with refresh provenance; never expose a shared authority
+directory. A removed/changed identity does not silently transfer membership to a new
+account with a recycled email. Duplicate/suspension decisions use verified subject identity,
+not an old contact string alone. If authority confirms a former subject is deleted and the
+address now belongs to a new subject, an authorized administrator must suspend/resolve the
+old membership and explicitly approve a fresh invitation; no old roles are copied and the
+old subject/history remains distinct. A suspended existing subject still requires ordinary
+reactivation. Public invite flows do not disclose account existence.
+
+Introduce a product Access module for canonical access persistence/evaluation and a People
+module for administration/invitation workflows; names are implementation targets, not
+generated scaffolds. Reuse ProductPersistenceModule's one pool. Auth consumes Access,
+never the inverse. Application composition orchestrates Access and Organization with
+transaction-scoped policy interfaces; no Organization → Auth → Organization cycle or
+second pool. The same evaluator serves login/session, route classification, readiness,
+configuration operations, scoped units and private commands. Repository checks use the
+current transaction's access and hierarchy, not a guard's old permission snapshot.
+
+An enabled canonical membership is required before effective grants count. Suspension
+overrides roles and imported legacy grants. Migrate every old `user_access` row once into
+an explicit canonical legacy-grant source, preserving enabled state and exact permission
+sets without inventing a role/admin assignment. Retain old rows for compatibility/recovery
+inventory, but they cease to be independent authorization sources after cutover. Missing
+legacy rows are normal for new role-only members. The upgraded private `auth:set-access`
+updates that canonical legacy source with existing replacement semantics; enabled false
+suspends all access, and enabled true reactivates subject to protected-member checks.
+An explicit administration operation can retire legacy grants alongside replacement role
+assignments with impact review. Ordinary role replacement must show retained legacy grants
+and their remaining effective powers; it cannot promise narrowing while hiding another
+grant source. Do not keep a second writable source or fall back to old flat arrays.
+
+Each assignment couples one role to company scope or selected canonical units with an
+explicit `includeChildren` boolean. `turnstile:access` is scope-neutral shell entry; it
+does not make a unit role global. Other permissions declare company-only or scope-aware
+applicability. Effective authorization is the union of matching permission-and-scope pairs,
+not the Cartesian product of all permissions and all units. Recompute on protected requests;
+an unchanged permission-name array with a changed scope is still an access change. Project
+accessRevision and minimal assignment scope to clients without making client checks authority.
+Use a separate actor-specific effective-access fingerprint for session fencing; the global
+access revision protects impact previews, while unrelated membership edits do not churn
+an unchanged actor session. Compute scope coverage on the server and send bounded anchors/
+fingerprint, not the expanded hierarchy in every session.
+
+Freeze a versioned permission catalog in `@thaarei/turnstile-contracts`: preserve existing
+access/configuration/capability-read identifiers, and introduce planned people-management,
+role-management, unit-read and unit-manage actions. The exact wire identifiers and starter sets are frozen below for UM-I02. Whole-company profile/zone/completion, capability checks, people and role
+administration are company-only. New unit read/manage actions support company/exact/subtree
+scope; manage implies read. A protected Workspace administrator includes current product
+administration/configuration/unit powers, but existing capability-read remains explicit.
+New catalog permissions never enter existing roles automatically. Configuration manager
+retains current configuration authority; Unit manager uses scope-aware actions; Member
+is shell entry only. Reject mixed company-only permissions on a unit assignment.
+All four starter definitions are read-only system templates with stable reserved identities;
+copy their supported permissions into a custom role to change a definition. Copying does
+not copy the protected-administrator identity or bypass catalog/grant limits.
+
+Only a current company-scope people administrator assigns, reapproves or reactivates
+membership. Only a company-scope role administrator defines roles. Both operations also
+require grant coverage: for every newly enabled permission/scope pair, the actor's current
+grantable access covers that pair. Evaluate all existing/pending assignments affected by
+a shared-role edit, including self-assignments; management permissions alone grant no
+operational ceiling. Protected administrator assignment requires the protected role plus
+people-management authority, preventing a custom role editor from creating that privilege.
+Creating a role or adding permissions to a reusable definition requires current company-wide
+coverage of each added action, with scope-neutral entry exempt from the scope check.
+Changing permissions on a definition referenced by memberships or actionable invitations
+also requires company people-management authority, including reductions. A role-only
+administrator can manage unassigned definitions and harmless custom display changes; it
+cannot change other members' effective grants through a shared definition. Assignment
+writes still apply the actor's per-action/scope coverage to the proposed assignments.
+Protected stable role identity/core capabilities cannot be renamed into another role,
+emptied, archived or deleted. Count distinct enabled local subjects with that role, not
+assignments/invitations, for the last-administrator invariant. Count current effective
+company configuration managers across imported and role sources for the existing invariant.
+External authority bans/deletion retain operator recovery; they are not atomically controllable
+by the product. Verify replacement login before removing known external administrator access.
+
+#### User-management permission and starter catalog
+
+Freeze catalog version `1` and user-management API document version `1.0.0`. Catalog
+availability means the owning backend behavior is implemented; UM-I02 schemas alone do
+not expose new powers through the old flat command/guards. Keep installed `TURNSTILE_PERMISSIONS` and the legacy private-input schema
+restricted to the original three until I03/I04 coordinate their replacement; I02 exports
+the versioned feature catalog separately. Preserve the three installed identifiers. Do not add an implicit wildcard, role inheritance or future-permission grant.
+
+| Identifier                        | Applicability | Meaning / implication                                                                                              |
+| --------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `turnstile:access`                | Scope-neutral | Ordinary shell entry with enabled membership; no resource coverage.                                                |
+| `turnstile:dms:capabilities:read` | Company-only  | Existing DMS connection/capability request, independent of administration.                                         |
+| `turnstile:configuration:manage`  | Company-only  | Existing profile, regional defaults, setup and company structure; implies company unit manage/read for evaluation. |
+| `turnstile:people:manage`         | Company-only  | Members, assignment/status/legacy retirement, invitations and eligible role choices.                               |
+| `turnstile:roles:manage`          | Company-only  | Role definitions; referenced permission edits also require people management.                                      |
+| `turnstile:units:read`            | Scope-aware   | Authorized unit records/projections; no profile/setup data.                                                        |
+| `turnstile:units:manage`          | Scope-aware   | Authorized unit mutations; implies unit read at exactly the same coverage.                                         |
+
+Implications are evaluated, not silently written into stored permission sets. Keep imported
+sets exact. For new role definitions require explicit `turnstile:access`; an empty/action-
+only role is invalid. There is no hidden capability-read implication. System rows carry
+an immutable reserved `systemKey` and stable persisted UUID; authorization of the protected
+role uses its system identity, never display name or matching permissions.
+
+| System key / reserved display name                  | Explicit stored permission set                                                      | Assignment scope                               |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `workspace_administrator` / Workspace administrator | access, configuration:manage, people:manage, roles:manage, units:read, units:manage | Company only; protected identity.              |
+| `configuration_manager` / Configuration manager     | access, configuration:manage, units:read, units:manage                              | Company only.                                  |
+| `unit_manager` / Unit manager                       | access, units:read, units:manage                                                    | Company or units.                              |
+| `member` / Member                                   | access                                                                              | Company or units; shell remains scope-neutral. |
+
+Every abbreviated action above has the `turnstile:` prefix. Four read-only definitions
+count toward the live-role cap. Copy creates a new custom UUID with `systemKey: null`;
+server-selected system keys cannot be supplied by customer commands. A copied administrator
+is not a protected administrator and does not count toward the protected-person invariant.
+
+Role names reuse `normalizeConfigurationName` and `configurationNameKey`: NFC, collapse
+Unicode White_Space to single spaces, trim, require a letter/number, reject remaining
+Cc/Cf/Cs, preserve case/accents for display, compare lowercased NFC keys. Apply the existing
+1,024-code-point raw input bound before normalization; canonical name is 1–80 code points.
+Custom role keys are unique per installation, including all four reserved name keys.
+Description is NFC, at most 500 code points, trimmed; allow LF for paragraphs, reject other
+Cc/Cf/Cs; canonical empty description is `null`. Reject malformed Unicode first.
+
+Pinned Better Auth `1.7.14` admin creation lowercases then validates email; email sign-in
+validates and lowercases for lookup. Adopt `email.toLowerCase()` and Zod email validation,
+with a 254-character input bound; reject surrounding whitespace rather than introducing a
+new trim/Unicode/IDNA/provider-alias rule. Preserve submitted spelling only as bounded
+contact display. No plus-tag/dot merging. Source evidence is installed
+`better-auth/dist/plugins/admin/routes.mjs` (`createUser`) and
+`better-auth/dist/api/routes/sign-in.mjs` (`signInEmail`), plus the configured
+`authority-options.ts`; the [official documentation index](https://better-auth.com/llms.txt)
+maps 1.7.x to its matching docs. Verify these pinned semantics again in I06 rather than
+assuming a dependency upgrade preserves comparison behavior.
+
+Grant-ceiling predicate: current enabled actor must have shell entry and the command's
+company management action. For every affected before/after permission-and-scope pair,
+prove coverage using grants that contain that same action (including documented
+implications). Company covers company/exact/subtree; subtree covers exact/subtree anchored
+at itself or a current descendant; exact covers only that exact unit. Several exact anchors
+cover a finite exact target set, never a subtree's future descendants. Union matching
+coverage across sources; never union unrelated actions with scope. Shell entry is exempt
+from scope containment, not membership status. Assignment replacement checks the changed
+old/new assignments, explicit source retirement checks the retired source, and suspension/
+reactivation checks all retained effective sources. Unchanged independent sources remain
+visible and are not silently modified. Shared permission edits check affected old/new
+member and actionable invitation assignments. Reusable definition creation/additions need
+company coverage for each added non-shell action, even if currently used only at one unit.
+
+Only a protected administrator with people management may assign/remove the protected
+identity. Public changes preserve at least one distinct enabled protected person and one
+effective company configuration manager once each invariant is established. First verified
+bootstrap is a private operator action. Local counts do not pretend to verify remote bans
+atomically; operator recovery handles unusable external identities. Reject unknown catalog
+versions/permissions and unit scopes containing any company-only stored permission.
+
+#### User-management module dependencies and transition inventory
+
+Arrows mean imports/consumption. These are target modules for the owning packages, not
+scaffolding created by UM-I01. Generate modules/providers with the installed Nest CLI.
+
+```mermaid
+flowchart TD
+  App[AppModule / global route policy] --> Auth[AuthModule]
+  App --> Workspace[WorkspaceApplicationModule / onboarding and configuration coordination]
+  App --> Structure[StructureApplicationModule / scoped and legacy unit commands]
+  App --> Recipient[RecipientApplicationModule / recipient coordination]
+  App --> People[PeopleModule / administration and invitations]
+  Recipient --> Auth
+  Recipient --> People
+  Workspace --> Access[AccessModule / canonical evaluator and grants]
+  Workspace --> Org[OrganizationModule / canonical operations]
+  Structure --> Access
+  Structure --> Org
+  Structure --> People
+  People --> Access
+  People --> Org
+  People --> Identity[AuthorityIntegrationModule / authenticated HTTP adapter]
+  Auth --> Access
+  Access --> OrgStore[OrganizationPersistenceModule / read-only hierarchy port]
+  Org --> OrgStore
+  Access --> DB[ProductPersistenceModule / one pool and transaction host]
+  OrgStore --> DB
+  Auth --> DB
+  People --> DB
+```
+
+Split the hierarchy read port from the high-level Organization service so Access can use
+current canonical ancestry without importing Auth, People or application coordinators.
+The organization persistence layer owns its queries. Access exposes transaction-aware
+policy/evaluation interfaces; higher application coordinators acquire the shared ordered
+transaction and pass its client/context to Access and Organization. Organization storage
+and primitives do not invoke a second transaction or authorize from a request snapshot.
+No low-level service imports its controller/coordinator; no `forwardRef` cycle, duplicate
+pool or cross-application database/source import. Auth handles OIDC, cookie/CSRF fencing and
+typed purpose state, not invitation lifecycle. Recipient coordination checks People policy
+before acceptance; Auth can return only restricted identity for invitation-purpose callback.
+People owns approval invalidation/impact and mail intent; SMTP/authority HTTP run outside
+product transactions. Route metadata/decorators and finite domain errors move to neutral
+infrastructure/contracts so Organization no longer imports Auth's `authError` helper.
+
+Inventory at UM-I01 (paths relative to `apps/turnstile-api/src` unless stated otherwise):
+
+| Current consumer / writer                                                                                                      | Required owning transition                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `modules/auth/browser-auth/browser-auth.service.ts`: `access`, callback, authenticate and session projection                   | I04 canonical evaluator, actor fingerprint/scopes; role-only login, no flat fallback.                                                                              |
+| `modules/auth/user-session/user-session.guard.ts`, `infrastructure/application-access.guard.ts`                                | I04 explicit company/resource/purpose classification and readiness policy; transaction recheck remains mandatory.                                                  |
+| `modules/auth/browser-auth/oidc.service.ts`, `bff-state.ts` and encrypted `persistence/postgres-session-store.ts`              | I04/I08 typed normal versus restricted identity, bounded context and unchanged refresh/logout fencing.                                                             |
+| `modules/organization/persistence/organization.repository.ts`: `status`, `transaction`, `snapshot`                             | I04 canonical status/manager authority; I05 projections and transaction coordinator, no independent grant join.                                                    |
+| `modules/organization/configuration-operator.ts`: `inspect` managers/count                                                     | I03/I04 canonical distinct effective configuration managers, including role-only members.                                                                          |
+| `modules/auth/set-user-access.ts`: prior/other-manager reads, upsert and operator configuration audit                          | I03 canonical legacy replacement/suspension with protected counts and new truthful access audit; retain entry command compatibility.                               |
+| `modules/auth/product-database/product-database.service.ts`: `ready`; `infrastructure/database/product-persistence.service.ts` | I03/I04 access schema/capability barrier and all feature table RLS/privilege checks, not only session/user_access.                                                 |
+| `modules/auth/persistence/product.schema.ts` and historical `database/migrations/0000`–`0003`                                  | Preserve migration history/old rows; I03 adds only implementing access-feature migrations and repeat-safe import.                                                  |
+| Root `scripts/backup-local-onboarding.mjs`, `rehearse-local-onboarding-upgrade.mjs`, `verify-local-onboarding-release.mjs`     | I11 access-aware release inventory/backup/verification. Old flat assertions cannot certify user-management release.                                                |
+| API database fixtures and root database/browser harness                                                                        | Update fixtures with their owning package; keep explicit legacy upgrade matrix and real HTTP consumers. Test-only direct legacy SQL is not a production evaluator. |
+
+Configuration response inventory: `OrganizationService.read/save/renameUnit/moveUnit/
+deleteUnit/complete` return `ConfigurationSnapshot`; `createUnit` returns it nested in the
+create result, including transport replay. `OrganizationController` projects GET profile
+and units but returns those full mutation results. `OnboardingController` projects GET
+setup and returns full completion; `workspace/status` is minimal. The repository's
+`configurationConflict` returns only code/reason/revision (not a snapshot); validation
+field errors and generic failures still need scope-safe mapping. Web
+`features/configuration/api.ts` composes profile/units/setup and parses every mutation as
+a whole snapshot. I05 adds separate scoped DTOs and updates every success/replay/conflict/
+readback path. Legacy full routes remain configuration-only and share new mutation policy;
+relaxing their guard alone would expose data. I10 splits Settings/navigation/loaders.
+
+#### User-management consistency and scoped structure
+
+Access has a monotonic revision independent of organization revision; role/member/invitation
+records also carry versions. Access changes do not replay onboarding or alter its revision.
+An impact confirmation binds actor, operation digest, affected records, accessRevision,
+organization revision when relevant and invitation approval/generation. It is not a grant.
+Commit reacquires locks in order: fixed installation context, organization configuration
+when needed, access context, then role/member/invitation/receipt rows in stable ID order.
+All participating public/private/structure writers use that order. Recheck actor grants,
+versions, references, approval and protected-member invariants; commit state, revision,
+audit and delivery intent atomically. No SMTP/authority HTTP while holding these locks.
+Stale review returns conflict and a new safe readback; never silently reapply a preview.
+
+Use a dedicated product access-audit contract for user/operator role/member/invitation
+events. The existing configuration audit's `access_changed` shape is operator-only and
+must not be reused for user actions by falsifying actor kind or organization revision.
+Preserve its historical events/constraints. New access audit is tenant-bound, bounded,
+append-only for runtime, with truthful actor/subject IDs, finite actions and access revisions;
+audit insertion failure rolls back the owning mutation. Include every new access, invitation,
+receipt, delivery and audit table in forced-RLS/runtime-privilege readiness verification,
+not just the existing onboarding-table safety list.
+
+Keep deliberate cookie-generation and CSRF fencing on access changes. Validate a write's
+request token against its incoming session generation before access-context rotation.
+If that actor's effective context changed, refresh/fence the session and return a finite
+access-context-changed conflict before business mutation. It must not treat an old token as valid for a new
+cookie generation or simply disable rotation. Session readback gives the current cookie,
+CSRF and access revision; the client retains drafts and requires explicit resubmission
+after refresh/review rather than automatically replaying a write. Current required-action
+revocation always denies. Keep session payloads bounded to assignment anchors/revision,
+not expanded descendant lists or the whole catalog; unrelated actors' access changes do
+not rotate every session merely because a global audit revision advanced.
+
+Keep whole-company setup/profile routes and full configuration projections restricted.
+Scoped unit routes have dedicated read/write/conflict projections: authorized units,
+minimal ancestor IDs/labels needed for paths and revision tokens, with no sibling records,
+hidden counts, completion actor or unrelated profile data. Enforce predicates before
+pagination/counting. Not-found/forbidden projections must not disclose out-of-scope existence.
+The existing structure responses cannot be reused unfiltered after a scoped mutation.
+
+Exact-unit view/manage permits reading/renaming that unit only. Subtree coverage permits
+those actions for descendants. Creating a child needs manage coverage of its parent and
+coverage that includes the newly created child; exact-only access to a parent cannot create
+an inaccessible child. Deleting requires manage coverage of the leaf and the affected parent
+relationship, no scope/member/invitation references and all existing versioned setup guards.
+Moving requires manage coverage of source, source parent, destination, resulting subtree
+and relevant parent links, with minimal root relationship context only when separately
+authorized by company configuration management. Never interpret ancestor breadcrumbs as
+parent-management permission. Cross-boundary moves require company structure authority;
+if inherited access changes, also require company people-management authority, current
+grant ceilings and an access-impact confirmation. A structure-only manager cannot change
+people's coverage by moving units. Same-parent no-op retains authorization/version checks.
+
+Compute move impact for current memberships and pending invitations, including new or
+removed subtree coverage. Membership permissions follow the confirmed current-hierarchy
+policy; pending invitation approval becomes stale if its effective coverage changes.
+Explicit anchors remain attached by stable ID. Retained assignments of suspended members
+remain references until explicitly removed, for both unit and role deletion checks.
+Renames do not change permissions; new
+children receive the parent's enabled subtree policy. Reject deletion while live assignments
+or actionable pending invitations reference the unit. Terminal invitation audit retains IDs
+without pinning live units forever. Scope-only roles cannot alter protected root/type/depth,
+completion or first-unit invariants. Organization/Access changes share the locks above.
+
+#### Invitation approval, identity and delivery
+
+Invitation lifecycle is `pending`, `needs_reapproval`, `accepted`, `cancelled` or `expired`;
+delivery lifecycle is independently `queued`, `sending`, `smtp_accepted`, `failed` or
+`unknown`. Store addressed normalized email, approver, approved assignments, role versions,
+scope digest, approval revision, expiry and credential generation. Normalize exactly as
+the pinned authority does; never merge provider-specific aliases. One actionable invitation
+per normalized address/product; an active member cannot be reinvited to overwrite grants,
+and a suspended member needs explicit authorized reactivation. A concurrent membership
+creation conflicts and requires current administration review rather than stale replacement.
+
+Access-affecting role/scope/email changes invalidate the old approval/generation. Loss
+of approver authority invalidates outstanding approval durably; later restoration does
+not revive it. Reapproval uses a current eligible administrator, rotates the link and
+requires fresh recipient review. Harmless display renames may refresh labels without
+changing the approved permission digest. Cancellation never deletes already accepted
+membership. Acceptance versus resend/cancel/reapproval uses one locked transition and
+database time; the first committed transition wins. Acceptance records one subject-bound
+receipt and canonical membership/assignments. Replays return the current result/status,
+never restore grants changed or suspended later. Session failure after commit does not
+undo membership; retry/normal login resolves the existing subject-bound result.
+
+Normal product login remains access-gated. Add invitation-purpose login and restricted
+verified-identity state using the existing exact registered callback, encrypted BFF store,
+state/nonce/PKCE and live authority check. Bind invitation ID/generation and server-side
+continuation; restricted state cannot authenticate ordinary product routes or fetch setup
+configuration. Acceptance is explicit CSRF/Origin-protected POST and revalidates live
+identity, matching verified email, membership suspension, expiry, approval and units.
+GET link previews and email scanners cannot consume or accept. Wrong-account handling
+offers explicit switch/cancel with exact-parent logout; never silently sign out a different
+authority session. Losing transient continuation after verification/reset is recoverable
+by reopening the current invitation, without exposing secrets to returnTo or browser storage.
+
+The sign-in and reset-password entry pages resolve a valid server-side invitation purpose
+before falling back to ordinary login. Authority verification/reset callbacks remain fixed;
+their redirect cannot discard the HttpOnly continuation or turn it into arbitrary returnTo.
+An explicit switch clears only the applicable product/restricted state and exact current
+authority parent after consent; another tab's changed identity/generation invalidates the
+old acceptance attempt. Shared browser login may end, but other application memberships
+and credentials are not changed.
+
+For a genuinely new account, defer creation until the recipient explicitly submits their
+display name and chosen password through an authority-owned, invitation-purpose setup
+operation. A service-issued, expiring setup receipt binds the fixed product/invitation/
+generation/email; it authorizes ordinary unverified account creation only, not general
+signup, identity verification or existing-account password replacement. Send the existing
+authority verification email, then resume invitation-purpose login/acceptance. The normal
+new-user journey is invitation → name/password → verification → acceptance, without a
+manual Forgot password detour. A raw password travels only to the owning authority,
+never the product BFF, mail payload or retained receipt. New recipient name is NFC with
+collapsed/trimmed Unicode whitespace, 1–200 code points with a letter/number and no Cc/Cf/Cs;
+apply the existing 1,024-code-point raw bound. Preserve configured authority password limits
+15–128 characters and existing hashing; verification/reset tokens retain their 30-minute
+expiry. Existing account names/passwords are not rewritten. Creation races reconcile to the
+existing account; they cannot overwrite its credentials. A prepared account may remain
+after cancellation/failure, but no product membership is granted by account setup.
+Existing users sign in normally; unverified/passwordless accounts from earlier provisioning
+use the authority-supported verification/recovery path with guided resume.
+Banned identities are never unbanned; authority outage is retryable and grants nothing.
+Do not change an existing account's password, name, role or other application access.
+Recipient possession of an invitation does not replace verified live authority identity.
+
+Authority integration gets a separate privately registered confidential service client,
+resource audience and minimal account-preparation/subject-projection scopes. Extend the
+managed provider policy deliberately; neither browser login credentials nor the DMS machine
+client/enrollment authorize these operations. Audience-bound short-lived service tokens,
+live client/scope checks and fixed installation/application binding protect narrow internal
+HTTP routes. Preparation is idempotent by product/invitation operation reference with
+bounded receipts and create-race reconciliation; account creation may commit before mail
+fails and must be inspected/reused. No arbitrary role/verified/ban/password fields, identity
+directory search or browser-accessible general authority-admin endpoints. Identity display
+lookup is bounded to registered product-linked subjects; public recipient responses stay
+generic. Routes/identifiers are frozen below; UM-I02 encodes them before runtime handlers.
+
+Turnstile owns an SMTP adapter for invitation mail; authority keeps verification/reset mail.
+Both use the existing Mailpit transport in development and their own configured senders.
+Do not import another application's mail implementation. Persist invitation generation
+and delivery work atomically. A bounded database-backed drain in the owning API uses
+durable claim leases across replicas, invokes SMTP outside transactions and commits results
+only for the claimed generation. Startup/restart reclaims expired work; explicit resend
+rotates first and never restores an old link on delivery failure. Creation request retries
+reuse their result without resending. SMTP timeout after possible acceptance is `unknown`;
+duplicate delivery is possible, duplicate membership activation is not. No broker or new
+long-running service is required for this feature.
+
+Credentials are random opaque values stored as digests; delivery payloads needing a
+recoverable link use authenticated encryption, a dedicated validated server-only key and
+bounded retention. Purge payload secrets after terminal delivery/expiry/cancellation.
+The owning product process validates `TURNSTILE_INVITATION_ENCRYPTION_KEY` as a dedicated
+32-byte hex key and `TURNSTILE_INVITATION_RECOVERY_EPOCH` as a random 32-byte base64url
+value. Both are server-only deployment secrets; no fallback to cookie/token encryption keys.
+All replicas share that recovery epoch outside restored product backups; acceptance
+and delivery require the current epoch. After restore rotate it, invalidate old approval/
+delivery work and explicitly reapprove/resend eligible invitations. Extend Nginx and app
+no-store/no-referrer/log-redaction exclusions to invitation/continuation routes, remove
+credentials from address/history after server exchange, and suppress secret-bearing traces
+and screenshots. Recipient or mail tokens never enter localStorage, telemetry or audit.
+
+#### User-management state transitions
+
+Membership is `active` or `suspended`; absence is not a membership. Versions start at 1
+and advance once per effective entity change. Canonical legacy import maps enabled true/
+false exactly and retains empty/missing-access sets without inventing shell entry. Access
+revision starts at 0, advances once per committed access/approval-effective change and
+never advances for display-only edits or unchanged retries. Display edits still advance
+their entity version. Organization revision changes only for configuration/hierarchy work;
+an access-changing move advances both once. Use bounded nonnegative integers through
+2,147,483,647, fail closed at exhaustion. Database time determines validity.
+
+| Invitation source              | Command / event                                                                                  | Result and credential policy                                                                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Absent                         | Explicit approved issue                                                                          | `pending`, generation 1, approved snapshot and new expiry; one durable delivery intent, no account.                                         |
+| `pending`                      | Explicit resend                                                                                  | `pending`, generation +1, new expiry; current approval/ceilings rechecked, previous credential permanently invalid.                         |
+| `pending`                      | Permission/contact/selected-scope/inherited-coverage change, or approver loses authority/ceiling | `needs_reapproval`, generation +1, old approval/credential and unsent payload invalidated; no replacement mail yet.                         |
+| `needs_reapproval`             | Explicit reapprove with reviewed payload                                                         | `pending`, generation +1, current approver/snapshot/new expiry and mail; no automatic revival.                                              |
+| `pending` / `needs_reapproval` | Authorized cancel or explicit recipient decline of current continuation                          | `cancelled`, generation +1, no further delivery/acceptance. Decline grants no people administration.                                        |
+| `pending` / `needs_reapproval` | Database expiry reached                                                                          | Effectively `expired` immediately, persisted by next locked command/maintenance; no reliance on a timer for denial.                         |
+| `pending`                      | Explicit eligible matching verified acceptance                                                   | `accepted`; credential ceases authorizing transitions; one subject-bound result/membership/assignment/audit commit.                         |
+| Any terminal state             | Resend/reapprove/cancel/other-subject acceptance                                                 | State conflict; accepted membership changes only through ordinary administration. Identical completed command can read its current outcome. |
+| `accepted`                     | Same accepted subject repeats or normal session recovery                                         | Current membership/access/status only; never reinstall saved grants. Expired old bearer alone cannot read member state.                     |
+
+Expired/cancelled rows do not reopen. New issue after either terminal state gets a new
+invitation ID/approval and independently checks current membership and address rules.
+`needs_reapproval` counts as actionable and retains live role/unit references. Automatic
+invalidation persists under the source access transaction before authority restoration can
+revive it. If the impacted set cannot be processed within bounded transaction/deadline,
+reject the source command rather than leave partially invalidated approvals. Approval
+digest covers supported explicit/effective permissions, assignment anchor coverage, role
+permission versions/digests, scope digest, approver authority epoch and external recovery
+epoch. A display-only role rename does not change that permission digest. New descendants
+follow D01 without new consent; a move changing current effective coverage invalidates
+approval. A revoked approver never becomes valid merely because their permissions return.
+
+Delivery jobs have a separate generation-bound state machine. `queued` is claimable as
+`sending` with lease/fence. A current claim becomes `smtp_accepted` only on positive SMTP
+acknowledgment, `failed` on definite rejection before acceptance, or `unknown` on ambiguous
+acceptance/timeout or a lost `sending` lease. Definite transient pre-acceptance failures
+can requeue with delays 5, 30, 120 and 600 seconds, at most five total attempts. Ambiguous
+results stop automatic retries; show unknown and require explicit resend. Expired/stale
+claims cannot finalize newer work. Cancel/reapproval/expiry closes obsolete work as terminal failed with a finite
+`stale_generation`, `cancelled` or `expired` reason, never SMTP acceptance. Other delivery
+reasons are `smtp_rejected`, `transport_unavailable`, `attempts_exhausted`, `deadline` and
+`lease_lost`; ambiguous `deadline`/`lease_lost` uses unknown, not definite failure. Purge encrypted link payload immediately after accepted,
+failed-terminal, unknown, superseded or cancelled delivery, and by invitation expiry.
+Retain only bounded nonsecret status afterward. A drain restart can reclaim queued work;
+a lost in-flight SMTP result remains unknown, never assumed unsent.
+
+Use one UUID Idempotency-Key per explicit command. Receipt identity is installation/actor/
+key, and that UUID is the command ID used by readback. Store operation and canonical request
+digest as immutable receipt attributes, not extra uniqueness dimensions: reusing a key for
+another operation or payload conflicts. Replay of the same operation/digest reads the current
+safe outcome without repeating mutation/mail; mismatch is conflict. Receipt expiry never
+allows acceptance replay to restore grants. Keep terminal invitation/acceptance metadata
+at least seven days and at most the 90-day audit window through bounded private pruning;
+active membership/assignment and actor attribution remain canonical, independent of receipt
+retention. No secret-bearing historical payload is needed for readback.
+
+#### User-management planned bounds and HTTP contract
+
+These defaults are adopted by UM-I01, not installed limits or measured capacity.
+Encode them in executable contracts/environment validation with their owning packages.
+
+| Boundary                               | Planned default                                                                                                                                                       |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Invitation credential / lifetime       | 32 random bytes; 7 days from explicit issuance/resend, evaluated with database time                                                                                   |
+| Restricted continuation                | Existing 5-minute OIDC transaction; 10-minute verified pending identity; 30-minute server setup continuation, each bounded by parent identity and invitation validity |
+| Role name/description                  | Existing Unicode name normalization/key rules; 1–80 code points for name, at most 500 for description; protected names/keys reserved                                  |
+| Lists / request / response             | 25 default, 100 maximum rows, stable opaque cursor; strict JSON at most 16,384 bytes; response at most 1,048,576 bytes; product deadline 10 seconds                   |
+| Role/assignment bounds                 | 128 live role definitions; 32 assignments per member/invitation; 16 unit anchors per assignment and 64 in the whole payload; existing unit/depth bounds unchanged     |
+| Pending/delivery bounds                | 1,000 actionable invitations and 2,048 unfinished delivery jobs; reject safely at capacity without partial grants; terminal rows pruned separately                    |
+| Product invitation issuance/resend     | 10 actions per administrator/minute and 100 per installation/hour; duplicate transport retries do not count as new issuance; persist limits across replicas           |
+| Public invitation/auth-bridge requests | 10 attempts/minute per client IP and invitation digest, independently; generic errors and no account-existence disclosure; preserve existing authority limits         |
+| Delivery drain                         | Batch at most 10 every 5 seconds, lease 30 seconds, at most 5 attempts with bounded backoff; SMTP operation deadline at most 10 seconds                               |
+| Reconciliation/idempotency             | 24-hour create-command and authority-preparation receipt window; accepted-invitation receipt retained at least 7 days after terminal state; no replay restores grants |
+| Audit and maintenance                  | Existing 90-day bounded audit policy; private prune batches at most 1,000; invitation credentials/payloads follow shorter secret-retention rules                      |
+
+Grandfather valid migrated state above a new creation limit; never drop grants/data to fit
+a cap. Deny further growth until safely reduced. Revisions never wrap and limits fail with
+finite safe errors. Wire identifiers and DTO families below are frozen for browser-safe executable Zod
+contracts and deterministic OpenAPI 3.1 generation in UM-I02. No route is implemented by
+this table. Route/security catalog:
+
+| Method and path                                                                                  | Policy / result family                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /api/people/catalog`                                                                        | Normal completed session, company people OR role management; versioned catalog/starter capabilities.                                                                                       |
+| `GET /api/people/members` and `GET /api/people/members/:id`                                      | Company people management; paginated member/source/assignment summaries or detail. `id` is product member UUID, not email.                                                                 |
+| `GET /api/people/eligible-roles`                                                                 | Company people management; bounded role/scope eligibility choices, no role-edit authority implied.                                                                                         |
+| `PUT /api/people/members/:id/assignments`                                                        | Company people management, ceiling/impact; replace explicit assignments and optionally retire legacy source only when confirmed.                                                           |
+| `POST /api/people/members/:id/suspend` and `POST /api/people/members/:id/reactivate`             | Company people management, whole-member ceiling/impact and protected counts; status result.                                                                                                |
+| `GET /api/people/roles` and `GET /api/people/roles/:id`                                          | Company role management; definitions only, no member identity directory.                                                                                                                   |
+| `POST /api/people/roles`                                                                         | Company role management and reusable company ceiling; create from explicit permissions or `copyFromRoleId`, never both.                                                                    |
+| `PATCH /api/people/roles/:id`                                                                    | Company role management; permission change on a referenced role also requires people management and impact. Name/description-only edit is distinct.                                        |
+| `DELETE /api/people/roles/:id`                                                                   | Company role management; custom unreferenced role only, protected/active references conflict.                                                                                              |
+| `GET /api/people/invitations` and `GET /api/people/invitations/:id`                              | Company people management; approval/delivery/contact/assignments, never raw credential.                                                                                                    |
+| `POST /api/people/invitations`                                                                   | Company people management, reviewed approval/ceiling; issue. A new-account existence query is not part of issuance.                                                                        |
+| `POST /api/people/invitations/:id/resend`, `/cancel`, `/reapprove`                               | Company people management; exact current invitation version/generation and reviewed command. Reapprove may replace contact/assignments; cancel never suspends membership.                  |
+| `POST /api/people/impact`                                                                        | Authorization of discriminated target command; read-only policy calculation. Referenced role-permission impact requires both powers; role-only results reveal no member identities.        |
+| `GET /api/people/commands/:id`                                                                   | Current command-owning management permission and same actor; safe receipt/current-state readback, no lost credential recovery.                                                             |
+| `GET /api/structure/units` and `GET /api/structure/units/:id`                                    | Normal completed identity, matching unit read/manage or company configuration; scoped list/detail plus minimal context.                                                                    |
+| `POST /api/structure/units`, `PATCH /api/structure/units/:id`, `DELETE /api/structure/units/:id` | Matching current operation matrix; scoped create/rename/delete result and safe conflict.                                                                                                   |
+| `POST /api/structure/move-impact` and `PATCH /api/structure/units/:id/parent`                    | Matching operation matrix; company people authority additionally required for effective access changes; version-bound move review.                                                         |
+| `GET /api/structure/commands/:id`                                                                | Same actor and current resource policy; scope-safe create/mutation readback.                                                                                                               |
+| `POST /api/invitations/exchange`                                                                 | Pre-auth credential + exact Origin/Fetch Metadata + JSON, bounded; establishes only protected restricted continuation with synchronizer CSRF. No acceptance/provisioning.                  |
+| `GET /api/invitations/context`                                                                   | Valid restricted continuation (pre-identity or verified); safe current invitation/review/status and CSRF, no ordinary product session required.                                            |
+| `POST /api/invitations/start`                                                                    | Restricted continuation + CSRF/Origin; start purpose-bound OIDC through existing exact callback, no arbitrary returnTo.                                                                    |
+| `POST /api/invitations/setup`                                                                    | Restricted continuation + CSRF/Origin; narrow server preparation and one-shot authority setup handoff, no password field.                                                                  |
+| `POST /api/invitations/accept`                                                                   | Restricted matching verified live identity + CSRF/Origin/current review; atomic subject-bound acceptance then ordinary session recovery.                                                   |
+| `POST /api/invitations/decline`, `/cancel`, `/switch-account`, `/logout`                         | Restricted continuation + CSRF/Origin; decline cancels invitation, cancel clears flow only, switch/logout require explicit exact-current-parent consent. Logout has bounded retry outcome. |
+| `POST /internal/identity/v1/invitation-preparations`                                             | Distinct service client/audience + `identity:invitation:prepare`; idempotent setup authorization for fixed product/invitation/generation/email, no immediate account creation.             |
+| `GET /internal/identity/v1/invitation-preparations/:id`                                          | Same service binding/scope; reconcile preparation outcome, never return password or another product's record.                                                                              |
+| `POST /internal/identity/v1/subject-projections`                                                 | Distinct service binding + `identity:subjects:read`; at most 100 product-linked subjects, no arbitrary email/name search.                                                                  |
+| `POST /identity/invitation-setup/exchange`                                                       | Authority one-shot preparation receipt + exact Origin/Fetch Metadata; exchange to protected authority setup cookie/CSRF.                                                                   |
+| `GET /identity/invitation-setup/context`                                                         | Authority setup continuation; generic bounded state/CSRF, no shared account-existence projection.                                                                                          |
+| `POST /identity/invitation-setup/complete`                                                       | Authority setup continuation + CSRF/Origin; recipient name/password, ordinary unverified create/reconcile and verification delivery. Never reset existing credentials.                     |
+| `POST /identity/invitation-setup/cancel`                                                         | Authority setup continuation + CSRF/Origin; retire this setup flow only.                                                                                                                   |
+
+All `/api/people` and `/api/structure` routes require normal live shell identity and
+completed workspace before the additional policy. No generic public or readiness exemption
+is inherited from their controller. Restricted routes explicitly classify credential,
+pre-identity continuation, verified continuation or logout receipt; they never populate
+`request.productUser`. `GET context` changes no business/account/credential state. Browser
+landing route is `/invitations/join` with opaque credential in the fragment; capture and
+clear the fragment with history replacement before rendering, exchange only on explicit
+POST, exclude the route from traces and keep
+credential in transient memory only. Reload after losing the exchange reopens current mail;
+acceptance still requires explicit review. Members/Invitations/Roles and Structure have
+independent workspace routes/loaders; company configuration remains in Settings.
+
+Existing `/api/auth/login`, `/callback`, `/session`, `/logout`, `/api/workspace/status`,
+`/api/setup`, `/api/setup/complete`, `/api/organization` and `/api/organization/units`
+routes keep their established policy. Extend auth login/callback only with server-held
+purpose discrimination; existing exact registered callback is unchanged. Fixed `/sign-in`
+and `/reset-password` resolve invitation continuation before normal access-gated entry.
+Legacy company unit mutation routes retain configuration-only responses and use the same
+new coordination/impact enforcement; they cannot bypass approval invalidation. Their move
+contract remains unchanged and rejects moves that change effective member or actionable
+approval coverage. Such moves require current impact/confirmation through the scoped
+endpoint; the old endpoint cannot bypass that policy.
+
+Owning processes validate `IDENTITY_SERVICE_CLIENT_ID`, `IDENTITY_SERVICE_RESOURCE_URL`
+(exactly `${AUTH_PUBLIC_ORIGIN}/identity/services/accounts`) and fixed installation binding;
+only product receives `IDENTITY_SERVICE_CLIENT_SECRET` and `IDENTITY_SERVICE_API_URL` (private
+authority transport base, no credentials/query/fragment). Authority service resource is
+`${AUTH_PUBLIC_ORIGIN}/identity/services/accounts` (audience
+must match exactly). Register a third distinct confidential client, fixed to the existing
+installation/application, with client_credentials only, no redirect/refresh/login grants,
+no DMS enrollment and only the two scopes above. Keep existing five-minute service-token
+lifetime, live managed-client/scope checks and replay-safe preparation receipts. Client
+issuance/rotation/suspension remains a private operator command. Internal routes are not
+published by Nginx/ingress; browser setup routes expose only receipt-bound authority work.
+Product-linked projection requests contain `{userId, memberId, memberVersion}` assertions
+from canonical imported/accepted membership records. The registered confidential product
+service is trusted to assert its own membership; this is not an independent authority
+query into the product database. Authority validates installation/application binding,
+bounded UUID/subject assertions and purpose, then records the binding with the service
+registration before projecting only those IDs. Product constructs assertions server-side
+after people authorization; no browser-selected arbitrary subject array or email/name
+search reaches the adapter. Preparation outcomes bind only their matched subject. Private
+operator bootstrap can project one explicitly selected subject through the owning operator
+path. No cross-service database query or authority admin cookie substitutes for binding.
+
+UM-I06 implements these seven authority handlers and the server-only product adapter.
+Configuration is staged: absent service configuration leaves this surface unavailable without
+changing existing login/DMS readiness. Both authority service settings must be configured
+together; the product additionally needs its independently generated secret and an exact
+private transport origin. Its token request also uses that private transport, with the
+public issuer/resource unchanged. No automatic mutation retry occurs; preparation `id` is
+the caller's operation UUID, so a lost preparation response is reconciled by that known ID.
+An unused authorization is replayable only with an identical canonical request digest.
+
+Authority migrations 0002–0003 own six feature tables, separate from the 13 provider-owned
+NOT RLS tables. Feature tables use FORCE RLS and installation policies for the dedicated
+runtime/migrator; no tenant GUC means no rows. Runtime audit is append-only. Live managed
+client/resource rows are checked under locks for each private operation and each browser
+setup operation; suspension and scope removal fence already issued tokens and setup cookies.
+Membership links are immutable by subject/member pair, with monotonic member versions;
+deleted subjects never resolve to a new account through email reuse. Product projection
+checks current company People authority and canonical member bindings before and after HTTP.
+
+Preparation retains its result for 24 hours and authorizes setup for the lesser of invitation
+expiry or 30 minutes. Higher invitation generations supersede old setup flows. A single-use
+opaque receipt exchanges by explicit same-origin POST into a separate HttpOnly, SameSite=Lax
+cookie (Secure and `__Host-` on HTTPS); later POSTs require its synchronizer CSRF token.
+The receipt digest is indexed; recoverable receipt material is AES-256-GCM sealed with a
+purpose-derived authority key and client/application/operation associated data. Setup cookie
+values are stored only as digests. A lost exchange requires a new currently authorized
+preparation operation; context GET never consumes a receipt or creates/changes an account.
+New name/password completion calls Better Auth 1.7.14's headless `createUser` API on the exact
+outer transaction connection with its adapter transaction disabled. Provider user creation,
+provider password hashing/credential linking, completion receipt and finite audit commit
+atomically. Only then does the existing provider verification API send its fixed `/sign-in`
+callback. Mail failure returns retryable unavailable while committed receipt readback remains
+completed; repeat completion never recreates an account or implicitly resends email. Existing
+verified, unverified, passwordless or banned records retain their profile/credentials/flags.
+Verification/recovery and invitation-purpose browser resume compose in UM-I08.
+
+Configured limits are 16 KiB request/1 MiB product response, 100 subjects per projection,
+10,000 retained preparations and immutable links, 2,000 setup sessions and 100,000 audit rows
+per installation/service boundary. Budgets are committed independently: 600 installation
+and 120 hashed-IP requests/minute, 20 preparations/client and exchanges/IP/minute and ten
+completions/IP/minute. Token and transport timeout remain five minutes and five seconds.
+Expired setup/preparation/rate rows are pruned at use; private `auth:prune-identity` uses the
+authority migrator to remove at most 1,000 eligible rows per table/run, including audit older
+than 90 days. Capacity exhaustion fails closed until bounded maintenance frees space.
+Service credentials remain excluded from the browser, and ingress must route only the
+established public authority paths; `/internal/identity/` stays private (web Nginx returns 404).
+
+DTO families are frozen as follows; I02 supplies strict runtime schemas, exports, examples
+and generated docs without claiming implemented handlers:
+
+| Family                                 | Required fields / validation                                                                                                                                                                                                                                |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Catalog/role                           | `catalogVersion: 1`, role UUID/version/systemKey/name/description/explicit permission set; discriminated create versus copy; custom patch has at least one field.                                                                                           |
+| Scope/assignment                       | `{kind: 'company'}` OR `{kind: 'units', unitIds, includeChildren}`; assignment stable UUID, role UUID/version; unique normalized UUIDs and semantic company-action applicability. Include child units is explicit on wire; UI defaults true.                |
+| Member/source                          | Member UUID, immutable `userId`, active/suspended/version, verified display with fresh/stale/deleted/unavailable provenance, all assignments and explicit legacy source. Display lookup freshness never transfers subject ownership.                        |
+| Normal session                         | Preserve current user/session/CSRF fields; add access revision, actor fingerprint and bounded scope anchors/action capabilities. The compatibility permission array cannot authorize resource operations. No expanded descendants, tokens or whole catalog. |
+| Restricted context                     | Discriminated pre-identity/verified/state outcome with invitation UUID/generation/version, safe review summary/digest and CSRF. No normal-session permissions or authority/service tokens.                                                                  |
+| Command/impact                         | Discriminated operation, entity ID/version, expected access revision, expected organization revision where relevant, canonical requested change; opaque actor/digest-bound impact token valid at most five minutes and current versions.                    |
+| Command result/readback                | Command UUID, changed/replayed flags, current entity/version/revisions and safe outcome; deleted entity tombstone. Retry gives current state, never an old serialized secret/grant snapshot.                                                                |
+| Invitation/approval/delivery           | Separate finite states, invitation UUID/version/generation, normalized addressed email for admin, assignments/approval digests/expiry, current delivery status. Recipient preview omits directory/approver contact internals.                               |
+| Scoped units                           | Authorized unit rows, minimal ancestor context marked non-actionable, safe revision/cursor; scoped mutation/tombstone result. No whole configuration shape nested on any outcome.                                                                           |
+| Authority preparation/setup/projection | Fixed product/invitation/generation/operation IDs, normalized email, expiry and one-shot opaque setup receipt; no arbitrary role/verified/ban/password in service DTOs. Recipient password appears only in authority completion body.                       |
+| Error                                  | Finite code, request UUID, optional safe field reasons, retryAfterSeconds/conflict metadata; no raw validator, SQL, SMTP, token or hidden entity data.                                                                                                      |
+
+All admin/structure mutations require UUID `Idempotency-Key`; use it as command ID.
+Every change requires expected entity version (when existing) and access revision;
+hierarchy-dependent commands also require organization revision. A preview does not mutate
+state; issue a server-authenticated opaque proof bound to actor, command digest, versions,
+affected records, expiry and epoch. Commit verifies it under locks. New grant, replacement,
+retirement, status, referenced role-permission, invitation issue/reapproval/resend and
+access-changing move commands require confirmed impact. Display-only custom rename,
+unreferenced role edit/delete, invitation cancel and ordinary covered unit edits need
+versions but no access-impact dialog. Impacts affecting identities are visible only with
+people authority. Grants never come from possession of an impact token alone.
+
+List query keys are `cursor`, `limit` (25 default, 100 maximum), optional `search` (NFC,
+trimmed, at most 120 code points); members add active/suspended status, invitations their
+finite state, roles system/custom kind. Empty search is absent. Reject unknown/duplicate
+query keys. Cursors bind installation, actor policy fingerprint, filter, sort and relevant
+revision; stale cursors conflict rather than leaking unfiltered data. Sort roles by name
+key/UUID, members by product member UUID, invitations by createdAt/UUID, scoped units by
+canonical path/UUID. Paginate eligible role/anchor choices too. Totals are authorized-only.
+Entity/command IDs are normalized UUIDs; authority subjects retain existing
+`^[A-Za-z0-9_-]{1,200}$` validation. Whole-request anchor count is at most 64; duplicate
+anchors/identical role-and-scope assignments reject, overlaps across different assignments
+remain additive. No payload supplies tenant/application identity from the browser.
+
+| HTTP      | Finite code(s) / safe response policy                                                                                                                                                                                                                                                                                                                                                                         |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400       | `PEOPLE_INVALID`, `STRUCTURE_INVALID`, `INVITATION_INVALID_REQUEST`, existing `INVALID_AUTH_REQUEST` / `LOGIN_TRANSACTION_INVALID`; bounded field reasons required/invalid/unsupported/limit_reached, never raw input.                                                                                                                                                                                        |
+| 401       | Existing `IDENTITY_REQUIRED`, `LOGIN_REQUIRED` as applicable; `INVITATION_IDENTITY_REQUIRED` for restricted identity needed.                                                                                                                                                                                                                                                                                  |
+| 403       | Existing `PRODUCT_ACCESS_DENIED`, `PERMISSION_DENIED`, `CSRF_REJECTED`; `ACCESS_COVERAGE_DENIED`, `INVITATION_IDENTITY_MISMATCH`. No hidden object details.                                                                                                                                                                                                                                                   |
+| 404       | `PEOPLE_NOT_FOUND`, `STRUCTURE_NOT_FOUND`; nonexistent/out-of-scope resources share projection.                                                                                                                                                                                                                                                                                                               |
+| 409       | Existing `SETUP_REQUIRED`; `ACCESS_CONTEXT_CHANGED`, `PEOPLE_CONFLICT`, `STRUCTURE_CONFLICT`, `INVITATION_CONFLICT`; finite reasons revision/version/duplicate_name/reference_in_use/protected_role/last_administrator/last_configuration_manager/approval_changed/membership_exists/membership_suspended/idempotency_mismatch/impact_stale/state/required_unit. Only relevant authorized revisions/readback. |
+| 410       | `INVITATION_UNAVAILABLE`; uniform invalid/expired/superseded/cancelled bearer result with no account/directory information. A valid continuation may show its safe terminal status.                                                                                                                                                                                                                           |
+| 413 / 415 | `PEOPLE_TOO_LARGE` / `PEOPLE_MEDIA_TYPE_UNSUPPORTED`, parallel STRUCTURE and INVITATION codes; route-specific bound/media errors, preserving existing configuration codes on legacy routes.                                                                                                                                                                                                                   |
+| 429       | `PEOPLE_RATE_LIMITED`, `INVITATION_RATE_LIMITED`; bounded Retry-After, no account-existence signal.                                                                                                                                                                                                                                                                                                           |
+| 503       | `PEOPLE_UNAVAILABLE`, `STRUCTURE_UNAVAILABLE`, `INVITATION_UNAVAILABLE_RETRY`, existing `AUTH_UNAVAILABLE`, `REFRESH_IN_PROGRESS`; finite dependency/readiness/capacity/revision_exhausted reason and retryable readback, no partial successful grant.                                                                                                                                                        |
+
+Keep existing auth/configuration HTTP codes/statuses where already established; the new
+catalog cannot silently redefine them. Authority private error family uses 400
+`IDENTITY_SERVICE_INVALID`, 401 `IDENTITY_SERVICE_IDENTITY_REQUIRED`, 403
+`IDENTITY_SERVICE_DENIED`, 404 `IDENTITY_SERVICE_NOT_FOUND`, 409
+`IDENTITY_SERVICE_CONFLICT`, 410 `IDENTITY_SETUP_UNAVAILABLE`, 429
+`IDENTITY_SERVICE_RATE_LIMITED`, 503 `IDENTITY_SERVICE_UNAVAILABLE`. Authority browser
+setup uses the same bounded invalid/unavailable vocabulary and existing `CSRF_REJECTED`;
+existing-account create collisions stay a generic completion/recovery result. OAuth token
+errors remain standard OAuth protocol errors. Validation and capacity/rate denials cannot
+commit access or a successful audit event. New codes/status maps become executable in I02.
+
+The authority-owned recipient setup POST has its own purpose-bound receipt/Origin/CSRF
+policy; it is the only new browser account-creation surface and cannot be invoked through
+general signup/admin paths. Issue its short-lived receipt through the private service
+contract and exchange it into protected same-origin continuation; the browser never gets
+an authority-service client credential. Setup receipts use the server setup-continuation
+bound above and are digest/application/invitation/email/generation-bound, then subject-bound
+after creation/reconciliation, with terminal replay returning
+the current completion outcome rather than replacing any password.
+
+Every route is classified explicitly; a permission-name union is never sufficient for a
+resource operation. Mutations require current versions, typed impact confirmation when
+needed, CSRF/Origin/Fetch Metadata for cookie authority, strict DTOs and request IDs.
+Specify finite 400 validation, 401 identity, 403 permission/coverage, 404 safe not-found,
+409 stale/approval/last-manager/state, 410 invalid/expired credential, 429 bounded limiting
+and 503 dependency/readiness/capacity outcomes. Error/readback DTOs preserve scope privacy.
+Retain existing login/refresh/logout semantics, installed setup v1/v2 and DMS independence.
+
+
+Private operator command catalog (implemented foundation in I03; release rehearsal in I11): preserve
+`auth:set-access` JSON replacement input/entry point. UM-I04 requires explicit canonical
+access initialization and removes its former pre-import flat-grant fallback; it writes
+canonical legacy sources and membership status only. Replacing permissions never un-retires a source,
+and disabled status suspends every retained role/legacy source. `access:operator` supplies
+`verify`, `initialize`, `inspect`, `bootstrap-administrator`, `handover-administrator`,
+`retire-legacy` and `prune` operations. Bootstrap/handover take explicit subject/operator IDs and
+expected access revision, requires live verified eligible authority proof through private
+owning HTTP, and add the protected company assignment without removing legacy sources.
+The protected stdin input includes the selected subject's short-lived userinfo login access
+token; the owning authority's fixed introspection and userinfo endpoints verify its exact
+client/issuer/audience, live subject and verified email before any product locks. The proof
+must remain unexpired and at most ten seconds old at mutation. Handover adds the explicitly
+selected successor before removing only the former subject's protected assignment. A
+suspended successor requires separate status recovery. Receipt digests exclude the token,
+so a fresh proof can read back the same command without storing credentials.
+It never creates an identity or selects an administrator implicitly. Operator retirement/
+status commands share lock order, count protections and access audit; operator authority
+is explicitly deployment authority, not a fabricated ordinary user permission ceiling.
+Inspect is bounded/nonsecret and verify includes access model/table safety. Prune uses
+existing 90-day/1,000-row bounds. Inputs use protected stdin/environment with owning roles,
+no secrets in arguments; API runtime never gets migrator credentials. Existing
+configuration inspect/prune commands remain compatible and use canonical manager counts.
+Migration 0025 widens only the assignment scope-key bound to 603 characters: the fixed
+`units:false:` encoding plus sixteen UUIDs and fifteen commas. The public sixteen-anchor
+limit is unchanged; both exact and inherited assignments fit the same persistence contract.
+Authority `auth:manage-client` explicitly gains the separate service type; it does not
+convert/reuse a login or DMS machine registration.
+
+#### User-management executable contract ownership
+
+UM-I02 owns browser-safe `people-common.ts`, `access.ts`, `people.ts` and `people-routes.ts`
+in `@thaarei/turnstile-contracts`. They export the versioned catalog separately from the
+installed three-action `TURNSTILE_PERMISSIONS`, strict normalized role/assignment commands,
+resolved action/scope applicability, independent permission versions, membership/source
+projections, invitation approval/delivery states, impact/recovery results, finite errors
+and explicit route/security classification. Request role references must be resolved from
+current owning storage and validated with `resolvedRoleAssignmentsSchema` before a grant;
+client-supplied role definitions are never authority. No Nest/DB/server package is imported.
+
+`accessAwareUserSessionSchema` requires current access revision, actor fingerprint and
+at most 32 assignment sources plus one legacy source, keeping permissions paired with
+scope and at most 64 anchors. Its permission-name summary agrees with those grant sources
+and documented implications, but cannot authorize resource operations. The current
+`UserSessionDto` requires `access`, and all normal session producers/readers use the
+UM-I04 canonical consumer baseline. The UM-I02 optional-field bridge was temporary;
+it is no longer the public session contract. Restricted invitation context
+has a distinct `kind`/phase shape and cannot satisfy the ordinary schema. Recipient review
+contains only approved anchor units and their ordered ancestor labels, addressed email
+and current permission/scope digests; verified context must match that email and cannot
+outlive its invitation. Identity/parent/expiry and grant checks still belong to live servers.
+
+The reusable `identity-service.ts`/`identity-service-routes.ts` in `@thaarei/dms-contracts`
+define fixed service purpose/audience path/scopes, bounded membership assertions, idempotent
+preparation/reconciliation and receipt-bound authority setup. They do not extend the DMS
+machine scope catalog or install provider policy. No service request accepts password,
+role, verification, ban or arbitrary directory filters; only authority recipient completion
+accepts name/password. Public completion stays generic across new/existing account races.
+New setup preparation is not subject-bound until authority creation/reconciliation resolves
+the subject; it is initially application/invitation/generation/email-bound, then immutable.
+
+`PEOPLE_ROUTES` covers 37 product operations; `IDENTITY_SERVICE_ROUTES` covers seven
+reusable authority operations. All paths are contract targets with explicit normal/company/
+resource/credential/restricted/service/setup policy. Route path IDs and command targets
+must agree. POST impact previews require cookie CSRF/Origin but no business mutation or
+Idempotency-Key. The setup handoff returns a short-lived, single-purpose receipt to POST
+only to `/identity/invitation-setup/exchange`, never a service token/secret. Cookie names
+for these purpose continuations remain future owning configuration; generated names are
+explicit targets, not installed cookies or broad public exemptions.
+
+`pnpm docs:user-management` builds both packages and generates
+[product OpenAPI](docs/api/turnstile-people.openapi.json) and
+[authority OpenAPI](docs/api/identity-invitations.openapi.json) through
+`scripts/generate-user-management-openapi.mjs`. A local Zod registry shares schemas with
+OpenAPI references; shared responses avoid repeated snapshots. No fragment-valued JSON
+Schema `$id` is emitted. Examples for every exported schema and recipient/approval/delivery
+failure states validate against executable schemas; generated per-status error schemas
+match finite status maps and all local references resolve. `pnpm check:contracts` checks
+both new files deterministically alongside unchanged existing auth/onboarding generation.
+Zod normalization/cross-field refinements are normative beyond structural JSON Schema.
+HTTP adapters must enforce byte/deadline/rate limits before parsing and recheck live
+permissions/versions/references/receipts under the ordered transaction. No contract table
+or generated endpoint proves any corresponding handler, client registration or migration.
+
+#### User-management release compatibility
+
+Coordinate authority policy, API, web, migration and private commands as one capability
+release. Persist access model and release capability version `1` and public feature state
+`closed`/`open` in owning installation capability state. Version-aware readiness rejects
+missing/wrong version, unsafe feature tables, legacy runtime SELECT or a mismatched bound
+recovery epoch. Private release verification additionally checks complete legacy import. Ordinary legacy
+readers cannot be made compatible by this flag; stop them and revoke their credentials/
+connections at cutover. Fresh and upgraded installations keep feature writers closed until
+I04/I05/I06/I07/I08/I09 integration and I11 release verification meet the dependency gates.
+Only an explicit compatible operator release action opens the feature; startup never grants
+roles, imports state or opens writers. A closed feature denies public people/invitation/
+scoped writers with finite unavailable outcome; recipient entry and delivery claiming/sending
+are also closed. It does not bypass legacy setup protection.
+
+Preflight the exact installation, back up and rehearse restore, stop old API and
+private writers, run owner migrations, import legacy sources repeat-safely, upgrade every
+access reader and grant writer, provision/verify the chosen protected administrator, and
+only then enable public people/invitation/scoped writers. Prove no old process/credential
+can keep authorizing through the retired flat model; rotate runtime credentials/terminate
+old connections if a stopped-process guarantee cannot be established. Do not assume an
+old image/private CLI is compatible because the migration added tables. Rollback is only
+to a tested access-aware release or an explicit coordinated restore with invitation epoch
+rotation and mail quarantine. Keep fixed installation IDs, registered clients, setup
+version/completion, stored zones, existing grants/suspensions, session fencing and DMS
+enrollment intact. Real production email and target DNS/TLS remain separate acceptance.
+
+`0027_user_management_release` removes runtime table/column SELECT on the retired
+inventory, retains its freeze trigger and permits release metadata changes only to a
+direct owning migrator session. Existing runtime security-definer commands can still
+advance only the access revision. Release changes take the existing installation,
+configuration and access locks and advance one revision with an operator audit/receipt.
+The row binds a SHA-256 candidate inventory ID and external recovery-epoch digest;
+it stores neither an invitation secret nor a credential. The lock function supports
+both closed and open compatible states, without weakening tenant or privilege checks.
+
+`access:release` is an explicit private CLI with bounded strict JSON stdin and finite
+nonsecret errors. `bootstrap-administrator` uses the owning access operation after
+verifying the selected normal encrypted/signed product session and live authority
+identity. `verify-login` proves the current protected administrator and distinct
+versioned identity-service transport; `open` additionally checks complete legacy import,
+current revision, protected-person counts, full invitation configuration, candidate ID
+and explicit stopped-incompatible-process acknowledgement. The versioned authority
+probe reads a random absent preparation and requires the strict authenticated not-found
+response; it creates no identity/preparation and adds no public readiness endpoint.
+`close` works without the authority. `recover` requires a new external epoch, closes
+writers, invalidates pending invitations and retires queued/sending payloads and leases
+atomically, preserving accepted grants. Replaying its receipt never repeats recovery;
+current or retained historical invitation epochs cannot be rebound. Old configured
+epochs fail readiness, and dispatch/recipient entry require the open bound capability.
+
+The [release runbook](docs/runbooks/user-management-release.md) owns operator sequencing.
+The local-only backup/rehearsal/retirement/verifier helpers retain protected files outside
+the checkout and reject a different installation/profile/port. Retirement rotates six
+dedicated role passwords, terminates old connections, proves old-password denial and
+installs replacement configuration while all applications remain stopped. It is never
+part of startup. The isolated rehearsal invokes this same retirement primitive against
+generated clone credentials and tests archived setup/grants without touching the source.
+The candidate inventory binds actual authority/API/web image IDs, deployed compiled/public
+package bytes, owning SQL/journals and private operation hashes. Exact-image verification
+runs production entrypoints non-root/read-only without network/host ports. The selected
+target verifier additionally requires the exact running images and real administrator
+login. Successful isolated checks do not imply actual target rollout or stable host time.
+
+UM-I03 stages its owning schema without changing any installed grants at migration/startup.
+The ten `access_*` tables own capability/revision, membership, explicit legacy sources,
+stable role definitions and permission entries, assignments and selected unit anchors,
+command/impact receipts, and access audit. Every table has forced tenant RLS; runtime has
+read-only access to feature state and user-only audit INSERT, with no access-history SELECT,
+UPDATE/DELETE, feature writes or DDL. Private verification and persistence readiness inspect
+all ten tables, ownership and runtime table/column privileges. No invitation/delivery table
+is introduced in this package.
+
+`access:operator initialize` is the explicit import boundary. Under fixed installation,
+configuration and access locks it seeds the four templates and copies every legacy subject
+and its exact permission set/status into one canonical source, without any role assignment.
+The capability row records model `1`, closed public writes and the attributable import;
+repeat initialization preserves IDs, revisions, sources and audit. Invalid historical
+subjects/actions abort the entire transaction for operator reconciliation. A trigger freezes
+old `user_access` rows as read-only recovery inventory after import.
+
+UM-I03 originally fenced ordinary legacy readers after import. UM-I04 removes those
+readers: normal login, sessions, readiness, route guards, configuration/setup transactions
+and private inspection now use canonical access exclusively. Missing initialization/model,
+unsafe feature tables or an unsafe/missing lock function fail readiness closed. Role-only
+members need no recovery-inventory row; retained positive sources cannot authorize a
+suspended member. Initialization remains explicit and is never performed on the existing
+installation by workspace verification. Public role/assignment writers remain closed.
+
+#### User-management consumer baseline
+
+Auth consumes the Access repository over the existing product pool. Normal sessions require
+bounded `UserAccessContext` (catalog version, access revision, actor fingerprint and at most
+33 permission/scope sources with 64 selected anchors). The browser validates the complete
+access-aware session. No expanded descendants, complete role definitions or OAuth credentials
+are stored in its DTO. The auth OpenAPI document advances to version 2 for the mandatory
+context; user-management catalog/API version 1 and existing organization DTOs retain their
+own versions. Old encrypted normal sessions receive their first context only after live
+identity and canonical membership verification.
+
+Every request re-reads canonical access. Membership/source/permission/scope or affected live
+ancestry changes update the fingerprint; unrelated actors and harmless role display edits
+do not rotate it. Unsafe requests validate their incoming CSRF/Origin/Fetch Metadata against
+the incoming cookie generation before context replacement. A changed context reloads current
+state, checks identity/refresh ownership and expiry, then regenerates cookie generation and
+CSRF through the pinned plugin's generation/revision compare-and-set. Regeneration caps
+cookie expiry at the original verified absolute limit. Stale saves cannot
+overwrite logout, refresh or another transition. The mutation receives typed 409
+`ACCESS_CONTEXT_CHANGED`; the client retains drafts, fetches current session/CSRF and requires
+deliberate resubmission. Safe session reads can return the updated context directly.
+Unrelated revision changes update the summary without cookie/CSRF churn. Existing live
+parent checks, refresh claims, idle/absolute limits and bounded logout recovery still apply.
+
+Route metadata distinguishes company/scope-neutral permissions from explicit unit resource
+policies (`action`, named path parameter and exact/subtree requirement). A flat permission
+name in a session summary is not route authority. Missing/unknown policy denies; readiness
+exemptions bypass only workspace activation. Whole-company configuration routes stay
+company-only, separate from people or unit management. Scoped structure delivery is described below.
+
+Configuration transactions re-read the actor and hierarchy after installation, organization
+and access context locks, check enabled shell/company configuration authority, and compare
+the server-derived request fingerprint before mutation. `turnstile.lock_access_context(uuid)`
+is the initial narrow runtime lock capability: SECURITY DEFINER owned by the product
+migrator, fixed `pg_catalog, pg_temp` search path, no PUBLIC execute, one UUID argument,
+void result, and no writes or cross-application access. It requires matching transaction-local
+tenant context, verifies the one installation and initialized configuration/model, and locks
+those three rows in that order. Runtime receives only EXECUTE, retaining read-only feature
+tables and append-only user audit. Readiness/private verify inspect its owner, path, mode,
+return type and execute ACL; real database tests cover misuse and privilege isolation.
+
+This remains a staged capability, not a mixed-image release. Pre-I03 readers still must be
+stopped/revoked for the eventual coordinated cutover; public writers stay gated through the
+dependent packages and I11 release verification.
+
+#### Invitation approval and delivery implementation (UM-I07)
+
+PeopleModule owns InvitationService, InvitationStoreService, InvitationDeliveryService and
+InvitationMailService. Its composition-only global InvitationPolicyBindingsModule installs
+the StructureInvitationPolicy implementation without making Access import People or creating
+a module/provider cycle. Restricted recipient and ordinary People HTTP composition are implemented below in UM-I08/I09;
+no public product writer flag is opened here and no invitation creates membership.
+
+Product migrations 0017–0020 add seven installation-bound FORCE RLS tables: invitation,
+immutable invitation_generation, actionable invitation_reference, invitation_delivery,
+invitation_operation, invitation_rate and append-only invitation_audit. Role/unit reference
+FKs pin live targets until terminal cancellation/expiry; historical JSON snapshots do not.
+Runtime can write only the owning invitation tables and append finite user/system audit;
+generation updates are denied and guarded even for private owning operators. Existing
+Access membership, role, assignment and receipt tables retain read-only runtime grants.
+Readiness verifies all feature table privileges, fixed function ownership/path/ACL and six
+deferred approval fences. Capacity is 1,000 actionable invitations, 2,048 unfinished sends,
+10,000 shared command receipts and 100,000 invitation audit rows; exhaustion fails closed.
+
+An explicit issue/resend/reapprove first reserves its immutable installation/actor/UUID
+operation, request digest and known authority-operation UUID under ordered installation,
+configuration and Access locks. The global immutable Access receipt reserves the same
+namespace used by Structure/private commands. Current company People authority, completed
+workspace, role versions, action/scope ceilings, unit references and expected revisions
+are checked before reservation. Only new reservations charge the durable 10/admin/minute
+and 100/installation/hour issuance budget. Authority reconciliation then runs outside the
+product transaction: read the known preparation first, prepare only on definite not-found,
+and never blindly retry creation. The authority creates no placeholder account; its matched
+subject permits a canonical local active/suspended membership conflict instead of overwriting
+access. Resend/reapproval lookup uses the current product generation so an uncommitted
+resend does not advance authority purpose beyond the product. A changed email is permitted
+only with a strictly higher authority epoch; same-generation mismatches remain conflicts.
+Only currently persisted eligible invitation operation context authorizes this lookup.
+
+Finalization reacquires the locks and rechecks actor authority, revisions, current invitation
+version/generation, membership and all grant ceilings. It atomically commits the invitation,
+approved generation/snapshot, digest-only credential, live references, encrypted delivery
+intent, finite audit, operation completion and one Access revision. The narrow
+reserve_invitation_command and commit_invitation_command capabilities never write grants;
+the immutable global receipt is not updated. The owning operation's one-shot committed_at
+fence prevents repeated revision advances. Exact command replay returns the current safe
+invitation, including later terminal/stale status, without another link, charge or email.
+A retained preparing operation can be retried only by its currently authorized actor.
+
+Approval permission digests include role permission versions/sets, approver authority
+fingerprint and external recovery epoch; scope digests bind explicit anchors/subtree policy.
+Six DEFERRABLE INITIALLY DEFERRED constraints inspect final effective grants after member,
+legacy, assignment, anchor, role or permission changes. Loss of approver authority/ceiling,
+protected status or approved role permissions persists needs_reapproval, increments version/
+generation and purges old unsent work in that source commit. Restoration in a later commit
+never revives it. Equivalent atomic grant replacement and display-only role edits do not
+invalidate approval. A bounded set is all-or-nothing; audit/capacity failure rejects the
+source transaction. Structure impact compares the union of effective action/scope coverage
+before/after a move, hashes affected IDs/generations/snapshots and invalidates under the
+same transaction. Overlapping grants and new descendants retain the established policy.
+
+A new credential is 32 random bytes; explicit issuance/resend/reapproval sets seven-day
+expiry using database time. The delivery-only recoverable JSON is AES-256-GCM encrypted
+under TURNSTILE_INVITATION_ENCRYPTION_KEY with tenant/invitation/generation/recovery-epoch
+associated data. No link is returned in an administrator result or stored in audit/receipts.
+A read-only credential lookup requires the current pending generation, digest, approval,
+expiry and external recovery epoch; it performs no account, consent or membership changes.
+UM-I08 must wrap it in the restricted exchange/CSRF/IP-and-digest attempt budgets.
+
+The API starts one bounded drain immediately and every five seconds when owning invitation
+configuration is available. Replicas claim up to ten queued jobs under durable 30-second
+UUID leases, then release all product locks and perform concurrent SMTP operations with a
+ten-second deadline. A second current-generation/approval/epoch check precedes SMTP; a
+leased CAS after SMTP fences late senders. SMTP acceptance is evidence of transport
+acceptance only. Definite pre-acceptance unavailable outcomes retry after 5/30/120/600
+seconds, at most five attempts. Definite rejection is terminal failed. DATA/acknowledgment
+loss, ambiguous connection loss or expired send lease is unknown and never automatically
+retried. A connection error labelled CONN after DATA is not proof that mail was unsent.
+Resend rotates before its new SMTP work; a late old sender cannot update the new generation.
+Secrets are purged on SMTP-accepted, terminal failed, unknown, supersession, cancellation
+and expiry. Startup/restart reclaims queued work and marks abandoned sends unknown.
+Before-shutdown stops new claims and awaits the bounded active batch before the shared
+persistence pool closes; the product container has a 45-second stop grace. Finite in-memory metrics
+expose batch/accepted/failed/unknown/unavailable counts without recipient, token or payload.
+
+Owning Turnstile SMTP variables are TURNSTILE_SMTP_HOST, TURNSTILE_SMTP_PORT and
+TURNSTILE_MAIL_FROM. The adapter is restricted to Mailpit/loopback capture, with STARTTLS
+required in production and plaintext local/test capture. No external relay transport is
+introduced. Local API forwarding reuses reserved port 23604 and the existing Mailpit;
+Compose startup waits for it. The production pilot overlay reuses its existing STARTTLS CA
+and capture bounds. TURNSTILE_INVITATION_ENCRYPTION_KEY and
+TURNSTILE_INVITATION_RECOVERY_EPOCH are mandatory, independently generated server secrets
+for this capability; missing settings leave invitation work unavailable. All replicas use
+the current external epoch. After backup restore rotate it before delivery/acceptance;
+maintenance retires old-epoch approvals and requires explicit reapproval/resend. Never put
+these settings in Vite or a browser bundle. The web invitation landing path suppresses
+access/error request logs and retains the existing no-referrer policy.
+
+Private access:operator prune is retention-only, extending its shared 1,000-row deletion
+budget to expired operations/rates and invitation audit, terminal delivery/generation/metadata
+older than 90 days. It can free audit capacity without first requiring another audit insert.
+Owning lifecycle maintenance/worker performs audited expiry and lease recovery after capacity
+is available. Current actionable generations and accepted current approvals are preserved.
+An accepted terminal parent and its one current approval are removed atomically only after
+retention is due and every other FK dependent has drained; both rows count against the
+budget. Bounded repeated runs drain eligible history without deleting memberships or restoring
+grants. Recipient and administration behavior is described below; coordinated release and
+restore acceptance remain UM-I11.
+
+#### Restricted recipient identity and acceptance implementation (UM-I08)
+
+PeopleModule installs only the frozen `/api/invitations/*` recipient handlers. Their
+explicit credential, protected continuation or verified-recipient policies bypass the
+normal member gate locally; no ordinary People administration route is opened. All other
+product routes retain the canonical normal-session guard. Access and owned persistence
+must already be initialized; runtime startup never provisions them. Ordinary invitation
+issuance/reapproval remains completed-workspace-only. A current valid approval may finish
+recipient authentication/acceptance against an initialized saved incomplete configuration;
+ordinary readiness then selects existing setup or waiting. This is an accepted compatibility
+invariant, not a claim that current issuance/recovery creates such approvals. Restored
+old-epoch mail remains invalid, and acceptance never completes configuration.
+
+The landing module captures a canonical opaque fragment into transient memory and removes
+it from history before rendering. An explicit Review invitation action exchanges it;
+scanner GETs neither consume an invitation nor prepare accounts. The exchange requires
+exact Origin, same-origin Fetch Metadata when supplied and bounded JSON. Encrypted BFF
+storage holds a random continuation ID, invitation/generation, credential digest, external
+recovery epoch, synchronizer CSRF and a server-generated setup operation ID. No credential,
+password or authority setup receipt enters returnTo, router state or browser storage.
+
+The continuation lasts at most 30 minutes and never beyond the invitation. The existing
+five-minute state/nonce/PKCE transaction and exact registered OIDC callback carry an optional
+server-held invitation purpose. Normal `/api/auth/login` resolves that purpose first, so
+existing sign-in, fixed verification callbacks and reset-password completion resume it.
+A completed acceptance marks the purpose consumed in the same database transaction;
+subsequent ordinary login uses the canonical member evaluator and cannot loop into pending
+identity. Reopening the current mail link establishes a fresh continuation after loss or
+expiry without creating another identity.
+
+Restricted identity is a separate encrypted session variant, never a normal product user.
+It lasts at most ten minutes, invitation/continuation validity and the actual authority
+parent expiry. Every restricted identity read or mutation checks live introspection, verified
+current userinfo and the exact browser authority parent over HTTP. Token expiry requires
+another purpose login; this bridge never retries an uncertain refresh grant. Current
+issuer/client/audience/subject/session binding, bans and changed-parent checks remain in
+the owning OIDC adapter. Before acceptance, matching current verified email is necessary
+in addition to immutable subject ID; a wrong account cannot accept. After acceptance,
+readback/replay follows the immutable subject and current membership even if its verified
+email has changed; historical contact text no longer authorizes access. Explicit switch/logout retires local identity before HTTP,
+retains at most a five-minute logout retry and ends only its exact retained parent. A
+new authority login in another tab is preserved. Cancel clears the flow; decline cancels
+the current invitation and closes its delivery work without granting People authority.
+
+Only explicit setup prepares a recipient-owned account handoff after current approval,
+generation, expiry and session checks. The persisted setup operation is reconciled before
+new preparation; a lost mutation response is never blindly retried. A second eligibility
+check follows authority HTTP. The browser posts its one-shot receipt and then its chosen
+name/password directly to the owning authority setup endpoints. Product HTTP accepts no
+password field. New accounts remain unverified until the existing fixed verification flow
+finishes; existing unverified/passwordless accounts use supported sign-in/verification/
+recovery. No setup changes an existing profile, credential, role or ban. Authority epoch
+updates retain the newly approved email when advancing generation, including subsequent
+same-generation recipient preparations.
+
+Recipient mutations enforce current CSRF, exact Origin, strict empty queries and the frozen
+JSON body contract. HTTP request/response bounds stay 16 KiB/1 MiB and database work shares
+the ten-second request deadline. Public exchange/context/mutation counters persist across replicas:
+ten attempts per minute independently for the derived socket IP and credential digest.
+Forwarded IP headers remain untrusted. IP rejection precedes creation of another digest
+bucket; the owning path deletes at most 1,000 obsolete public minute buckets and caps live
+public rate metadata at 10,000 buckets. Capacity fails closed and retries after the window.
+This conservative proxy/IP behavior remains subject to target ingress acceptance.
+
+Migration 0021 adds a FORCE RLS, runtime-read-only immutable subject-bound acceptance result;
+0022 installs the fixed-search-path, non-PUBLIC narrow acceptance capability. Runtime keeps
+Access tables read-only. The capability derives all assignments from current immutable
+approved generation data, checks live approval/role permissions/anchors, saved configuration,
+matching email/subject, recovery epoch and database time after locking. Existing active or
+suspended membership is never overwritten. Access/invitation locking serializes acceptance
+with cancel/resend/reapproval and source revocation. The encrypted session row is then
+locked and revalidated in that same transaction, fencing concurrent cancellation, account
+switch and callback generation changes without holding locks during authority HTTP.
+
+A successful transition writes canonical member/assignments/anchors, accepted state,
+subject-bound receipt, one Access revision and audit atomically, retires pending delivery
+payloads and removes actionable references. The receipt persists at least seven days and
+joins the bounded private pruning budget; terminal invitation history remains subject to
+the existing 90-day policy. Repeated acceptance reads current membership/grants and never
+reapplies the approved snapshot. Ordinary session establishment occurs after commit;
+failed cookie/session persistence leaves membership and its consumed purpose recoverable
+through readback, retry or ordinary login. Readiness checks cover the receipt privileges,
+RLS and acceptance capability as well as the preceding invitation storage.
+Promotion rebinds the regenerated normal cookie's relative lifetime to the verified
+identity's remaining absolute lifetime; it never inherits the restricted continuation's
+original maximum age. A concurrent replacement or expired identity prevents promotion.
+Passive rejected/stale requests do not clear the browser cookie: their delayed responses
+could otherwise erase a newer valid generation. Explicit logout owns cookie removal;
+stale and invalid cookies remain unauthorized.
+
+Migration 0026 preserves this recipient/setup separation in the narrow acceptance
+capability without changing ordinary issuance, business readiness or epoch checks.
+
+The public recipient entry composes existing authentication layout, fields, buttons and
+feedback. Its unavailable context includes a safe optional action target so cancel/switch
+remain possible after OIDC navigation when no review can be shown. Browser-facing authority
+setup response projections live in Turnstile contracts; the browser still imports no DMS
+contracts/client or backend package. Ordinary administration handlers and the People UI
+are implemented below in UM-I09/10. Target ingress/email/installation rollout remains
+a separate release package.
+
+#### People administration implementation (UM-I09)
+
+PeopleModule installs only the frozen `/api/people/*` administration catalog. The
+AdministrationController delegates projections to AdministrationService and commands/impact/
+readback to PeopleCommandsService; PeopleStoreService uses the one ProductPersistence pool.
+All routes require a normal live shell session and completed setup. Member/invitation and
+eligible-role routes require company People authority, role routes require company Roles
+authority, and catalog/impact/readback authorize the actual operation independently. Role-only
+impact results contain definitions without member or invitation identifiers. Strict DTOs,
+path/operation matching, current CSRF/Origin/Fetch Metadata, UUID command keys, finite safe
+errors, telemetry, 16 KiB/1 MiB limits and the ten-second request/database deadline apply.
+Ordinary mutations still require the closed `public_writes_enabled` release gate; preview
+and current authorized reads do not open it. Disposable tests override only the owning gate
+method, with no production request or environment override.
+
+Migration 0023 adds one current `member_display` cache row per immutable canonical member
+and nullable `people_changed` metadata on new shared command receipts; historical receipts
+are unchanged. Migration 0024 forces installation RLS and grants runtime CRUD only on this
+display cache. Readiness verifies ownership, RLS, privileges and fixed-search-path,
+non-PUBLIC helpers/capability. Runtime Access tables remain read-only; the narrow
+`apply_people_command` capability checks current actor/action/scope, expected versions,
+references, protected counts and receipts under installation/configuration/access locks.
+Custom copies have no protected system identity; all four system templates remain immutable.
+Changed member assignment pairs are checked before and after; retained independent sources
+keep their IDs and do not force an unrelated grant ceiling. Legacy retirement is explicit
+and separately audited. Last administrator and effective configuration-manager guards count
+distinct active subjects. Effective changes advance Access exactly once with atomic audit
+and immutable receipt; no-ops retain the current revision and append no change audit.
+
+Referenced role permission edits require both management powers, including reductions;
+added reusable permissions require company coverage even without references. Before/after
+assignment and actionable invitation scopes must remain grantable. Shared edits inspect at
+most 1,000 combined members/invitations, returning finite capacity errors beyond that bound.
+Five-minute impact proofs bind the actor fingerprint, canonical command and full affected
+source snapshots, current Access/organization revisions and expiry; the wire response
+samples at most 100 affected IDs with exact bounded counts. Confirmation is checked again
+inside the mutation transaction. Invitation preview uses the owning lifecycle candidate
+check, including pending-only resend and needs-reapproval-only reapproval. Invitation
+issue/reapprove/resend/cancel use the existing InvitationService, with an administration
+validation callback in its final transaction. Completed reservations skip stale impact
+validation under the same lock and concurrent HTTP creation returns one 201 plus a current
+200 replay. Deferred invitation fences invalidate changed approvals atomically; a late audit failure
+rolls back the source edit, invalidation and new command receipt. Shared command-key replay
+and same-actor readback return current authorized entities or role tombstones, never saved
+grants, restored membership or another delivery.
+
+Identity refresh captures at most 100 server-selected canonical links, calls the authenticated
+owning authority outside product locks, then rechecks current actor and member/user/version
+bindings before saving projections. An older checked-at response cannot overwrite a newer
+projection, including a confirmed deletion. Lists refresh a bounded batch and selected page; detail
+refreshes its selected member. Verified displays are fresh for 60 seconds with matching
+member version, otherwise stale; absent/unverified data is unavailable and confirmed deleted
+subjects have an explicit deleted projection. Cache state never authorizes a subject or
+automatically relinks an email. Search uses the local product-linked display index, escapes
+literal wildcards and refuses incomplete name/email totals while some member lacks a
+projection. A later bounded read warms another batch. Deleted cache rows retain contact
+provenance privately for recycled-address checks without exposing that contact in a deleted
+DTO. A confirmed deleted active former subject with the requested address (or unknown old
+address) must first be suspended/resolved; fresh explicit invitation approval never copies
+its roles. Reactivation of a suspended member requires a current present verified projection
+outside locks, followed by the usual locked version/grant checks. Authority display outages
+leave local suspension and other local Access administration usable. Lists/cursors bind
+query, actor fingerprint and Access revision; display freshness remains a projection, not
+an authorization snapshot. Target migration, cutover and ordinary writer opening remain
+the coordinated release package.
+The disposable database harness runs every owning database test file independently, with
+complete failure output and a finite six-minute per-file process budget. It uses a bounded
+2 GiB temporary filesystem for PostgreSQL data, asserts normal fsync/full-page-write/
+synchronous-commit settings and still verifies real owned migrations, runtime privileges,
+RLS, HTTP and restore behavior. These fixture settings do not change installation storage
+or application transport/request deadlines. Rate-boundary fixtures seed current/next buckets
+or explicit future/expired metadata rather than relying on a slow scenario finishing within
+the same wall-clock minute.
+
+#### People and scoped structure UI (UM-I10)
+
+The completed-workspace shell composes independent `/people/members`,
+`/people/invitations`, `/people/roles` and `/structure` routes. Navigation uses the live
+normal session; each route loads only its owning authorized API. Permission refresh updates
+the existing shell. People-only and role-only screens do not request company configuration
+or structure snapshots. The permission catalog additionally projects the current organization
+revision and company permissions the actor can grant, without organization data or identities.
+These additive fields guide drafts; transactional backend checks remain authoritative.
+Eligible role definitions and unit choices are fetched independently, with bounded paging;
+unit context contains canonical ancestor paths and does not confer management access.
+
+Completed-workspace navigation groups Members, Invitations and Roles under People & access;
+Structure is a separate destination. The requested route drives visible active states in
+both navigation areas while owning loaders still wait for session authorization. The old
+Settings Structure URL redirects to `/structure`; the old Workspace settings URL redirects
+to General settings, which edits organization name/time zone together. Setup overview
+links to the canonical Structure editor. Onboarding retains its dedicated configuration
+journey; company-only profile data is never loaded for scoped structure users.
+Structure offers chart/outline presentations over the same authorized page and one reviewed
+command flow. Read-only units open details without mutation controls. Company unit managers
+can add sites under the root. New unit-scope assignments default child coverage on; saved
+assignments are retained verbatim. Custom role editing selects one intended action at a
+time (details, permissions, copy or deletion), preserving separate backend authorization.
+
+Members Invite person carries a one-shot router-state compose intent to Invitations.
+Only the authorized owning route opens the empty composer; it consumes the intent with
+history replacement, so ordinary tab navigation/Back does not reopen a discarded draft.
+It does not issue invitations, choose a role or bypass the ordinary loader/command checks.
+Access inspectors use the shared Card panel variant: task header/close, independently
+scrolling body and persistent action footer, with natural document scrolling on narrow
+screens. Impact/recovery actions render into the same footer while the owning Review
+component retains its state and idempotency key. Closing is disabled during pending or
+uncertain writes; dirty close and role-action switches require deliberate discard.
+Permissions are grouped by purpose with company-only/required labels. New assignments
+start with no role selected. Saved invitations expose their approved roles/coverage and
+lifecycle rather than an editable-looking disabled form. No authorization semantics change.
+
+Roles and scoped Structure share a compact directory surface, search/filter/reload toolbar
+and adjacent non-modal editor. Wide workspace pages use up to 82rem; at 70rem and below
+the selected editor precedes its directory. Roles use the shared semantic table with
+permission summaries and explicit system/protected labels; narrow screens retain role
+identity/actions and expose permissions through the editor. Structure reconstructs a
+nested outline from only the current authorized page and its supplied ancestor paths.
+Path-only ancestors have collapse controls but no management action; collapsed units keep
+their own label/action visible. Search/page changes expand the new result ancestry and do
+not infer missing siblings or fetch full configuration. The unit editor selects one
+rename/create/move/delete operation at a time. Both editors retain existing owning APIs,
+permission gates, version capture, impact review and confirmation.
+
+The Members directory uses compact person/status/role-and-coverage rows, with a direct
+Invitations link. Selecting a member opens a saved-access overview; role editing is an
+explicit separate state and membership suspension/reactivation has its own explanation
+and review. Roles/permissions remain paired with each assignment's coverage, never merged
+into a misleading global permission summary. Retained imported grants stay visible as an
+independent company-wide source; retired sources and immutable subject IDs are secondary
+account/history details. Identity freshness is separate from membership status. Saved
+writes fence directory selection until fresh session/readback reloads settle. Assignment
+controls stack role/coverage labels and disclose permission previews and refresh tools.
+
+Editors keep drafts in memory, protect dirty navigation and capture saved entity versions.
+Same-subject permission/session failures keep draft owners mounted but hidden and inert;
+owning loaders pause and prior impact proofs are discarded. A fresh successful access check
+can resume the draft, while explicit sign-out or a different subject clears it. Full document
+navigation ends memory-only drafts. No permission or mutation result is inferred from retention.
+After a successful mutation, a fresh session/access read drains any preceding in-flight
+read before checking current state. Focus/interval checks join that refresh, and dependent
+list reloads wait for it. This sequences cookie/context changes without retrying writes.
+Assignment controls show actual permissions, company-only constraints and explicit child-unit
+coverage. Shared-role and member/invitation changes obtain server impact proofs before an
+explicit confirmation. A command keeps one idempotency key; an uncertain response offers
+authorized readback and never automatically replays a write. Structure moves use their
+own impact API. Loading and failures remain local to the section; authoritative confirmation
+precedes refreshed saved data. The restricted invitation entry displays approved permission
+and full path context and retains its separate identity/verification/acceptance boundary.
+Reopening an invitation in the same document captures and removes its new fragment before
+explicit exchange; an invalid new link cannot reuse an earlier credential.
+Purpose generations fence stale async responses, and superseded reads abort. An in-flight
+mutation settles before another explicitly requested purpose action can run, preserving
+cookie transition order without replay. Recipient response streams stop at the 1 MiB bound.
+No draft or invitation credential is persisted in browser storage. Sensitive route ingress
+exclusions include the administration routes. The gallery examples are inert fixtures.
+
+The disposable People browser runner uses real HTTPS, authority login, owning product HTTP,
+SMTP capture and isolated databases. Its guarded test entry opens owning command services
+only in that fixture; production readiness gates and installation state remain unchanged.
+
+#### Scoped structure implementation (UM-I05)
+
+`GET /api/structure/units` and `GET /api/structure/units/:id` use the existing Organization
+repository and its one ProductPersistenceModule pool. They require normal shell identity
+and completed setup, then re-read current access after installation/configuration/access
+locks. The server request fingerprint fences a change between guard and repository.
+The canonical bounded tree is projected directly, without returning a full profile/setup
+snapshot. Exact unit read/manage covers only that unit; subtree coverage uses current
+canonical parents. Shell-only access produces an empty list, while missing/out-of-scope
+details have the same finite 404 without revisions or hidden fields.
+
+Filter coverage before search, counts and pages; sort by type, normalized name key and UUID.
+Opaque cursors bind organization/access revisions, actor fingerprint, normalized search
+and the previous authorized unit ID. They are positions, not authorization proofs. Ancestor
+context contains only needed path IDs/types/labels, marked `actionable:false`; breadcrumbs
+never authorize ancestor detail or mutation. Every structure outcome uses strict scoped
+contracts, request-ID errors, response byte limits and private/no-store/no-referrer headers.
+Existing whole-company profile/setup routes retain configuration-only guards/projections.
+
+Organization's StructureCommands service implements scoped create/rename/delete/move,
+move-impact preview and same-actor command readback. Canonical root/type/depth/name/cycle/
+required-first-unit validation is shared with the existing configuration service. Rename
+needs exact manage coverage. Creation needs parent and new-child coverage; an exact-only
+parent grant cannot create a child. Delete needs leaf and parent-link authority and rejects
+all retained member anchors, including suspended memberships. Root relationships additionally
+require company configuration management. Moves check source, source-parent, destination,
+all moved units before/after and both parent links. Scope-only moves must remain inside a
+single common subtree anchor; combining separate anchors is not company structure authority.
+Same-parent no-ops still check authorization and both revisions, without changing tree/audit.
+
+Access's StructureAccess service computes current effective read/manage differences for
+the moved subtree using the canonical evaluator and the union of every member source.
+Candidates are selected by changed ancestor anchors in one bounded SQL query; company or
+overlapping grants can mask a source change. Suspended memberships have no effective powers
+but retain deletion references. Impact is bounded to 1,000 candidate members; unknown or
+oversized coverage rejects the command. Changing effective access requires company unit
+management, company people management and current before/after action-scope ceilings.
+Previews reveal only authorized counts. Five-minute opaque confirmations are stored as
+hashes and bind actor/fingerprint, canonical command, current organization/access revisions,
+subtree ancestry, candidate grants and the invitation policy digest. Commit recomputes this
+under the shared locks and uses database time for expiry. Missing/stale/other-command proofs
+conflict; no mutation is silently rebased. Explicit anchors remain attached to stable IDs.
+
+Migrations 0015–16 extend existing Access receipts with structure operation discriminants,
+terminal parent context and immutable resulting revisions, and add finite truthful
+`unit_coverage_changed` audit. Receipt identity remains installation/actor/UUID across
+private/people/structure operations, with collision checks against legacy configuration
+create receipts in both directions. All scope-changing commits atomically persist the tree,
+configuration revision/audit, invitation invalidation, command receipt and one access
+revision/user-audit advance. Other structure changes advance organization revision only.
+Three fixed SECURITY DEFINER functions (`save_structure_command`, `save_structure_impact`,
+`commit_structure_access`) provide only these bounded operations. They use the existing
+ordered lock function, transaction-local tenant, fixed search path and no PUBLIC execution.
+Runtime keeps read-only Access tables and append-only user audit; no role/member grant
+privilege is added. Readiness verifies all four function signatures, return types, owner,
+mode, exact search path and ACL. A missing configuration value cannot pass aggregate checks.
+Command storage is capped at 10,000 retained rows, with 24-hour live receipts and existing
+bounded private pruning. Impact storage is capped at 1,000 rows; issuing proof removes at
+most 1,000 expired rows. Capacity failures are finite and leave no partial mutation/proof.
+
+Identical commands read current authorized state without repeating writes; a UUID reused
+for another operation/body conflicts. Readback remains available while writers are closed.
+A moved-out-of-scope unit returns the same 404 even after later deletion; non-company callers
+receive terminal parent-authorized tombstones only for their own completed deletion.
+Neither receipt nor tombstone is a new unit grant, and terminal history has no live-unit FK.
+The old company move endpoint has no confirmation contract and rejects any effective member
+or approval coverage change with its existing `CONFIGURATION_CONFLICT/unit_in_use` envelope.
+It uses the same current impact/reference policy, so it cannot bypass people authority.
+Harmless overlapping coverage and exact anchors retain ordinary legacy move behavior.
+
+The invitation owner plugs into `StructureInvitationPolicy` through the same locked client:
+actionable unit references, affected approval IDs/current generation digest and grant pairs,
+and transactional invalidation. UM-I07 supplies the owning adapter described below;
+pending/needs-reapproval references participate in the same transaction. PostgreSQL fixtures
+exercise real invitation generations, confirmed moves and audit-failure rollback. The old
+closed adapter remains a historical transition utility, not the installed binding.
+
+Structure HTTP arms the shared ten-second deadline before guards/parsing. Server-derived
+actor deadlines flow into transactions; an expired transaction destroys its dedicated
+connection, including lock waits/queued acquisition, and checks time again before commit.
+No late business write starts after expiry. A response lost during commit is intentionally
+uncertain and reconciled through the command receipt/current readback, never automatic retry.
+
+All public scoped writers, including impact proof issuance, remain closed behind persisted
+`public_writes_enabled` until the coordinated I06–I09/I11 release dependencies are met.
+Startup never opens it and there is no environment/browser bypass. Disposable tests mock
+only this gate to verify real runtime SQL, policies and handlers. Browser UI and customer
+rollout remain their owning later packages; the existing installation has not been migrated
+or initialized by this workspace implementation.
 
 ## Selected architecture and technology
 
@@ -1255,19 +2639,19 @@ the target design, not completed implementations. Feature controllers, services,
 and repositories remain within their owning module; expose explicit provider interfaces
 to other modules and coordinate cross-module atomic changes in the control plane.
 
-| Module          | Owns                                                                                                                                          |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `platform-auth` | Better Auth authority, login/machine-client endpoints, auth persistence and signing-key integration; separate from DMS resource authorization |
-| `access`        | Verified machine principal, tenant/application mapping, scope ceilings, resource grants and default-deny authorization                        |
-| `enrollment`    | Bound enrollment-key issuance/activation/revocation and transactional nonsecret replay receipt                                                |
-| `audit`         | Bounded attributable audit capture and authorized audit retrieval                                                                             |
-| `documents`     | Stable document identity, immutable revisions/current pointer, metadata, tags, references and version/history behavior                        |
-| `uploads`       | Single-file sessions, multi-file batches/items, completion/cancellation/expiry and snapshot workflow                                          |
-| `storage`       | SeaweedFS S3 adapter, narrowly scoped capabilities, object identity, protected snapshots and exact-object operations                          |
-| `policies`      | Versioned format/profile policy, quotas, reservations and admission limits                                                                    |
-| `processing`    | Stage registry, jobs/attempts/fences, result acceptance, dispatch/outbox and processing status                                                |
-| `search`        | Authorized metadata/FTS queries, source chunks and index-generation replacement                                                               |
-| `lifecycle`     | Soft deletion/restore, generation invalidation, reference-aware cleanup and recovery-aware disposal                                           |
+| Module          | Owns                                                                                                                                                                            |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `platform-auth` | Better Auth authority, login/machine/identity-service policy and narrow setup endpoints, auth persistence and signing-key integration; separate from DMS resource authorization |
+| `access`        | Verified machine principal, tenant/application mapping, scope ceilings, resource grants and default-deny authorization                                                          |
+| `enrollment`    | Bound enrollment-key issuance/activation/revocation and transactional nonsecret replay receipt                                                                                  |
+| `audit`         | Bounded attributable audit capture and authorized audit retrieval                                                                                                               |
+| `documents`     | Stable document identity, immutable revisions/current pointer, metadata, tags, references and version/history behavior                                                          |
+| `uploads`       | Single-file sessions, multi-file batches/items, completion/cancellation/expiry and snapshot workflow                                                                            |
+| `storage`       | SeaweedFS S3 adapter, narrowly scoped capabilities, object identity, protected snapshots and exact-object operations                                                            |
+| `policies`      | Versioned format/profile policy, quotas, reservations and admission limits                                                                                                      |
+| `processing`    | Stage registry, jobs/attempts/fences, result acceptance, dispatch/outbox and processing status                                                                                  |
+| `search`        | Authorized metadata/FTS queries, source chunks and index-generation replacement                                                                                                 |
+| `lifecycle`     | Soft deletion/restore, generation invalidation, reference-aware cleanup and recovery-aware disposal                                                                             |
 
 ### Processes and Python boundaries
 
@@ -1534,12 +2918,13 @@ expire after eight hours, rotate without reuse overlap and require a live parent
 session for renewal. This adds an explicit parent-session gate because the pinned
 provider's `offline_access` refresh behavior alone does not enforce that boundary.
 
-Two managed client purposes are supported:
+Three managed client purposes are supported (the third is staged in UM-I06):
 
-| Purpose                 | Grants and policy                                                                                                                                                             | Audience / scope ceiling                                                                                    |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Turnstile login         | Confidential `client_secret_basic`; code/refresh only; required S256 PKCE; exact configured callback and `/sign-in` logout destination; explicit first-party consent skipping | UserInfo resource only; `openid profile email offline_access`; no DMS machine scopes                        |
-| DMS machine application | Confidential `client_secret_basic`; client credentials only; explicit operator-assigned scopes and persisted client-resource link; no login callback                          | Exact DMS resource; current catalog is `dms:capabilities:read`, enforced by the AUTH-05 capability endpoint |
+| Purpose                    | Grants and policy                                                                                                                                                             | Audience / scope ceiling                                                                                                 |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Turnstile login            | Confidential `client_secret_basic`; code/refresh only; required S256 PKCE; exact configured callback and `/sign-in` logout destination; explicit first-party consent skipping | UserInfo resource only; `openid profile email offline_access`; no DMS machine scopes                                     |
+| Authority identity service | Confidential `client_secret_basic`; client credentials only; fixed configured client/installation/application; no redirect/refresh/login grants or DMS enrollment             | Exact identity-service resource; `identity:invitation:prepare identity:subjects:read`; live client/resource/scope fences |
+| DMS machine application    | Confidential `client_secret_basic`; client credentials only; explicit operator-assigned scopes and persisted client-resource link; no login callback                          | Exact DMS resource; current catalog is `dms:capabilities:read`, enforced by the AUTH-05 capability endpoint              |
 
 Every authorize/token request validates a server-owned approval record, installation
 ownership, purpose and resource in addition to the provider's grant, scope, secret and
@@ -1560,7 +2945,7 @@ installation tenant rather than the individual operator, allowing another author
 administrator to rotate the same application identity.
 
 The command supports issuance, inspection, rotation, suspension/resumption and machine
-scope assignment. Issuance creates the DMS resource through the provider's API when absent;
+scope assignment. UM-I06 adds `kind: identity_service` with only identity scopes; its configured ID cannot be overridden or reused by another purpose. Issuance creates the corresponding DMS or identity resource through the provider's API when absent;
 an existing incompatible resource requires review. Credentials are provider-generated and
 hashed at rest. Issuance/rotation require a new exclusive mode-0600 output file, reserved
 before mutation. Stdout is an explicitly projected nonsecret JSON operator record containing

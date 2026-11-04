@@ -24,10 +24,12 @@ import { workspaceDestinations } from '@/components/workspace-navigation';
 import { cn } from '@/lib/utils';
 import { ForgotPassword, ResetPassword, SignIn } from './features/auth/AuthForms';
 import { beginSignIn, captureResetToken, identity } from './features/auth/client';
+import { InvitationEntry } from './features/auth/InvitationEntry';
 import { endSession, loadCapabilities, loadSession, ProductError } from './features/auth/product';
 import { loadWorkspaceStatus } from './features/configuration/api';
 import { settingsPaths, setupPaths } from './features/configuration/routes';
 import { OnboardingJourney } from './features/onboarding/OnboardingJourney';
+import { People, peoplePaths } from './features/people/People';
 import { LegacyUnitPrompt } from './features/settings/LegacyUnitPrompt';
 import { Settings } from './features/settings/Settings';
 
@@ -158,8 +160,15 @@ export function Workspace() {
   const [workspace, setWorkspace] = useState<WorkspaceStatusDto>();
   const { pathname: routePath } = useLocation();
   const [path, setPath] = useState(routePath);
+  useEffect(() => {
+    if (routePath === '/settings/organization/structure')
+      void navigate('/structure', { replace: true });
+    if (routePath === '/settings/workspace')
+      void navigate('/settings/organization', { replace: true });
+  }, [routePath, navigate]);
   const knownPath =
     path === '/' ||
+    peoplePaths.includes(path) ||
     path === '/auth-unavailable' ||
     path === '/waiting-for-setup' ||
     setupPaths.some((value) => value === path) ||
@@ -172,42 +181,61 @@ export function Workspace() {
   const [busyAction, setBusyAction] = useState<'sign-out' | 'connection'>();
   const [connection, setConnection] = useState('');
   const [logout, setLogout] = useState<{ csrf: string; retryUntil: number }>();
-  const check = useCallback(async () => {
-    const current = generation.current;
-    const requestedPath = window.location.pathname;
-    const checkId = ++checks.current;
-    setChecking(true);
-    try {
-      const value = await loadSession();
-      if (current !== generation.current || checkId !== checks.current) return;
-      if (identityId.current && identityId.current !== value.user.id) {
-        setWorkspace(undefined);
-        setState('loading');
+  const freshCheck = useRef<Promise<boolean>>(undefined);
+  const check = useCallback(
+    (fresh = false): Promise<boolean> => {
+      // Focus/navigation joins a pending post-mutation check instead of superseding it.
+      if (!fresh && freshCheck.current) return freshCheck.current;
+      const result = (async () => {
+        const current = generation.current;
+        const requestedPath = window.location.pathname;
+        const checkId = ++checks.current;
+        setChecking(true);
+        try {
+          const value = await loadSession({ fresh });
+          if (current !== generation.current || checkId !== checks.current) return false;
+          const subjectChanged = !!identityId.current && identityId.current !== value.user.id;
+          if (subjectChanged) {
+            setWorkspace(undefined);
+            setState('loading');
+          }
+          identityId.current = value.user.id;
+          if (!fresh || subjectChanged) setSession(value);
+          const status = await loadWorkspaceStatus(value.user.id);
+          if (current !== generation.current || checkId !== checks.current) return false;
+          setSession(value);
+          setWorkspace(status);
+          // Navigation may have joined this fresh check while it was draining a prior read.
+          setPath(fresh ? window.location.pathname : requestedPath);
+          setState('ready');
+          if (window.location.pathname === '/auth-unavailable')
+            void navigate('/', { replace: true });
+          return true;
+        } catch (error) {
+          if (current !== generation.current || checkId !== checks.current) return false;
+          if (error instanceof ProductError && error.status === 401) {
+            // Keep the last subject's mounted draft owners hidden during in-page recovery.
+            setState('expired');
+          } else if (error instanceof ProductError && error.status === 403) {
+            setState('denied');
+          } else if (error instanceof ProductError && error.code === 'CONFIGURATION_UNAVAILABLE')
+            setState('setup-unavailable');
+          else setState('unavailable');
+          return false;
+        } finally {
+          if (current === generation.current && checkId === checks.current) setChecking(false);
+        }
+      })();
+      if (fresh) {
+        freshCheck.current = result;
+        void result.finally(() => {
+          if (freshCheck.current === result) freshCheck.current = undefined;
+        });
       }
-      identityId.current = value.user.id;
-      setSession(value);
-      const status = await loadWorkspaceStatus(value.user.id);
-      if (current !== generation.current || checkId !== checks.current) return;
-      setSession(value);
-      setWorkspace(status);
-      setPath(requestedPath);
-      setState('ready');
-      if (window.location.pathname === '/auth-unavailable') void navigate('/', { replace: true });
-    } catch (error) {
-      if (current !== generation.current || checkId !== checks.current) return;
-      if (error instanceof ProductError && error.status === 401) {
-        setSession(undefined);
-        setState('expired');
-      } else if (error instanceof ProductError && error.status === 403) {
-        setSession(undefined);
-        setState('denied');
-      } else if (error instanceof ProductError && error.code === 'CONFIGURATION_UNAVAILABLE')
-        setState('setup-unavailable');
-      else setState('unavailable');
-    } finally {
-      if (current === generation.current && checkId === checks.current) setChecking(false);
-    }
-  }, [navigate]);
+      return result;
+    },
+    [navigate],
+  );
   useEffect(() => {
     if (state !== 'ready' || !workspace || !knownPath) return;
     if (
@@ -226,9 +254,9 @@ export function Workspace() {
   useEffect(() => {
     void check();
   }, [check, routePath]);
-  const refreshWorkspace = useCallback(() => void check(), [check]);
+  const refreshWorkspace = useCallback((fresh = false) => check(fresh === true), [check]);
   useEffect(() => {
-    if (state !== 'ready' && state !== 'unavailable') return;
+    if (!['ready', 'unavailable', 'expired', 'denied'].includes(state)) return;
     const focus = () => {
       if (!document.hidden) void check();
     };
@@ -390,7 +418,7 @@ export function Workspace() {
         )}
       </AuthLayout>
     );
-  if (!session || (state !== 'ready' && state !== 'unavailable' && state !== 'setup-unavailable'))
+  if (!session || state === 'signed-out')
     return (
       <AuthLayout>
         <AccountState
@@ -406,9 +434,11 @@ export function Workspace() {
     <header className={cn('entry-header', workspace?.status === 'complete' && 'workspace-header')}>
       <Brand />
       <div className="entry-account">
-        <p className="account-label">
-          Signed in as <strong>{session.user.email}</strong>
-        </p>
+        {state === 'ready' && (
+          <p className="account-label">
+            Signed in as <strong>{session.user.email}</strong>
+          </p>
+        )}
         {checking && routePath === path && <LoadingStatus>Checking session…</LoadingStatus>}
         <Button variant="outline" type="button" disabled={busy} onClick={() => void signOut()}>
           {busy && busyAction === 'sign-out' && (
@@ -420,7 +450,15 @@ export function Workspace() {
     </header>
   );
   const unavailable =
-    state === 'setup-unavailable' ? (
+    state === 'expired' || state === 'denied' ? (
+      <div className="flex flex-col gap-5">
+        <AccountState kind={state} retry={() => void check()} pending={checking} />
+        <p>Your unsaved entries are kept on this page while you check your session.</p>
+        <Button className="self-start" disabled={checking} onClick={() => void check()}>
+          Check session and access
+        </Button>
+      </div>
+    ) : state === 'setup-unavailable' ? (
       <div className="flex flex-col gap-5">
         <h1 className="page-title">Setup is temporarily unavailable</h1>
         <p className="intro">
@@ -494,7 +532,11 @@ export function Workspace() {
     <WorkspaceLayout
       pending={state === 'ready' && routePath !== path}
       header={header}
-      destinations={workspaceDestinations(path, workspace.canManageConfiguration)}
+      destinations={
+        state === 'ready'
+          ? workspaceDestinations(routePath, workspace.canManageConfiguration, session)
+          : []
+      }
       settings={
         state === 'ready' &&
         workspace?.status === 'complete' &&
@@ -503,11 +545,20 @@ export function Workspace() {
       }
     >
       {unavailable}
-      <div className="workspace-view" hidden={state !== 'ready'}>
+      <div className="workspace-view" hidden={state !== 'ready'} inert={state !== 'ready'}>
         {!knownPath ? (
           notFound
         ) : setupPaths.some((value) => value === path) || path === '/waiting-for-setup' ? (
           <ContentLoading label="Opening workspace…" />
+        ) : peoplePaths.includes(path) ? (
+          <People
+            key={session.user.id}
+            session={session}
+            path={path}
+            requestedPath={routePath}
+            onCheck={refreshWorkspace}
+            active={state === 'ready'}
+          />
         ) : settingsPaths.some((value) => value === path) ? (
           workspace.canManageConfiguration ? (
             <Settings
@@ -624,6 +675,12 @@ export default function App() {
       </Suspense>
     );
   }
+  if (path === '/invitations/join')
+    return (
+      <AuthLayout>
+        <InvitationEntry />
+      </AuthLayout>
+    );
   if (path === '/sign-in')
     return (
       <AuthLayout>

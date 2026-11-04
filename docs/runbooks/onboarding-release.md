@@ -6,6 +6,10 @@ command contracts and recovery boundaries are defined in
 [architecture.md](../../architecture.md#onboarding-operations-and-upgrade).
 Actual verification and remaining target acceptance belong in [IN_PROGRESS.md](../../IN_PROGRESS.md).
 
+For an access-aware user-management release, use the [user-management procedure](user-management-release.md)
+for coordinated authority/API/web cutover, credential retirement and invitation recovery.
+This onboarding-only procedure does not establish compatibility with those feature writers.
+
 This procedure covers the v2 first-unit/move release and preserved completed v1.
 The [redesign plan](../onboarding_redesign_implementation_plan.md#onb-rd08-verification-and-coordinated-release)
 defines its release evidence. Build matching API/web candidates, verify their exact

@@ -79,8 +79,11 @@ export async function testWorkspaceNavigation({ page, origin }) {
   await collapse.click();
   assert.ok((await width()) >= 56 && (await width()) <= 64);
   const settings = nav().getByRole('link', { name: 'Settings', exact: true });
-  await page.keyboard.press('Tab');
-  await page.keyboard.press('Tab');
+  const linkCount = await nav().getByRole('link').count();
+  for (let index = 0; index < linkCount; index++) {
+    await page.keyboard.press('Tab');
+    if (await settings.evaluate((element) => element === document.activeElement)) break;
+  }
   assert.equal(await settings.evaluate((element) => element === document.activeElement), true);
   // Base UI deliberately makes tooltips visual-only; the trigger owns its accessible name.
   await page

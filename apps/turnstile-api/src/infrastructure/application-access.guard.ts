@@ -2,9 +2,9 @@ import { type CanActivate, type ExecutionContext, Injectable } from '@nestjs/com
 import { Reflector } from '@nestjs/core';
 import type { FastifyRequest } from 'fastify';
 import { authError } from '../modules/auth/browser-auth/auth-errors.js';
-import { PUBLIC_ENDPOINT } from '../modules/auth/user-session/access-policy.js';
 import { UserSessionGuard } from '../modules/auth/user-session/user-session.guard.js';
 import { OnboardingService } from '../modules/onboarding/onboarding.service.js';
+import { PUBLIC_ENDPOINT } from './access-policy.js';
 import { WORKSPACE_READINESS_EXEMPT } from './workspace-access.js';
 
 @Injectable()

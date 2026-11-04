@@ -15,6 +15,20 @@
       "when": 1793435067210,
       "tag": "0001_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793717898504,
+      "tag": "0002_identity_service",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793717899673,
+      "tag": "0003_identity_security",
+      "breakpoints": true
     }
   ]
 }

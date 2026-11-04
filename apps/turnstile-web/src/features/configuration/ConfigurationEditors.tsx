@@ -63,7 +63,7 @@ export function OrganizationForm({
   onSnapshot,
   onCheck,
   mode = 'onboarding',
-}: EditorProps & { mode?: 'onboarding' | 'organization' | 'workspace' }) {
+}: EditorProps & { mode?: 'onboarding' | 'organization' | 'workspace' | 'general' }) {
   const navigate = useNavigate();
   const mounted = useMounted();
   const [name, setName] = useState(snapshot.organization.name ?? '');
@@ -154,7 +154,9 @@ export function OrganizationForm({
             ? 'No changes to save.'
             : mode === 'organization'
               ? 'Organization name saved.'
-              : 'Time zone saved.',
+              : mode === 'general'
+                ? 'General settings saved.'
+                : 'Time zone saved.',
         );
       }
     } catch (error) {
@@ -204,7 +206,9 @@ export function OrganizationForm({
             ? 'Tell us about your organization'
             : mode === 'organization'
               ? 'Organization'
-              : 'Workspace regional defaults'}
+              : mode === 'general'
+                ? 'General settings'
+                : 'Workspace regional defaults'}
         </h1>
         <p className="intro">
           {mode === 'onboarding'

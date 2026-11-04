@@ -139,7 +139,9 @@ Use its transient collapse control, named icon links and generated Tooltip. At n
 widths the generated Sheet supplies focus trapping, dismissal and a visible title.
 Close on accepted router navigation so a cancelled dirty-form warning preserves the menu
 and draft. Keep collapse state in memory. Settings sections remain a horizontal link row
-at every width, outside their content scroll pane. The gallery uses this same navigation
+at every width, with the Settings label on its own preceding line in every section,
+including Structure. Keep this shared header consistent while the chart owns its canvas.
+The gallery uses this same navigation
 with inert anchor destinations; it reads no account or configuration data.
 
 Use the generated Empty composition for honest dashboard availability, with actions only
@@ -147,16 +149,20 @@ for delivered destinations. The optional first-unit suggestion belongs only to m
 of completed v1 organizations without a non-root unit; it uses canonical configuration,
 never a second onboarding model or browser storage.
 
-## Structure editing
+## Onboarding structure editing and gallery
 
-The shared `StructureTree` presentation serves setup and Settings through the owning
+Completed workspaces use the canonical scoped Structure destination described under
+Access directories below. Its chart/outline views share reviewed commands; the camera
+and floating tools described here belong to onboarding and the legacy gallery only.
+
+The legacy `StructureTree` presentation serves onboarding and inert gallery examples through the owning
 `StructureEditor` controller. Use contextual + / Add below to infer the parent and allowed
 type. Selecting a connected card opens its details and actions; Add a unit opens the
 same creation form in the floating tools panel. Keep explicit rename Save/Cancel and named unused-leaf removal. The root’s
 name always comes from Organization; show full paths when names repeat.
 
 The default chart places parents above their children and draws connections on a quiet
-dotted surface. Settings gives the chart its available content width and height, beneath
+dotted surface. the managed gallery example gives the chart its available content width and height, beneath
 a compact heading and persistent navigation. Avoid a second map title, permanent inspector
 column, page scrollbar or explanatory section below the canvas.
 
@@ -172,7 +178,7 @@ to their connections. Navigation must never submit an organization mutation. Fit
 for the tools panel; filtered results fit into view. No-result messaging stays fixed.
 
 One nonmodal floating **Structure tools** panel contains search, the view selector and
-selected-unit operations. It starts collapsed in Settings; selecting a card or its + opens
+selected-unit operations. It starts collapsed in the managed gallery example; selecting a card or its + opens
 it. Onboarding opens its first-unit form initially. Use the generated Base UI Collapsible
 with `keepMounted`: collapsing is transient and must preserve create/rename/move drafts,
 validation, pending writes and readback controls. A failed hidden write reopens its editor.
@@ -190,7 +196,7 @@ occupy a separate footer so they never obscure the rows. Keep
 unit row keys stable across parent changes and selected ancestor paths expanded. Search
 shows matches plus ancestors; disable drag while filtered. The selected unit has a concise
 purpose/path and contextual rename/move/remove actions. The creation form supports repeated
-additions and, in Settings, explicit valid-parent selection. Use the Card `embedded` variant
+additions and, in the managed gallery example, explicit valid-parent selection. Use the Card `embedded` variant
 for these compositions inside the floating surface; avoid nested rings and rounded cards.
 
 Routine create/rename/remove/move confirmations use an accessible quiet announcement and
@@ -234,6 +240,27 @@ sibling sorting, an additional palette or a diagram dependency for this composit
    `pnpm test:browser:auth` for changes touching authentication controls/layout or bundled
    fonts. Record actual results and any limits in `IN_PROGRESS.md` before handoff.
 
+## People patterns
+
+People uses independent Members, Invitations, Roles and Structure sections within the
+existing workspace shell. Cards expose identity freshness, invitation delivery, actual role
+permissions and all independent grant sources. Scope controls use canonical paths and an
+explicit Include child units checkbox; a role name never substitutes for its permissions.
+The People gallery uses fixed examples without account data or network requests.
+
+Editors keep drafts in memory with explicit discard and dirty-navigation protection. Show
+localized loading and bounded errors, retain input after conflicts, and show saved data only
+after owning-service confirmation. Impact review precedes access changes; uncertain outcomes
+offer command readback without automatic replay.
+Same-subject permission/session recovery retains mounted draft owners while hiding/inerting
+blocked content and pausing loaders. Fresh access invalidates old reviews; sign-out or a
+different subject clears drafts. Full document navigation ends these memory-only entries.
+Use the generated Base UI Checkbox with
+FieldLabel for scope and permission choices. Long names wrap and native controls retain
+keyboard/touch behavior within the existing responsive layout and reduced-motion rules.
+Run `pnpm test:browser:people` for the owning HTTPS/OIDC/SMTP administration, scoped-manager
+and recipient journeys; retain the authentication browser regression check above.
+
 ## CLI maintenance
 
 Run shadcn commands from `apps/turnstile-web`. The installed CLI version and libraries
@@ -268,3 +295,50 @@ through the root `tsconfig.boundaries.json` (its resolver plugin uses repository
 Keep the bundled [third-party notices](../apps/turnstile-web/public/third-party-notices.txt)
 with the web assets when updating components, icons or fonts. The root proprietary
 LICENSE remains authoritative for Thaarei-owned code.
+
+## Access directories
+
+Roles and scoped Structure compose the shared access surface, compact toolbar and adjacent
+non-modal inspector. Use `RoleTable` and `StructureOutline` from the People feature for
+these domain presentations; the development gallery demonstrates them with inert fixtures.
+Keep ordinary list navigation available around an editor and retain drafts under the
+existing session/access boundary. Opening an inspector focuses its named region; narrow
+layouts place it above the directory and scroll it into view. Use a single action selector
+in unit editing so rename, child creation, moves and deletion have distinct fields.
+
+Role permission summaries use wrapping badges; system and protected status use explicit
+text. On phones the table retains identity and View; permission details remain in the
+selected editor. Organization outlines use nested lists with named expand/collapse buttons
+and `aria-expanded`/`aria-controls`. A branch retains its own row when collapsed. Only the
+returned units receive Manage actions; ancestor context never receives an action. Result
+counts exclude ancestor context and describe the authorized API result set, not all units
+in the organization. Empty states explain search/access without implying hidden data exists.
+
+Completed-workspace Structure has one scoped editor, with outline/chart presentations of
+the same returned units and contextual ancestry. Settings links to it; old URLs redirect.
+People sections contain Members, Invitations and Roles only, grouped in the sidebar as
+People & access. Active links use explicit primary emphasis and aria-current in both
+navigation areas. General settings combines company name and time zone. Unit readers get
+View and a read-only inspector; eligible managers get mutation controls. Role action
+selection exposes only the intended operation before review.
+
+Members use the MemberTable and MemberOverview compositions: person/contact, explicit
+membership status, and each saved role's coverage. Keep member status distinct from
+identity freshness and show suspended roles as saved assignments, not active access.
+Open in overview mode; Edit access deliberately enters the transient assignment form.
+Keep suspension/reactivation in a separate named section with impact confirmation.
+Retained imported access must remain visible; account IDs and retired import history
+belong in secondary details. Keep role and coverage labels above their controls and put
+long permission previews behind disclosure. Do not invent global metrics from a paged or
+filtered member list. Directory actions stay disabled through post-save access refresh.
+
+Use the shared Card `panel` variant for access inspectors. Keep one task header/close,
+a scrollable body and a persistent footer; let narrow layouts scroll naturally. Focus the
+named region without drawing a heavy outline around the whole panel; interactive controls
+retain their keyboard focus rings. Scroll new panels into view at every viewport size.
+Review/uncertain-save actions share that footer while retaining the owning review state.
+Prevent closing a pending or uncertain write; deliberate Cancel discards only transient
+changes. Role-action switching must not silently lose dirty fields. Group permissions by
+purpose and label required/company choices. New assignments require an explicit role
+choice. Members Invite person opens the Invitations composer in one action through a
+consumed navigation intent, never a mutation or an automatic grant.

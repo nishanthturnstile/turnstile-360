@@ -18,6 +18,15 @@ v1 delivery, informed by the [Version 1 discovery](onboarding_v1_discovery.md) a
 ONB-RD01. Planned descriptions do not establish implementation; actual evidence stays in
 IN_PROGRESS.md. The workspace tasks below retain their foundation scope and history.
 
+The next Turnstile capability follows the accepted
+[user-management specification](user_management_specification.md), informed by the
+[reviewed proposal](user_management_design_proposal.md), and its
+[detailed implementation plan](user_management_implementation_plan.md). They preserve the
+owner-confirmed custom roles, company/unit scopes and Mailpit development mail. Technical
+targets live in [architecture.md](../architecture.md#user-management-implementation-target);
+UM-I01 adopts that baseline; no runtime role, invitation, schema or migration is
+implemented by specification adoption.
+
 ## Accepted decisions
 
 The accepted component architecture, stack, ownership boundaries, web/future-mobile design,

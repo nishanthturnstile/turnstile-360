@@ -1,14 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  CONFIGURATION_LIMITS,
-  CONFIGURATION_MANAGE_PERMISSION,
-  configurationActorSchema,
-} from '@thaarei/turnstile-contracts';
+import { CONFIGURATION_LIMITS, configurationActorSchema } from '@thaarei/turnstile-contracts';
 import { z } from 'zod';
 import { lockConfiguration } from '../../infrastructure/database/configuration-lock.js';
 import { withProductOperator } from '../../infrastructure/database/product-operator.js';
+import { accessCounts, configurationManagerIds } from '../access/access-evaluator.js';
+import { lockAccess } from '../access/access-transactions.js';
 import type { ConfigurationRecord } from './persistence/organization.repository.js';
 
 const operatorInput = z.strictObject({ operatorId: configurationActorSchema });
@@ -89,20 +87,9 @@ export async function configurationOperator(
         revision: record.revision,
       };
     }
-    const manager = 'enabled AND permissions @> $2::text[]';
-    const managerPermissions = ['turnstile:access', CONFIGURATION_MANAGE_PERMISSION];
-    const managers = (
-      await client.query(
-        `SELECT user_id FROM turnstile.user_access WHERE tenant_id = $1 AND ${manager} ORDER BY user_id COLLATE "C" LIMIT 100`,
-        [record.tenant_id, managerPermissions],
-      )
-    ).rows.map((row) => row.user_id as string);
-    const managerCount = (
-      await client.query(
-        `SELECT count(*)::int AS total FROM turnstile.user_access WHERE tenant_id = $1 AND ${manager}`,
-        [record.tenant_id, managerPermissions],
-      )
-    ).rows[0].total as number;
+    await lockAccess(client, record.tenant_id);
+    const managers = await configurationManagerIds(client, record.tenant_id);
+    const managerCount = (await accessCounts(client, record.tenant_id)).managers;
     const auditCount = (
       await client.query(
         'SELECT count(*)::int AS total FROM turnstile.configuration_audit WHERE tenant_id = $1',

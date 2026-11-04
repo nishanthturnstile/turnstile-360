@@ -17,6 +17,9 @@ and deployment topology there; reference it from other docs rather than duplicat
 design. Keep product scope/requirement IDs in their specifications and actual completion
 in `IN_PROGRESS.md`. Update affected references when the architecture changes.
 
+- Work on `development` or a new branch created from up-to-date `development`.
+  Never create feature, fix, or other work branches from `main`. Target `development`
+  for change pull requests; never commit, push changes, or merge directly into `main`.
 - Use pnpm 12.16.1, Node 24.21.0, and the pinned Python/uv versions.
 - Use the installed library/framework CLI to generate scaffolds when one exists.
 - Both backends use NestJS with Fastify. Use Fastify-compatible integrations.

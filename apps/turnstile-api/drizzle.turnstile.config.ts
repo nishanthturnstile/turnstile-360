@@ -8,6 +8,9 @@ export default defineConfig({
   schema: [
     './src/modules/auth/persistence/product.schema.ts',
     './src/modules/organization/persistence/organization.schema.ts',
+    './src/modules/access/access.schema.ts',
+    './src/modules/people/persistence/invitation.schema.ts',
+    './src/modules/people/persistence/people.schema.ts',
   ],
   out: './database/migrations',
   migrations: { schema: 'turnstile_migrations' },

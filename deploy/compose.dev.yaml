@@ -92,6 +92,7 @@ services:
 
   turnstile-api:
     <<: *development
+    stop_grace_period: 45s
     command:
       [
         sh,
@@ -104,6 +105,7 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       dms-api: { condition: service_started }
+      mailpit: { condition: service_healthy }
     ports: ["127.0.0.1:23602:3002"]
     volumes:
       - type: bind

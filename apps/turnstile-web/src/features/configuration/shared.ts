@@ -20,7 +20,7 @@ export function notice(error: unknown) {
   if (error.code === 'CONFIGURATION_CONFLICT')
     return 'Saved setup has changed. Load the latest saved data and compare it with your entries before trying again.';
   if (error.code === 'CONFIGURATION_INVALID') return 'Check the highlighted fields and try again.';
-  if (error.code === 'CSRF_REJECTED')
+  if (error.code === 'CSRF_REJECTED' || error.code === 'ACCESS_CONTEXT_CHANGED')
     return 'Your session changed. Refresh your session, then deliberately try again. Your entries are kept.';
   if (error.code === 'CONFIGURATION_TOO_LARGE')
     return 'This change is too large. Shorten your entries and try again.';
@@ -64,7 +64,10 @@ export function errorDetail(error: unknown) {
   return error instanceof ProductError ? error.detail : undefined;
 }
 export function needsSession(error: unknown) {
-  return error instanceof ProductError && (error.status === 401 || error.status === 403);
+  return (
+    error instanceof ProductError &&
+    (error.status === 401 || error.status === 403 || error.code === 'ACCESS_CONTEXT_CHANGED')
+  );
 }
 
 export type EditorProps = {

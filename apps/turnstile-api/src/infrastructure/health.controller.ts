@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { PublicEndpoint } from '../modules/auth/user-session/access-policy.js';
+import { PublicEndpoint } from './access-policy.js';
 
 @Controller('health')
 export class HealthController {

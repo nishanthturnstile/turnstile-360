@@ -7,6 +7,7 @@ import { createApplication } from '../src/bootstrap.js';
 import { bootstrapInstallation } from '../src/infrastructure/database/migrate.js';
 import { withTenant } from '../src/infrastructure/database/postgres.js';
 import { AuthorityService } from '../src/modules/platform-auth/authority/authority.service.js';
+import { authorityTables } from '../src/modules/platform-auth/authority-instance.js';
 import { manageOAuthClient } from '../src/modules/platform-auth/manage-client.js';
 import { userInfoResource } from '../src/modules/platform-auth/oauth-policy.js';
 import { provisionUser } from '../src/modules/platform-auth/provision-user.js';
@@ -595,7 +596,8 @@ describe('persisted authority and native HTTP boundary', () => {
       dms.query('ALTER TABLE dms.application_registration DISABLE ROW LEVEL SECURITY'),
     ).rejects.toMatchObject({ code: '42501' });
     const authRls = await owner.query(
-      "SELECT relrowsecurity FROM pg_class JOIN pg_namespace ON pg_namespace.oid = relnamespace WHERE nspname = 'auth' AND relkind = 'r'",
+      'SELECT relrowsecurity FROM pg_class WHERE oid=ANY($1::regclass[])',
+      [authorityTables],
     );
     expect(authRls.rows.every((row) => !row.relrowsecurity)).toBe(true);
   });

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Turnstile browser authentication and DMS capability integration
-  version: 1.0.0
+  version: 2.0.0
   description: >-
     Same-origin backend for frontend. OAuth tokens and client credentials remain server-side.
     HTTPS uses __Host-turnstile; local HTTP uses turnstile. Logout retains a distinct
@@ -70,6 +70,12 @@ paths:
     get:
       operationId: getUserSession
       summary: Verify current authority and product access and return a safe session
+      description: >-
+        Canonical active membership and explicit shell access are required. Returns bounded
+        action/scope anchors, access revision and actor fingerprint. A changed context
+        regenerates the fenced cookie and CSRF. Unsafe requests first validate their incoming
+        CSRF, then return ACCESS_CONTEXT_CHANGED before mutation; fetch current session and
+        deliberately resubmit. Unrelated access revisions do not rotate this actor's session.
       security:
         - ProductCookie: []
         - LocalProductCookie: []
@@ -79,6 +85,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/UserSession" }
+        "409": { $ref: "#/components/responses/AccessContextChanged" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Denied" }
         "503": { $ref: "#/components/responses/Unavailable" }
@@ -130,11 +137,13 @@ paths:
                       $ref: "turnstile-onboarding.openapi.json#/components/schemas/ConfigurationUnavailable",
                     }
         "409":
-          description: Otherwise permitted workspace operation requires committed activation; no machine call occurs.
+          description: Workspace activation is required, or the access context changed concurrently. Refetch session/state before retrying; no machine call occurs.
           content:
             application/json:
               schema:
-                { $ref: "turnstile-onboarding.openapi.json#/components/schemas/SetupRequired" }
+                oneOf:
+                  - { $ref: "turnstile-onboarding.openapi.json#/components/schemas/SetupRequired" }
+                  - { $ref: "#/components/schemas/AccessContextChanged" }
   /api/auth/logout:
     post:
       operationId: logout
@@ -211,11 +220,22 @@ components:
               REFRESH_IN_PROGRESS,
               LOGIN_REQUIRED,
             ]
+    AccessContextChanged:
+      type: object
+      additionalProperties: false
+      required: [code, requestId, reason, accessRevision]
+      properties:
+        code: { type: string, const: ACCESS_CONTEXT_CHANGED }
+        requestId: { type: string, format: uuid }
+        reason: { type: string, const: state }
+        accessRevision: { type: integer, minimum: 0, maximum: 2147483647 }
     UserSession:
       type: object
       additionalProperties: false
-      required: [user, permissions, session, csrfToken]
+      required: [user, permissions, session, csrfToken, access]
       properties:
+        access:
+          $ref: "turnstile-people.openapi.json#/components/schemas/UserAccessContext"
         user:
           type: object
           additionalProperties: false
@@ -235,6 +255,10 @@ components:
                   "turnstile:access",
                   "turnstile:dms:capabilities:read",
                   "turnstile:configuration:manage",
+                  "turnstile:people:manage",
+                  "turnstile:roles:manage",
+                  "turnstile:units:read",
+                  "turnstile:units:manage",
                 ],
             }
         session:
@@ -254,6 +278,10 @@ components:
         authority: { type: string, enum: [complete, pending] }
         retryUntil: { type: string, format: date-time }
   responses:
+    AccessContextChanged:
+      description: Access changed. Fetch current session/CSRF, retain drafts and explicitly resubmit; no automatic mutation replay.
+      content:
+        application/json: { schema: { $ref: "#/components/schemas/AccessContextChanged" } }
     InvalidRequest:
       description: Malformed, duplicate, expired or mismatched one-time authentication input.
       content:

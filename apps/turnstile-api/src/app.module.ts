@@ -7,13 +7,25 @@ import { ProductPersistenceModule } from './infrastructure/database/product-pers
 import { HealthController } from './infrastructure/health.controller.js';
 import { SecurityTelemetryService } from './infrastructure/security-telemetry.service.js';
 import { DmsModule } from './integrations/dms/dms.module.js';
+import { IdentityModule } from './integrations/identity/identity.module.js';
+import { AccessModule } from './modules/access/access.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { UserSessionGuard } from './modules/auth/user-session/user-session.guard.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
 import { OrganizationModule } from './modules/organization/organization.module.js';
+import { PeopleModule } from './modules/people/people.module.js';
 
 @Module({
-  imports: [AuthModule, DmsModule, ProductPersistenceModule, OrganizationModule, OnboardingModule],
+  imports: [
+    AuthModule,
+    DmsModule,
+    ProductPersistenceModule,
+    OrganizationModule,
+    OnboardingModule,
+    AccessModule,
+    IdentityModule,
+    PeopleModule,
+  ],
   controllers: [AppController, HealthController],
   providers: [
     AppService,

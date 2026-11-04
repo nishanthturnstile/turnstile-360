@@ -3,22 +3,48 @@ import { APP_GUARD } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 import type { FastifyRequest } from 'fastify';
+import {
+  PublicEndpoint,
+  REQUIRED_PERMISSIONS,
+  RequirePermissions,
+  RequireResourceAccess,
+} from '../src/infrastructure/access-policy.js';
 import { ApplicationAccessGuard } from '../src/infrastructure/application-access.guard.js';
 import { ConfigurationException } from '../src/infrastructure/configuration-exception.js';
 import { WorkspaceReadinessExempt } from '../src/infrastructure/workspace-access.js';
 import { AuthExceptionFilter } from '../src/modules/auth/browser-auth/auth-errors.js';
 import { BrowserAuthService } from '../src/modules/auth/browser-auth/browser-auth.service.js';
 import { verifyProductCsrf } from '../src/modules/auth/browser-auth/csrf.js';
-import {
-  PublicEndpoint,
-  REQUIRED_PERMISSIONS,
-  RequirePermissions,
-} from '../src/modules/auth/user-session/access-policy.js';
 import { UserSessionGuard } from '../src/modules/auth/user-session/user-session.guard.js';
 import { OnboardingService } from '../src/modules/onboarding/onboarding.service.js';
+import { policyFixtureAccess } from './access-fixture.js';
 
 @Controller('policy')
 class PolicyFixture {
+  @Get('units/:id')
+  @WorkspaceReadinessExempt()
+  @RequireResourceAccess({
+    action: 'turnstile:units:read',
+    unitParam: 'id',
+    includeChildren: false,
+  })
+  unit() {
+    return { allowed: true };
+  }
+
+  @Get('company-units')
+  @WorkspaceReadinessExempt()
+  @RequirePermissions('turnstile:units:read')
+  companyUnits() {
+    return { allowed: true };
+  }
+
+  @Get('people')
+  @WorkspaceReadinessExempt()
+  @RequirePermissions('turnstile:people:manage')
+  people() {
+    return { allowed: true };
+  }
   @Post('configuration-conflict')
   @RequirePermissions('turnstile:access')
   configurationConflict() {
@@ -65,6 +91,7 @@ describe('default product permission boundary', () => {
   const origin = 'http://localhost:5173';
   const csrf = 'fixture-csrf-token';
   let readiness: 'complete' | 'incomplete' | 'unavailable' = 'complete';
+  let access = policyFixtureAccess(['turnstile:access']);
   const requireReady = vi.fn(async () => {
     if (readiness !== 'complete')
       throw new ConfigurationException({
@@ -75,6 +102,7 @@ describe('default product permission boundary', () => {
     const current = {
       identity: { user: { id: 'fixture-user', role: 'admin' }, permissions: ['turnstile:access'] },
       csrf,
+      access,
     };
     // Identity verification is exercised against the real authority in the database suite.
     request.productUser = current as unknown as NonNullable<FastifyRequest['productUser']>;
@@ -108,7 +136,40 @@ describe('default product permission boundary', () => {
   });
   afterEach(() => {
     readiness = 'complete';
+    access = policyFixtureAccess(['turnstile:access']);
     requireReady.mockClear();
+  });
+
+  it('requires matching resource scope and never broadens units authority through a company shell grant', async () => {
+    const a = '20000000-0000-4000-8000-000000000010';
+    const child = '20000000-0000-4000-8000-000000000011';
+    const b = '20000000-0000-4000-8000-000000000012';
+    access = {
+      ...access,
+      units: new Map([
+        [a, null],
+        [child, a],
+        [b, null],
+      ]),
+    };
+    access.context.grants.push({
+      sourceId: '20000000-0000-4000-8000-000000000013',
+      permissions: ['turnstile:units:manage'],
+      scope: { kind: 'units', unitIds: [a], includeChildren: true },
+    });
+    expect((await app.inject({ url: `/policy/units/${a}` })).statusCode).toBe(200);
+    expect((await app.inject({ url: `/policy/units/${child}` })).statusCode).toBe(200);
+    expect((await app.inject({ url: `/policy/units/${b}` })).statusCode).toBe(403);
+    expect((await app.inject({ url: '/policy/company-units' })).statusCode).toBe(403);
+  });
+
+  it('keeps configuration and people authority separate while applying documented unit implications', async () => {
+    access = policyFixtureAccess(['turnstile:access', 'turnstile:configuration:manage']);
+    expect((await app.inject({ url: '/policy/people' })).statusCode).toBe(403);
+    expect((await app.inject({ url: '/policy/company-units' })).statusCode).toBe(200);
+    access = policyFixtureAccess(['turnstile:access', 'turnstile:people:manage']);
+    expect((await app.inject({ url: '/policy/people' })).statusCode).toBe(200);
+    expect((await app.inject({ url: '/policy/company-units' })).statusCode).toBe(403);
   });
 
   it('bypasses identity verification only on an explicitly public handler', async () => {

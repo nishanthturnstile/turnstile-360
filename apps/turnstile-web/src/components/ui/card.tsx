@@ -6,7 +6,10 @@ function Card({
   size = 'default',
   variant = 'default',
   ...props
-}: React.ComponentProps<'div'> & { size?: 'default' | 'sm'; variant?: 'default' | 'embedded' }) {
+}: React.ComponentProps<'div'> & {
+  size?: 'default' | 'sm';
+  variant?: 'default' | 'embedded' | 'panel';
+}) {
   return (
     <div
       data-slot="card"
@@ -14,9 +17,11 @@ function Card({
       data-variant={variant}
       className={cn(
         'group/card flex flex-col gap-(--card-spacing) text-sm text-card-foreground [--card-spacing:--spacing(6)] has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl',
-        variant === 'embedded'
-          ? 'bg-transparent'
-          : 'overflow-hidden rounded-2xl bg-card py-(--card-spacing) ring-1 ring-foreground/10',
+        variant === 'panel'
+          ? 'overflow-hidden rounded-2xl border border-border bg-card p-0 gap-0 shadow-sm'
+          : variant === 'embedded'
+            ? 'bg-transparent'
+            : 'overflow-hidden rounded-2xl bg-card py-(--card-spacing) ring-1 ring-foreground/10',
         className,
       )}
       {...props}

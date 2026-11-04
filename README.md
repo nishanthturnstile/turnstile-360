@@ -84,6 +84,9 @@ first with `pnpm exec playwright install chromium`. The same harness also verifi
 onboarding and Settings; `pnpm test:browser:onboarding:structured` verifies a separate fresh
 installation with a required Department, India confirmation and retained nested units. `pnpm test:browser:structure` checks the shared editor and confirmed keyboard/pointer/touch moves. `pnpm test:images:onboarding <api-tag> <web-tag>`
 checks built production packaging/non-root runtime. See the runbook for Nginx image mode.
+`pnpm test:browser:people` verifies administrator handover, People/scoped management and
+recipient acceptance. The [user-management release runbook](docs/runbooks/user-management-release.md)
+describes exact three-image verification, archive rehearsal and explicit gated cutover/recovery.
 
 Builds cover seven projects: four application projects and three shared packages.
 TypeScript 6.0.3 is pinned for Nest generator/compiler compatibility. Three focused browser authentication journeys use real APIs and Mailpit through HTTPS.

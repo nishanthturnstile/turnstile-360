@@ -35,7 +35,10 @@ async function main() {
   await forwardLoopback(ports.web, 'turnstile-web', 5173);
   await forwardLoopback(ports.postgres, 'postgres', 5432);
   if (service === 'dms-api') await forwardLoopback(ports.smtp, 'mailpit', 1025);
-  else await forwardLoopback(ports.dmsApi, 'dms-api', 3001);
+  else {
+    await forwardLoopback(ports.dmsApi, 'dms-api', 3001);
+    await forwardLoopback(ports.smtp, 'mailpit', 1025);
+  }
   await import(`../apps/${service}/dist/${service === 'dms-api' ? 'main.api' : 'main'}.js`);
 }
 

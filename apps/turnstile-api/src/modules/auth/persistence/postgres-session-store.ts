@@ -1,6 +1,6 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import type { SessionStore } from '@fastify/session';
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 import { withTenant } from '../../../infrastructure/database/postgres.js';
 import { generation } from '../browser-auth/bff-state.js';
 
@@ -151,6 +151,61 @@ export class PostgresSessionStore implements SessionStore {
       );
       return result;
     });
+  }
+
+  // Called after installation/access locking. The row remains locked through the
+  // owning acceptance transaction, fencing concurrent callback, switch and logout.
+  async invitationFence(
+    client: PoolClient,
+    id: string,
+    expectedGeneration: string,
+    continuationId: string,
+    csrf: string,
+    sid?: string,
+  ) {
+    const hash = this.digest(id);
+    const row = (
+      await client.query(
+        'SELECT ciphertext FROM turnstile.session WHERE tenant_id=$1 AND id_hash=$2 AND expires_at>clock_timestamp() FOR UPDATE',
+        [this.tenantId, hash],
+      )
+    ).rows[0];
+    if (!row) return false;
+    const session = this.decode(hash, row.ciphertext);
+    const flow = session.invitation;
+    return (
+      generation(session, id) === expectedGeneration &&
+      !!flow &&
+      flow.id === continuationId &&
+      flow.csrf === csrf &&
+      flow.expiresAt > Date.now() &&
+      (!sid || (flow.identity?.value.sid === sid && flow.identity.expiresAt > Date.now()))
+    );
+  }
+
+  async markInvitationAccepted(
+    client: PoolClient,
+    id: string,
+    expectedGeneration: string,
+    continuationId: string,
+  ) {
+    const hash = this.digest(id);
+    const row = (
+      await client.query(
+        'SELECT ciphertext FROM turnstile.session WHERE tenant_id=$1 AND id_hash=$2 FOR UPDATE',
+        [this.tenantId, hash],
+      )
+    ).rows[0];
+    if (!row) this.stale();
+    const session = this.decode(hash, row.ciphertext);
+    if (generation(session, id) !== expectedGeneration || session.invitation?.id !== continuationId)
+      this.stale();
+    session.invitation.accepted = true;
+    session.bffRevision = (session.bffRevision ?? 0) + 1;
+    await client.query(
+      'UPDATE turnstile.session SET ciphertext=$2 WHERE tenant_id=$1 AND id_hash=$3',
+      [this.tenantId, this.encode(hash, session), hash],
+    );
   }
 
   destroy(id: string, callback: Callback) {

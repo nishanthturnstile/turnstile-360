@@ -5,6 +5,7 @@ import {
   SidebarLeftIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import type { UserSessionDto } from '@thaarei/turnstile-contracts';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
@@ -18,6 +19,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { canReadUnits, company } from '@/features/people/client';
 import { cn } from '@/lib/utils';
 
 export type WorkspaceDestination = {
@@ -25,11 +27,59 @@ export type WorkspaceDestination = {
   href: string;
   active: boolean;
   icon: typeof Home01Icon;
+  group?: string;
 };
 
-export function workspaceDestinations(path: string, canManage: boolean): WorkspaceDestination[] {
+export function workspaceDestinations(
+  path: string,
+  canManage: boolean,
+  session?: UserSessionDto,
+): WorkspaceDestination[] {
   return [
     { label: 'Home', href: '/', active: path === '/', icon: Home01Icon },
+    ...(session
+      ? [
+          ...(company(session, 'turnstile:people:manage')
+            ? [
+                {
+                  label: 'Members',
+                  group: 'People & access',
+                  href: '/people/members',
+                  active: path === '/people/members',
+                  icon: Settings01Icon,
+                },
+                {
+                  label: 'Invitations',
+                  group: 'People & access',
+                  href: '/people/invitations',
+                  active: path === '/people/invitations',
+                  icon: Settings01Icon,
+                },
+              ]
+            : []),
+          ...(company(session, 'turnstile:roles:manage')
+            ? [
+                {
+                  label: 'Roles',
+                  group: 'People & access',
+                  href: '/people/roles',
+                  active: path === '/people/roles',
+                  icon: Settings01Icon,
+                },
+              ]
+            : []),
+          ...(canReadUnits(session)
+            ? [
+                {
+                  label: 'Structure',
+                  href: '/structure',
+                  active: path === '/structure',
+                  icon: Settings01Icon,
+                },
+              ]
+            : []),
+        ]
+      : []),
     ...(canManage
       ? [
           {
@@ -54,24 +104,29 @@ function WorkspaceLinks({
 }) {
   return (
     <nav id={id} aria-label="Workspace navigation" className="workspace-navigation">
-      {destinations.map(({ label, href, active, icon }) => (
-        <Tooltip key={href} disabled={!collapsed}>
-          <TooltipTrigger
-            render={
-              <ButtonLink
-                href={href}
-                variant={active ? 'secondary' : 'ghost'}
-                aria-current={active ? 'page' : undefined}
-                aria-label={label}
-                className={cn('justify-start', collapsed && 'justify-center px-0')}
-              />
-            }
-          >
-            <HugeiconsIcon icon={icon} aria-hidden="true" data-icon="inline-start" />
-            <span className={cn(collapsed && 'sr-only')}>{label}</span>
-          </TooltipTrigger>
-          <TooltipContent side="right">{label}</TooltipContent>
-        </Tooltip>
+      {destinations.map(({ label, href, active, icon, group }, index) => (
+        <div key={href} className="workspace-navigation-entry">
+          {group && group !== destinations[index - 1]?.group && !collapsed && (
+            <p className="workspace-navigation-group">{group}</p>
+          )}
+          <Tooltip disabled={!collapsed}>
+            <TooltipTrigger
+              render={
+                <ButtonLink
+                  href={href}
+                  variant={active ? 'secondary' : 'ghost'}
+                  aria-current={active ? 'page' : undefined}
+                  aria-label={label}
+                  className={cn('justify-start', collapsed && 'justify-center px-0')}
+                />
+              }
+            >
+              <HugeiconsIcon icon={icon} aria-hidden="true" data-icon="inline-start" />
+              <span className={cn(collapsed && 'sr-only')}>{label}</span>
+            </TooltipTrigger>
+            <TooltipContent side="right">{label}</TooltipContent>
+          </Tooltip>
+        </div>
       ))}
     </nav>
   );

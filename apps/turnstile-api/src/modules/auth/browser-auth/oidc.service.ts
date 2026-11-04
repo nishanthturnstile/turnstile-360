@@ -15,6 +15,15 @@ const parent = z.object({
   }),
 });
 
+const recipientParent = z.object({
+  session: parent.shape.session,
+  user: z.object({
+    id: z.string(),
+    email: z.email(),
+    emailVerified: z.boolean(),
+  }),
+});
+
 export function authorityCookies(request: FastifyRequest) {
   return Object.entries(request.cookies ?? {})
     .filter(([name]) => /^(?:__Secure-)?thaarei-identity\.[A-Za-z0-9_.-]+$/.test(name))
@@ -259,6 +268,47 @@ export class OidcService {
       value.exp * 1000 <= Date.now()
     )
       return authError(401, 'IDENTITY_REQUIRED');
+  }
+
+  async recipientActive(identity: UserIdentity, cookies: string) {
+    try {
+      const [active, profile, session] = await Promise.allSettled([
+        this.active(identity),
+        this.client().then((client) =>
+          oidc.fetchUserInfo(client, identity.accessToken, identity.user.id),
+        ),
+        this.authorityRequest('/get-session', 'GET', cookies),
+      ]);
+      // Prefer authoritative inactive identity over a simultaneous userinfo error.
+      // Dependency failures remain retryable and never turn into authorization.
+      if (active.status === 'rejected') throw active.reason;
+      if (profile.status === 'rejected') {
+        if (
+          profile.reason instanceof oidc.ResponseBodyError &&
+          profile.reason.error === 'invalid_token'
+        )
+          return authError(401, 'IDENTITY_REQUIRED');
+        throw profile.reason;
+      }
+      if (session.status === 'rejected') throw session.reason;
+      const user = profile.value;
+      const current = recipientParent.safeParse(await session.value.json());
+      if (
+        !cookies ||
+        !current.success ||
+        current.data.session.id !== identity.sid ||
+        current.data.session.userId !== identity.user.id ||
+        Date.parse(current.data.session.expiresAt) <= Date.now() ||
+        user.email_verified !== true ||
+        current.data.user.id !== identity.user.id ||
+        current.data.user.emailVerified !== true ||
+        user.email !== current.data.user.email
+      )
+        return authError(401, 'IDENTITY_REQUIRED');
+      return current.data.user.email;
+    } catch (error) {
+      return loginFailure(error);
+    }
   }
 
   async refresh(identity: UserIdentity) {

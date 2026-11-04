@@ -1,7 +1,9 @@
 import { z } from 'zod';
+import type { AccessAwareUserSessionDto } from './access.js';
 import { CONFIGURATION_MANAGE_PERMISSION, configurationActorSchema } from './onboarding.js';
 
-// Product permissions are assigned locally, independently of identity/operator roles.
+// Legacy private replacement input only. Canonical reads use PEOPLE_PERMISSIONS /
+// PeoplePermission; authority identity/operator roles never supply product permissions.
 export const TURNSTILE_PERMISSIONS = [
   'turnstile:access',
   'turnstile:dms:capabilities:read',
@@ -24,12 +26,7 @@ export const accessAssignmentSchema = z.strictObject({
 });
 export type AccessAssignmentDto = z.infer<typeof accessAssignmentSchema>;
 
-export interface UserSessionDto {
-  user: { id: string; name: string; email: string };
-  permissions: TurnstilePermission[];
-  session: { expiresAt: string; idleExpiresAt: string };
-  csrfToken: string;
-}
+export type UserSessionDto = AccessAwareUserSessionDto;
 
 export interface LogoutDto {
   local: 'complete';
@@ -44,6 +41,7 @@ export type AuthErrorCode =
   | 'PRODUCT_ACCESS_DENIED'
   | 'PERMISSION_DENIED'
   | 'CSRF_REJECTED'
+  | 'ACCESS_CONTEXT_CHANGED'
   | 'AUTH_UNAVAILABLE'
   | 'REFRESH_IN_PROGRESS'
   | 'LOGIN_REQUIRED';
@@ -62,5 +60,9 @@ export interface DmsIntegrationErrorDto {
   code: 'DMS_ACCESS_DENIED' | 'DMS_UNAVAILABLE';
 }
 
+export * from './access.js';
 export * from './onboarding.js';
+export * from './people.js';
+export * from './people-common.js';
+export * from './people-routes.js';
 export { SUPPORTED_TIME_ZONES, TIME_ZONE_PROVENANCE } from './time-zones.js';

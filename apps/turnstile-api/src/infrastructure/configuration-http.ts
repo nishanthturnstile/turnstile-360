@@ -19,8 +19,12 @@ declare module 'fastify' {
 }
 
 export function configurationActor(request: FastifyRequest): ConfigurationActor {
-  if (!request.productUser) throw new HttpException({ code: 'IDENTITY_REQUIRED' }, 401);
   parseConfiguration(configurationQuerySchema, request.query);
+  return productActor(request);
+}
+
+export function productActor(request: FastifyRequest): ConfigurationActor {
+  if (!request.productUser) throw new HttpException({ code: 'IDENTITY_REQUIRED' }, 401);
   // bootstrap.ts sets a UUID request id. Keep an insertable audit identity valid
   // for any other factory/adapter by generating one server-side, never from input.
   const parsedId = configurationIdSchema.safeParse(request.id);
@@ -28,6 +32,10 @@ export function configurationActor(request: FastifyRequest): ConfigurationActor 
   return {
     userId: configurationActorSchema.parse(request.productUser.identity.user.id),
     requestId: request.id,
+    ...(request.structureDeadlineAt ? { deadlineAt: request.structureDeadlineAt } : {}),
+    ...(request.productUser.identity.access
+      ? { accessFingerprint: request.productUser.identity.access.fingerprint }
+      : {}),
   };
 }
 
