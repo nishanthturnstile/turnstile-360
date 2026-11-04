@@ -3,7 +3,7 @@
 **Updated:** 2026-10-31
 
 **Status:** AUTH-01–07 code and local verification cover authority/BFF, machine enrollment/client,
-login/recovery UI and operational checks; see [IN_PROGRESS.md](../IN_PROGRESS.md) for actual evidence.
+login/recovery UI and operational checks; see [IN_PROGRESS.md](../../IN_PROGRESS.md) for actual evidence.
 Real customer provisioning, Dokploy deployment and target container DNS/TLS verification remain pending.
 The original audit/research below describes the pre-implementation state.
 
@@ -18,11 +18,11 @@ DMS API, including expiry, revocation, failure handling and deployment. Better A
 the shared identity authority inside DMS `platform-auth`; it does not replace Turnstile
 business authorization or DMS resource authorization.
 
-The [architecture proposal](../architecture.md#authentication-chain-implementation-proposal)
+The [architecture proposal](../../architecture.md#authentication-chain-implementation-proposal)
 owns the technical design, credential boundaries, sequence diagram and proposed routes.
 This file owns the research findings, implementation work packages and acceptance criteria.
-The [requirements](headless_dms_functionality_requirements_v1.md) retain their stable IDs;
-[IN_PROGRESS.md](../IN_PROGRESS.md) records actual execution. Recommended details below are
+The [requirements](../dms/headless_dms_functionality_requirements_v1.md) retain their stable IDs;
+[IN_PROGRESS.md](../../IN_PROGRESS.md) records actual execution. Recommended details below are
 not evidence that a feature is configured or that the implementation is authorized to start.
 
 ## Repository audit
@@ -30,16 +30,16 @@ not evidence that a feature is configured or that the implementation is authoriz
 Audit performed on 2026-10-31; the existing workspace build/test results establish its
 foundation, not an authentication implementation.
 
-| Area              | Evidence                                                                                                                                              | Result                                                                                                                         |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| DMS authority     | [PlatformAuthModule](../apps/dms-api/src/modules/platform-auth/platform-auth.module.ts), [manifest](../apps/dms-api/package.json)                     | Empty module; no Better Auth instance, adapter, plugins, auth routes, accounts or signing keys                                 |
-| DMS authorization | [AccessModule](../apps/dms-api/src/modules/access/access.module.ts), [enrollment module](../apps/dms-api/src/modules/enrollment/enrollment.module.ts) | Empty modules; no bearer guard, registered application lookup, scope enforcement or enrollment                                 |
-| Product backend   | [Bootstrap](../apps/turnstile-api/src/bootstrap.ts), [manifest](../apps/turnstile-api/package.json)                                                   | Fastify and `/api` prefix only; no login/callback, session store, guards or user access mappings                               |
-| Browser           | [Manifest](../apps/turnstile-web/package.json), [Vite proxy](../apps/turnstile-web/vite.config.ts)                                                    | Application entry point; `/api` proxy only; no login/recovery or authority routing                                             |
-| DMS client        | [Package entry point](../packages/dms-client/src/index.ts)                                                                                            | Empty export; no token acquisition/cache or authenticated HTTP operations                                                      |
-| Contracts         | [DMS](../packages/dms-contracts/src/index.ts), [Turnstile](../packages/turnstile-contracts/src/index.ts)                                              | Empty exports; no auth/integration DTOs or generated contract evidence                                                         |
-| Database          | Reserved auth/DMS/Turnstile schema and migration folders                                                                                              | No tables, migrations, roles or application database connections                                                               |
-| Deployment        | [Compose](../deploy/compose.dokploy.yaml), [runbook](runbooks/dokploy.md)                                                                             | Three application containers; identity discovery, cookies, secrets, production persistence and auth routing are not configured |
+| Area              | Evidence                                                                                                                                                    | Result                                                                                                                         |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| DMS authority     | [PlatformAuthModule](../../apps/dms-api/src/modules/platform-auth/platform-auth.module.ts), [manifest](../../apps/dms-api/package.json)                     | Empty module; no Better Auth instance, adapter, plugins, auth routes, accounts or signing keys                                 |
+| DMS authorization | [AccessModule](../../apps/dms-api/src/modules/access/access.module.ts), [enrollment module](../../apps/dms-api/src/modules/enrollment/enrollment.module.ts) | Empty modules; no bearer guard, registered application lookup, scope enforcement or enrollment                                 |
+| Product backend   | [Bootstrap](../../apps/turnstile-api/src/bootstrap.ts), [manifest](../../apps/turnstile-api/package.json)                                                   | Fastify and `/api` prefix only; no login/callback, session store, guards or user access mappings                               |
+| Browser           | [Manifest](../../apps/turnstile-web/package.json), [Vite proxy](../../apps/turnstile-web/vite.config.ts)                                                    | Application entry point; `/api` proxy only; no login/recovery or authority routing                                             |
+| DMS client        | [Package entry point](../../packages/dms-client/src/index.ts)                                                                                               | Empty export; no token acquisition/cache or authenticated HTTP operations                                                      |
+| Contracts         | [DMS](../../packages/dms-contracts/src/index.ts), [Turnstile](../../packages/turnstile-contracts/src/index.ts)                                              | Empty exports; no auth/integration DTOs or generated contract evidence                                                         |
+| Database          | Reserved auth/DMS/Turnstile schema and migration folders                                                                                                    | No tables, migrations, roles or application database connections                                                               |
+| Deployment        | [Compose](../../deploy/compose.dokploy.yaml), [runbook](../runbooks/dokploy.md)                                                                             | Three application containers; identity discovery, cookies, secrets, production persistence and auth routing are not configured |
 
 Consequently, **Better Auth configuration and the complete authentication mechanism do
 not exist yet**. Both APIs currently expose identity and liveness only.
@@ -128,8 +128,8 @@ slice. Minimal login/recovery/session UI is included because the user journey ne
 ## Proposed dependencies and ownership
 
 These were **candidate exact versions observed on 2026-10-31** during planning. AUTH-01
-installs these pins; the [architecture inventory](../architecture.md#installed-toolchain-and-libraries)
-and manifests own the installed selection, and [progress](../IN_PROGRESS.md) records actual checks. AUTH-01 must resolve peers and verify the actual Node 24,
+installs these pins; the [architecture inventory](../../architecture.md#installed-toolchain-and-libraries)
+and manifests own the installed selection, and [progress](../../IN_PROGRESS.md) records actual checks. AUTH-01 must resolve peers and verify the actual Node 24,
 TypeScript 6, Nest/Fastify, ESM and CLI build before feature code depends on them. Refresh
 security/release information if implementation starts later. Preserve current pins unless
 an affected compatibility check justifies a change.
@@ -473,5 +473,5 @@ architecture reference before being represented as supported behavior.
 
 **After AUTH-07:** prepare and verify the target installation through the supported private
 operator path. Local tests do not onboard a real customer or establish deployed DNS/TLS readiness.
-Other product/document capabilities remain separate authorized work. See [progress](../IN_PROGRESS.md) for actual completed checks
-and the [operator runbook](runbooks/authentication.md) for persistence and OAuth operator commands.
+Other product/document capabilities remain separate authorized work. See [progress](../../IN_PROGRESS.md) for actual completed checks
+and the [operator runbook](../runbooks/authentication.md) for persistence and OAuth operator commands.

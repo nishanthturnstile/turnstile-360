@@ -4,17 +4,17 @@
 
 **Updated:** 2026-10-31
 
-**Status:** Product requirements aligned with [architecture.md](../architecture.md) and the accepted [product blueprint v1.7](headless_dms_product_blueprint_v1.md).
+**Status:** Product requirements aligned with [architecture.md](../../architecture.md) and the accepted [product blueprint v1.7](headless_dms_product_blueprint_v1.md).
 
 **Approach:** Direct implementation of the actual solution.
 
 ## Purpose and reading rules
 
-This document identifies the functionality the product must provide and a dependency-safe order in which to build it. The owner can select a capability or requirement ID for later discussion and planning. After the bounded [workspace setup](workspace_implementation_plan.md), begin with capability 01 and build the actual solution.
+This document identifies the functionality the product must provide and a dependency-safe order in which to build it. The owner can select a capability or requirement ID for later discussion and planning. After the bounded [workspace setup](../workspace/workspace_implementation_plan.md), begin with capability 01 and build the actual solution.
 
 Each numbered group describes required product behavior, its prerequisites, and the capability it makes available. Requirement IDs identify individual behaviors for future discussion and tracking. The numbers are dependency order, not release phases, sprint assignments, estimates, engineering tasks, or a prescribed code structure. A partially built sequence is not automatically a complete release.
 
-[architecture.md](../architecture.md) owns architecture, technical contracts, and configured numeric defaults. The [product blueprint](headless_dms_product_blueprint_v1.md) owns product scope. This document owns the functionality inventory and ordering. If a numeric policy changes, update architecture.md and the affected requirement references together. Every functional requirement below belongs to v1 unless it appears in the explicitly deferred section.
+[architecture.md](../../architecture.md) owns architecture, technical contracts, and configured numeric defaults. The [product blueprint](headless_dms_product_blueprint_v1.md) owns product scope. This document owns the functionality inventory and ordering. If a numeric policy changes, update architecture.md and the affected requirement references together. Every functional requirement below belongs to v1 unless it appears in the explicitly deferred section.
 
 The structured-extraction capability is an included opt-in profile: its installation, model artifacts, resource allocation, and advertised formats are required when enabled. It is not an architecture trial or an automatic processing step for every file. Existing requirement IDs remain stable; newly accepted behavior is appended within the relevant groups.
 
@@ -26,7 +26,7 @@ Security, tenant isolation, audit capture, safe retries, bounded resources, and 
 - **Identity:** One shared authority per deployment, Better Auth by default; supported login/session/recovery and machine-client administration. DMS operations use machine access tokens, with one-time Thaarei enrollment for initial consumer activation.
 - **Access:** One owning application per document, explicit same-tenant application grants, and no cross-tenant sharing. Browser sessions do not authorize DMS machine operations.
 - **Deployment:** Self-hosted, exactly one customer tenant per installation (for example MRR), with multiple independently registered applications such as Turnstile and other customer systems. Separate customers receive separate installations. SaaS tenant selection and multi-customer provisioning are outside scope; tenant integrity and application isolation remain required.
-- **Files:** PDF; JPEG/PNG/TIFF/BMP/static WebP; UTF-8 text/Markdown/CSV/TSV; the approved Word/PowerPoint/OpenDocument/RTF, spreadsheet, and EML/MSG families in the [architecture format matrix](../architecture.md#supported-format-and-capability-matrix). English OCR is included. Additional industrial formats require explicit storage-only policy and complete required assessment; universal extraction is not promised.
+- **Files:** PDF; JPEG/PNG/TIFF/BMP/static WebP; UTF-8 text/Markdown/CSV/TSV; the approved Word/PowerPoint/OpenDocument/RTF, spreadsheet, and EML/MSG families in the [architecture format matrix](../../architecture.md#supported-format-and-capability-matrix). English OCR is included. Additional industrial formats require explicit storage-only policy and complete required assessment; universal extraction is not promised.
 - **Storage:** SeaweedFS. Normal file bytes transfer directly between clients/workers and storage, outside the control API.
 - **Processing:** A security requirement precedes every original publication. Native/Office text, spreadsheet data, OCR, optional structured artifacts, and search have explicit capabilities and independent outcomes. The selected Python/Celery/RabbitMQ runtime implements the durable-work behavior; these requirements do not prescribe engineering tasks.
 - **Demand:** Up to 200,000 documents/month, with declared file/page mix, OCR/structured share, processing window, and bursts used for capacity sizing.
@@ -34,7 +34,7 @@ Security, tenant isolation, audit capture, safe retries, bounded resources, and 
 - **Integration:** REST/JSON, documented contracts, polling, and browser/backend examples. A DMS frontend and public broker access are not required.
 
 The confirmed first authentication release uses administrator-provisioned email/password
-accounts and controlled recovery. The [authentication implementation plan](authentication_implementation_plan.md)
+accounts and controlled recovery. The [authentication implementation plan](../authentication/authentication_implementation_plan.md)
 coordinates the relevant parts of groups 01–04 across the authority, Turnstile session and
 DMS machine boundary. It preserves the capability dependencies and does not declare those
 groups complete; customer-specific provisioning remains required.
@@ -43,28 +43,28 @@ groups complete; customer-specific provisioning remains required.
 
 Follow this order for the initial product. The prerequisite column names the main functional dependencies, rather than every shared non-functional requirement.
 
-| Order | Functionality | Primary prerequisites |
-|---|---|---|
-| 01 | Shared identity, tenant bootstrap, and application provisioning | None; authorized operator bootstrap |
-| 02 | Machine authentication, Thaarei enrollment, and access boundaries | 01 |
-| 03 | Consistent API and integration contract | 01, 02 |
-| 04 | Audit capture and authorized audit access | 01, 02, 03 |
-| 05 | Document identity and registry | 01, 02, 03, 04 |
-| 06 | Policies, quotas, and admission control | 01, 02, 03 |
-| 07 | Upload sessions, multi-file batches, and direct transfer | 05, 06 |
-| 08 | Durable background work, status, and recovery | 03, 04, 05, 06, 07 |
-| 09 | File assessment, quarantine, and publication | 07, 08 |
-| 10 | Authorized original retrieval | 02, 09 |
-| 11 | Binary version history and historical restore | 05, 07, 08, 09, 10 |
-| 12 | Metadata, tags, and business references | 03, 05 |
-| 13 | Explicit application sharing | 02, 05, 10 |
-| 14 | Soft deletion and document restoration | 04, 08, 11, 13 |
-| 15 | Native/Office text, spreadsheet data, and source coverage | 08, 09, 14 |
-| 16 | OCR and mixed-document handling | 15 |
-| 17 | Processing results, optional structure, and reprocessing | 10, 11, 15, 16 |
-| 18 | Authorized metadata and full-text search | 12, 13, 14, 17 |
-| 19 | Self-hosted administration and operational visibility | 01, 03, 04, 06, 08 |
-| 20 | Backup, recovery, and controlled physical cleanup | 11, 14, 17, 19 |
+| Order | Functionality                                                     | Primary prerequisites               |
+| ----- | ----------------------------------------------------------------- | ----------------------------------- |
+| 01    | Shared identity, tenant bootstrap, and application provisioning   | None; authorized operator bootstrap |
+| 02    | Machine authentication, Thaarei enrollment, and access boundaries | 01                                  |
+| 03    | Consistent API and integration contract                           | 01, 02                              |
+| 04    | Audit capture and authorized audit access                         | 01, 02, 03                          |
+| 05    | Document identity and registry                                    | 01, 02, 03, 04                      |
+| 06    | Policies, quotas, and admission control                           | 01, 02, 03                          |
+| 07    | Upload sessions, multi-file batches, and direct transfer          | 05, 06                              |
+| 08    | Durable background work, status, and recovery                     | 03, 04, 05, 06, 07                  |
+| 09    | File assessment, quarantine, and publication                      | 07, 08                              |
+| 10    | Authorized original retrieval                                     | 02, 09                              |
+| 11    | Binary version history and historical restore                     | 05, 07, 08, 09, 10                  |
+| 12    | Metadata, tags, and business references                           | 03, 05                              |
+| 13    | Explicit application sharing                                      | 02, 05, 10                          |
+| 14    | Soft deletion and document restoration                            | 04, 08, 11, 13                      |
+| 15    | Native/Office text, spreadsheet data, and source coverage         | 08, 09, 14                          |
+| 16    | OCR and mixed-document handling                                   | 15                                  |
+| 17    | Processing results, optional structure, and reprocessing          | 10, 11, 15, 16                      |
+| 18    | Authorized metadata and full-text search                          | 12, 13, 14, 17                      |
+| 19    | Self-hosted administration and operational visibility             | 01, 03, 04, 06, 08                  |
+| 20    | Backup, recovery, and controlled physical cleanup                 | 11, 14, 17, 19                      |
 
 ### 01. Shared identity, tenant bootstrap, and application provisioning
 
@@ -397,66 +397,66 @@ Follow this order for the initial product. The prerequisite column names the mai
 
 ## Shared quality requirements
 
-These requirements accompany the relevant functionality from its introduction and its ordinary quality checks. Numeric values and detailed operating rules are owned by [architecture.md](../architecture.md), including identity, format/processing contracts, durable jobs, limits, security, deployment, recovery, and distribution.
+These requirements accompany the relevant functionality from its introduction and its ordinary quality checks. Numeric values and detailed operating rules are owned by [architecture.md](../../architecture.md), including identity, format/processing contracts, durable jobs, limits, security, deployment, recovery, and distribution.
 
-| ID | Requirement |
-|---|---|
-| NFR-01 | Deny unauthorized access across tenant/application/resource boundaries, including indirect metadata, snippets, counts, polling, artifacts, and signed transfers. |
-| NFR-02 | Never issue normal read authority for unpublished, rejected, inconclusive, deleted, or otherwise unavailable content. |
-| NFR-03 | Preserve immutable original bytes, stable document identity, monotonic version selection, and attributable source/result provenance. |
-| NFR-04 | Remain consistent across retries, concurrent updates, duplicate/out-of-order delivery, interrupted processes, missed callbacks, and stale results. |
-| NFR-05 | Bound request sizes, decoded content, storage/work reservations, processing resources, queue growth, and operational-history retention. |
-| NFR-06 | Report incomplete extraction honestly; target word error rate at most 10% for clean printed English scans, with no claim of exact tables/handwriting or invented content. |
-| NFR-07 | Target metadata p95 latency below 300 ms for the documented normal operating workload; distinguish API latency, original availability, processing duration, and search lag. |
-| NFR-08 | Provide versioned, language-independent integration contracts and examples without consumer-repository or frontend-framework coupling. |
-| NFR-09 | Operate on self-hosted infrastructure, including the documented offline data/update arrangements; isolate untrusted processing from credentials, external networks, and unrelated files. |
-| NFR-10 | Support RPO at most 24 hours and RTO at most 4 hours for the documented small-profile operating volume/hardware, with compatible database/object recovery. |
-| NFR-11 | Preserve effective access, security, lifecycle, and quota behavior during degraded operation, recovery, and supported upgrades. |
-| NFR-12 | Keep the architecture maintainable through shared contracts, explicit module ownership, pinned dependencies, and bounded processor/configuration choices. |
-| NFR-13 | Run the required commercial/self-hosted product without mandatory paid licenses or hosted subscriptions; meet applicable open-source distribution conditions for code, containers, native dependencies, fonts/codecs, signatures, language data, and models. |
+| ID     | Requirement                                                                                                                                                                                                                                                                             |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NFR-01 | Deny unauthorized access across tenant/application/resource boundaries, including indirect metadata, snippets, counts, polling, artifacts, and signed transfers.                                                                                                                        |
+| NFR-02 | Never issue normal read authority for unpublished, rejected, inconclusive, deleted, or otherwise unavailable content.                                                                                                                                                                   |
+| NFR-03 | Preserve immutable original bytes, stable document identity, monotonic version selection, and attributable source/result provenance.                                                                                                                                                    |
+| NFR-04 | Remain consistent across retries, concurrent updates, duplicate/out-of-order delivery, interrupted processes, missed callbacks, and stale results.                                                                                                                                      |
+| NFR-05 | Bound request sizes, decoded content, storage/work reservations, processing resources, queue growth, and operational-history retention.                                                                                                                                                 |
+| NFR-06 | Report incomplete extraction honestly; target word error rate at most 10% for clean printed English scans, with no claim of exact tables/handwriting or invented content.                                                                                                               |
+| NFR-07 | Target metadata p95 latency below 300 ms for the documented normal operating workload; distinguish API latency, original availability, processing duration, and search lag.                                                                                                             |
+| NFR-08 | Provide versioned, language-independent integration contracts and examples without consumer-repository or frontend-framework coupling.                                                                                                                                                  |
+| NFR-09 | Operate on self-hosted infrastructure, including the documented offline data/update arrangements; isolate untrusted processing from credentials, external networks, and unrelated files.                                                                                                |
+| NFR-10 | Support RPO at most 24 hours and RTO at most 4 hours for the documented small-profile operating volume/hardware, with compatible database/object recovery.                                                                                                                              |
+| NFR-11 | Preserve effective access, security, lifecycle, and quota behavior during degraded operation, recovery, and supported upgrades.                                                                                                                                                         |
+| NFR-12 | Keep the architecture maintainable through shared contracts, explicit module ownership, pinned dependencies, and bounded processor/configuration choices.                                                                                                                               |
+| NFR-13 | Run the required commercial/self-hosted product without mandatory paid licenses or hosted subscriptions; meet applicable open-source distribution conditions for code, containers, native dependencies, fonts/codecs, signatures, language data, and models.                            |
 | NFR-14 | Support the demand target of up to 200,000 documents/month under a declared format/page/size mix, OCR/structured share, processing window, arrival bursts, and resourced deployment; report API latency, original availability, queue age, processing delay, and search lag separately. |
 
-Default file/page/output limits, capability lifetimes, scanner freshness, logical restore time, physical-disposal timing, and history retention remain as specified in [architecture.md](../architecture.md). A deployment configuration is not a measured capacity guarantee. Legal holds and regulated immutable retention remain outside v1.
+Default file/page/output limits, capability lifetimes, scanner freshness, logical restore time, physical-disposal timing, and history retention remain as specified in [architecture.md](../../architecture.md). A deployment configuration is not a measured capacity guarantee. Legal holds and regulated immutable retention remain outside v1.
 
 ## Deferred functionality and its dependencies
 
 These are future scope options already identified by the product plan. They are not requirements for completing v1 and are not automatically scheduled after it. When an option is selected, its prerequisites below establish where it fits; options with unrelated prerequisites have no implied strict order between them.
 
-| Future functionality | Depends on / relationship to the v1 capabilities |
-|---|---|
-| Multipart/resumable transfer and larger files | 06–09, 20; preserve reservation, immutable assessment, abandonment cleanup, and original safety |
-| Formats beyond the accepted matrix, archive unpacking/import, industrial CAD/PLC interpretation, and additional OCR languages | 06, 09, 15–17; define explicit format/language/security behavior and bounds; listed Office/TIFF/email formats are already included |
-| Structure beyond the enabled Docling profile and searchable PDF derivatives | 15–17; extend attributable artifact contracts; configured PDF/image layout/table output is already an opt-in v1 capability |
-| Previews, thumbnails, and Office rendering | 09, 10, 17; additional formats/converters where required and safe preview access |
-| Folders, inherited permissions, and configurable metadata schemas | 05, 12, 13; make inheritance/schema semantics explicit before exposing them |
-| DMS end-user/group permissions, user delegation, arbitrary multi-issuer federation, and finer sharing | 01, 02, 13; extend the principal/access model; shared login and one configured external issuer are already supported |
-| Signed webhooks, public event feeds, and packaged SDKs | 03, 08, 13; versioned consumer contracts, authorization, delivery/retry/signature behavior |
-| Bulk migration/import/export and bulk metadata operations | 05–07, 12–14, 20; extend the already-included multi-file upload batches while preserving per-item authorization, quotas, and recoverable outcomes |
-| Advanced ranking, multilingual relevance, facets, and historical text search | 16–18; explicit language/version visibility and bounded result semantics |
-| Retention rules, legal holds, WORM storage, and governed disposal | 04, 11, 14, 20; governance must constrain deletion before regulated data relies on it |
-| Classification, redaction, field extraction, embeddings, and document Q&A | 09, 13, 15–18; provenance, current authorization, quality limits, and untrusted-content boundaries |
-| Check-out, approvals, electronic signatures, or other business workflows | 04, 11, 13; an explicit expansion of the current consumer-owned workflow boundary |
-| Optional DMS management UI | The relevant administration/document APIs; consumer login/recovery screens and private operator tooling are already required |
+| Future functionality                                                                                                          | Depends on / relationship to the v1 capabilities                                                                                                  |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Multipart/resumable transfer and larger files                                                                                 | 06–09, 20; preserve reservation, immutable assessment, abandonment cleanup, and original safety                                                   |
+| Formats beyond the accepted matrix, archive unpacking/import, industrial CAD/PLC interpretation, and additional OCR languages | 06, 09, 15–17; define explicit format/language/security behavior and bounds; listed Office/TIFF/email formats are already included                |
+| Structure beyond the enabled Docling profile and searchable PDF derivatives                                                   | 15–17; extend attributable artifact contracts; configured PDF/image layout/table output is already an opt-in v1 capability                        |
+| Previews, thumbnails, and Office rendering                                                                                    | 09, 10, 17; additional formats/converters where required and safe preview access                                                                  |
+| Folders, inherited permissions, and configurable metadata schemas                                                             | 05, 12, 13; make inheritance/schema semantics explicit before exposing them                                                                       |
+| DMS end-user/group permissions, user delegation, arbitrary multi-issuer federation, and finer sharing                         | 01, 02, 13; extend the principal/access model; shared login and one configured external issuer are already supported                              |
+| Signed webhooks, public event feeds, and packaged SDKs                                                                        | 03, 08, 13; versioned consumer contracts, authorization, delivery/retry/signature behavior                                                        |
+| Bulk migration/import/export and bulk metadata operations                                                                     | 05–07, 12–14, 20; extend the already-included multi-file upload batches while preserving per-item authorization, quotas, and recoverable outcomes |
+| Advanced ranking, multilingual relevance, facets, and historical text search                                                  | 16–18; explicit language/version visibility and bounded result semantics                                                                          |
+| Retention rules, legal holds, WORM storage, and governed disposal                                                             | 04, 11, 14, 20; governance must constrain deletion before regulated data relies on it                                                             |
+| Classification, redaction, field extraction, embeddings, and document Q&A                                                     | 09, 13, 15–18; provenance, current authorization, quality limits, and untrusted-content boundaries                                                |
+| Check-out, approvals, electronic signatures, or other business workflows                                                      | 04, 11, 13; an explicit expansion of the current consumer-owned workflow boundary                                                                 |
+| Optional DMS management UI                                                                                                    | The relevant administration/document APIs; consumer login/recovery screens and private operator tooling are already required                      |
 
 Mandatory Kubernetes, microservices, new brokers/databases, and active-active regions are architectural changes, not missing v1 functionality.
 
 ## Scope coverage
 
-| Blueprint scope area | Requirement groups |
-|---|---|
-| Shared identity, Thaarei enrollment, machine access, and integration | 01–03 |
-| Registry, identity, metadata, tags, references | 05, 12 |
-| Single-file/batch upload, download, binary versions | 06–11 |
-| Tenant/application access and explicit sharing | 02, 13; applied throughout |
-| File security and immutable publication | 06, 07, 09, 10 |
-| Format/security matrix, text/spreadsheet/OCR/optional structure, and quality | 03, 06, 09, 15–17, NFR-06 |
-| Asynchronous status, retries, durable events, reconciliation | 03, 08 |
-| Search and permission-aware visibility | 18 |
-| Audit | 04; capture accompanies every relevant capability |
-| Delete, logical restore, physical disposal | 14, 20 |
-| Quotas, self-hosting, administration, operations, recovery | 06, 08, 19, 20 |
-| Performance, maintainability, isolation, and compatibility | Shared quality requirements throughout |
-| Monthly demand and commercial/self-hosted distribution | 06, 08, 19, NFR-13, NFR-14 |
+| Blueprint scope area                                                         | Requirement groups                                |
+| ---------------------------------------------------------------------------- | ------------------------------------------------- |
+| Shared identity, Thaarei enrollment, machine access, and integration         | 01–03                                             |
+| Registry, identity, metadata, tags, references                               | 05, 12                                            |
+| Single-file/batch upload, download, binary versions                          | 06–11                                             |
+| Tenant/application access and explicit sharing                               | 02, 13; applied throughout                        |
+| File security and immutable publication                                      | 06, 07, 09, 10                                    |
+| Format/security matrix, text/spreadsheet/OCR/optional structure, and quality | 03, 06, 09, 15–17, NFR-06                         |
+| Asynchronous status, retries, durable events, reconciliation                 | 03, 08                                            |
+| Search and permission-aware visibility                                       | 18                                                |
+| Audit                                                                        | 04; capture accompanies every relevant capability |
+| Delete, logical restore, physical disposal                                   | 14, 20                                            |
+| Quotas, self-hosting, administration, operations, recovery                   | 06, 08, 19, 20                                    |
+| Performance, maintainability, isolation, and compatibility                   | Shared quality requirements throughout            |
+| Monthly demand and commercial/self-hosted distribution                       | 06, 08, 19, NFR-13, NFR-14                        |
 
 ## Research basis for the ordering
 
@@ -474,10 +474,10 @@ Security assessments, ordinary tests, and backup/restore correctness in these re
 
 ## Revision history
 
-| Revision | Change |
-|---|---|
-| v1.0, 2026-10-30 | Initial sequenced inventory aligned with blueprint v1.2 |
+| Revision         | Change                                                                                                                                                                                                                              |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v1.0, 2026-10-30 | Initial sequenced inventory aligned with blueprint v1.2                                                                                                                                                                             |
 | v1.1, 2026-10-31 | Aligned with blueprint v1.3: shared identity, Thaarei enrollment, batch uploads, expanded text/data/OCR/optional-structure behavior, durable-work ownership, monthly demand, and commercial OSS distribution; retained existing IDs |
-| v1.2, 2026-10-31 | Updated architecture ownership/references after consolidation into root architecture.md; requirement IDs, functionality and ordering unchanged |
-| v1.3, 2026-10-31 | Clarified deployment boundary, FR-01.01/03/06 and FR-06.06 for exactly one customer tenant per installation, multiple registered applications, and separate customer installations; existing requirement IDs/order retained |
-| v1.4, 2026-10-31 | Recorded email/password-first decision and linked complete-chain authentication research/proposal; FR/NFR statements, IDs and dependency order unchanged |
+| v1.2, 2026-10-31 | Updated architecture ownership/references after consolidation into root architecture.md; requirement IDs, functionality and ordering unchanged                                                                                      |
+| v1.3, 2026-10-31 | Clarified deployment boundary, FR-01.01/03/06 and FR-06.06 for exactly one customer tenant per installation, multiple registered applications, and separate customer installations; existing requirement IDs/order retained         |
+| v1.4, 2026-10-31 | Recorded email/password-first decision and linked complete-chain authentication research/proposal; FR/NFR statements, IDs and dependency order unchanged                                                                            |

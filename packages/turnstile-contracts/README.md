@@ -41,7 +41,7 @@ lost-response reconciliation rules. RD05 consumes saved readiness in dedicated s
 Compatible migrations/API/web must ship together after the dependent packages and
 complete-chain verification. See the
 [architecture baseline](../../architecture.md#onboarding-implementation-baseline) and
-[product specification](../../docs/onboarding_specification.md) for the accepted scope.
+[product specification](../../docs/turnstile/onboarding/onboarding_specification.md) for the accepted scope.
 
 Run from the repository root:
 

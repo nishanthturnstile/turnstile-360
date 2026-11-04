@@ -103,17 +103,17 @@ define application, contract/client, tooling, and deployment ownership.
 
 ## Documentation
 
-- [Web design system](docs/design-system.md): shared component gallery, semantic tokens and designer/developer maintenance workflow.
-- [Onboarding specification](docs/onboarding_specification.md): accepted ONB-R01–13 scope and acceptance. ONB-I01–08 deliver v1 setup/Settings, audited configuration, readiness and [upgrade/recovery procedures](docs/runbooks/onboarding-release.md). The [redesign plan](docs/onboarding_redesign_implementation_plan.md) sequences adopted v2 first-unit setup, accessible moves and new layouts; RD02 supplies compatible contracts, RD03 adds v2 persistence/readiness with completed-v1 preservation, and RD04 implements guarded audited moves; RD05 adds dedicated resumable setup/waiting and required first-unit forms; RD06 adds the shared visual structure editor and confirmed keyboard/pointer/touch moves; RD07 adds the completed responsive sidebar, dashboard actions and compact Settings navigation. RD08 adds exact image and archive-upgrade verification and completes the selected local release while preserving completed v1. Actual delivery and verification remain in IN_PROGRESS.md; production acceptance is deployment-specific.
+- [Web design system](docs/turnstile/design-system.md): shared component gallery, semantic tokens and designer/developer maintenance workflow.
+- [Onboarding specification](docs/turnstile/onboarding/onboarding_specification.md): accepted ONB-R01–13 scope and acceptance. ONB-I01–08 deliver v1 setup/Settings, audited configuration, readiness and [upgrade/recovery procedures](docs/runbooks/onboarding-release.md). The [redesign plan](docs/turnstile/onboarding/onboarding_redesign_implementation_plan.md) sequences adopted v2 first-unit setup, accessible moves and new layouts; RD02 supplies compatible contracts, RD03 adds v2 persistence/readiness with completed-v1 preservation, and RD04 implements guarded audited moves; RD05 adds dedicated resumable setup/waiting and required first-unit forms; RD06 adds the shared visual structure editor and confirmed keyboard/pointer/touch moves; RD07 adds the completed responsive sidebar, dashboard actions and compact Settings navigation. RD08 adds exact image and archive-upgrade verification and completes the selected local release while preserving completed v1. Actual delivery and verification remain in IN_PROGRESS.md; production acceptance is deployment-specific.
 - [Architecture](architecture.md): single technical reference for DMS and Turnstile components, data/work flows, stack, security, configured defaults, and deployment/recovery design.
-- [Authentication implementation plan](docs/authentication_implementation_plan.md): original audit, official-source research, ordered tasks and acceptance tests. Email/password is the confirmed first login method; AUTH-01–07 implement the authority, BFF, machine enrollment/client, login/recovery UI and local operational checks; actual customer/Dokploy verification remains pending.
+- [Authentication implementation plan](docs/authentication/authentication_implementation_plan.md): original audit, official-source research, ordered tasks and acceptance tests. Email/password is the confirmed first login method; AUTH-01–07 implement the authority, BFF, machine enrollment/client, login/recovery UI and local operational checks; actual customer/Dokploy verification remains pending.
 - [Project progress](IN_PROGRESS.md): shared agent handoff, completed milestones, current work, verification, and pending items. Read and update this when working on the repository.
-- [Workspace implementation plan](docs/workspace_implementation_plan.md): ordered workspace tasks, CLI provenance, scope, and verification limits.
+- [Workspace implementation plan](docs/workspace/workspace_implementation_plan.md): ordered workspace tasks, CLI provenance, scope, and verification limits.
 - [Workspace standards](docs/standards/workspace.md): ownership, toolchain, code, configuration, and testing rules.
 - [Authentication operations](docs/runbooks/authentication.md): private role/migration/bootstrap/account/client commands, immediate credential cutover and fixture verification.
 - [Dokploy runbook](docs/runbooks/dokploy.md): container build contexts, ingress, environment, and installation boundaries.
-- [DMS product blueprint](docs/headless_dms_product_blueprint_v1.md): product promise, included/deferred scope, correctness requirements, and decision history.
-- [DMS functionality requirements](docs/headless_dms_functionality_requirements_v1.md): feature dependency order after workspace setup.
+- [DMS product blueprint](docs/dms/headless_dms_product_blueprint_v1.md): product promise, included/deferred scope, correctness requirements, and decision history.
+- [DMS functionality requirements](docs/dms/headless_dms_functionality_requirements_v1.md): feature dependency order after workspace setup.
 
 ## Ownership
 
@@ -126,3 +126,5 @@ uses proprietary license metadata and a private-package classifier. Repository a
 is controlled by the Git host; package metadata does not configure repository visibility.
 Third-party components retain their own licenses and notices. Required product paths
 retain the accepted no-mandatory-paid-license dependency policy.
+
+See the [documentation index](docs/README.md) for plans, specifications and runbooks by area.

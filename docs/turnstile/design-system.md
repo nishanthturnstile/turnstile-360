@@ -9,20 +9,20 @@ module and route are excluded from production builds; the product currently open
 in light mode. No theme preference is stored.
 
 The accepted stack, preset identity, ownership and technical boundaries live in
-[architecture.md](../architecture.md#web-design-system). Implementation and dated
-verification live in [IN_PROGRESS.md](../IN_PROGRESS.md). This guide defines how to
+[architecture.md](../../architecture.md#web-design-system). Implementation and dated
+verification live in [IN_PROGRESS.md](../../IN_PROGRESS.md). This guide defines how to
 use and maintain that system; it does not authorize new product workflows.
 
 ## Sources of truth
 
-| Concern                                         | Authoritative source                                                         | Working rule                                                                                       |
-| ----------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Palette, light/dark roles, fonts, radius        | [src/index.css](../apps/turnstile-web/src/index.css)                         | Edit semantic variables here; do not copy raw colors into screens or maintain a second token file. |
-| Registry, primitive base, style, icons, aliases | [components.json](../apps/turnstile-web/components.json)                     | Keep CLI output consistent with the accepted architecture.                                         |
-| Component appearance and interaction            | [components/ui](../apps/turnstile-web/src/components/ui)                     | Use component variants; change shared primitives when the change should apply everywhere.          |
-| Product compositions                            | [components](../apps/turnstile-web/src/components), feature UI               | Compose primitives and keep product-specific behavior with its feature.                            |
-| Shared visual review                            | [DesignSystem.tsx](../apps/turnstile-web/src/design-system/DesignSystem.tsx) | Add representative states when a reusable pattern changes.                                         |
-| Installed versions                              | [Web manifest](../apps/turnstile-web/package.json), root lockfile            | Use exact versions and pnpm; commit the lockfile with dependency changes.                          |
+| Concern                                         | Authoritative source                                                            | Working rule                                                                                       |
+| ----------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Palette, light/dark roles, fonts, radius        | [src/index.css](../../apps/turnstile-web/src/index.css)                         | Edit semantic variables here; do not copy raw colors into screens or maintain a second token file. |
+| Registry, primitive base, style, icons, aliases | [components.json](../../apps/turnstile-web/components.json)                     | Keep CLI output consistent with the accepted architecture.                                         |
+| Component appearance and interaction            | [components/ui](../../apps/turnstile-web/src/components/ui)                     | Use component variants; change shared primitives when the change should apply everywhere.          |
+| Product compositions                            | [components](../../apps/turnstile-web/src/components), feature UI               | Compose primitives and keep product-specific behavior with its feature.                            |
+| Shared visual review                            | [DesignSystem.tsx](../../apps/turnstile-web/src/design-system/DesignSystem.tsx) | Add representative states when a reusable pattern changes.                                         |
+| Installed versions                              | [Web manifest](../../apps/turnstile-web/package.json), root lockfile            | Use exact versions and pnpm; commit the lockfile with dependency changes.                          |
 
 The preset builder is [biekTCUvD](https://ui.shadcn.com/create?preset=biekTCUvD).
 The builder records the starting preset; the checked-in tokens and components describe
@@ -125,7 +125,7 @@ Check current component documentation before adding a new interaction; Radix `as
 examples use a different API.
 
 Workspace layout and scroll ownership follow the
-[architecture](../architecture.md#web-navigation-and-scroll-ownership). Use `AppLink`
+[architecture](../../architecture.md#web-navigation-and-scroll-ownership). Use `AppLink`
 for ordinary text navigation and `ButtonLink` for button appearance; reserve
 `window.location` for full auth/identity navigation. Setup uses the shared `SetupProgress` composition above its independently scrolling form;
 its current-step state also appears in the fixture-only gallery. Keep neutral entry and
@@ -236,7 +236,7 @@ sibling sorting, an additional palette or a diagram dependency for this composit
    use and light/dark previews. The application remains light by default until a
    separately agreed theme-switching flow exists. Motion should be short and restrained;
    reduced-motion mode removes movement and loading pulses.
-5. Run the [workspace verification](standards/workspace.md#verification), plus
+5. Run the [workspace verification](../standards/workspace.md#verification), plus
    `pnpm test:browser:auth` for changes touching authentication controls/layout or bundled
    fonts. Record actual results and any limits in `IN_PROGRESS.md` before handoff.
 
@@ -292,7 +292,7 @@ Existing Button customizations are preserved. Biome enables Tailwind directives 
 Dependency-boundary validation resolves the same `@/` alias as TypeScript and Vite
 through the root `tsconfig.boundaries.json` (its resolver plugin uses repository-relative paths).
 
-Keep the bundled [third-party notices](../apps/turnstile-web/public/third-party-notices.txt)
+Keep the bundled [third-party notices](../../apps/turnstile-web/public/third-party-notices.txt)
 with the web assets when updating components, icons or fonts. The root proprietary
 LICENSE remains authoritative for Thaarei-owned code.
 

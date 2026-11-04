@@ -2,7 +2,7 @@
 
 Follow the root workspace instructions. Read the accepted
 [web design-system architecture](../../architecture.md#web-design-system) and
-[shared design guide](../../docs/design-system.md) before changing presentation.
+[shared design guide](../../docs/turnstile/design-system.md) before changing presentation.
 
 - Use the configured shadcn/Base UI primitives and semantic tokens. Keep shared
   styles in `src/index.css` and `src/components/ui`; compose them in feature UI.

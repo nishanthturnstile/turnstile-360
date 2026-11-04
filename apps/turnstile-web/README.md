@@ -16,7 +16,7 @@ Nginx inside the Dokploy-managed frontend container, with Traefik routing `/api`
 backend. API requests use the current origin; no frontend `.env` or API-base build
 argument is required. Any future VITE_* settings are public build values.
 
-The shared [design system](../../docs/design-system.md) supplies the preset, semantic
+The shared [design system](../../docs/turnstile/design-system.md) supplies the preset, semantic
 tokens and reusable UI. Designers and developers can review the actual components at
 http://localhost:23600/design-system in development, including light/dark states. The
 catalogue is excluded from production. Follow the guide when adding/updating primitives.

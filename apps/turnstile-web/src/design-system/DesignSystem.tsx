@@ -406,8 +406,8 @@ export default function DesignSystem() {
         <Separator />
         <footer className="text-sm text-muted-foreground">
           Development reference · Components and tokens are the source of truth. Maintenance and
-          handoff guidance: <code>docs/design-system.md</code>. Check keyboard focus, narrow layouts
-          and both themes before handing off changes.
+          handoff guidance: <code>docs/turnstile/design-system.md</code>. Check keyboard focus,
+          narrow layouts and both themes before handing off changes.
         </footer>
       </main>
     </div>

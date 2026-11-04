@@ -23,7 +23,7 @@ Follow [the Turnstile application architecture](../../architecture.md#turnstile-
 for backend authority, client responsibilities, platform-independent contracts, and future
 mobile compatibility. Do not add a mobile application without an explicit request.
 
-Web presentation follows the [shared design-system guide](../design-system.md) and
+Web presentation follows the [shared design-system guide](../turnstile/design-system.md) and
 its architecture reference. Reuse configured primitives/tokens and review changes in
 the development gallery; keep designer/developer handoffs consistent with those sources.
 

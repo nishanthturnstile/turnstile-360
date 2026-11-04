@@ -2,31 +2,31 @@
 
 **Date:** 2026-11-02. **Status:** Implementation underway with baseline adoption and
 versioned contract foundations;
-actual delivery and verification are tracked in [IN_PROGRESS.md](../IN_PROGRESS.md).
+actual delivery and verification are tracked in [IN_PROGRESS.md](../../../IN_PROGRESS.md).
 This plan does not itself implement any delivery package. **Owner:** Thaarei.
 
 Deliver the owner's requested onboarding redesign through the packages below. Keep this
 plan separate from the [original v1 implementation plan](onboarding_implementation_plan.md),
 whose ONB-I01–08 history remains intact. Package IDs here are delivery milestones, not new
 product requirement IDs. Actual ownership, completion, verification and blockers belong
-in [IN_PROGRESS.md](../IN_PROGRESS.md).
+in [IN_PROGRESS.md](../../../IN_PROGRESS.md).
 
 ## Read first and document ownership
 
 - [Dated redesign decisions](onboarding_design_proposal.md#redesign-recommendation-2026-11-02)
-  and [interactive concept](presentations/onboarding-redesign-concept.html): intended
+  and [interactive concept](../../presentations/onboarding-redesign-concept.html): intended
   experience and rationale. The concept is illustrative, with no production persistence
   or drag/move implementation.
 - [Onboarding specification](onboarding_specification.md): accepted product requirements.
   RD01 adopts the redesign baseline, including required first units and preserved completed
   v1 setup; historical optional-structure acceptance is not the fresh-v2 target.
-- [Architecture](../architecture.md#onboarding-implementation-baseline): authoritative
+- [Architecture](../../../architecture.md#onboarding-implementation-baseline): authoritative
   technical boundaries, contracts, limits, persistence and deployment. Record adopted
   redesign decisions there; this plan identifies delivery work rather than
   creating a second architecture reference.
-- [Design-system guide](design-system.md), root/app AGENTS.md, and
-  [workspace standards](standards/workspace.md): implementation conventions.
-- [Release runbook](runbooks/onboarding-release.md): backup, existing-installation
+- [Design-system guide](../design-system.md), root/app AGENTS.md, and
+  [workspace standards](../../standards/workspace.md): implementation conventions.
+- [Release runbook](../../runbooks/onboarding-release.md): backup, existing-installation
   preparation, verification and recovery. Extend it for the redesign instead of
   repeating the original installation release on an already completed customer.
 
@@ -105,7 +105,7 @@ coordinated. Do not add planned packages as completed work or start other featur
 
 ## ONB-RD01 Adopt the redesign baseline
 
-Update `docs/onboarding_specification.md` for required first units, version-aware legacy
+Update `docs/turnstile/onboarding/onboarding_specification.md` for required first units, version-aware legacy
 completion, the new resume order, accessible moves and the dedicated/completed layouts.
 Review ONB-R03/04/06/07/10/11/12 and affected acceptance journeys. Preserve stable IDs;
 define any additional move-specific requirement IDs in that specification only.
@@ -243,7 +243,7 @@ configuration from expired identity and from a DMS feature outage.
 
 Primary files: `features/configuration/ConfigurationEditors.tsx`, `UnitEditor.tsx`, typed
 API helpers and new focused editor compositions, shared tokens/primitives, design gallery,
-`docs/design-system.md` and browser fixtures.
+`docs/turnstile/design-system.md` and browser fixtures.
 
 Replace the flat administrative list with connected, expandable cards and a compact
 outline mode. Add contextual Add first unit/Add below, inline rename with Save/Cancel,

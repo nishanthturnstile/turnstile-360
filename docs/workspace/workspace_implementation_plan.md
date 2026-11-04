@@ -1,7 +1,7 @@
 # Workspace implementation plan
 
 Current task status, completed milestones, verification, and handoffs are maintained in
-[IN_PROGRESS.md](../IN_PROGRESS.md). Update that record as implementation progresses.
+[IN_PROGRESS.md](../../IN_PROGRESS.md). Update that record as implementation progresses.
 
 Prepare the monorepo for subsequent application implementation and migration. This scope
 establishes folders, application projects, package boundaries, build tooling,
@@ -10,27 +10,27 @@ Turnstile business features, identity, database tables, document processing, or 
 of existing source/data. Turnstile functionality will be specified separately.
 
 For the owner-prioritized onboarding work, the
-[original implementation plan](onboarding_implementation_plan.md) preserves ONB-I01–08
-v1 delivery, informed by the [Version 1 discovery](onboarding_v1_discovery.md) and
-[design proposal](onboarding_design_proposal.md). The
-[redesign plan](onboarding_redesign_implementation_plan.md) sequences the current
-[specification](onboarding_specification.md) and linked architecture baseline adopted by
+[original implementation plan](../turnstile/onboarding/onboarding_implementation_plan.md) preserves ONB-I01–08
+v1 delivery, informed by the [Version 1 discovery](../turnstile/onboarding/onboarding_v1_discovery.md) and
+[design proposal](../turnstile/onboarding/onboarding_design_proposal.md). The
+[redesign plan](../turnstile/onboarding/onboarding_redesign_implementation_plan.md) sequences the current
+[specification](../turnstile/onboarding/onboarding_specification.md) and linked architecture baseline adopted by
 ONB-RD01. Planned descriptions do not establish implementation; actual evidence stays in
 IN_PROGRESS.md. The workspace tasks below retain their foundation scope and history.
 
 The next Turnstile capability follows the accepted
-[user-management specification](user_management_specification.md), informed by the
-[reviewed proposal](user_management_design_proposal.md), and its
-[detailed implementation plan](user_management_implementation_plan.md). They preserve the
+[user-management specification](../turnstile/user-management/user_management_specification.md), informed by the
+[reviewed proposal](../turnstile/user-management/user_management_design_proposal.md), and its
+[detailed implementation plan](../turnstile/user-management/user_management_implementation_plan.md). They preserve the
 owner-confirmed custom roles, company/unit scopes and Mailpit development mail. Technical
-targets live in [architecture.md](../architecture.md#user-management-implementation-target);
+targets live in [architecture.md](../../architecture.md#user-management-implementation-target);
 UM-I01 adopts that baseline; no runtime role, invitation, schema or migration is
 implemented by specification adoption.
 
 ## Accepted decisions
 
 The accepted component architecture, stack, ownership boundaries, web/future-mobile design,
-and deployment topology are maintained in [architecture.md](../architecture.md). This plan
+and deployment topology are maintained in [architecture.md](../../architecture.md). This plan
 records the workspace setup sequence and CLI provenance; it does not redefine that design.
 Feature-specific dependencies are introduced with their corresponding implementation.
 
@@ -83,8 +83,8 @@ SWC preserves Nest decorator metadata in Vitest; application builds use TypeScri
 
 This section records the original 2026-10-31 foundation snapshot. Later authentication
 and Compose development work supersedes its capability and verification limits. Use
-[IN_PROGRESS.md](../IN_PROGRESS.md) for current evidence and the
-[architecture](../architecture.md#development-and-current-deployment) for current commands.
+[IN_PROGRESS.md](../../IN_PROGRESS.md) for current evidence and the
+[architecture](../../architecture.md#development-and-current-deployment) for current commands.
 
 Run the commands in the README. The seven application/library projects have build tasks.
 Backend tests cover application identity and the actual Fastify application wiring.
@@ -118,12 +118,18 @@ deployment/routing still have no verification recorded. See the progress file fo
 
 ## Subsequent implementation
 
+The [standalone DMS implementation plan](../dms/dms_implementation_plan.md) maps the remaining
+DMS v1 requirements to delivery packages, independent installation/integration and API
+explorer acceptance. It preserves the accepted architecture and distinguishes implemented
+AUTH foundations from planned document/processing capabilities. Start with its DMS-only
+foundation and generated-documentation packages when implementation is authorized.
+
 Define each Turnstile capability and any migration source before creating its domain
 modules or data migrations. Onboarding now has its own accepted specification above;
 Document Approval and source/data migration remain separately unspecified. Implement the
 DMS in the accepted requirement dependency order, beginning with shared identity/provisioning
 for the installation's one customer
-tenant, as defined in the [customer deployment model](../architecture.md#customer-deployment-and-application-model).
+tenant, as defined in the [customer deployment model](../../architecture.md#customer-deployment-and-application-model).
 Add real contract schemas, JSON Schema/
 OpenAPI generation, and cross-language fixtures with those capabilities. Add coordinator,
 publisher, scanner, extraction, and heavy-worker runtime roles as their functionality is
@@ -142,11 +148,11 @@ changes the next feature's acceptance criteria without starting feature/schema w
 
 ### Next feature: complete authentication chain
 
-Use the [authentication implementation plan](authentication_implementation_plan.md) for
+Use the [authentication implementation plan](../authentication/authentication_implementation_plan.md) for
 the next implementation proposal. Email/password accounts are administrator-provisioned.
 AUTH-01–AUTH-07 cover authority setup, the product session, separate DMS machine access,
 guarded enrollment and real end-to-end verification. Their design is maintained in
-[architecture.md](../architecture.md#authentication-chain-implementation-proposal).
+[architecture.md](../../architecture.md#authentication-chain-implementation-proposal).
 
 Configuration and tests can precede real customer onboarding. Complete verification still
 requires one tenant, provisioned accounts/clients, product access and an enrolled DMS
