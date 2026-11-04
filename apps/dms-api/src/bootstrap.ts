@@ -7,6 +7,8 @@ import { SecurityTelemetryService } from './infrastructure/security-telemetry.se
 import { DmsExceptionFilter } from './modules/access/dms-errors.js';
 import { AuthorityService } from './modules/platform-auth/authority/authority.service.js';
 import { mountAuthorityHandler } from './modules/platform-auth/authority-handler.js';
+import { mountIdentityHandler } from './modules/platform-auth/identity-handler.js';
+import { IdentityServiceService } from './modules/platform-auth/identity-service.service.js';
 
 export async function createApplication(logging = true): Promise<NestFastifyApplication> {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -28,6 +30,7 @@ export async function createApplication(logging = true): Promise<NestFastifyAppl
     .addHook('onResponse', async (request, reply) => {
       telemetry.observe(request, reply);
     });
+  await mountIdentityHandler(app.getHttpAdapter().getInstance(), app.get(IdentityServiceService));
   await mountAuthorityHandler(app.getHttpAdapter().getInstance(), app.get(AuthorityService));
   app.useGlobalFilters(new DmsExceptionFilter());
   app

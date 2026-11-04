@@ -3,7 +3,7 @@ import { betterAuth } from 'better-auth';
 import { getTableName, is } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { PgTable } from 'drizzle-orm/pg-core';
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 import type { AuthorityConfiguration } from './authority-configuration.js';
 import { createAuthorityOptions } from './authority-options.js';
 import * as schema from './persistence/auth.generated.js';
@@ -15,8 +15,9 @@ export const authorityTables = Object.values(schema).flatMap((value) =>
 
 export function createAuthority(
   config: AuthorityConfiguration,
-  pool: Pool,
+  pool: Pool | PoolClient,
   delivery: RecoveryDelivery,
+  transaction = true,
 ) {
   return betterAuth({
     ...createAuthorityOptions(config, delivery),
@@ -24,7 +25,7 @@ export function createAuthority(
       provider: 'pg',
       schemaName: 'auth',
       schema,
-      transaction: true,
+      transaction,
     }),
   });
 }

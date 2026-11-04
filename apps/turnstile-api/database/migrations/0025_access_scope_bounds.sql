@@ -1,0 +1,2 @@
+ALTER TABLE "turnstile"."access_assignment" DROP CONSTRAINT "access_assignment_scope";--> statement-breakpoint
+ALTER TABLE "turnstile"."access_assignment" ADD CONSTRAINT "access_assignment_scope" CHECK (("turnstile"."access_assignment"."scope_kind" = 'company' AND NOT "turnstile"."access_assignment"."include_children" AND "turnstile"."access_assignment"."scope_key" = 'company') OR ("turnstile"."access_assignment"."scope_kind" = 'units' AND char_length("turnstile"."access_assignment"."scope_key") BETWEEN 43 AND 603));

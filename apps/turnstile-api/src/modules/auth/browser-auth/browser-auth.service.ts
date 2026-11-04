@@ -1,19 +1,22 @@
 import { HttpException, Injectable } from '@nestjs/common';
-import {
-  type LogoutDto,
-  TURNSTILE_PERMISSIONS,
-  type TurnstilePermission,
-  type UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+import { type LogoutDto, type UserSessionDto } from '@thaarei/turnstile-contracts';
 import type { FastifyReply, FastifyRequest, Session } from 'fastify';
+import type { PoolClient } from 'pg';
+import { AccessContextChangedException } from '../../../infrastructure/access-context-exception.js';
 import { productCookiePolicy } from '../../../infrastructure/auth-environment.js';
-import { withTenant } from '../../../infrastructure/database/postgres.js';
+import {
+  type EffectiveAccess,
+  hasShell,
+  impliedPermissions,
+} from '../../access/access-evaluator.js';
+import { AccessRepositoryService } from '../../access/access-repository/access-repository.service.js';
 import { ProductDatabaseService } from '../product-database/product-database.service.js';
 import { authError } from './auth-errors.js';
 import {
   type BffState,
   equal,
   IDLE_MS,
+  type InvitationContinuation,
   opaque,
   REFRESH_LEASE_MS,
   TRANSACTION_MS,
@@ -27,6 +30,7 @@ export class BrowserAuthService {
   constructor(
     private readonly database: ProductDatabaseService,
     private readonly oidc: OidcService,
+    private readonly accessRepository: AccessRepositoryService,
   ) {}
 
   private get store() {
@@ -56,23 +60,10 @@ export class BrowserAuthService {
       return authError(400, 'INVALID_AUTH_REQUEST');
     return value;
   }
-  private async access(userId: string): Promise<TurnstilePermission[]> {
-    const pool = this.database.pool;
-    if (!pool) return authError(503, 'AUTH_UNAVAILABLE');
-    const { rows } = await withTenant(pool, this.oidc.config.INSTALLATION_TENANT_ID, (connection) =>
-      connection.query(
-        'SELECT enabled, permissions FROM turnstile.user_access WHERE user_id = $1',
-        [userId],
-      ),
-    );
-    const row = rows[0];
-    if (
-      !row?.enabled ||
-      !Array.isArray(row.permissions) ||
-      !row.permissions.includes('turnstile:access')
-    )
-      return authError(403, 'PRODUCT_ACCESS_DENIED');
-    return TURNSTILE_PERMISSIONS.filter((permission) => row.permissions.includes(permission));
+  private async access(userId: string): Promise<EffectiveAccess> {
+    const access = await this.accessRepository.read(userId);
+    if (!hasShell(access)) return authError(403, 'PRODUCT_ACCESS_DENIED');
+    return access;
   }
 
   async login(request: FastifyRequest, reply: FastifyReply) {
@@ -85,6 +76,16 @@ export class BrowserAuthService {
     const url = this.canonical(request);
     if ([...url.searchParams.keys()].some((key) => key !== 'returnTo'))
       authError(400, 'INVALID_AUTH_REQUEST');
+    if (request.session.isPersisted()) await request.session.reload();
+    const continuation = request.session.invitation;
+    const invitation =
+      continuation && !continuation.accepted && continuation.expiresAt > Date.now()
+        ? {
+            id: continuation.id,
+            invitationId: continuation.invitationId,
+            generation: continuation.generation,
+          }
+        : undefined;
     const transaction: Extract<BffState, { kind: 'login' }> = {
       kind: 'login',
       issuer: this.oidc.config.AUTH_ISSUER_URL,
@@ -92,16 +93,19 @@ export class BrowserAuthService {
       state: opaque(),
       nonce: opaque(),
       verifier: opaque(),
-      returnTo: this.localPath(url.searchParams.get('returnTo')),
+      returnTo: invitation ? '/invitations/join' : this.localPath(url.searchParams.get('returnTo')),
+      ...(invitation ? { invitation } : {}),
       expiresAt: Date.now() + TRANSACTION_MS,
     };
     const destination = await this.oidc.authorization(transaction);
     // Regeneration preserves the store ID but rotates its fenced cookie generation.
     if (request.session.isPersisted()) {
       await request.session.reload();
-      await request.session.regenerate(['bffRevision']);
+      await request.session.regenerate(['bffRevision', 'invitation']);
     }
-    request.session.options({ maxAge: TRANSACTION_MS });
+    request.session.options({
+      maxAge: invitation && continuation ? continuation.expiresAt - Date.now() : TRANSACTION_MS,
+    });
     request.session.bff = transaction;
     await request.session.save();
     reply.code(302).redirect(destination);
@@ -137,7 +141,37 @@ export class BrowserAuthService {
     try {
       identity = await this.oidc.exchange(url, transaction, authorityCookies(request));
       await this.oidc.active(identity);
-      identity.permissions = await this.access(identity.user.id);
+      if (transaction.invitation) {
+        await request.session.reload();
+        const current = request.session.invitation;
+        if (
+          !current ||
+          current.accepted ||
+          request.session.bff?.kind !== 'consumed' ||
+          current.expiresAt <= Date.now() ||
+          current.id !== transaction.invitation.id ||
+          current.invitationId !== transaction.invitation.invitationId ||
+          current.generation !== transaction.invitation.generation
+        )
+          return authError(400, 'LOGIN_TRANSACTION_INVALID');
+        current.identity = {
+          kind: 'invitation',
+          issuer: transaction.issuer,
+          value: identity,
+          expiresAt: Math.min(Date.now() + 600000, current.expiresAt, identity.absoluteExpiresAt),
+        };
+        delete current.logout;
+        await request.session.regenerate(['bffRevision', 'invitation']);
+        request.session.options({ maxAge: current.expiresAt - Date.now() });
+        request.session.bff = { kind: 'restricted' };
+        await request.session.save();
+        return reply.code(302).redirect('/invitations/join');
+      }
+      const access = await this.access(identity.user.id);
+      identity.permissions = impliedPermissions(
+        access.context.grants.flatMap((grant) => grant.permissions),
+      );
+      identity.access = access.context;
       await request.session.reload();
       await request.session.regenerate(['bffRevision']);
       request.session.options({ maxAge: identity.absoluteExpiresAt - Date.now() });
@@ -149,6 +183,194 @@ export class BrowserAuthService {
     }
     reply.clearCookie(`${productCookiePolicy(this.oidc.config).cookieName}-logout`, { path: '/' });
     reply.code(302).redirect(transaction.returnTo);
+  }
+
+  async installInvitation(
+    request: FastifyRequest,
+    binding: Omit<InvitationContinuation, 'parent'>,
+  ) {
+    await this.ready();
+    if (request.session.isPersisted()) await request.session.reload();
+    const previous = request.session.bff;
+    const parent =
+      previous?.kind === 'user'
+        ? previous.identity
+        : (request.session.invitation?.identity?.value ?? request.session.invitation?.parent);
+    if (request.session.isPersisted()) await request.session.regenerate(['bffRevision']);
+    request.session.invitation = { ...binding, ...(parent ? { parent } : {}) };
+    request.session.bff = { kind: 'restricted' };
+    request.session.options({ maxAge: binding.expiresAt - Date.now() });
+    await request.session.save();
+  }
+
+  async invitation(request: FastifyRequest, mutation = false): Promise<InvitationContinuation> {
+    await this.ready();
+    const current = await this.atomic(request, (session) => {
+      const current = session.invitation;
+      if (!current || current.expiresAt <= Date.now()) return undefined;
+      if (mutation) this.csrf(request, current.csrf);
+      if (current.logout && current.logout.expiresAt <= Date.now()) delete current.logout;
+      return current;
+    });
+    if (!current) throw new HttpException({ code: 'INVITATION_IDENTITY_REQUIRED' }, 401);
+    return current;
+  }
+
+  async invitationIdentity(request: FastifyRequest, current: InvitationContinuation) {
+    const identity = current.identity;
+    if (
+      identity?.kind !== 'invitation' ||
+      identity.issuer !== this.oidc.config.AUTH_ISSUER_URL ||
+      identity.expiresAt <= Date.now() ||
+      identity.value.absoluteExpiresAt <= Date.now()
+    )
+      throw new HttpException({ code: 'INVITATION_IDENTITY_REQUIRED' }, 401);
+    // Short-lived restricted identities require a new purpose login when their access
+    // token expires. Never retry an uncertain refresh grant in the recipient bridge.
+    const email = await this.oidc.recipientActive(identity.value, authorityCookies(request));
+    const unchanged = await this.atomic(
+      request,
+      (session) =>
+        session.invitation?.id === current.id &&
+        session.invitation.csrf === current.csrf &&
+        session.invitation.identity?.value.sid === identity.value.sid &&
+        session.invitation.identity.expiresAt > Date.now(),
+    );
+    if (!unchanged) throw new HttpException({ code: 'INVITATION_IDENTITY_REQUIRED' }, 401);
+    return { ...identity.value, user: { ...identity.value.user, email } };
+  }
+
+  async fenceInvitation(
+    db: PoolClient,
+    request: FastifyRequest,
+    current: InvitationContinuation,
+    sid?: string,
+  ) {
+    if (
+      !(await this.store.invitationFence(
+        db,
+        request.session.sessionStoreId,
+        request.session.sessionId,
+        current.id,
+        current.csrf,
+        sid,
+      ))
+    )
+      throw new HttpException({ code: 'INVITATION_IDENTITY_REQUIRED' }, 401);
+  }
+
+  async markInvitationAccepted(
+    db: PoolClient,
+    request: FastifyRequest,
+    current: InvitationContinuation,
+  ) {
+    await this.store.markInvitationAccepted(
+      db,
+      request.session.sessionStoreId,
+      request.session.sessionId,
+      current.id,
+    );
+  }
+
+  async establishInvitation(request: FastifyRequest, current: InvitationContinuation) {
+    const identity = await this.invitationIdentity(request, current);
+    const access = await this.access(identity.user.id);
+    const committed = await this.atomic(request, (session) => {
+      if (
+        session.invitation?.id !== current.id ||
+        session.invitation.csrf !== current.csrf ||
+        session.invitation.identity?.value.sid !== identity.sid
+      )
+        return false;
+      identity.permissions = impliedPermissions(
+        access.context.grants.flatMap((g) => g.permissions),
+      );
+      identity.access = access.context;
+      session.bff = { kind: 'user', identity, csrf: opaque() };
+      session.cookie.expires = new Date(identity.absoluteExpiresAt);
+      return true;
+    });
+    if (!committed) throw new HttpException({ code: 'INVITATION_IDENTITY_REQUIRED' }, 401);
+    await request.session.reload();
+    const promoted = request.session.bff;
+    if (
+      promoted?.kind !== 'user' ||
+      promoted.identity.sid !== identity.sid ||
+      promoted.identity.user.id !== identity.user.id ||
+      promoted.identity.absoluteExpiresAt <= Date.now()
+    )
+      throw new HttpException({ code: 'INVITATION_IDENTITY_REQUIRED' }, 401);
+    // Regeneration otherwise restores the restricted cookie's originalMaxAge.
+    request.session.options({ maxAge: promoted.identity.absoluteExpiresAt - Date.now() });
+    await request.session.regenerate(['bff', 'bffRevision', 'invitation']);
+    await request.session.save();
+  }
+
+  async cancelInvitation(request: FastifyRequest, current: InvitationContinuation) {
+    await this.atomic(request, (session) => {
+      if (session.invitation?.id !== current.id || session.invitation.csrf !== current.csrf)
+        throw new HttpException({ code: 'INVITATION_IDENTITY_REQUIRED' }, 401);
+      delete session.invitation;
+      if (session.bff?.kind !== 'user') session.bff = { kind: 'consumed' };
+      return true;
+    });
+  }
+
+  async endInvitationParent(
+    request: FastifyRequest,
+    reply: FastifyReply,
+    current: InvitationContinuation,
+  ) {
+    const receipt = await this.atomic(request, (session) => {
+      const flow = session.invitation;
+      if (!flow || flow.id !== current.id || flow.csrf !== current.csrf)
+        throw new HttpException({ code: 'INVITATION_IDENTITY_REQUIRED' }, 401);
+      if (!flow.logout) {
+        const identity = flow.identity?.value ?? flow.parent;
+        if (!identity) throw new HttpException({ code: 'INVITATION_IDENTITY_REQUIRED' }, 401);
+        flow.logout = {
+          sid: identity.sid,
+          identity,
+          expiresAt: Date.now() + TRANSACTION_MS,
+          complete: false,
+        };
+      }
+      delete flow.identity;
+      delete flow.parent;
+      session.bff = { kind: 'restricted' };
+      return flow.logout;
+    });
+    if (!receipt || receipt.expiresAt <= Date.now())
+      throw new HttpException({ code: 'INVITATION_IDENTITY_REQUIRED' }, 401);
+    try {
+      const cookies = receipt.complete
+        ? await this.oidc.clearBrowserSession(authorityCookies(request), receipt.sid)
+        : receipt.identity
+          ? await this.oidc.logout(receipt.identity, authorityCookies(request))
+          : [];
+      const previous = reply.getHeader('set-cookie');
+      reply.header('set-cookie', [
+        ...(Array.isArray(previous) ? previous : typeof previous === 'string' ? [previous] : []),
+        ...cookies,
+      ]);
+      await this.atomic(request, (session) => {
+        if (
+          session.invitation?.id === current.id &&
+          session.invitation.logout?.sid === receipt.sid
+        ) {
+          session.invitation.logout.complete = true;
+          delete session.invitation.logout.identity;
+        }
+        return true;
+      });
+      return { local: 'complete' as const, authority: 'complete' as const };
+    } catch {
+      return {
+        local: 'complete' as const,
+        authority: 'pending' as const,
+        retryUntil: new Date(receipt.expiresAt).toISOString(),
+      };
+    }
   }
 
   csrf(request: FastifyRequest, expected: string) {
@@ -177,7 +399,7 @@ export class BrowserAuthService {
     });
   }
 
-  async authenticate(request: FastifyRequest): Promise<{ identity: UserIdentity; csrf: string }> {
+  async authenticate(request: FastifyRequest): Promise<NonNullable<FastifyRequest['productUser']>> {
     await this.ready();
     const snapshot = await this.atomic(request, (session) => {
       const state = session.bff;
@@ -186,6 +408,9 @@ export class BrowserAuthService {
         this.retire(session);
         return undefined;
       }
+      // Validate the incoming request against its incoming generation/token, before
+      // refresh or access-context regeneration can replace either one.
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method)) this.csrf(request, state.csrf);
       return state;
     });
     if (!snapshot) return authError(401, 'IDENTITY_REQUIRED');
@@ -241,21 +466,49 @@ export class BrowserAuthService {
         await this.invalidate(request);
       throw error;
     }
-    let permissions: TurnstilePermission[];
+    let access: EffectiveAccess;
     try {
-      permissions = await this.access(identity.user.id);
+      access = await this.access(identity.user.id);
     } catch (error) {
       if (error instanceof HttpException && error.getStatus() === 403)
         await this.invalidate(request);
       throw error;
     }
-    if (JSON.stringify(permissions) !== JSON.stringify(identity.permissions)) {
-      await request.session.reload();
-      const state = request.session.bff;
-      if (state?.kind !== 'user' || state.refresh) return authError(503, 'REFRESH_IN_PROGRESS');
-      state.identity.permissions = permissions;
-      state.csrf = opaque();
-      await request.session.regenerate(['bff', 'bffRevision']);
+    const permissions = impliedPermissions(
+      access.context.grants.flatMap((grant) => grant.permissions),
+    );
+    if (
+      identity.access?.fingerprint !== access.context.fingerprint ||
+      JSON.stringify(permissions) !== JSON.stringify(identity.permissions)
+    ) {
+      try {
+        await request.session.reload();
+        const state = request.session.bff;
+        if (state?.kind !== 'user') return authError(401, 'IDENTITY_REQUIRED');
+        if (
+          Math.min(state.identity.absoluteExpiresAt, state.identity.idleExpiresAt) <= Date.now()
+        ) {
+          await this.invalidate(request);
+          return authError(401, 'IDENTITY_REQUIRED');
+        }
+        if (state.refresh || state.identity.accessToken !== identity.accessToken)
+          return authError(503, 'REFRESH_IN_PROGRESS');
+        if (state.csrf !== snapshot.csrf)
+          throw new AccessContextChangedException(request.id, access.context.accessRevision);
+        state.identity.access = access.context;
+        state.identity.permissions = permissions;
+        state.csrf = opaque();
+        request.session.options({ maxAge: state.identity.absoluteExpiresAt - Date.now() });
+        // The plugin's generation/revision CAS prevents a stale reload from
+        // overwriting concurrent refresh, logout or another context transition.
+        await request.session.regenerate(['bff', 'bffRevision']);
+      } catch (error) {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT')
+          throw new AccessContextChangedException(request.id, access.context.accessRevision);
+        throw error;
+      }
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method))
+        throw new AccessContextChangedException(request.id, access.context.accessRevision);
     }
     const current = await this.atomic(request, (session) => {
       const state = session.bff;
@@ -268,13 +521,21 @@ export class BrowserAuthService {
       // Retry with the current token before authorizing; logout and expiry still deny above.
       if (state.refresh || state.identity.accessToken !== identity.accessToken)
         return 'changed' as const;
+      if (
+        state.identity.access?.fingerprint !== access.context.fingerprint ||
+        (!['GET', 'HEAD', 'OPTIONS'].includes(request.method) && state.csrf !== snapshot.csrf)
+      )
+        return 'access-changed' as const;
+      state.identity.access = access.context;
       state.identity.idleExpiresAt = Math.min(
         Date.now() + IDLE_MS,
         state.identity.absoluteExpiresAt,
       );
-      return { identity: state.identity, csrf: state.csrf };
+      return { identity: state.identity, csrf: state.csrf, access };
     });
     if (current === 'changed') return authError(503, 'REFRESH_IN_PROGRESS');
+    if (current === 'access-changed')
+      throw new AccessContextChangedException(request.id, access.context.accessRevision);
     if (!current) return authError(401, 'IDENTITY_REQUIRED');
     request.productUser = current;
     return current;
@@ -283,6 +544,7 @@ export class BrowserAuthService {
   session(request: FastifyRequest): UserSessionDto {
     const current = request.productUser;
     if (!current) return authError(401, 'IDENTITY_REQUIRED');
+    if (!current.identity.access) return authError(503, 'AUTH_UNAVAILABLE');
     return {
       user: current.identity.user,
       permissions: current.identity.permissions,
@@ -291,6 +553,7 @@ export class BrowserAuthService {
         idleExpiresAt: new Date(current.identity.idleExpiresAt).toISOString(),
       },
       csrfToken: current.csrf,
+      access: current.identity.access,
     };
   }
 

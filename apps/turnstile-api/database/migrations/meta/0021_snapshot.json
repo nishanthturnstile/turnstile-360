@@ -1,0 +1,3180 @@
+{
+  "id": "c33456c0-af58-4d3b-bd69-0c87dad4ca8f",
+  "prevId": "864bc88d-48e3-489e-b011-020bb5fe7ae0",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "turnstile.installation": {
+      "name": "installation",
+      "schema": "turnstile",
+      "columns": {
+        "singleton": {
+          "name": "singleton",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_key": {
+          "name": "customer_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "installation_tenant_id_unique": {
+          "name": "installation_tenant_id_unique",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id"]
+        },
+        "installation_customer_key_unique": {
+          "name": "installation_customer_key_unique",
+          "nullsNotDistinct": false,
+          "columns": ["customer_key"]
+        },
+        "installation_application_id_unique": {
+          "name": "installation_application_id_unique",
+          "nullsNotDistinct": false,
+          "columns": ["application_id"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "one_installation": {
+          "name": "one_installation",
+          "value": "\"turnstile\".\"installation\".\"singleton\" = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "turnstile.session": {
+      "name": "session",
+      "schema": "turnstile",
+      "columns": {
+        "id_hash": {
+          "name": "id_hash",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ciphertext": {
+          "name": "ciphertext",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "session_expiry_idx": {
+          "name": "session_expiry_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "session_tenant_id_installation_tenant_id_fk": {
+          "name": "session_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "session",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"session\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"session\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "turnstile.user_access": {
+      "name": "user_access",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "permissions": {
+          "name": "permissions",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_access_tenant_id_installation_tenant_id_fk": {
+          "name": "user_access_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "user_access",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_access_tenant_id_user_id_pk": {
+          "name": "user_access_tenant_id_user_id_pk",
+          "columns": ["tenant_id", "user_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"user_access\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"user_access\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "turnstile.configuration_audit": {
+      "name": "configuration_audit",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_kind": {
+          "name": "actor_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_id": {
+          "name": "subject_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_user_id": {
+          "name": "subject_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "changed_fields": {
+          "name": "changed_fields",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revision_before": {
+          "name": "revision_before",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revision_after": {
+          "name": "revision_after",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        }
+      },
+      "indexes": {
+        "configuration_audit_time_idx": {
+          "name": "configuration_audit_time_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "configuration_audit_tenant_id_organization_configuration_tenant_id_fk": {
+          "name": "configuration_audit_tenant_id_organization_configuration_tenant_id_fk",
+          "tableFrom": "configuration_audit",
+          "tableTo": "organization_configuration",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "configuration_audit_tenant_id_id_pk": {
+          "name": "configuration_audit_tenant_id_id_pk",
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"configuration_audit\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"configuration_audit\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "audit_actor_bound": {
+          "name": "audit_actor_bound",
+          "value": "\"turnstile\".\"configuration_audit\".\"actor_kind\" IN ('user', 'operator') AND \"turnstile\".\"configuration_audit\".\"actor_id\" ~ '^[A-Za-z0-9_-]{1,200}$'"
+        },
+        "audit_action": {
+          "name": "audit_action",
+          "value": "\"turnstile\".\"configuration_audit\".\"action\" IN ('initialized', 'profile_saved', 'unit_created', 'unit_renamed', 'unit_moved', 'unit_deleted', 'setup_completed', 'access_changed')"
+        },
+        "audit_fields": {
+          "name": "audit_fields",
+          "value": "cardinality(\"turnstile\".\"configuration_audit\".\"changed_fields\") <= 6 AND \"turnstile\".\"configuration_audit\".\"changed_fields\" <@ ARRAY['name','timeZone','type','parentId','completion','permissions','enabled']::text[]"
+        },
+        "audit_subject_user": {
+          "name": "audit_subject_user",
+          "value": "(\"turnstile\".\"configuration_audit\".\"action\" = 'access_changed' AND \"turnstile\".\"configuration_audit\".\"actor_kind\" = 'operator' AND \"turnstile\".\"configuration_audit\".\"subject_user_id\" IS NOT NULL AND \"turnstile\".\"configuration_audit\".\"subject_user_id\" ~ '^[A-Za-z0-9_-]{1,200}$') OR (\"turnstile\".\"configuration_audit\".\"action\" <> 'access_changed' AND \"turnstile\".\"configuration_audit\".\"subject_user_id\" IS NULL)"
+        },
+        "audit_revisions": {
+          "name": "audit_revisions",
+          "value": "(\"turnstile\".\"configuration_audit\".\"revision_before\" IS NULL OR \"turnstile\".\"configuration_audit\".\"revision_before\" >= 0) AND \"turnstile\".\"configuration_audit\".\"revision_after\" >= 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.configuration_create_receipt": {
+      "name": "configuration_create_receipt",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fingerprint": {
+          "name": "fingerprint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit_id": {
+          "name": "unit_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp() + interval '24 hours'"
+        }
+      },
+      "indexes": {
+        "configuration_receipt_expiry_idx": {
+          "name": "configuration_receipt_expiry_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "configuration_create_receipt_tenant_id_organization_configuration_tenant_id_fk": {
+          "name": "configuration_create_receipt_tenant_id_organization_configuration_tenant_id_fk",
+          "tableFrom": "configuration_create_receipt",
+          "tableTo": "organization_configuration",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "configuration_create_receipt_tenant_id_key_pk": {
+          "name": "configuration_create_receipt_tenant_id_key_pk",
+          "columns": ["tenant_id", "key"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "operator_tenant": {
+          "name": "operator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator"],
+          "using": "\"turnstile\".\"configuration_create_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"configuration_create_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        },
+        "runtime_read": {
+          "name": "runtime_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"configuration_create_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        },
+        "runtime_insert": {
+          "name": "runtime_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": ["thaarei_turnstile_runtime"],
+          "withCheck": "\"turnstile\".\"configuration_create_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        },
+        "runtime_expired_delete": {
+          "name": "runtime_expired_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": ["thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"configuration_create_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid AND \"turnstile\".\"configuration_create_receipt\".\"expires_at\" <= statement_timestamp()"
+        }
+      },
+      "checkConstraints": {
+        "receipt_actor_bound": {
+          "name": "receipt_actor_bound",
+          "value": "\"turnstile\".\"configuration_create_receipt\".\"actor_id\" ~ '^[A-Za-z0-9_-]{1,200}$'"
+        },
+        "receipt_fingerprint_bound": {
+          "name": "receipt_fingerprint_bound",
+          "value": "\"turnstile\".\"configuration_create_receipt\".\"fingerprint\" ~ '^[0-9a-f]{64}$'"
+        },
+        "receipt_window": {
+          "name": "receipt_window",
+          "value": "\"turnstile\".\"configuration_create_receipt\".\"expires_at\" = \"turnstile\".\"configuration_create_receipt\".\"created_at\" + interval '24 hours'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.organization_configuration": {
+      "name": "organization_configuration",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "revision": {
+          "name": "revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time_zone": {
+          "name": "time_zone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "root_id": {
+          "name": "root_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "requirement_version": {
+          "name": "requirement_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 2
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_by": {
+          "name": "completed_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "organization_configuration_tenant_id_installation_tenant_id_fk": {
+          "name": "organization_configuration_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "organization_configuration",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "configuration_root_fk": {
+          "name": "configuration_root_fk",
+          "tableFrom": "organization_configuration",
+          "tableTo": "organization_unit",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "root_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"organization_configuration\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"organization_configuration\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "configuration_revision_bound": {
+          "name": "configuration_revision_bound",
+          "value": "\"turnstile\".\"organization_configuration\".\"revision\" >= 0 AND \"turnstile\".\"organization_configuration\".\"revision\" <= 2147483647"
+        },
+        "configuration_name_bound": {
+          "name": "configuration_name_bound",
+          "value": "\"turnstile\".\"organization_configuration\".\"name\" IS NULL OR char_length(\"turnstile\".\"organization_configuration\".\"name\") BETWEEN 1 AND 160"
+        },
+        "configuration_zone_bound": {
+          "name": "configuration_zone_bound",
+          "value": "\"turnstile\".\"organization_configuration\".\"time_zone\" IS NULL OR (octet_length(\"turnstile\".\"organization_configuration\".\"time_zone\") = char_length(\"turnstile\".\"organization_configuration\".\"time_zone\") AND char_length(\"turnstile\".\"organization_configuration\".\"time_zone\") BETWEEN 1 AND 100)"
+        },
+        "configuration_root_pair": {
+          "name": "configuration_root_pair",
+          "value": "(\"turnstile\".\"organization_configuration\".\"name\" IS NULL) = (\"turnstile\".\"organization_configuration\".\"root_id\" IS NULL)"
+        },
+        "configuration_version": {
+          "name": "configuration_version",
+          "value": "\"turnstile\".\"organization_configuration\".\"requirement_version\" IN (1, 2)"
+        },
+        "configuration_completion": {
+          "name": "configuration_completion",
+          "value": "(\"turnstile\".\"organization_configuration\".\"completed_at\" IS NULL AND \"turnstile\".\"organization_configuration\".\"completed_by\" IS NULL) OR (\"turnstile\".\"organization_configuration\".\"completed_at\" IS NOT NULL AND \"turnstile\".\"organization_configuration\".\"completed_by\" IS NOT NULL AND \"turnstile\".\"organization_configuration\".\"completed_by\" ~ '^[A-Za-z0-9_-]{1,200}$' AND \"turnstile\".\"organization_configuration\".\"name\" IS NOT NULL AND \"turnstile\".\"organization_configuration\".\"time_zone\" IS NOT NULL AND \"turnstile\".\"organization_configuration\".\"root_id\" IS NOT NULL AND \"turnstile\".\"organization_configuration\".\"revision\" > 0)"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.organization_unit": {
+      "name": "organization_unit",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name_key": {
+          "name": "name_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "organization_one_root_idx": {
+          "name": "organization_one_root_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"turnstile\".\"organization_unit\".\"type\" = 'organization'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "organization_sibling_name_idx": {
+          "name": "organization_sibling_name_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "\"name_key\" COLLATE \"C\"",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "organization_unit_tenant_id_organization_configuration_tenant_id_fk": {
+          "name": "organization_unit_tenant_id_organization_configuration_tenant_id_fk",
+          "tableFrom": "organization_unit",
+          "tableTo": "organization_configuration",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "organization_unit_parent_fk": {
+          "name": "organization_unit_parent_fk",
+          "tableFrom": "organization_unit",
+          "tableTo": "organization_unit",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "parent_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "organization_unit_tenant_id_id_pk": {
+          "name": "organization_unit_tenant_id_id_pk",
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"organization_unit\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"organization_unit\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "unit_type": {
+          "name": "unit_type",
+          "value": "\"turnstile\".\"organization_unit\".\"type\" IN ('organization', 'site', 'department')"
+        },
+        "unit_shape": {
+          "name": "unit_shape",
+          "value": "(\"turnstile\".\"organization_unit\".\"type\" = 'organization' AND \"turnstile\".\"organization_unit\".\"parent_id\" IS NULL AND \"turnstile\".\"organization_unit\".\"name\" IS NULL AND \"turnstile\".\"organization_unit\".\"name_key\" IS NULL) OR (\"turnstile\".\"organization_unit\".\"type\" IN ('site', 'department') AND \"turnstile\".\"organization_unit\".\"parent_id\" IS NOT NULL AND \"turnstile\".\"organization_unit\".\"parent_id\" <> \"turnstile\".\"organization_unit\".\"id\" AND \"turnstile\".\"organization_unit\".\"name\" IS NOT NULL AND char_length(\"turnstile\".\"organization_unit\".\"name\") BETWEEN 1 AND 120 AND \"turnstile\".\"organization_unit\".\"name_key\" IS NOT NULL AND char_length(\"turnstile\".\"organization_unit\".\"name_key\") BETWEEN 1 AND 240)"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.access_assignment": {
+      "name": "access_assignment",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "member_id": {
+          "name": "member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role_id": {
+          "name": "role_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scope_kind": {
+          "name": "scope_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "include_children": {
+          "name": "include_children",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scope_key": {
+          "name": "scope_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "access_assignment_scope_idx": {
+          "name": "access_assignment_scope_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "member_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "role_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "scope_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "access_assignment_role_idx": {
+          "name": "access_assignment_role_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "role_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "access_assignment_tenant_id_installation_tenant_id_fk": {
+          "name": "access_assignment_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "access_assignment",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "access_assignment_tenant_id_member_id_access_member_tenant_id_id_fk": {
+          "name": "access_assignment_tenant_id_member_id_access_member_tenant_id_id_fk",
+          "tableFrom": "access_assignment",
+          "tableTo": "access_member",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "member_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "access_assignment_tenant_id_role_id_access_role_tenant_id_id_fk": {
+          "name": "access_assignment_tenant_id_role_id_access_role_tenant_id_id_fk",
+          "tableFrom": "access_assignment",
+          "tableTo": "access_role",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "role_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "access_assignment_tenant_id_id_pk": {
+          "name": "access_assignment_tenant_id_id_pk",
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"access_assignment\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"access_assignment\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "access_assignment_scope": {
+          "name": "access_assignment_scope",
+          "value": "(\"turnstile\".\"access_assignment\".\"scope_kind\" = 'company' AND NOT \"turnstile\".\"access_assignment\".\"include_children\" AND \"turnstile\".\"access_assignment\".\"scope_key\" = 'company') OR (\"turnstile\".\"access_assignment\".\"scope_kind\" = 'units' AND char_length(\"turnstile\".\"access_assignment\".\"scope_key\") BETWEEN 43 AND 600)"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.access_audit": {
+      "name": "access_audit",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_kind": {
+          "name": "actor_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_id": {
+          "name": "subject_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subject_user_id": {
+          "name": "subject_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revision_before": {
+          "name": "revision_before",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revision_after": {
+          "name": "revision_after",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        }
+      },
+      "indexes": {
+        "access_audit_time_idx": {
+          "name": "access_audit_time_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "access_audit_tenant_id_installation_tenant_id_fk": {
+          "name": "access_audit_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "access_audit",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "access_audit_tenant_id_id_pk": {
+          "name": "access_audit_tenant_id_id_pk",
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "operator_tenant": {
+          "name": "operator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator"],
+          "using": "\"turnstile\".\"access_audit\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"access_audit\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        },
+        "runtime_append_user": {
+          "name": "runtime_append_user",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": ["thaarei_turnstile_runtime"],
+          "withCheck": "\"turnstile\".\"access_audit\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid AND \"turnstile\".\"access_audit\".\"actor_kind\" = 'user'"
+        }
+      },
+      "checkConstraints": {
+        "access_audit_actor": {
+          "name": "access_audit_actor",
+          "value": "\"turnstile\".\"access_audit\".\"actor_kind\" IN ('operator','user') AND \"turnstile\".\"access_audit\".\"actor_id\" ~ '^[A-Za-z0-9_-]{1,200}$'"
+        },
+        "access_audit_subject": {
+          "name": "access_audit_subject",
+          "value": "\"turnstile\".\"access_audit\".\"subject_user_id\" IS NULL OR \"turnstile\".\"access_audit\".\"subject_user_id\" ~ '^[A-Za-z0-9_-]{1,200}$'"
+        },
+        "access_audit_action": {
+          "name": "access_audit_action",
+          "value": "\"turnstile\".\"access_audit\".\"action\" IN ('legacy_imported','legacy_replaced','legacy_retired','administrator_bootstrapped','administrator_handed_over','member_assignments_changed','member_suspended','member_reactivated','role_created','role_details_changed','role_permissions_changed','role_deleted','unit_coverage_changed','invitation_changed')"
+        },
+        "access_audit_operator": {
+          "name": "access_audit_operator",
+          "value": "\"turnstile\".\"access_audit\".\"action\" NOT IN ('legacy_imported','legacy_replaced','administrator_bootstrapped','administrator_handed_over') OR \"turnstile\".\"access_audit\".\"actor_kind\" = 'operator'"
+        },
+        "access_audit_revisions": {
+          "name": "access_audit_revisions",
+          "value": "\"turnstile\".\"access_audit\".\"revision_before\" >= 0 AND \"turnstile\".\"access_audit\".\"revision_after\"::bigint = \"turnstile\".\"access_audit\".\"revision_before\"::bigint + 1"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.access_command_receipt": {
+      "name": "access_command_receipt",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operation": {
+          "name": "operation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "digest": {
+          "name": "digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_id": {
+          "name": "subject_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope_parent_id": {
+          "name": "scope_parent_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "organization_revision_after": {
+          "name": "organization_revision_after",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "access_revision_after": {
+          "name": "access_revision_after",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp() + interval '24 hours'"
+        }
+      },
+      "indexes": {
+        "access_receipt_expiry_idx": {
+          "name": "access_receipt_expiry_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "access_command_receipt_tenant_id_installation_tenant_id_fk": {
+          "name": "access_command_receipt_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "access_command_receipt",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "access_command_receipt_tenant_id_actor_id_key_pk": {
+          "name": "access_command_receipt_tenant_id_actor_id_key_pk",
+          "columns": ["tenant_id", "actor_id", "key"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"access_command_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"access_command_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "access_receipt_actor": {
+          "name": "access_receipt_actor",
+          "value": "\"turnstile\".\"access_command_receipt\".\"actor_id\" ~ '^[A-Za-z0-9_-]{1,200}$'"
+        },
+        "access_receipt_digest": {
+          "name": "access_receipt_digest",
+          "value": "\"turnstile\".\"access_command_receipt\".\"digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "access_receipt_operation": {
+          "name": "access_receipt_operation",
+          "value": "\"turnstile\".\"access_command_receipt\".\"operation\" IN ('legacy.replace','legacy.retire','administrator.bootstrap','administrator.handover','member.assignments','member.suspend','member.reactivate','role.create','role.patch','role.delete','invitation.issue','invitation.resend','invitation.cancel','invitation.reapprove','unit.create','unit.rename','unit.delete','unit.move')"
+        },
+        "access_receipt_structure_revisions": {
+          "name": "access_receipt_structure_revisions",
+          "value": "(\"turnstile\".\"access_command_receipt\".\"organization_revision_after\" IS NULL AND \"turnstile\".\"access_command_receipt\".\"access_revision_after\" IS NULL) OR (\"turnstile\".\"access_command_receipt\".\"operation\" IN ('unit.create','unit.rename','unit.delete','unit.move') AND \"turnstile\".\"access_command_receipt\".\"organization_revision_after\" IS NOT NULL AND \"turnstile\".\"access_command_receipt\".\"access_revision_after\" IS NOT NULL AND \"turnstile\".\"access_command_receipt\".\"organization_revision_after\" >= 0 AND \"turnstile\".\"access_command_receipt\".\"access_revision_after\" >= 0)"
+        },
+        "access_receipt_window": {
+          "name": "access_receipt_window",
+          "value": "\"turnstile\".\"access_command_receipt\".\"expires_at\" = \"turnstile\".\"access_command_receipt\".\"created_at\" + interval '24 hours'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.access_context": {
+      "name": "access_context",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "model_version": {
+          "name": "model_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "public_writes_enabled": {
+          "name": "public_writes_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "revision": {
+          "name": "revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "initialized_by": {
+          "name": "initialized_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "initialized_at": {
+          "name": "initialized_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "access_context_tenant_id_installation_tenant_id_fk": {
+          "name": "access_context_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "access_context",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"access_context\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"access_context\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "access_model_version": {
+          "name": "access_model_version",
+          "value": "\"turnstile\".\"access_context\".\"model_version\" = 1 AND NOT \"turnstile\".\"access_context\".\"public_writes_enabled\""
+        },
+        "access_revision": {
+          "name": "access_revision",
+          "value": "\"turnstile\".\"access_context\".\"revision\" BETWEEN 0 AND 2147483647"
+        },
+        "access_initializer": {
+          "name": "access_initializer",
+          "value": "\"turnstile\".\"access_context\".\"initialized_by\" ~ '^[A-Za-z0-9_-]{1,200}$'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.access_impact_receipt": {
+      "name": "access_impact_receipt",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "command_digest": {
+          "name": "command_digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_fingerprint": {
+          "name": "actor_fingerprint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "access_revision": {
+          "name": "access_revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organization_revision": {
+          "name": "organization_revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp() + interval '5 minutes'"
+        }
+      },
+      "indexes": {
+        "access_impact_token_idx": {
+          "name": "access_impact_token_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "token_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "access_impact_expiry_idx": {
+          "name": "access_impact_expiry_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "access_impact_receipt_tenant_id_installation_tenant_id_fk": {
+          "name": "access_impact_receipt_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "access_impact_receipt",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "access_impact_receipt_tenant_id_id_pk": {
+          "name": "access_impact_receipt_tenant_id_id_pk",
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"access_impact_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"access_impact_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "access_impact_actor": {
+          "name": "access_impact_actor",
+          "value": "\"turnstile\".\"access_impact_receipt\".\"actor_id\" ~ '^[A-Za-z0-9_-]{1,200}$'"
+        },
+        "access_impact_digests": {
+          "name": "access_impact_digests",
+          "value": "\"turnstile\".\"access_impact_receipt\".\"token_hash\" ~ '^[0-9a-f]{64}$' AND \"turnstile\".\"access_impact_receipt\".\"command_digest\" ~ '^[0-9a-f]{64}$' AND \"turnstile\".\"access_impact_receipt\".\"actor_fingerprint\" ~ '^[0-9a-f]{64}$'"
+        },
+        "access_impact_revisions": {
+          "name": "access_impact_revisions",
+          "value": "\"turnstile\".\"access_impact_receipt\".\"access_revision\" >= 0 AND (\"turnstile\".\"access_impact_receipt\".\"organization_revision\" IS NULL OR \"turnstile\".\"access_impact_receipt\".\"organization_revision\" >= 0)"
+        },
+        "access_impact_window": {
+          "name": "access_impact_window",
+          "value": "\"turnstile\".\"access_impact_receipt\".\"expires_at\" = \"turnstile\".\"access_impact_receipt\".\"created_at\" + interval '5 minutes'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.access_legacy_source": {
+      "name": "access_legacy_source",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "member_id": {
+          "name": "member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "permissions": {
+          "name": "permissions",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "retired": {
+          "name": "retired",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "imported_at": {
+          "name": "imported_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        }
+      },
+      "indexes": {
+        "access_legacy_source_id_idx": {
+          "name": "access_legacy_source_id_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "access_legacy_source_tenant_id_installation_tenant_id_fk": {
+          "name": "access_legacy_source_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "access_legacy_source",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "access_legacy_source_tenant_id_member_id_access_member_tenant_id_id_fk": {
+          "name": "access_legacy_source_tenant_id_member_id_access_member_tenant_id_id_fk",
+          "tableFrom": "access_legacy_source",
+          "tableTo": "access_member",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "member_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "access_legacy_source_tenant_id_member_id_pk": {
+          "name": "access_legacy_source_tenant_id_member_id_pk",
+          "columns": ["tenant_id", "member_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"access_legacy_source\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"access_legacy_source\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "access_legacy_version": {
+          "name": "access_legacy_version",
+          "value": "\"turnstile\".\"access_legacy_source\".\"version\" BETWEEN 1 AND 2147483647"
+        },
+        "access_legacy_permissions": {
+          "name": "access_legacy_permissions",
+          "value": "cardinality(\"turnstile\".\"access_legacy_source\".\"permissions\") <= 3 AND array_position(\"turnstile\".\"access_legacy_source\".\"permissions\",NULL) IS NULL AND \"turnstile\".\"access_legacy_source\".\"permissions\" <@ ARRAY['turnstile:access','turnstile:dms:capabilities:read','turnstile:configuration:manage']::text[]"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.access_member": {
+      "name": "access_member",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "access_member_subject_idx": {
+          "name": "access_member_subject_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "access_member_tenant_id_installation_tenant_id_fk": {
+          "name": "access_member_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "access_member",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "access_member_tenant_id_id_pk": {
+          "name": "access_member_tenant_id_id_pk",
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"access_member\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"access_member\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "access_member_subject": {
+          "name": "access_member_subject",
+          "value": "\"turnstile\".\"access_member\".\"user_id\" ~ '^[A-Za-z0-9_-]{1,200}$'"
+        },
+        "access_member_version": {
+          "name": "access_member_version",
+          "value": "\"turnstile\".\"access_member\".\"version\" BETWEEN 1 AND 2147483647"
+        },
+        "access_member_status": {
+          "name": "access_member_status",
+          "value": "\"turnstile\".\"access_member\".\"status\" IN ('active','suspended')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.access_role": {
+      "name": "access_role",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "system_key": {
+          "name": "system_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name_key": {
+          "name": "name_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "permission_version": {
+          "name": "permission_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "access_role_name_idx": {
+          "name": "access_role_name_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "\"name_key\" COLLATE \"C\"",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "access_role_system_idx": {
+          "name": "access_role_system_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "system_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "access_role_tenant_id_installation_tenant_id_fk": {
+          "name": "access_role_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "access_role",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "access_role_tenant_id_id_pk": {
+          "name": "access_role_tenant_id_id_pk",
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"access_role\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"access_role\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "access_role_version": {
+          "name": "access_role_version",
+          "value": "\"turnstile\".\"access_role\".\"version\" BETWEEN 1 AND 2147483647 AND \"turnstile\".\"access_role\".\"permission_version\" BETWEEN 1 AND \"turnstile\".\"access_role\".\"version\""
+        },
+        "access_role_system": {
+          "name": "access_role_system",
+          "value": "\"turnstile\".\"access_role\".\"system_key\" IS NULL OR \"turnstile\".\"access_role\".\"system_key\" IN ('workspace_administrator','configuration_manager','unit_manager','member')"
+        },
+        "access_role_name": {
+          "name": "access_role_name",
+          "value": "char_length(\"turnstile\".\"access_role\".\"name\") BETWEEN 1 AND 80 AND char_length(\"turnstile\".\"access_role\".\"name_key\") BETWEEN 1 AND 160"
+        },
+        "access_role_description": {
+          "name": "access_role_description",
+          "value": "\"turnstile\".\"access_role\".\"description\" IS NULL OR char_length(\"turnstile\".\"access_role\".\"description\") BETWEEN 1 AND 500"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.access_role_permission": {
+      "name": "access_role_permission",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role_id": {
+          "name": "role_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "permission": {
+          "name": "permission",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "access_role_permission_tenant_id_installation_tenant_id_fk": {
+          "name": "access_role_permission_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "access_role_permission",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "access_role_permission_tenant_id_role_id_access_role_tenant_id_id_fk": {
+          "name": "access_role_permission_tenant_id_role_id_access_role_tenant_id_id_fk",
+          "tableFrom": "access_role_permission",
+          "tableTo": "access_role",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "role_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "access_role_permission_tenant_id_role_id_permission_pk": {
+          "name": "access_role_permission_tenant_id_role_id_permission_pk",
+          "columns": ["tenant_id", "role_id", "permission"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"access_role_permission\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"access_role_permission\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "access_permission_catalog": {
+          "name": "access_permission_catalog",
+          "value": "\"turnstile\".\"access_role_permission\".\"permission\" IN ('turnstile:access','turnstile:dms:capabilities:read','turnstile:configuration:manage','turnstile:people:manage','turnstile:roles:manage','turnstile:units:read','turnstile:units:manage')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.access_scope_anchor": {
+      "name": "access_scope_anchor",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assignment_id": {
+          "name": "assignment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit_id": {
+          "name": "unit_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "access_scope_unit_idx": {
+          "name": "access_scope_unit_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "unit_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "access_scope_anchor_tenant_id_installation_tenant_id_fk": {
+          "name": "access_scope_anchor_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "access_scope_anchor",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "access_scope_anchor_tenant_id_assignment_id_access_assignment_tenant_id_id_fk": {
+          "name": "access_scope_anchor_tenant_id_assignment_id_access_assignment_tenant_id_id_fk",
+          "tableFrom": "access_scope_anchor",
+          "tableTo": "access_assignment",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "assignment_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "access_scope_anchor_tenant_id_unit_id_organization_unit_tenant_id_id_fk": {
+          "name": "access_scope_anchor_tenant_id_unit_id_organization_unit_tenant_id_id_fk",
+          "tableFrom": "access_scope_anchor",
+          "tableTo": "organization_unit",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "unit_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "access_scope_anchor_tenant_id_assignment_id_unit_id_pk": {
+          "name": "access_scope_anchor_tenant_id_assignment_id_unit_id_pk",
+          "columns": ["tenant_id", "assignment_id", "unit_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"access_scope_anchor\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"turnstile\".\"access_scope_anchor\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "turnstile.invitation": {
+      "name": "invitation",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "generation": {
+          "name": "generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "approver_id": {
+          "name": "approver_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "approval_id": {
+          "name": "approval_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assignments": {
+          "name": "assignments",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recovery_epoch": {
+          "name": "recovery_epoch",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        },
+        "invalidated_at": {
+          "name": "invalidated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancelled_at": {
+          "name": "cancelled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accepted_at": {
+          "name": "accepted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accepted_user_id": {
+          "name": "accepted_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "invitation_actionable_email_idx": {
+          "name": "invitation_actionable_email_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"turnstile\".\"invitation\".\"state\" IN ('pending','needs_reapproval')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "invitation_expiry_idx": {
+          "name": "invitation_expiry_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "invitation_tenant_id_installation_tenant_id_fk": {
+          "name": "invitation_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "invitation",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "invitation_tenant_id_id_pk": {
+          "name": "invitation_tenant_id_id_pk",
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "installation_isolation": {
+          "name": "installation_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"invitation\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "\"turnstile\".\"invitation\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "invitation_state": {
+          "name": "invitation_state",
+          "value": "\"turnstile\".\"invitation\".\"state\" IN ('pending','needs_reapproval','accepted','cancelled','expired')"
+        },
+        "invitation_versions": {
+          "name": "invitation_versions",
+          "value": "\"turnstile\".\"invitation\".\"version\" BETWEEN 1 AND 2147483647 AND \"turnstile\".\"invitation\".\"generation\" BETWEEN 1 AND 2147483647"
+        },
+        "invitation_email": {
+          "name": "invitation_email",
+          "value": "\"turnstile\".\"invitation\".\"email\"=lower(\"turnstile\".\"invitation\".\"email\") AND length(\"turnstile\".\"invitation\".\"email\") BETWEEN 3 AND 254"
+        },
+        "invitation_approval": {
+          "name": "invitation_approval",
+          "value": "(\"turnstile\".\"invitation\".\"state\" IN ('pending','accepted'))=(\"turnstile\".\"invitation\".\"approval_id\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.invitation_acceptance": {
+      "name": "invitation_acceptance",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invitation_id": {
+          "name": "invitation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "generation": {
+          "name": "generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "member_id": {
+          "name": "member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()+interval '7 days'"
+        }
+      },
+      "indexes": {
+        "invitation_acceptance_retention_idx": {
+          "name": "invitation_acceptance_retention_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "invitation_acceptance_tenant_id_installation_tenant_id_fk": {
+          "name": "invitation_acceptance_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "invitation_acceptance",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "invitation_acceptance_tenant_id_invitation_id_invitation_tenant_id_id_fk": {
+          "name": "invitation_acceptance_tenant_id_invitation_id_invitation_tenant_id_id_fk",
+          "tableFrom": "invitation_acceptance",
+          "tableTo": "invitation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "invitation_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "invitation_acceptance_tenant_id_invitation_id_pk": {
+          "name": "invitation_acceptance_tenant_id_invitation_id_pk",
+          "columns": ["tenant_id", "invitation_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "installation_isolation": {
+          "name": "installation_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"invitation_acceptance\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "\"turnstile\".\"invitation_acceptance\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "invitation_acceptance_subject": {
+          "name": "invitation_acceptance_subject",
+          "value": "\"turnstile\".\"invitation_acceptance\".\"user_id\" ~ '^[A-Za-z0-9_-]{1,200}$' AND \"turnstile\".\"invitation_acceptance\".\"generation\">0"
+        },
+        "invitation_acceptance_window": {
+          "name": "invitation_acceptance_window",
+          "value": "\"turnstile\".\"invitation_acceptance\".\"expires_at\"=\"turnstile\".\"invitation_acceptance\".\"created_at\"+interval '7 days'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.invitation_audit": {
+      "name": "invitation_audit",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invitation_id": {
+          "name": "invitation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "generation": {
+          "name": "generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_kind": {
+          "name": "actor_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        }
+      },
+      "indexes": {
+        "invitation_audit_retention_idx": {
+          "name": "invitation_audit_retention_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "invitation_audit_tenant_id_installation_tenant_id_fk": {
+          "name": "invitation_audit_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "invitation_audit",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "invitation_audit_tenant_id_id_pk": {
+          "name": "invitation_audit_tenant_id_id_pk",
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "installation_isolation": {
+          "name": "installation_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"invitation_audit\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "\"turnstile\".\"invitation_audit\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "invitation_audit_actions": {
+          "name": "invitation_audit_actions",
+          "value": "\"turnstile\".\"invitation_audit\".\"action\" IN ('issued','resent','reapproved','cancelled','expired','invalidated','smtp_accepted','delivery_failed','delivery_unknown','accepted','declined')"
+        },
+        "invitation_audit_actor": {
+          "name": "invitation_audit_actor",
+          "value": "\"turnstile\".\"invitation_audit\".\"actor_kind\" IN ('user','system') AND (\"turnstile\".\"invitation_audit\".\"actor_kind\"='system' OR \"turnstile\".\"invitation_audit\".\"actor_id\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.invitation_delivery": {
+      "name": "invitation_delivery",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invitation_id": {
+          "name": "invitation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "generation": {
+          "name": "generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "payload": {
+          "name": "payload",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recovery_epoch": {
+          "name": "recovery_epoch",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "next_attempt_at": {
+          "name": "next_attempt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        },
+        "lease_id": {
+          "name": "lease_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lease_expires_at": {
+          "name": "lease_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "outcome_at": {
+          "name": "outcome_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "invitation_delivery_claim_idx": {
+          "name": "invitation_delivery_claim_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "next_attempt_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "invitation_delivery_tenant_id_installation_tenant_id_fk": {
+          "name": "invitation_delivery_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "invitation_delivery",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "invitation_delivery_tenant_id_invitation_id_generation_invitation_generation_tenant_id_invitation_id_generation_fk": {
+          "name": "invitation_delivery_tenant_id_invitation_id_generation_invitation_generation_tenant_id_invitation_id_generation_fk",
+          "tableFrom": "invitation_delivery",
+          "tableTo": "invitation_generation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "invitation_id", "generation"],
+          "columnsTo": ["tenant_id", "invitation_id", "generation"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "invitation_delivery_tenant_id_invitation_id_generation_pk": {
+          "name": "invitation_delivery_tenant_id_invitation_id_generation_pk",
+          "columns": ["tenant_id", "invitation_id", "generation"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "installation_isolation": {
+          "name": "installation_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"invitation_delivery\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "\"turnstile\".\"invitation_delivery\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "invitation_delivery_state": {
+          "name": "invitation_delivery_state",
+          "value": "\"turnstile\".\"invitation_delivery\".\"state\" IN ('queued','sending','smtp_accepted','failed','unknown')"
+        },
+        "invitation_delivery_attempts": {
+          "name": "invitation_delivery_attempts",
+          "value": "\"turnstile\".\"invitation_delivery\".\"attempts\" BETWEEN 0 AND 5"
+        },
+        "invitation_delivery_attempt_state": {
+          "name": "invitation_delivery_attempt_state",
+          "value": "(\"turnstile\".\"invitation_delivery\".\"state\"<>'queued' OR \"turnstile\".\"invitation_delivery\".\"attempts\"<5) AND (\"turnstile\".\"invitation_delivery\".\"state\" NOT IN ('sending','smtp_accepted','unknown') OR \"turnstile\".\"invitation_delivery\".\"attempts\">0)"
+        },
+        "invitation_delivery_payload": {
+          "name": "invitation_delivery_payload",
+          "value": "(\"turnstile\".\"invitation_delivery\".\"state\" IN ('queued','sending'))=(\"turnstile\".\"invitation_delivery\".\"payload\" IS NOT NULL)"
+        },
+        "invitation_delivery_lease": {
+          "name": "invitation_delivery_lease",
+          "value": "\"turnstile\".\"invitation_delivery\".\"state\"<>'sending' OR (\"turnstile\".\"invitation_delivery\".\"lease_id\" IS NOT NULL AND \"turnstile\".\"invitation_delivery\".\"lease_expires_at\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.invitation_generation": {
+      "name": "invitation_generation",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invitation_id": {
+          "name": "invitation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "generation": {
+          "name": "generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "approver_id": {
+          "name": "approver_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "approval": {
+          "name": "approval",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assignments": {
+          "name": "assignments",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credential_hash": {
+          "name": "credential_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recovery_epoch": {
+          "name": "recovery_epoch",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        }
+      },
+      "indexes": {
+        "invitation_credential_idx": {
+          "name": "invitation_credential_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "credential_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "invitation_generation_tenant_id_installation_tenant_id_fk": {
+          "name": "invitation_generation_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "invitation_generation",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "invitation_generation_owner_fk": {
+          "name": "invitation_generation_owner_fk",
+          "tableFrom": "invitation_generation",
+          "tableTo": "invitation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "invitation_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "invitation_generation_tenant_id_invitation_id_generation_pk": {
+          "name": "invitation_generation_tenant_id_invitation_id_generation_pk",
+          "columns": ["tenant_id", "invitation_id", "generation"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "installation_isolation": {
+          "name": "installation_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"invitation_generation\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "\"turnstile\".\"invitation_generation\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "invitation_generation_digests": {
+          "name": "invitation_generation_digests",
+          "value": "\"turnstile\".\"invitation_generation\".\"credential_hash\" ~ '^[0-9a-f]{64}$' AND \"turnstile\".\"invitation_generation\".\"recovery_epoch\" ~ '^[0-9a-f]{64}$'"
+        },
+        "invitation_generation_lifetime": {
+          "name": "invitation_generation_lifetime",
+          "value": "\"turnstile\".\"invitation_generation\".\"expires_at\">\"turnstile\".\"invitation_generation\".\"created_at\" AND \"turnstile\".\"invitation_generation\".\"expires_at\"<=\"turnstile\".\"invitation_generation\".\"created_at\"+interval '604800 seconds'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.invitation_operation": {
+      "name": "invitation_operation",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invitation_id": {
+          "name": "invitation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "identity_operation_id": {
+          "name": "identity_operation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input": {
+          "name": "input",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "digest": {
+          "name": "digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'preparing'"
+        },
+        "committed_at": {
+          "name": "committed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()+interval '24 hours'"
+        }
+      },
+      "indexes": {
+        "invitation_identity_operation_idx": {
+          "name": "invitation_identity_operation_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "identity_operation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "invitation_operation_expiry_idx": {
+          "name": "invitation_operation_expiry_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "invitation_operation_tenant_id_installation_tenant_id_fk": {
+          "name": "invitation_operation_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "invitation_operation",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "invitation_operation_tenant_id_actor_id_key_pk": {
+          "name": "invitation_operation_tenant_id_actor_id_key_pk",
+          "columns": ["tenant_id", "actor_id", "key"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "installation_isolation": {
+          "name": "installation_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"invitation_operation\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "\"turnstile\".\"invitation_operation\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "invitation_operation_state": {
+          "name": "invitation_operation_state",
+          "value": "\"turnstile\".\"invitation_operation\".\"state\" IN ('preparing','completed')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "turnstile.invitation_rate": {
+      "name": "invitation_rate",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor": {
+          "name": "actor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "window": {
+          "name": "window",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "statement_timestamp()"
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "invitation_rate_tenant_id_installation_tenant_id_fk": {
+          "name": "invitation_rate_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "invitation_rate",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "invitation_rate_tenant_id_actor_window_pk": {
+          "name": "invitation_rate_tenant_id_actor_window_pk",
+          "columns": ["tenant_id", "actor", "window"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "installation_isolation": {
+          "name": "installation_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"invitation_rate\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "\"turnstile\".\"invitation_rate\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "turnstile.invitation_reference": {
+      "name": "invitation_reference",
+      "schema": "turnstile",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invitation_id": {
+          "name": "invitation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role_id": {
+          "name": "role_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unit_id": {
+          "name": "unit_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "invitation_reference_invitation_idx": {
+          "name": "invitation_reference_invitation_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "invitation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "invitation_reference_role_idx": {
+          "name": "invitation_reference_role_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "role_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "invitation_reference_unit_idx": {
+          "name": "invitation_reference_unit_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "unit_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "invitation_reference_tenant_id_installation_tenant_id_fk": {
+          "name": "invitation_reference_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "invitation_reference",
+          "tableTo": "installation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "invitation_reference_tenant_id_invitation_id_invitation_tenant_id_id_fk": {
+          "name": "invitation_reference_tenant_id_invitation_id_invitation_tenant_id_id_fk",
+          "tableFrom": "invitation_reference",
+          "tableTo": "invitation",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "invitation_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "invitation_reference_tenant_id_role_id_access_role_tenant_id_id_fk": {
+          "name": "invitation_reference_tenant_id_role_id_access_role_tenant_id_id_fk",
+          "tableFrom": "invitation_reference",
+          "tableTo": "access_role",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "role_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "invitation_reference_tenant_id_unit_id_organization_unit_tenant_id_id_fk": {
+          "name": "invitation_reference_tenant_id_unit_id_organization_unit_tenant_id_id_fk",
+          "tableFrom": "invitation_reference",
+          "tableTo": "organization_unit",
+          "schemaTo": "turnstile",
+          "columnsFrom": ["tenant_id", "unit_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "invitation_reference_tenant_id_id_pk": {
+          "name": "invitation_reference_tenant_id_id_pk",
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "installation_isolation": {
+          "name": "installation_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_turnstile_migrator", "thaarei_turnstile_runtime"],
+          "using": "\"turnstile\".\"invitation_reference\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "\"turnstile\".\"invitation_reference\".\"tenant_id\"=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "invitation_reference_kind": {
+          "name": "invitation_reference_kind",
+          "value": "(\"turnstile\".\"invitation_reference\".\"role_id\" IS NULL)<>(\"turnstile\".\"invitation_reference\".\"unit_id\" IS NULL)"
+        }
+      },
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "turnstile": "turnstile"
+  },
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

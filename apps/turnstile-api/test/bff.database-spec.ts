@@ -10,11 +10,12 @@ import { Pool } from 'pg';
 import { createApplication } from '../src/bootstrap.js';
 import { parseProductEnvironment } from '../src/infrastructure/auth-environment.js';
 import { withTenant } from '../src/infrastructure/database/postgres.js';
+import { scopeKey } from '../src/modules/access/access-evaluator.js';
 import type { BffState } from '../src/modules/auth/browser-auth/bff-state.js';
 import { registerProductSession } from '../src/modules/auth/browser-auth/session-plugin.js';
 import { ProductDatabaseService } from '../src/modules/auth/product-database/product-database.service.js';
 import { setUserAccess } from '../src/modules/auth/set-user-access.js';
-import { configurationOperator } from '../src/modules/organization/configuration-operator.js';
+import { resetAccessFixture } from './access-fixture.js';
 
 interface Fixture {
   ready: true;
@@ -334,7 +335,7 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
     vi.stubEnv('DMS_MACHINE_CLIENT_SECRET', fixture.machineSecret);
     await command('enroll-machine');
     app = await start();
-    await configurationOperator('initialize', { operatorId: 'bff-fixture' });
+    await resetAccessFixture(owner);
     await grant('member');
     await grant('reset');
     await grant('suspended');
@@ -367,12 +368,6 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
     }
     proxy.closeAllConnections();
     await new Promise<void>((resolve) => proxy.close(() => resolve()));
-    if (fixture)
-      await withTenant(owner, tenant, (connection) =>
-        connection.query('DELETE FROM turnstile.user_access WHERE user_id = ANY($1::text[])', [
-          Object.values(fixture.users).map((user) => user.id),
-        ]),
-      );
     await owner.end();
     vi.unstubAllEnvs();
   });
@@ -380,6 +375,7 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
   it('completes PKCE/OIDC login, regenerates its cookie and survives API restart without browser tokens', async () => {
     const signed = await login();
     expect(Object.keys(signed.session).sort()).toEqual([
+      'access',
       'csrfToken',
       'permissions',
       'session',
@@ -390,7 +386,16 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
     expect(Date.parse(signed.session.session.idleExpiresAt) - Date.now()).toBeLessThanOrEqual(
       1800000,
     );
-    expect(Date.parse(signed.session.session.expiresAt) - Date.now()).toBeLessThanOrEqual(28800000);
+    const parentResponse = await fetch(`${origin}/identity/get-session`, {
+      headers: { cookie: signed.authority },
+    });
+    expect(parentResponse.status).toBe(200);
+    const parent = (await parentResponse.json()).session;
+    // The absolute limit is anchored to the verified parent, whose clock can be
+    // within the accepted skew window relative to this process's wall clock.
+    expect(Date.parse(signed.session.session.expiresAt)).toBeLessThanOrEqual(
+      Math.min(Date.parse(parent.expiresAt), Date.parse(parent.createdAt) + 28800000),
+    );
     await app.close();
     app = await start();
     const restored = await session(signed.cookie);
@@ -827,8 +832,13 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
 
   it('regenerates the session generation and CSRF token when its local permission snapshot changes', async () => {
     const signed = await login();
+    const absoluteLimit = Date.now() + 60000;
     await edit(signed.cookie, (state) => {
-      if (state.kind === 'user') state.identity.permissions = [];
+      if (state.kind === 'user') {
+        state.identity.permissions = [];
+        state.identity.absoluteExpiresAt = absoluteLimit;
+        state.identity.idleExpiresAt = absoluteLimit;
+      }
     });
     const changed = await session(signed.cookie);
     expect(changed.statusCode).toBe(200);
@@ -836,6 +846,10 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
     expect(cookie).not.toBe('');
     expect(cookie).not.toBe(signed.cookie);
     expect(changed.json().csrfToken).not.toBe(signed.csrf);
+    const header = setCookies(changed).find((value) => value.startsWith('turnstile='));
+    const expires = header?.match(/Expires=([^;]+)/i)?.[1];
+    expect(expires).toBeDefined();
+    expect(Date.parse(expires ?? '')).toBeLessThanOrEqual(absoluteLimit);
     expect((await session(signed.cookie)).statusCode).toBe(401);
     expect((await session(cookie)).statusCode).toBe(200);
   });
@@ -1083,6 +1097,218 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
     expect(machineCalls).toBe(issued);
     expect((await session(signed.cookie)).statusCode).toBe(200);
     await grant('member');
+  });
+
+  it('admits a verified role-only member without an inventory row and suspends every retained source', async () => {
+    await grant('member');
+    const userId = fixture.users.member.id;
+    const assignmentId = randomUUID();
+    await withTenant(owner, tenant, async (client) => {
+      await client.query('SELECT turnstile.lock_access_context($1::uuid)', [tenant]);
+      await client.query(
+        'DELETE FROM turnstile.access_legacy_source WHERE tenant_id = $1 AND member_id = (SELECT id FROM turnstile.access_member WHERE tenant_id = $1 AND user_id = $2)',
+        [tenant, userId],
+      );
+      await client.query(
+        `INSERT INTO turnstile.access_assignment (tenant_id,id,member_id,role_id,scope_kind,include_children,scope_key)
+        SELECT $1,$2,m.id,r.id,'company',false,'company' FROM turnstile.access_member m CROSS JOIN turnstile.access_role r
+        WHERE m.tenant_id = $1 AND m.user_id = $3 AND r.tenant_id = $1 AND r.system_key = 'member'`,
+        [tenant, assignmentId, userId],
+      );
+      await client.query(
+        'UPDATE turnstile.access_context SET revision = revision + 1 WHERE tenant_id = $1',
+        [tenant],
+      );
+      expect(
+        (
+          await client.query(
+            'SELECT * FROM turnstile.user_access WHERE tenant_id = $1 AND user_id = $2',
+            [tenant, userId],
+          )
+        ).rowCount,
+      ).toBe(0);
+    });
+    try {
+      const signed = await login();
+      expect(signed.session.permissions).toEqual(['turnstile:access']);
+      expect(signed.session.access.grants.map((g: { sourceId: string }) => g.sourceId)).toEqual([
+        assignmentId,
+      ]);
+      expect(
+        (await app.inject({ url: '/api/organization', headers: { cookie: signed.cookie } }))
+          .statusCode,
+      ).toBe(403);
+      await grant('member', false);
+      expect((await session(signed.cookie)).json().code).toBe('PRODUCT_ACCESS_DENIED');
+    } finally {
+      await grant('member');
+      await withTenant(owner, tenant, (client) =>
+        client.query('DELETE FROM turnstile.access_assignment WHERE tenant_id = $1 AND id = $2', [
+          tenant,
+          assignmentId,
+        ]),
+      );
+    }
+  });
+
+  it('fences scope-only changes before mutation, handles concurrent old requests, and ignores unrelated access revisions', async () => {
+    await grant('member');
+    const userId = fixture.users.member.id;
+    const roleId = randomUUID();
+    const unitA = randomUUID();
+    const unitB = randomUUID();
+    let assignmentId = randomUUID();
+    async function replaceScope(unitId: string) {
+      await withTenant(owner, tenant, async (client) => {
+        await client.query('SELECT turnstile.lock_access_context($1::uuid)', [tenant]);
+        await client.query(
+          'DELETE FROM turnstile.access_assignment WHERE tenant_id = $1 AND id = $2',
+          [tenant, assignmentId],
+        );
+        assignmentId = randomUUID();
+        await client.query(
+          `INSERT INTO turnstile.access_assignment (tenant_id,id,member_id,role_id,scope_kind,include_children,scope_key)
+          SELECT $1,$2,id,$3,'units',false,$4 FROM turnstile.access_member WHERE tenant_id = $1 AND user_id = $5`,
+          [
+            tenant,
+            assignmentId,
+            roleId,
+            scopeKey({ kind: 'units', unitIds: [unitId], includeChildren: false }),
+            userId,
+          ],
+        );
+        await client.query(
+          'INSERT INTO turnstile.access_scope_anchor (tenant_id,assignment_id,unit_id) VALUES ($1,$2,$3)',
+          [tenant, assignmentId, unitId],
+        );
+        await client.query(
+          'UPDATE turnstile.access_context SET revision = revision + 1 WHERE tenant_id = $1',
+          [tenant],
+        );
+      });
+    }
+    await withTenant(owner, tenant, async (client) => {
+      await client.query('SELECT turnstile.lock_access_context($1::uuid)', [tenant]);
+      const root = (
+        await client.query(
+          'SELECT root_id FROM turnstile.organization_configuration WHERE tenant_id = $1',
+          [tenant],
+        )
+      ).rows[0].root_id;
+      expect(root).not.toBeNull();
+      for (const id of [unitA, unitB])
+        await client.query(
+          "INSERT INTO turnstile.organization_unit (tenant_id,id,type,parent_id,name,name_key) VALUES ($1,$2,'department',$3,$4,$5)",
+          [tenant, id, root, `Scoped ${id}`, `scoped ${id}`],
+        );
+      await client.query(
+        'INSERT INTO turnstile.access_role (tenant_id,id,name,name_key) VALUES ($1,$2,$3,$4)',
+        [tenant, roleId, `Scoped reader ${roleId}`, `scoped reader ${roleId}`],
+      );
+      await client.query(
+        "INSERT INTO turnstile.access_role_permission (tenant_id,role_id,permission) VALUES ($1,$2,'turnstile:access'),($1,$2,'turnstile:units:read')",
+        [tenant, roleId],
+      );
+    });
+    try {
+      await replaceScope(unitA);
+      const signed = await login();
+      await replaceScope(unitB);
+      const before = await withTenant(
+        owner,
+        tenant,
+        async (client) =>
+          (
+            await client.query(
+              'SELECT name,revision FROM turnstile.organization_configuration WHERE tenant_id = $1',
+              [tenant],
+            )
+          ).rows[0],
+      );
+      const mutate = (csrf: string, cookie = signed.cookie) =>
+        app.inject({
+          method: 'PATCH',
+          url: '/api/organization',
+          headers: { cookie, origin, 'x-csrf-token': csrf },
+          payload: { expectedRevision: before.revision, name: 'Must not commit from stale access' },
+        });
+      const forged = await mutate('wrong-token');
+      expect(forged.statusCode).toBe(403);
+      expect(forged.json().code).toBe('CSRF_REJECTED');
+      expect(cookieOf(forged)).toBe('');
+      const concurrent = await Promise.all([mutate(signed.csrf), mutate(signed.csrf)]);
+      expect(concurrent.every((r) => [409, 401].includes(r.statusCode))).toBe(true);
+      const transitioned = concurrent.find((r) => cookieOf(r));
+      expect(transitioned?.json().code).toBe('ACCESS_CONTEXT_CHANGED');
+      if (!transitioned) throw new Error('Expected fenced context transition');
+      const cookie = cookieOf(transitioned);
+      expect(cookie).not.toBe(signed.cookie);
+      const current = await session(cookie);
+      expect(current.statusCode).toBe(200);
+      expect(current.json().permissions).toEqual(signed.session.permissions);
+      expect(current.json().access.fingerprint).not.toBe(signed.session.access.fingerprint);
+      expect(current.json().csrfToken).not.toBe(signed.csrf);
+      expect((await mutate(signed.csrf, cookie)).json().code).toBe('CSRF_REJECTED');
+      expect(
+        await withTenant(
+          owner,
+          tenant,
+          async (client) =>
+            (
+              await client.query(
+                'SELECT name,revision FROM turnstile.organization_configuration WHERE tenant_id = $1',
+                [tenant],
+              )
+            ).rows[0],
+        ),
+      ).toEqual(before);
+      await grant('reset', true, ['turnstile:access', 'turnstile:dms:capabilities:read']);
+      const unrelated = await session(cookie);
+      expect(unrelated.json().access.accessRevision).toBeGreaterThan(
+        current.json().access.accessRevision,
+      );
+      expect(unrelated.json().csrfToken).toBe(current.json().csrfToken);
+      expect(cookieOf(unrelated)).toBe('');
+      // A shared definition edit changes effective access without changing its assignment.
+      await withTenant(owner, tenant, async (client) => {
+        await client.query('SELECT turnstile.lock_access_context($1::uuid)', [tenant]);
+        await client.query(
+          "INSERT INTO turnstile.access_role_permission (tenant_id,role_id,permission) VALUES ($1,$2,'turnstile:units:manage')",
+          [tenant, roleId],
+        );
+        await client.query(
+          'UPDATE turnstile.access_role SET version = version + 1,permission_version = permission_version + 1 WHERE tenant_id = $1 AND id = $2',
+          [tenant, roleId],
+        );
+        await client.query(
+          'UPDATE turnstile.access_context SET revision = revision + 1 WHERE tenant_id = $1',
+          [tenant],
+        );
+      });
+      const shared = await session(cookie);
+      expect(shared.json().permissions).toContain('turnstile:units:manage');
+      expect(shared.json().csrfToken).not.toBe(current.json().csrfToken);
+      expect(cookieOf(shared)).not.toBe('');
+    } finally {
+      await withTenant(owner, tenant, async (client) => {
+        await client.query(
+          'DELETE FROM turnstile.access_assignment WHERE tenant_id = $1 AND id = $2',
+          [tenant, assignmentId],
+        );
+        await client.query(
+          'DELETE FROM turnstile.access_role_permission WHERE tenant_id = $1 AND role_id = $2',
+          [tenant, roleId],
+        );
+        await client.query('DELETE FROM turnstile.access_role WHERE tenant_id = $1 AND id = $2', [
+          tenant,
+          roleId,
+        ]);
+        await client.query(
+          'DELETE FROM turnstile.organization_unit WHERE tenant_id = $1 AND id = ANY($2::uuid[])',
+          [tenant, [unitA, unitB]],
+        );
+      });
+    }
   });
 
   it('keeps Secure host-only cookies over the internal HTTP hop and permits logout after idle expiry', async () => {

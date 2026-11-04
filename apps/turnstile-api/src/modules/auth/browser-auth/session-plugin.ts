@@ -34,8 +34,9 @@ export async function registerProductSession(
         ...policy,
         ...(current.cookie.expires ? { expires: current.cookie.expires } : {}),
       });
-    else if (loaded && request.cookies[cookieName] && !current.isPersisted())
-      reply.clearCookie(cookieName, policy);
+    // A rejected incoming generation may belong to an earlier concurrent request.
+    // Clearing it here could erase a newer valid browser cookie; explicit logout
+    // owns cookie removal while passive stale requests remain unauthorized.
     // Suppress the plugin's implicit save/cookie hook, which would use transport
     // protocol at the internal HTTP listener and could overwrite fenced state.
     request.session = null as unknown as typeof request.session;

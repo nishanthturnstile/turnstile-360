@@ -1,0 +1,524 @@
+import {
+  COMPANY_ONLY_PERMISSIONS,
+  eligibleRolesResponseSchema,
+  PEOPLE_PERMISSIONS,
+  type PeoplePermission,
+  type RoleAssignmentRequestDto,
+  type RoleDefinitionDto,
+  scopedUnitDetailSchema,
+  scopedUnitsResponseSchema,
+  type UserSessionDto,
+} from '@thaarei/turnstile-contracts';
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { Notice } from '@/components/notice';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
+import { usePeopleActivity } from './activity';
+import { canReadUnits, message, PeopleError, request } from './client';
+import { permissionLabel } from './labels';
+
+export { permissionLabel } from './labels';
+export function Check({
+  children,
+  checked,
+  onChange,
+  disabled = false,
+}: {
+  children: ReactNode;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <Field orientation="horizontal" data-disabled={disabled}>
+      <FieldLabel>
+        <Checkbox checked={checked} disabled={disabled} onCheckedChange={onChange} />
+        {children}
+      </FieldLabel>
+    </Field>
+  );
+}
+export function Permissions({
+  value,
+  onChange,
+  allowed,
+}: {
+  value: PeoplePermission[];
+  onChange: (p: PeoplePermission[]) => void;
+  allowed: PeoplePermission[];
+}) {
+  return (
+    <FieldSet>
+      <FieldLegend>Permissions</FieldLegend>
+      {PEOPLE_PERMISSIONS.map((p) => (
+        <Check
+          key={p}
+          checked={value.includes(p)}
+          disabled={p === 'turnstile:access' || (!value.includes(p) && !allowed.includes(p))}
+          onChange={(yes) => onChange(yes ? [...value, p] : value.filter((x) => x !== p))}
+        >
+          {permissionLabel(p)}
+          {COMPANY_ONLY_PERMISSIONS.includes(p) ? ' · Company only' : ''}
+        </Check>
+      ))}
+      <p className="text-sm text-muted-foreground">
+        Choices reflect current company grant coverage. The server also checks every affected
+        assignment before saving.
+      </p>
+    </FieldSet>
+  );
+}
+export function usePage<T>(url: string, schema: { parse(value: unknown): T }, revision: unknown) {
+  const active = usePeopleActivity();
+  const [value, setValue] = useState<T>();
+  const [failure, setFailure] = useState<unknown>();
+  const [loading, setLoading] = useState(true);
+  const [reload, setReload] = useState(0);
+  useEffect(() => {
+    void revision;
+    void reload;
+    if (!active) {
+      setLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+
+    setFailure(undefined);
+    setLoading(true);
+    void request(url, schema, { signal: controller.signal })
+      .then((v) => {
+        if (!controller.signal.aborted) setValue(v);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) {
+          setFailure(e);
+          if (e instanceof PeopleError && [401, 403].includes(e.status)) setValue(undefined);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [url, schema, revision, reload, active]);
+  return { value, failure, loading, refresh: () => setReload((n) => n + 1) };
+}
+export function Search({ onChange }: { onChange: (search: string) => void }) {
+  const id = useId();
+  const [value, setValue] = useState('');
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onChange(value);
+      }}
+      className="flex flex-wrap items-end gap-3"
+    >
+      <Field className="max-w-sm">
+        <FieldLabel htmlFor={id}>Search</FieldLabel>
+        <Input id={id} value={value} maxLength={120} onChange={(e) => setValue(e.target.value)} />
+      </Field>
+      <Button type="submit" variant="outline">
+        Search
+      </Button>
+    </form>
+  );
+}
+export function Pager({
+  total,
+  next,
+  previous,
+  onNext,
+  onPrevious,
+}: {
+  total: number;
+  next: string | null;
+  previous: boolean;
+  onNext: () => void;
+  onPrevious: () => void;
+}) {
+  return (
+    <nav aria-label="Results pages" className="flex flex-wrap items-center gap-3">
+      <span className="text-sm text-muted-foreground">{total} results</span>
+      <Button variant="outline" disabled={!previous} onClick={onPrevious}>
+        Previous
+      </Button>
+      <Button variant="outline" disabled={!next} onClick={onNext}>
+        Next
+      </Button>
+    </nav>
+  );
+}
+type Eligible = ReturnType<typeof eligibleRolesResponseSchema.parse>['items'];
+export function AssignmentEditor({
+  value,
+  onChange,
+  session,
+}: {
+  value: RoleAssignmentRequestDto[];
+  onChange: (value: RoleAssignmentRequestDto[]) => void;
+  session: UserSessionDto;
+}) {
+  const rowIds = useRef<string[]>([]);
+  while (rowIds.current.length < value.length) rowIds.current.push(crypto.randomUUID());
+  const roles = usePage(
+    '/api/people/eligible-roles?limit=100',
+    eligibleRolesResponseSchema,
+    session.access?.fingerprint,
+  );
+  const [extra, setExtra] = useState<Eligible>([]);
+  const [cursor, setCursor] = useState<string | null | undefined>(undefined);
+  const [error, setError] = useState<unknown>();
+  useEffect(() => {
+    void session.access?.fingerprint;
+    setExtra([]);
+    setCursor(undefined);
+  }, [session.access?.fingerprint]);
+  const choices = [...(roles.value?.items ?? []), ...extra];
+  async function more() {
+    try {
+      const result = await request(
+        `/api/people/eligible-roles?limit=100&cursor=${encodeURIComponent((cursor === undefined ? roles.value?.nextCursor : cursor) ?? '')}`,
+        eligibleRolesResponseSchema,
+      );
+      setExtra((old) => [...old, ...result.items]);
+      setCursor(result.nextCursor);
+    } catch (e) {
+      setError(e);
+    }
+  }
+  const update = (index: number, part: Partial<RoleAssignmentRequestDto>) =>
+    onChange(value.map((a, i) => (i === index ? { ...a, ...part } : a)));
+  return (
+    <FieldSet>
+      <FieldLegend>Role assignments</FieldLegend>
+      {!!roles.failure && <Notice message={message(roles.failure)} />}{' '}
+      {!!error && <Notice message={message(error)} />}
+      <Button
+        type="button"
+        className="self-start"
+        variant="outline"
+        disabled={roles.loading}
+        onClick={() => {
+          setExtra([]);
+          setCursor(undefined);
+          roles.refresh();
+        }}
+      >
+        Reload eligible roles
+      </Button>
+      {value.map((a, index) => {
+        const choice = choices.find((c) => c.role.id === a.roleId);
+        return (
+          <FieldSet key={rowIds.current[index]} className="rounded-xl border p-4">
+            <FieldLegend>Assignment {index + 1}</FieldLegend>
+            <Field>
+              <FieldLabel>
+                Role
+                <NativeSelect
+                  className="max-w-full"
+                  value={a.roleId}
+                  onChange={(e) => {
+                    const c = choices.find((x) => x.role.id === e.target.value);
+                    if (c)
+                      update(index, {
+                        roleId: c.role.id,
+                        expectedRoleVersion: c.role.version,
+                        scope: c.allowedScopes.includes('company')
+                          ? { kind: 'company' }
+                          : { kind: 'units', unitIds: [], includeChildren: false },
+                      });
+                  }}
+                >
+                  <option value={a.roleId}>
+                    {choice?.role.name ?? 'Retained role (outside current grant choices)'}
+                  </option>
+                  {choices
+                    .filter((c) => c.role.id !== a.roleId)
+                    .map((c) => (
+                      <option value={c.role.id} key={c.role.id}>
+                        {c.role.name}
+                      </option>
+                    ))}
+                </NativeSelect>
+              </FieldLabel>
+            </Field>
+            {choice && (
+              <p className="text-sm">{choice.role.permissions.map(permissionLabel).join(', ')}</p>
+            )}
+            <Field>
+              <FieldLabel>
+                Scope
+                <NativeSelect
+                  className="max-w-full"
+                  value={a.scope.kind}
+                  onChange={(e) =>
+                    update(index, {
+                      scope:
+                        e.target.value === 'company'
+                          ? { kind: 'company' }
+                          : { kind: 'units', unitIds: [], includeChildren: false },
+                    })
+                  }
+                >
+                  <option
+                    value="company"
+                    disabled={!!choice && !choice.allowedScopes.includes('company')}
+                  >
+                    Whole company
+                  </option>
+                  <option
+                    value="units"
+                    disabled={!!choice && !choice.allowedScopes.includes('units')}
+                  >
+                    Selected sites / departments
+                  </option>
+                </NativeSelect>
+              </FieldLabel>
+            </Field>
+            {a.scope.kind === 'units' && (
+              <UnitPicker
+                session={session}
+                value={a.scope.unitIds}
+                onChange={(unitIds) =>
+                  update(index, {
+                    scope: {
+                      kind: 'units',
+                      unitIds,
+                      includeChildren: a.scope.kind === 'units' && a.scope.includeChildren,
+                    },
+                  })
+                }
+              />
+            )}
+            {a.scope.kind === 'units' && (
+              <Check
+                checked={a.scope.includeChildren}
+                onChange={(includeChildren) =>
+                  update(index, { scope: { ...a.scope, includeChildren } as typeof a.scope })
+                }
+              >
+                Include child units
+              </Check>
+            )}
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => {
+                rowIds.current.splice(index, 1);
+                onChange(value.filter((_, i) => i !== index));
+              }}
+            >
+              Remove assignment {index + 1}
+            </Button>
+          </FieldSet>
+        );
+      })}
+      <Button
+        type="button"
+        variant="outline"
+        disabled={!choices.length || value.length >= 32}
+        onClick={() => {
+          const c = choices[0];
+          if (c)
+            onChange([
+              ...value,
+              {
+                roleId: c.role.id,
+                expectedRoleVersion: c.role.version,
+                scope: c.allowedScopes.includes('company')
+                  ? { kind: 'company' }
+                  : { kind: 'units', unitIds: [], includeChildren: false },
+              },
+            ]);
+        }}
+      >
+        Add role assignment
+      </Button>
+      {(cursor === undefined ? roles.value?.nextCursor : cursor) && (
+        <Button type="button" variant="ghost" onClick={() => void more()}>
+          More eligible roles
+        </Button>
+      )}
+      <p className="text-sm text-muted-foreground">
+        Company-only permissions cannot use unit scope. Existing independent sources remain until
+        you explicitly remove them. Review checks the exact permissions and scope on the server.
+      </p>
+      <details>
+        <summary className="cursor-pointer">Your current grant coverage</summary>
+        {session.access?.grants.map((grant) => (
+          <div key={JSON.stringify(grant)} className="rounded-xl border p-3">
+            <p className="text-sm">{grant.permissions.map(permissionLabel).join(', ')}</p>
+            <p className="text-sm">
+              {grant.scope.kind === 'company'
+                ? 'Whole company'
+                : `${grant.scope.unitIds.length} selected units · ${grant.scope.includeChildren ? 'Includes child units' : 'Exact units only'}`}
+            </p>
+            {grant.scope.kind === 'units' && (
+              <UnitPaths ids={grant.scope.unitIds} session={session} />
+            )}
+          </div>
+        ))}
+      </details>
+    </FieldSet>
+  );
+}
+export function UnitPicker({
+  session,
+  value,
+  onChange,
+}: {
+  session: UserSessionDto;
+  value: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  if (!canReadUnits(session))
+    return (
+      <p>Unit reading permission is needed to choose units. Existing selections are retained.</p>
+    );
+  return <UnitChoices session={session} value={value} onChange={onChange} />;
+}
+function UnitChoices({
+  session,
+  value,
+  onChange,
+}: {
+  session: UserSessionDto;
+  value: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [search, setSearch] = useState('');
+  const [cursor, setCursor] = useState<string | null>(null);
+  const page = usePage(
+    `/api/structure/units?limit=100${search ? `&search=${encodeURIComponent(search)}` : ''}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`,
+    scopedUnitsResponseSchema,
+    session.access?.fingerprint,
+  );
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Search
+        onChange={(q) => {
+          setCursor(null);
+          setSearch(q);
+        }}
+      />
+      {!!page.failure && <Notice message={message(page.failure)} />}
+      <p className="text-sm">{value.length} selected</p>
+      {page.value?.units.map((u) => {
+        const labels = new Map(
+          [...(page.value?.units ?? []), ...(page.value?.ancestors ?? [])].map((x) => [
+            x.id,
+            x.name,
+          ]),
+        );
+        return (
+          <Check
+            key={u.id}
+            checked={value.includes(u.id)}
+            onChange={(yes) => onChange(yes ? [...value, u.id] : value.filter((x) => x !== u.id))}
+          >
+            {[...u.ancestorIds.map((id) => labels.get(id) ?? id), u.name].join(' / ')}
+          </Check>
+        );
+      })}
+      {page.value?.nextCursor && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setCursor(page.value?.nextCursor ?? null)}
+        >
+          More units
+        </Button>
+      )}
+      <Button variant="ghost" type="button" onClick={() => setCursor(null)}>
+        First units
+      </Button>
+    </div>
+  );
+}
+export function AssignmentSummary({
+  assignments,
+  session,
+}: {
+  session?: UserSessionDto | undefined;
+  assignments: { role: RoleDefinitionDto; scope: RoleAssignmentRequestDto['scope'] }[];
+}) {
+  return (
+    <ul className="flex flex-col gap-3">
+      {assignments.map((a) => (
+        <li key={`${a.role.id}:${JSON.stringify(a.scope)}`} className="rounded-xl border p-3">
+          <strong>{a.role.name}</strong>
+          <p className="text-sm">{a.role.permissions.map(permissionLabel).join(', ')}</p>
+          <p className="break-words text-sm text-muted-foreground">
+            {a.scope.kind === 'company'
+              ? 'Whole company'
+              : `${a.scope.unitIds.length} selected units · ${a.scope.includeChildren ? 'Includes child units' : 'Exact units only'}`}
+          </p>
+          {a.scope.kind === 'units' && <UnitPaths ids={a.scope.unitIds} session={session} />}
+        </li>
+      ))}
+    </ul>
+  );
+}
+export function FormFields({
+  name,
+  setName,
+  description,
+  setDescription,
+}: {
+  name: string;
+  setName: (s: string) => void;
+  description: string;
+  setDescription: (s: string) => void;
+}) {
+  return (
+    <FieldGroup>
+      <Field>
+        <FieldLabel htmlFor="role-name">Name</FieldLabel>
+        <Input id="role-name" required value={name} onChange={(e) => setName(e.target.value)} />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="role-description">Description</FieldLabel>
+        <Input
+          id="role-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </Field>
+    </FieldGroup>
+  );
+}
+
+function UnitPaths({ ids, session }: { ids: string[]; session: UserSessionDto | undefined }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details onToggle={(e) => setOpen(e.currentTarget.open)}>
+      <summary className="cursor-pointer">Unit paths</summary>
+      {open &&
+        (session && canReadUnits(session) ? (
+          ids.map((id) => <UnitPath key={id} id={id} session={session} />)
+        ) : (
+          <p>Unit names are unavailable within your current read access.</p>
+        ))}
+    </details>
+  );
+}
+function UnitPath({ id, session }: { id: string; session: UserSessionDto }) {
+  const page = usePage(
+    `/api/structure/units/${id}`,
+    scopedUnitDetailSchema,
+    session.access?.fingerprint,
+  );
+  return (
+    <p className="break-words text-sm">
+      {page.value
+        ? [...page.value.ancestors.map((a) => a.name), page.value.unit.name].join(' / ')
+        : page.loading
+          ? 'Loading unit path…'
+          : 'Unit unavailable within current read access'}
+    </p>
+  );
+}

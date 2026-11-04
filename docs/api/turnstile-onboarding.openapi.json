@@ -91,6 +91,18 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthError" } }
             }
           },
+          "409": {
+            "description": "Access context changed. Fetch current session/CSRF and deliberately resubmit; keep drafts.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AccessContextChanged" }
+              }
+            }
+          },
           "503": {
             "description": "Configuration unavailable without revoking a valid session. Live identity verification can independently fail with AUTH_UNAVAILABLE or REFRESH_IN_PROGRESS.",
             "headers": {
@@ -227,6 +239,18 @@
             },
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthError" } }
+            }
+          },
+          "409": {
+            "description": "Access context changed. Fetch current session/CSRF and deliberately resubmit; keep drafts.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AccessContextChanged" }
+              }
             }
           },
           "503": {
@@ -448,15 +472,19 @@
             }
           },
           "409": {
-            "description": "Current revision conflict or other safe configuration conflict. Refetch/reconcile rather than overwriting.",
+            "description": "Current configuration or access context changed. Refetch/reconcile before explicitly resubmitting.",
             "headers": {
               "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
               "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ConfigurationConflict" },
-                "example": { "code": "CONFIGURATION_CONFLICT", "reason": "revision", "revision": 2 }
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/ConfigurationConflict" },
+                    { "$ref": "#/components/schemas/AccessContextChanged" }
+                  ]
+                }
               }
             }
           },
@@ -570,6 +598,18 @@
             },
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthError" } }
+            }
+          },
+          "409": {
+            "description": "Access context changed. Fetch current session/CSRF and deliberately resubmit; keep drafts.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AccessContextChanged" }
+              }
             }
           },
           "503": {
@@ -789,15 +829,19 @@
             }
           },
           "409": {
-            "description": "Current revision conflict or other safe configuration conflict. Refetch/reconcile rather than overwriting.",
+            "description": "Current configuration or access context changed. Refetch/reconcile before explicitly resubmitting.",
             "headers": {
               "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
               "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ConfigurationConflict" },
-                "example": { "code": "CONFIGURATION_CONFLICT", "reason": "revision", "revision": 2 }
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/ConfigurationConflict" },
+                    { "$ref": "#/components/schemas/AccessContextChanged" }
+                  ]
+                }
               }
             }
           },
@@ -915,6 +959,18 @@
             },
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthError" } }
+            }
+          },
+          "409": {
+            "description": "Access context changed. Fetch current session/CSRF and deliberately resubmit; keep drafts.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AccessContextChanged" }
+              }
             }
           },
           "503": {
@@ -1082,15 +1138,19 @@
             }
           },
           "409": {
-            "description": "Current revision conflict or other safe configuration conflict. Refetch/reconcile rather than overwriting.",
+            "description": "Current configuration or access context changed. Refetch/reconcile before explicitly resubmitting.",
             "headers": {
               "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
               "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ConfigurationConflict" },
-                "example": { "code": "CONFIGURATION_CONFLICT", "reason": "revision", "revision": 2 }
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/ConfigurationConflict" },
+                    { "$ref": "#/components/schemas/AccessContextChanged" }
+                  ]
+                }
               }
             }
           },
@@ -1362,15 +1422,19 @@
             }
           },
           "409": {
-            "description": "Current revision conflict or other safe configuration conflict. Refetch/reconcile rather than overwriting.",
+            "description": "Current configuration or access context changed. Refetch/reconcile before explicitly resubmitting.",
             "headers": {
               "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
               "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ConfigurationConflict" },
-                "example": { "code": "CONFIGURATION_CONFLICT", "reason": "revision", "revision": 2 }
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/ConfigurationConflict" },
+                    { "$ref": "#/components/schemas/AccessContextChanged" }
+                  ]
+                }
               }
             }
           },
@@ -1640,15 +1704,19 @@
             }
           },
           "409": {
-            "description": "Current revision conflict or other safe configuration conflict. Refetch/reconcile rather than overwriting.",
+            "description": "Current configuration or access context changed. Refetch/reconcile before explicitly resubmitting.",
             "headers": {
               "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
               "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ConfigurationConflict" },
-                "example": { "code": "CONFIGURATION_CONFLICT", "reason": "revision", "revision": 2 }
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/ConfigurationConflict" },
+                    { "$ref": "#/components/schemas/AccessContextChanged" }
+                  ]
+                }
               }
             }
           },
@@ -1923,15 +1991,19 @@
             }
           },
           "409": {
-            "description": "Current revision conflict or other safe configuration conflict. Refetch/reconcile rather than overwriting.",
+            "description": "Current configuration or access context changed. Refetch/reconcile before explicitly resubmitting.",
             "headers": {
               "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
               "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ConfigurationConflict" },
-                "example": { "code": "CONFIGURATION_CONFLICT", "reason": "revision", "revision": 2 }
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/ConfigurationConflict" },
+                    { "$ref": "#/components/schemas/AccessContextChanged" }
+                  ]
+                }
               }
             }
           },
@@ -4777,6 +4849,17 @@
               "LOGIN_REQUIRED"
             ]
           }
+        }
+      },
+      "AccessContextChanged": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "requestId", "reason", "accessRevision"],
+        "properties": {
+          "code": { "type": "string", "const": "ACCESS_CONTEXT_CHANGED" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "reason": { "type": "string", "const": "state" },
+          "accessRevision": { "type": "integer", "minimum": 0, "maximum": 2147483647 }
         }
       }
     }

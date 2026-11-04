@@ -16,6 +16,7 @@ import { BrowserAuthService } from '../src/modules/auth/browser-auth/browser-aut
 import { setUserAccess } from '../src/modules/auth/set-user-access.js';
 import { configurationOperator } from '../src/modules/organization/configuration-operator.js';
 import { OrganizationService } from '../src/modules/organization/organization.service.js';
+import { policyFixtureAccess, resetAccessFixture } from './access-fixture.js';
 
 const ids = ['move-fixture-manager', 'move-fixture-second', 'move-fixture-member'] as const;
 const permissions: TurnstilePermission[] = ['turnstile:access', 'turnstile:configuration:manage'];
@@ -40,29 +41,19 @@ describe('transactional organization subtree moves', () => {
     organization = app.get(OrganizationService);
   });
   beforeEach(async () => {
-    await owner.query('TRUNCATE turnstile.organization_configuration CASCADE');
-    await owned(async (client) => {
-      await client.query(
-        'DELETE FROM turnstile.user_access WHERE tenant_id = $1 AND user_id = ANY($2)',
-        [tenantId, ids],
-      );
-      for (const [index, userId] of ids.entries())
-        await client.query(
-          'INSERT INTO turnstile.user_access (tenant_id,user_id,enabled,permissions) VALUES ($1,$2,true,$3)',
-          [tenantId, userId, index === 2 ? ['turnstile:access'] : permissions],
-        );
-    });
+    await resetAccessFixture(
+      owner,
+      ids.map((userId, index) => ({
+        userId,
+        permissions: index === 2 ? ['turnstile:access'] : [...permissions],
+      })),
+      true,
+    );
   });
   afterEach(() => vi.restoreAllMocks());
   afterAll(async () => {
     await app?.close();
-    await owner.query('TRUNCATE turnstile.organization_configuration CASCADE');
-    await owned((client) =>
-      client.query('DELETE FROM turnstile.user_access WHERE tenant_id = $1 AND user_id = ANY($2)', [
-        tenantId,
-        ids,
-      ]),
-    );
+    await resetAccessFixture(owner);
     await owner.end();
     await runtime.end();
   });
@@ -452,6 +443,7 @@ describe('transactional organization subtree moves', () => {
             permissions: currentPermissions,
           },
           csrf,
+          access: policyFixtureAccess(currentPermissions),
         } as unknown as NonNullable<FastifyRequest['productUser']>;
         request.productUser = current;
         return current;

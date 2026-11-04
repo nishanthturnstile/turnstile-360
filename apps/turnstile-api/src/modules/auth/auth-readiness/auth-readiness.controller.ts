@@ -1,9 +1,9 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { PublicEndpoint } from '../../../infrastructure/access-policy.js';
 import { DmsConfigurationService } from '../../../integrations/dms/dms-configuration/dms-configuration.service.js';
 import { AuthConfigurationService } from '../auth-configuration/auth-configuration.service.js';
 import { OidcService } from '../browser-auth/oidc.service.js';
 import { ProductDatabaseService } from '../product-database/product-database.service.js';
-import { PublicEndpoint } from '../user-session/access-policy.js';
 
 @Controller('health/ready/auth')
 @PublicEndpoint()

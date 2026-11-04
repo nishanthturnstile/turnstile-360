@@ -120,6 +120,14 @@ const machine = await manageOAuthClient(auth, config, operator, {
   applicationId,
   scopes: ['dms:capabilities:read'],
 });
+const identityClient = config.IDENTITY_SERVICE_CLIENT_ID
+  ? await manageOAuthClient(auth, config, operator, {
+      kind: 'identity_service',
+      action: 'issue',
+      applicationId,
+      scopes: ['identity:invitation:prepare', 'identity:subjects:read'],
+    })
+  : undefined;
 const context = {
   tenantId: config.INSTALLATION_TENANT_ID,
   deploymentId: config.DMS_RESOURCE_URL,
@@ -148,6 +156,7 @@ process.send?.({
   users,
   loginSecret: login.secret,
   machineSecret: machine.secret,
+  identitySecret: identityClient?.secret,
 });
 process.on('message', async (message) => {
   try {

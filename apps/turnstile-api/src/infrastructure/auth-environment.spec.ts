@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { productEnvironment } from '../../test/auth-environment.js';
 import {
   parseMachineEnvironment,
@@ -25,6 +26,17 @@ describe('product and machine configuration', () => {
       sameSite: 'lax',
       path: '/',
     });
+    const api = JSON.parse(
+      readFileSync(
+        new URL('../../../../docs/api/turnstile-people.openapi.json', import.meta.url),
+        'utf8',
+      ),
+    );
+    const scheme =
+      profile === 'production' ? 'InvitationContinuation' : 'LocalInvitationContinuation';
+    expect(api.components.securitySchemes[scheme].name).toBe(
+      productCookiePolicy(parseProductEnvironment(env)).cookieName,
+    );
   });
 
   it.each([

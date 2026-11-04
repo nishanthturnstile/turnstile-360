@@ -243,7 +243,8 @@ describe('machine registration and transactional enrollment', () => {
     const first = await createConsumer();
     const second = await createConsumer();
     const idempotency = randomUUID();
-    expect((await enroll(second, idempotency, first.key.key)).statusCode).toBe(403);
+    const mismatch = await enroll(second, idempotency, first.key.key);
+    expect(mismatch.statusCode, mismatch.json().code).toBe(403);
     await withTenant(owner, tenantId, (client) =>
       client.query('UPDATE dms.enrollment_key SET deployment_id=$1 WHERE id=$2', [
         'https://other-deployment.example.test',
@@ -316,7 +317,12 @@ describe('machine registration and transactional enrollment', () => {
       enroll(consumer, idempotency),
       enroll(consumer, idempotency),
     ]);
-    expect(parallel.some((response) => response.statusCode === 201)).toBe(true);
+    expect(
+      parallel.some((response) => response.statusCode === 201),
+      JSON.stringify(
+        parallel.map((response) => ({ status: response.statusCode, code: response.json().code })),
+      ),
+    ).toBe(true);
     expect(parallel.every((response) => [200, 201, 409].includes(response.statusCode))).toBe(true);
     expect((await enroll(consumer, idempotency)).statusCode).toBe(200);
     const count = await withTenant(owner, tenantId, (client) =>

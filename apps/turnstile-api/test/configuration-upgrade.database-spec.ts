@@ -10,10 +10,16 @@ import { Pool } from 'pg';
 import { bootstrapInstallation, migrateDatabase } from '../src/infrastructure/database/migrate.js';
 import { withTenant } from '../src/infrastructure/database/postgres.js';
 import { ProductPersistenceService } from '../src/infrastructure/database/product-persistence.service.js';
-import { setUserAccess } from '../src/modules/auth/set-user-access.js';
+import { accessOperator } from '../src/modules/access/access-operator.js';
+import { StructureAccessService } from '../src/modules/access/structure-access.service.js';
 import { configurationOperator } from '../src/modules/organization/configuration-operator.js';
 import { OrganizationService } from '../src/modules/organization/organization.service.js';
-import { OrganizationRepository } from '../src/modules/organization/persistence/organization.repository.js';
+import {
+  type ConfigurationRecord,
+  OrganizationRepository,
+} from '../src/modules/organization/persistence/organization.repository.js';
+import { OwningStructureInvitations } from '../src/modules/people/invitation-structure-policy.js';
+import { closeFixturePool } from './access-fixture.js';
 
 describe('owning v1 to v2 configuration migration', () => {
   // An isolated database in the harness's disposable cluster; never reset its shared fixture.
@@ -43,7 +49,31 @@ describe('owning v1 to v2 configuration migration', () => {
   function connectFixture() {
     owner = new Pool({ connectionString: environment.TURNSTILE_MIGRATION_DATABASE_URL, max: 1 });
     persistence = new ProductPersistenceService();
-    organization = new OrganizationService(new OrganizationRepository(persistence));
+    organization = new OrganizationService(
+      new OrganizationRepository(
+        persistence,
+        new StructureAccessService(new OwningStructureInvitations()),
+      ),
+    );
+  }
+
+  // Historical rows are seeded through the deployed v1 SQL contract. Current
+  // application readiness intentionally rejects this incomplete migration set.
+  async function historicalSnapshot() {
+    return withTenant(owner, environment.INSTALLATION_TENANT_ID as string, async (client) => {
+      const record = (await client.query('SELECT * FROM turnstile.organization_configuration'))
+        .rows[0] as ConfigurationRecord;
+      return new OrganizationRepository(
+        persistence,
+        new StructureAccessService(new OwningStructureInvitations()),
+      ).snapshot({
+        client,
+        tenantId: record.tenant_id,
+        record,
+        actor,
+        canManage: true,
+      });
+    });
   }
 
   async function restoreV1Archive() {
@@ -68,9 +98,9 @@ describe('owning v1 to v2 configuration migration', () => {
       { timeout: 30000, maxBuffer: 8 * 1024 * 1024 },
     );
     expect(dump.status).toBe(0);
-    await persistence.onApplicationShutdown();
-    await owner.end();
-    await administrator.query(`DROP DATABASE "${database}" WITH (FORCE)`);
+    await closeFixturePool(persistence.pool, () => persistence.onApplicationShutdown());
+    await closeFixturePool(owner);
+    await administrator.query(`DROP DATABASE "${database}"`);
     await createFixtureDatabase();
     const restored = spawnSync(
       'docker',
@@ -134,21 +164,34 @@ describe('owning v1 to v2 configuration migration', () => {
     expect(await configurationOperator('initialize', operator, environment)).toMatchObject({
       requirementVersion: 1,
     });
-    await setUserAccess(
-      {
-        ...operator,
-        userId: actor.userId,
-        enabled: true,
-        permissions: ['turnstile:access', 'turnstile:configuration:manage'],
-      },
-      environment,
-    );
+    await withTenant(owner, environment.INSTALLATION_TENANT_ID as string, async (client) => {
+      await client.query(
+        'INSERT INTO turnstile.user_access (tenant_id,user_id,enabled,permissions) VALUES ($1,$2,true,$3)',
+        [
+          environment.INSTALLATION_TENANT_ID,
+          actor.userId,
+          ['turnstile:access', 'turnstile:configuration:manage'],
+        ],
+      );
+      await client.query(
+        `INSERT INTO turnstile.configuration_audit
+        (tenant_id,id,actor_kind,actor_id,request_id,action,subject_id,subject_user_id,changed_fields,revision_before,revision_after)
+        VALUES ($1,$2,'operator',$3,$4,'access_changed',$1,$5,ARRAY['enabled','permissions'],0,0)`,
+        [
+          environment.INSTALLATION_TENANT_ID,
+          randomUUID(),
+          operator.operatorId,
+          randomUUID(),
+          actor.userId,
+        ],
+      );
+    });
   });
   afterAll(async () => {
-    await persistence?.onApplicationShutdown();
-    await owner?.end();
+    await closeFixturePool(persistence?.pool, () => persistence.onApplicationShutdown());
+    await closeFixturePool(owner);
     vi.unstubAllEnvs();
-    if (created) await administrator.query(`DROP DATABASE "${database}" WITH (FORCE)`);
+    if (created) await administrator.query(`DROP DATABASE "${database}"`);
     await administrator.end();
     if (legacyFolder) await rm(legacyFolder, { recursive: true, force: true });
   });
@@ -191,31 +234,55 @@ describe('owning v1 to v2 configuration migration', () => {
       nextStep: null,
     },
   ])('preserves $scenario through owning migration and repeat initialization', async (fixture) => {
-    let before = await organization.read(actor);
-    if (fixture.scenario !== 'empty')
-      before = await organization.save(actor, {
-        expectedRevision: before.revision,
-        name: 'Preserved organization',
-        ...(fixture.timeZone ? { timeZone: fixture.timeZone } : {}),
-      });
     let unitId: string | undefined;
-    if (fixture.unit) {
-      const created = await organization.createUnit(
-        actor,
-        {
-          expectedRevision: before.revision,
-          parentId: before.organization.rootId,
-          type: 'department',
-          name: 'Preserved operations',
-        },
-        randomUUID(),
-      );
-      before = created.configuration;
-      unitId = created.unitId;
-    }
-    if (fixture.completed)
-      before = await organization.complete(actor, { expectedRevision: before.revision });
     const tenantId = environment.INSTALLATION_TENANT_ID as string;
+    await withTenant(owner, tenantId, async (client) => {
+      const rootId = randomUUID();
+      let revision = 0;
+      const audit = (action: string, subject: string, fields: string[]) =>
+        client.query(
+          `INSERT INTO turnstile.configuration_audit
+        (tenant_id,id,actor_kind,actor_id,request_id,action,subject_id,changed_fields,revision_before,revision_after)
+        VALUES ($1,$2,'user',$3,$4,$5,$6,$7,$8,$8 + 1)`,
+          [tenantId, randomUUID(), actor.userId, randomUUID(), action, subject, fields, revision++],
+        );
+      if (fixture.scenario !== 'empty') {
+        await client.query(
+          "INSERT INTO turnstile.organization_unit (tenant_id,id,type) VALUES ($1,$2,'organization')",
+          [tenantId, rootId],
+        );
+        await client.query(
+          "UPDATE turnstile.organization_configuration SET name = 'Preserved organization',root_id = $2,time_zone = $3,revision = revision + 1 WHERE tenant_id = $1",
+          [tenantId, rootId, fixture.timeZone],
+        );
+        await audit('profile_saved', rootId, ['name', ...(fixture.timeZone ? ['timeZone'] : [])]);
+      }
+      if (fixture.unit) {
+        unitId = randomUUID();
+        await client.query(
+          "INSERT INTO turnstile.organization_unit (tenant_id,id,type,parent_id,name,name_key) VALUES ($1,$2,'department',$3,'Preserved operations','preserved operations')",
+          [tenantId, unitId, rootId],
+        );
+        await client.query(
+          'UPDATE turnstile.organization_configuration SET revision = revision + 1 WHERE tenant_id = $1',
+          [tenantId],
+        );
+        await audit('unit_created', unitId, ['name', 'type', 'parentId']);
+        await client.query(
+          'INSERT INTO turnstile.configuration_create_receipt (tenant_id,key,actor_id,fingerprint,unit_id) VALUES ($1,$2,$3,$4,$5)',
+          [tenantId, randomUUID(), actor.userId, '0'.repeat(64), unitId],
+        );
+      }
+      if (fixture.completed) {
+        await client.query(
+          'UPDATE turnstile.organization_configuration SET completed_at = statement_timestamp(),completed_by = $2,revision = revision + 1 WHERE tenant_id = $1',
+          [tenantId, actor.userId],
+        );
+        await audit('setup_completed', rootId, ['completion']);
+      }
+    });
+    const before = await historicalSnapshot();
+    expect(await persistence.ready()).toBe(false);
     const durableRows = () =>
       withTenant(owner, tenantId, async (client) => {
         const result = [];
@@ -230,9 +297,10 @@ describe('owning v1 to v2 configuration migration', () => {
       });
     const preserved = await durableRows();
     await restoreV1Archive();
-    expect(await organization.read(actor)).toEqual(before);
+    expect(await historicalSnapshot()).toEqual(before);
     expect(await durableRows()).toEqual(preserved);
     await migrateDatabase('turnstile', environment);
+    await accessOperator('initialize', operator, environment);
     const after = await organization.read(actor);
     expect(after.organization).toEqual(before.organization);
     expect(after.units).toEqual(before.units);

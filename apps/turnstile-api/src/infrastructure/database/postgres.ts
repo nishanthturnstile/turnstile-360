@@ -36,7 +36,9 @@ export async function withTenant<T>(
   pool: Pool,
   tenantId: string,
   work: (client: PoolClient) => Promise<T>,
+  deadlineAt?: number,
 ): Promise<T> {
+  if (deadlineAt !== undefined) return withTenantDeadline(pool, tenantId, work, deadlineAt);
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -49,5 +51,61 @@ export async function withTenant<T>(
     throw error;
   } finally {
     client.release();
+  }
+}
+
+async function withTenantDeadline<T>(
+  pool: Pool,
+  tenantId: string,
+  work: (client: PoolClient) => Promise<T>,
+  deadlineAt: number,
+): Promise<T> {
+  const expired = () => new Error('Database request deadline exceeded');
+  if (Date.now() >= deadlineAt) throw expired();
+  let client: PoolClient | undefined;
+  let released = false;
+  let timedOut = false;
+  const release = (destroy = false) => {
+    if (client && !released) {
+      released = true;
+      client.release(destroy);
+    }
+  };
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => {
+        timedOut = true;
+        release(true);
+        reject(expired());
+      },
+      Math.max(1, deadlineAt - Date.now()),
+    );
+    timer.unref();
+  });
+  const run = async () => {
+    client = await pool.connect();
+    if (timedOut) {
+      release(true);
+      throw expired();
+    }
+    try {
+      await client.query('BEGIN');
+      await client.query("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
+      const result = await work(client);
+      if (Date.now() >= deadlineAt) throw expired();
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      if (!released) await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      release(timedOut);
+    }
+  };
+  try {
+    return await Promise.race([run(), timeout]);
+  } finally {
+    clearTimeout(timer);
   }
 }

@@ -32,6 +32,7 @@ export function beginSignIn() {
   const safe =
     /^\/(?:[A-Za-z0-9_-]+\/?)*$/.test(path) &&
     ![
+      '/invitations/join',
       '/sign-in',
       '/forgot-password',
       '/reset-password',

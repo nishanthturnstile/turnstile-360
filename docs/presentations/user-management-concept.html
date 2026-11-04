@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Turnstile 360 people and custom roles concept</title>
+<style>
+:root{font-family:var(--font-sans,system-ui,sans-serif);color:var(--foreground,#20242a);line-height:1.5}
+*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit;color:inherit}button{cursor:pointer;min-height:42px;padding:9px 13px;border:1px solid var(--border,#d8dce2);border-radius:var(--radius,10px);background:var(--secondary,#f2f4f7);font-size:13px;font-weight:600}button:active{transform:scale(.98)}button:disabled{cursor:default;opacity:.65}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ring,#396bd8);outline-offset:3px}
+body [hidden]{display:none}h1,h2,h3,p{margin:0}h1{font-size:26px;letter-spacing:-.8px;line-height:1.2}h2{font-size:18px;letter-spacing:-.35px}h3{font-size:14px}p{font-size:13px}small,.small{font-size:12px}.muted{color:var(--muted-foreground,#656d78)}.meta{font-size:11px;margin-bottom:18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.dot{width:6px;height:6px;border-radius:50%;background:var(--chart-2,#32927b);display:inline-block}.tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--border,#d8dce2);padding-bottom:10px}.tabs button{flex:1;background:transparent;border-color:transparent}.tabs button[aria-pressed="true"]{background:var(--secondary,#f2f4f7);border-color:var(--border,#d8dce2)}.intro{margin:8px 0 20px;max-width:60ch}.panel{background:var(--card,#fff);border:1px solid var(--border,#d8dce2);padding:16px;border-radius:var(--radius,12px)}.section{margin-top:16px}.pill{display:inline-block;font-size:10px;font-weight:600;padding:3px 7px;border-radius:var(--radius,8px);background:var(--secondary,#eef1f5);color:var(--secondary-foreground,#4e5868)}.scope{color:var(--chart-2,#278273)}.eyebrow{text-transform:uppercase;font-size:10px;letter-spacing:1.3px;font-weight:650;margin-bottom:8px}.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:18px}.primary{background:var(--primary,#2859bd);color:var(--primary-foreground,#fff);border-color:transparent}.ghost{background:transparent}.push{margin-left:auto}.divider{height:1px;background:var(--border,#d8dce2);margin:16px 0}.grid{display:grid;grid-template-columns:190px minmax(0,1fr);gap:14px;align-items:start}.role-list{display:flex;flex-direction:column;gap:8px}.role-card{background:transparent;text-align:left;width:100%;font-weight:500;padding:11px}.role-card strong{display:block;font-size:12px}.role-card span{display:block;font-size:11px;margin-top:4px}.role-card.selected{border-color:var(--ring,#396bd8);background:var(--secondary,#f2f4f7)}.role-card.protected{border:1px dashed var(--border,#d8dce2);border-radius:var(--radius,10px);padding:11px}.field{display:grid;gap:6px;font-size:12px;font-weight:600;margin-top:16px}.field:first-child{margin-top:0}input[type=text],input[type=email],select{min-width:0;width:100%;padding:10px 11px;border:1px solid var(--border,#d8dce2);border-radius:var(--radius,9px);background:var(--background,#fff);font-size:13px}fieldset{padding:0;margin:18px 0 0;border:0;min-width:0}legend{font-size:12px;font-weight:600;margin-bottom:8px}.permission{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-top:1px solid var(--border,#d8dce2);font-size:12px;cursor:pointer}.permission input{accent-color:var(--primary,#2859bd);width:16px;height:16px;flex:none;margin:3px 0 0}.permission strong{font-weight:550;display:block}.permission small{display:block;margin-top:2px;font-size:11px}.summary{padding:12px;border-radius:var(--radius,9px);background:var(--secondary,#f2f4f7);margin-top:14px}.summary p{font-size:12px}.review{border-color:var(--ring,#396bd8)}.note{font-size:11px;margin-top:12px}.steps{display:grid;gap:0;margin:0;padding:0;list-style:none}.step{display:grid;grid-template-columns:32px minmax(0,1fr);gap:12px;position:relative;padding:0 0 24px}.step:last-child{padding-bottom:0}.step:not(:last-child):before{content:"";position:absolute;top:32px;bottom:0;left:15px;width:1px;background:var(--border,#d8dce2)}.number{width:32px;height:32px;border-radius:50%;background:var(--secondary,#f2f4f7);display:grid;place-items:center;font-size:12px;font-weight:650}.step p{margin-top:5px}.step .pill{margin-bottom:6px}.flow-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.model{display:grid;grid-template-columns:1fr 26px 1fr 26px 1fr;align-items:center;text-align:center;margin-top:16px}.model>div{padding:15px 7px;border-radius:var(--radius,10px);background:var(--secondary,#f2f4f7);font-size:12px}.model strong{display:block}.arrow{font-size:18px;color:var(--muted-foreground,#656d78)}.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.status{margin-top:14px;min-height:18px;font-size:12px;color:var(--chart-2,#278273)}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.footer{margin-top:18px;font-size:11px}.email{overflow-wrap:anywhere}.account-state{margin-top:14px}.inactive{color:var(--muted-foreground,#656d78)}.legend-note{border-left:2px solid var(--chart-2,#278273);padding-left:12px;margin-top:18px}
+@media(max-width:560px){h1{font-size:23px}.grid,.two{grid-template-columns:1fr}.role-list{display:grid;grid-template-columns:1fr 1fr;gap:7px}.role-card.protected{grid-column:1/-1}.tabs button{padding:8px 5px;font-size:12px}.panel{padding:16px}.model{grid-template-columns:1fr;gap:6px}.arrow{transform:rotate(90deg)}.push{margin-left:0}.row{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){button:active{transform:none}}
+</style>
+</head>
+<body>
+<div class="meta muted"><span class="dot" aria-hidden="true"></span> Interactive concept · Fictional data · Nothing is sent or saved</div>
+<nav class="tabs" aria-label="Explore the concept">
+<button type="button" data-view="journey" aria-pressed="false">1 · The journey</button>
+<button type="button" data-view="roles" aria-pressed="true">2 · Create a role</button>
+<button type="button" data-view="invite" aria-pressed="false">3 · Invite & join</button>
+</nav>
+
+<section id="journey" hidden aria-labelledby="journey-title">
+<p class="eyebrow muted">After company setup</p>
+<h1 id="journey-title">Bring your people into the workspace.</h1>
+<p class="intro muted">Define access once, invite colleagues, and let them join the organization you already configured.</p>
+<div class="panel">
+<ol class="steps">
+<li class="step"><span class="number">1</span><div><span class="pill">Administrator</span><h3>Open Settings → People & access</h3><p class="muted">Members, Invitations and Roles live together. Company setup is already complete.</p></div></li>
+<li class="step"><span class="number">2</span><div><span class="pill">Administrator</span><h3>Choose a starter role or create your own</h3><p class="muted">For example, “Operations lead”: enter the workspace and manage company configuration.</p><div class="flow-actions"><button type="button" class="ghost" data-view="roles">Try the role builder →</button></div></div></li>
+<li class="step"><span class="number">3</span><div><span class="pill">Administrator</span><h3>Invite by email and assign the role</h3><p class="muted">The invitation stays pending. You can resend it or cancel before it is accepted.</p></div></li>
+<li class="step"><span class="number">4</span><div><span class="pill">Recipient</span><h3>Verify identity, then accept</h3><p class="muted">New users establish an account; existing users sign in. The verified email must match the invitation.</p></div></li>
+<li class="step"><span class="number">5</span><div><span class="pill">Member</span><h3>Enter the existing workspace</h3><p class="muted">Available actions follow the assigned permissions. No repeat company onboarding.</p><div class="flow-actions"><button type="button" class="primary" data-view="invite">Try an invitation →</button></div></div></li>
+</ol>
+</div>
+<div class="model"><div><strong>Person</strong><span class="muted">Samira</span></div><span class="arrow" aria-hidden="true">→</span><div><strong>Custom role</strong><span class="muted">Operations lead</span></div><span class="arrow" aria-hidden="true">→</span><div><strong>Permissions</strong><span class="muted">Selected product actions</span></div></div>
+<p class="legend-note small muted">Sites and Departments describe where work happens. Roles describe what a person may do. In this release, all assigned permissions apply company-wide.</p>
+</section>
+
+<section id="roles" aria-labelledby="roles-title">
+<p class="eyebrow muted">Settings / People & access / Roles</p>
+<div class="row"><h1 id="roles-title">Roles shaped around your team.</h1><span class="pill scope">Company-wide</span></div>
+<p class="intro muted">Use a starter template or create a role with your own name and a clear set of permissions.</p>
+<div class="grid">
+<aside class="panel" aria-label="Role starters and custom roles">
+<p class="eyebrow muted">Start with</p>
+<div class="role-list" id="role-list">
+<div class="role-card protected"><strong>Workspace administrator</strong><span class="muted">Protected role · recovery access</span></div>
+<button type="button" class="role-card" data-template="configuration"><strong>Configuration manager</strong><span class="muted">Use as a template</span></button>
+<button type="button" class="role-card" data-template="member"><strong>Member</strong><span class="muted">Use as a template</span></button>
+<button type="button" class="role-card selected" id="new-role"><strong>+ Custom role</strong><span class="muted">Choose your own name</span></button>
+</div>
+<p class="note muted">Only authorized role administrators can create or change roles.</p>
+</aside>
+<div class="panel">
+<form id="role-form">
+<label class="field" for="role-name">Role name<input id="role-name" type="text" value="Operations lead" required maxlength="80" /></label>
+<p class="note muted">Choose a name your organization uses. The name itself grants no access.</p>
+<fieldset><legend>What can this role do?</legend>
+<label class="permission"><input type="checkbox" checked disabled /><span><strong>Enter the workspace</strong><small class="muted">Included in every assignable role.</small></span></label>
+<label class="permission"><input type="checkbox" id="configuration" data-permission="Manage company configuration" checked /><span><strong>Manage company configuration</strong><small class="muted">Company profile, regional settings and organization structure.</small></span></label>
+<label class="permission"><input type="checkbox" id="connection" data-permission="Check document-service connection" /><span><strong>Check document-service connection</strong><small class="muted">Read the available DMS capabilities.</small></span></label>
+<label class="permission"><input type="checkbox" id="people" data-permission="Invite and manage members" /><span><strong>Invite and manage members <span class="pill">Proposed</span></strong><small class="muted">Invitations, allowed role assignments and suspension.</small></span></label>
+<label class="permission"><input type="checkbox" id="role-admin" data-permission="Create and edit roles" /><span><strong>Create and edit roles <span class="pill">Proposed</span></strong><small class="muted">Manage role definitions within authorized grant limits.</small></span></label>
+</fieldset>
+<div class="summary"><p><strong>Scope: the whole company</strong></p><p class="muted">A role named “Plant manager” still applies company-wide. Site-specific restrictions are future scope.</p></div>
+<p class="note muted">Upload, document access and approval permissions appear only when those features are implemented.</p>
+<div class="actions"><button type="submit" class="primary">Review role →</button></div>
+</form>
+<div class="summary review" id="role-review" hidden aria-live="polite">
+<h3 id="review-title">Review role</h3><p class="muted" id="review-copy"></p>
+<div class="chips" id="review-permissions"></div>
+<div class="actions"><button type="button" class="primary" id="save-role">Create role in demo</button><button type="button" class="ghost" id="cancel-role">Keep editing</button></div>
+</div>
+<div id="saved-next" hidden class="actions"><button type="button" class="primary" data-view="invite">Invite someone with this role →</button></div>
+</div>
+</div>
+<div class="section panel"><h3>When a shared role changes</h3><p class="muted" style="margin-top:6px">“This change affects 8 members” → review the added and removed permissions → confirm. Renaming keeps assignments. Roles in use must be reassigned before deletion.</p></div>
+</section>
+
+<section id="invite" hidden aria-labelledby="invite-title">
+<p class="eyebrow muted">Settings / People & access / Invitations</p>
+<div class="row"><h1 id="invite-title">A clear path from invite to member.</h1><span class="pill scope">Example Industries</span></div>
+<p class="intro muted">Try creating a role first, or invite someone using a starter role. Every action below is a simulation.</p>
+<div class="two">
+<div class="panel">
+<p class="eyebrow muted">Administrator view</p><h2>Invite a colleague</h2>
+<form id="invite-form">
+<label class="field" for="invite-email">Email address<input id="invite-email" type="email" required value="samira@example.com" /></label>
+<label class="field" for="invite-role">Assign role<select id="invite-role"><option value="configuration">Configuration manager</option><option value="member">Member</option></select></label>
+<div class="summary"><p><strong>Access preview</strong></p><div id="invite-permissions" class="chips"></div><p class="note muted">Applies across the company.</p></div>
+<div class="actions"><button type="submit" class="primary" id="send-invite">Create demo invitation</button></div>
+</form>
+<div id="invitation-record" class="summary" hidden><div class="row"><strong class="small email" id="record-email"></strong><span class="pill" id="record-state">Pending</span></div><p class="note muted" id="record-detail">Demo delivery simulated. Access is not active yet.</p><div class="actions" id="pending-actions"><button type="button" class="ghost" id="resend">Resend</button><button type="button" class="ghost" id="cancel-invite">Cancel invite</button></div><div class="actions" id="member-actions" hidden><button type="button" class="ghost" id="suspend">Suspend access</button></div></div>
+</div>
+<div class="panel">
+<p class="eyebrow muted">Recipient view</p><h2 id="recipient-heading">Your invitation appears here</h2>
+<p class="muted section" id="recipient-copy">Create a demo invitation to see what the recipient does next.</p>
+<div id="recipient-flow" hidden>
+<label class="field" for="account-kind">Account situation<select id="account-kind"><option value="new">New account</option><option value="existing">Existing account</option></select></label>
+<p class="note muted" id="identity-copy">Set up a password and verify the invited email.</p>
+<div class="actions"><button type="button" class="ghost" id="verify">Simulate account setup & verification</button></div>
+<p class="small section email" id="verified-identity" hidden></p>
+<div class="actions"><button type="button" class="primary" id="accept" disabled>Accept invitation</button></div>
+</div>
+<div class="summary account-state" id="recipient-access" hidden><h3 id="access-title">Welcome to the workspace</h3><p class="muted" id="access-copy"></p></div>
+</div>
+</div>
+<div class="legend-note"><p><strong>Access follows permissions, not a title.</strong></p><p class="muted" style="margin-top:5px">Changing a role updates its members’ allowed actions after confirmation. Suspending a member stops their Turnstile access without deleting their identity or changing other applications.</p></div>
+</section>
+<p id="status" class="status" role="status" aria-live="polite"></p>
+<p class="footer muted">Design proposal · Custom roles and invitations are not implemented in the application yet.</p>
+
+<script>
+const el = (id) => document.getElementById(id);
+const roles = new Map([
+  ['configuration', {name:'Configuration manager', permissions:['Enter the workspace','Manage company configuration']}],
+  ['member', {name:'Member', permissions:['Enter the workspace']}],
+]);
+let roleSequence = 0;
+let draft = null;
+let invitation = null;
+let invitationSequence = 0;
+function announce(message) { el('status').textContent = message; }
+function showView(name) {
+  for (const view of ['journey','roles','invite']) el(view).hidden = view !== name;
+  document.querySelectorAll('.tabs button').forEach((button) => { button.setAttribute('aria-pressed',String(button.dataset.view === name)); });
+  announce('');
+}
+document.querySelectorAll('[data-view]').forEach((button) => { button.addEventListener('click',() => showView(button.dataset.view)); });
+function chips(container, values) {
+  container.replaceChildren();
+  for (const value of values) { const chip = document.createElement('span'); chip.className = 'pill'; chip.textContent = value; container.append(chip); }
+}
+function invalidateReview() { draft = null; el('role-review').hidden = true; el('saved-next').hidden = true; }
+el('role-form').addEventListener('input',invalidateReview);
+function useTemplate(kind) {
+  invalidateReview();
+  el('role-name').value = kind === 'new' ? 'Operations lead' : '';
+  for (const input of document.querySelectorAll('[data-permission]')) input.checked = input.id === 'configuration' && kind !== 'member';
+  document.querySelectorAll('.role-card').forEach((card) => { card.classList.toggle('selected',card.dataset.template === kind || (kind === 'new' && card.id === 'new-role')); });
+  el('role-name').focus();
+  announce(kind === 'new' ? 'Name your custom role and choose its permissions.' : 'Template copied. Give your new role a name.');
+}
+document.querySelectorAll('[data-template]').forEach((button) => { button.addEventListener('click',() => useTemplate(button.dataset.template)); });
+el('new-role').addEventListener('click',() => useTemplate('new'));
+el('role-form').addEventListener('submit',(event) => {
+  event.preventDefault();
+  const name = el('role-name').value.trim();
+  el('role-name').setCustomValidity('');
+  if (!name || name.toLowerCase() === 'workspace administrator' || [...roles.values()].some((role) => role.name.toLowerCase() === name.toLowerCase())) {
+    el('role-name').setCustomValidity('Use a unique role name. Workspace administrator is protected.');
+    el('role-name').reportValidity();
+    return;
+  }
+  const permissions = ['Enter the workspace',...[...document.querySelectorAll('[data-permission]:checked')].map((input) => input.dataset.permission)];
+  draft = { name, permissions };
+  el('review-title').textContent = `Create “${name}”?`;
+  el('review-copy').textContent = 'New role · 0 members affected · Company-wide. This role will be available when inviting or assigning people.';
+  chips(el('review-permissions'),permissions);
+  el('role-review').hidden = false;
+  el('save-role').focus();
+});
+el('role-name').addEventListener('input',() => el('role-name').setCustomValidity(''));
+el('cancel-role').addEventListener('click',() => { invalidateReview(); el('role-name').focus(); });
+el('save-role').addEventListener('click',() => {
+  if (!draft) return;
+  const id = `custom-${++roleSequence}`;
+  roles.set(id,draft);
+  const option = document.createElement('option'); option.value = id; option.textContent = draft.name; el('invite-role').append(option); el('invite-role').value = id;
+  const card = document.createElement('div'); card.className = 'role-card';
+  const title = document.createElement('strong'); title.textContent = draft.name;
+  const detail = document.createElement('span'); detail.className = 'muted'; detail.textContent = 'Custom · Company-wide';
+  card.append(title,detail); el('role-list').append(card);
+  announce(`“${draft.name}” created in this demo. You can now select it when inviting someone.`);
+  draft = null; el('role-review').hidden = true; el('saved-next').hidden = false; updateInvitePreview(); el('saved-next').querySelector('button').focus();
+});
+function updateInvitePreview() { chips(el('invite-permissions'),roles.get(el('invite-role').value).permissions); }
+el('invite-role').addEventListener('change',updateInvitePreview);
+function updateAccountKind() {
+  const isNew = el('account-kind').value === 'new';
+  el('identity-copy').textContent = isNew ? 'Set up a password and verify the invited email.' : 'Sign in with the existing account for the invited email. Your password stays unchanged.';
+  el('verify').textContent = isNew ? 'Simulate account setup & verification' : 'Simulate verified sign-in';
+  el('verified-identity').hidden = true; el('accept').disabled = true;
+}
+el('account-kind').addEventListener('change',updateAccountKind);
+el('invite-form').addEventListener('submit',(event) => {
+  event.preventDefault();
+  invitation = { id:++invitationSequence, email:el('invite-email').value.trim(), roleId:el('invite-role').value, state:'pending', verified:false };
+  const role = roles.get(invitation.roleId);
+  el('invitation-record').hidden = false; el('record-email').textContent = invitation.email; el('record-state').textContent = 'Pending'; el('record-detail').textContent = 'Demo delivery simulated. Access is not active yet.';
+  el('pending-actions').hidden = false; el('member-actions').hidden = true;
+  el('recipient-heading').textContent = 'Join Example Industries'; el('recipient-copy').textContent = `You have been invited as ${role.name}. Scope: company-wide.`;
+  el('recipient-flow').hidden = false; el('recipient-access').hidden = true; el('verify').disabled = false;
+  updateAccountKind();
+  el('send-invite').disabled = true; el('invite-email').disabled = true; el('invite-role').disabled = true;
+  announce('Demo invitation pending. Try the recipient journey; no email was sent.');
+});
+el('verify').addEventListener('click',() => {
+  if (invitation?.state !== 'pending') return;
+  invitation.verified = true; el('verified-identity').textContent = `Verified identity: ${invitation.email}`; el('verified-identity').hidden = false; el('accept').disabled = false;
+  announce('Matching identity verified in the demo. Membership is still pending.');
+});
+el('accept').addEventListener('click',() => {
+  if (invitation?.state !== 'pending' || !invitation.verified) return;
+  invitation.state = 'active';
+  el('record-state').textContent = 'Active'; el('record-detail').textContent = `Invitation accepted. Role: ${roles.get(invitation.roleId).name}.`;
+  el('pending-actions').hidden = true; el('member-actions').hidden = false; el('suspend').textContent = 'Suspend access';
+  el('recipient-flow').hidden = true; el('recipient-access').hidden = false; el('access-title').textContent = 'Welcome to the workspace';
+  el('access-copy').textContent = `Your role is ${roles.get(invitation.roleId).name}. Company setup is already complete.`;
+  announce('Membership activated in the demo. No company onboarding is repeated.');
+});
+el('resend').addEventListener('click',() => {
+  if (invitation?.state !== 'pending') return;
+  invitation.verified = false; invitation.id = ++invitationSequence; updateAccountKind();
+  el('record-detail').textContent = 'New demo invitation link issued. The previous link is invalid.';
+  announce('Resend simulated. The new invitation still needs verified acceptance.');
+});
+el('cancel-invite').addEventListener('click',() => {
+  if (invitation?.state !== 'pending') return;
+  invitation.state = 'cancelled'; el('record-state').textContent = 'Cancelled'; el('record-detail').textContent = 'Invitation cancelled. No membership was granted.';
+  el('pending-actions').hidden = true; el('recipient-flow').hidden = true; el('recipient-copy').textContent = 'This invitation has been cancelled. Ask an administrator for a new invitation.';
+  for (const id of ['send-invite','invite-email','invite-role']) el(id).disabled = false;
+  announce('Invitation cancelled in the demo.');
+});
+el('suspend').addEventListener('click',() => {
+  if (!invitation || !['active','suspended'].includes(invitation.state)) return;
+  const suspending = invitation.state === 'active'; invitation.state = suspending ? 'suspended' : 'active';
+  el('record-state').textContent = suspending ? 'Suspended' : 'Active'; el('suspend').textContent = suspending ? 'Reactivate access' : 'Suspend access';
+  el('access-title').textContent = suspending ? 'Workspace access suspended' : 'Welcome back to the workspace';
+  el('access-copy').textContent = suspending ? 'Turnstile access is stopped. Identity and other applications are unchanged.' : 'Your existing role applies again. Company setup remains complete.';
+  el('record-detail').textContent = suspending ? 'Membership retained; Turnstile access stopped.' : 'Member reactivated with the existing role.';
+  announce(suspending ? 'Suspension simulated.' : 'Reactivation simulated.');
+});
+updateInvitePreview();
+</script>
+</body>
+</html>

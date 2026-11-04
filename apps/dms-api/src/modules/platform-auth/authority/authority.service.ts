@@ -1,5 +1,5 @@
 import { Injectable, type OnApplicationShutdown } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 import { assertRuntimeRole, createPool } from '../../../infrastructure/database/postgres.js';
 import { DmsDatabaseService } from '../../access/dms-database/dms-database.service.js';
 import { parseAuthorityEnvironment } from '../authority-configuration.js';
@@ -11,7 +11,7 @@ export class AuthorityService implements OnApplicationShutdown {
   readonly configurationError: string | undefined;
   readonly config: ReturnType<typeof parseAuthorityEnvironment> | undefined;
   readonly auth: Authority | undefined;
-  private readonly pool: Pool | undefined;
+  readonly pool: Pool | undefined;
   private readonly delivery: RecoveryDelivery | undefined;
 
   constructor(private readonly dms: DmsDatabaseService) {
@@ -24,6 +24,24 @@ export class AuthorityService implements OnApplicationShutdown {
       this.configurationError =
         error instanceof Error ? error.message : 'Invalid auth configuration';
     }
+  }
+
+  transactionAuth(client: PoolClient) {
+    if (!this.config || !this.delivery) throw new Error('Authority unavailable');
+    return createAuthority(this.config, client, this.delivery, false);
+  }
+
+  async sendInvitationVerification(email: string) {
+    const { auth, config, delivery } = this;
+    if (!auth || !config || !delivery) throw new Error('Authority unavailable');
+    return delivery.run(() =>
+      auth.api.sendVerificationEmail({
+        body: {
+          email,
+          callbackURL: `${config.AUTH_PUBLIC_ORIGIN}/sign-in`,
+        },
+      }),
+    );
   }
 
   async ready(): Promise<boolean> {

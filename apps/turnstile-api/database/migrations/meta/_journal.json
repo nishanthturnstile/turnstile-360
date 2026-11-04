@@ -78,6 +78,125 @@
       "when": 1793626485602,
       "tag": "0010_unit_move_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793707528171,
+      "tag": "0011_access_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793707567470,
+      "tag": "0012_access_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793707952732,
+      "tag": "0013_access_audit_policy",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793709861945,
+      "tag": "0014_access_consumer_locks",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1793715133669,
+      "tag": "0015_structure_commands",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793715135248,
+      "tag": "0016_structure_capabilities",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793719496722,
+      "tag": "0017_invitations",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793719497887,
+      "tag": "0018_invitation_policy",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793720502060,
+      "tag": "0019_invitation_command_fence",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793721882415,
+      "tag": "0020_invitation_delivery_bounds",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793723017858,
+      "tag": "0021_invitation_acceptance",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793723019005,
+      "tag": "0022_recipient_policy",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793725959809,
+      "tag": "0023_people_administration",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793725961137,
+      "tag": "0024_people_policy",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793765812507,
+      "tag": "0025_access_scope_bounds",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793765856396,
+      "tag": "0026_recipient_setup_boundary",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1793770437369,
+      "tag": "0027_user_management_release",
+      "breakpoints": true
     }
   ]
 }

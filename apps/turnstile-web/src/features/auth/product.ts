@@ -1,5 +1,6 @@
 import {
   type AuthErrorCode,
+  accessAwareUserSessionSchema,
   CONFIGURATION_ERROR_STATUS,
   CONFIGURATION_LIMITS,
   type ConfigurationErrorDto,
@@ -37,7 +38,8 @@ export async function productRequest<T>(
   } = {},
 ): Promise<T> {
   const { method = 'GET', csrf, body, schema } = options;
-  const unavailable = schema ? 'CONFIGURATION_UNAVAILABLE' : 'AUTH_UNAVAILABLE';
+  const unavailable =
+    schema && path !== '/api/auth/session' ? 'CONFIGURATION_UNAVAILABLE' : 'AUTH_UNAVAILABLE';
   try {
     const response = await fetch(path, {
       method,
@@ -69,6 +71,7 @@ export async function productRequest<T>(
         'PRODUCT_ACCESS_DENIED',
         'PERMISSION_DENIED',
         'CSRF_REJECTED',
+        'ACCESS_CONTEXT_CHANGED',
         'AUTH_UNAVAILABLE',
         'REFRESH_IN_PROGRESS',
         'DMS_ACCESS_DENIED',
@@ -87,11 +90,19 @@ export async function productRequest<T>(
   }
 }
 let sessionRequest: Promise<UserSessionDto> | undefined;
-export function loadSession() {
-  sessionRequest ??= productRequest<UserSessionDto>('/api/auth/session').finally(() => {
-    sessionRequest = undefined;
+function startSessionRead(after?: Promise<UserSessionDto>): Promise<UserSessionDto> {
+  const read = () => productRequest('/api/auth/session', { schema: accessAwareUserSessionSchema });
+  const request = (after ? after.catch(() => {}).then(read) : read()).finally(() => {
+    if (sessionRequest === request) sessionRequest = undefined;
   });
-  return sessionRequest;
+  sessionRequest = request;
+  return request;
+}
+export function loadSession(options: { fresh?: boolean } = {}): Promise<UserSessionDto> {
+  if (!options.fresh && sessionRequest) return sessionRequest;
+  // Publish the post-mutation barrier to ordinary readers too. Drain the prior
+  // response (including its cookies) before starting the authoritative new read.
+  return startSessionRead(sessionRequest);
 }
 export const endSession = (csrf: string) =>
   productRequest<LogoutDto>('/api/auth/logout', { method: 'POST', csrf });

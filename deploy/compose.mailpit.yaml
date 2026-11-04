@@ -39,3 +39,16 @@ services:
         source: ${MAILPIT_CA_CERT_FILE:?Set the trusted pilot SMTP CA certificate file}
         target: /run/mailpit/ca.crt
         read_only: true
+
+  turnstile-api:
+    environment:
+      TURNSTILE_SMTP_HOST: mailpit
+      TURNSTILE_SMTP_PORT: "1025"
+      NODE_EXTRA_CA_CERTS: /run/mailpit/ca.crt
+    depends_on:
+      mailpit: { condition: service_healthy }
+    volumes:
+      - type: bind
+        source: ${MAILPIT_CA_CERT_FILE:?Set the trusted pilot SMTP CA certificate file}
+        target: /run/mailpit/ca.crt
+        read_only: true

@@ -69,3 +69,41 @@ locking, durable writes and repeat-safe activation. Byte limits are exported for
 HTTP adapters, which must enforce them before parsing. Header schemas validate an explicit
 projection, not the entire transport header collection. No-store/session/CSRF boundaries
 remain backend responsibilities.
+
+
+UM-I02 adds [user-management contracts](../../architecture.md#user-management-executable-contract-ownership)
+and the generated [People/scoped access API](../../docs/api/turnstile-people.openapi.json).
+The separate seven-action feature catalog does not extend the installed flat grant writer.
+Strict command schemas validate structure/versions/normalization; resolve current roles
+and use resolved-assignment validation before granting scoped actions. Session access is
+a required field on the UM-I04 normal-session DTO and is validated by the web transport.
+Restricted invitation state is a separate projection. Authority service secrets,
+password handling and server-only policy remain outside this browser-safe package.
+
+Run `pnpm docs:user-management` to regenerate both owning API documents and
+`pnpm check:contracts` to verify schemas/examples/references and artifact drift.
+Routes identify their implementation status individually. UM-I03–04 implement canonical
+persistence and existing auth/configuration consumers; UM-I05 implements scoped structure
+reads, mutations, current command readback and confirmed move impact. Scoped writers remain
+release-gated; recipient/admin delivery is described below. See the architecture's
+scoped structure baseline for current boundaries.
+Focused contract tests cover scope-pair
+isolation, payload/role bounds, strict lifecycle/error projections and purpose separation.
+
+UM-I07 implements the owning invitation lifecycle/approval service, generation-bound
+SMTP delivery and Structure reference/invalidation adapter. The product public writers
+remain closed. Recipient/administration HTTP composition is implemented in UM-I08/I09; see
+[architecture.md](../../architecture.md) for transaction, lease, secret-retention and
+Mailpit configuration policy, and IN_PROGRESS.md for actual verification/handoff.
+
+UM-I08 installs the restricted `/api/invitations/*` recipient handlers and public invitation
+entry, with purpose-bound OIDC and explicit atomic acceptance. The optional restricted
+context `action` target permits cancel/switch after navigation even when review is unavailable.
+Browser-safe account-setup response projections keep browser imports within Turnstile contracts;
+only the owning authority accepts name/password. UM-I09 adds the frozen ordinary administration
+read/command/impact routes, separate People/Roles rights, linked identity freshness, protected
+counts and shared current-outcome receipts. Ordinary writers remain release-gated. UM-I10
+composes the independent administration UI. The catalog's additive optional organization
+revision and grantable company permissions support drafts without company configuration
+reads; the owning server still checks every mutation. Installation rollout remains UM-I11.
+Technical policy is in [architecture.md](../../architecture.md).

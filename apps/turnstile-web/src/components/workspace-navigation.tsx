@@ -5,6 +5,7 @@ import {
   SidebarLeftIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import type { UserSessionDto } from '@thaarei/turnstile-contracts';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
@@ -18,6 +19,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { canReadUnits, company } from '@/features/people/client';
 import { cn } from '@/lib/utils';
 
 export type WorkspaceDestination = {
@@ -27,9 +29,53 @@ export type WorkspaceDestination = {
   icon: typeof Home01Icon;
 };
 
-export function workspaceDestinations(path: string, canManage: boolean): WorkspaceDestination[] {
+export function workspaceDestinations(
+  path: string,
+  canManage: boolean,
+  session?: UserSessionDto,
+): WorkspaceDestination[] {
   return [
     { label: 'Home', href: '/', active: path === '/', icon: Home01Icon },
+    ...(session
+      ? [
+          ...(company(session, 'turnstile:people:manage')
+            ? [
+                {
+                  label: 'Members',
+                  href: '/people/members',
+                  active: path === '/people/members',
+                  icon: Settings01Icon,
+                },
+                {
+                  label: 'Invitations',
+                  href: '/people/invitations',
+                  active: path === '/people/invitations',
+                  icon: Settings01Icon,
+                },
+              ]
+            : []),
+          ...(company(session, 'turnstile:roles:manage')
+            ? [
+                {
+                  label: 'Roles',
+                  href: '/people/roles',
+                  active: path === '/people/roles',
+                  icon: Settings01Icon,
+                },
+              ]
+            : []),
+          ...(canReadUnits(session)
+            ? [
+                {
+                  label: 'Structure',
+                  href: '/structure',
+                  active: path === '/structure',
+                  icon: Settings01Icon,
+                },
+              ]
+            : []),
+        ]
+      : []),
     ...(canManage
       ? [
           {

@@ -62,6 +62,20 @@ are for one-off operator commands; `.env.provision` is for initial database role
 belongs in a persistent API environment. Future feature settings must be
 validated by the owning process and supplied only to that process.
 
+User-management private operators follow the [access command and cutover
+contract](../../architecture.md#user-management-release-compatibility). Run
+`pnpm --filter @thaarei/turnstile-api access:operator <operation>` with protected JSON
+stdin and the owning migration environment. `initialize` explicitly imports legacy access;
+it is separate from schema migration and is not part of application startup. UM-I04's API
+and replacement command require initialized canonical access and never fall back to flat
+grants. Public feature writers remain gated for coordinated release. Use isolated fixtures for verification; do not initialize
+the persistent installation as part of workspace checks. Operator input definitions live
+in the owning `access-operator.ts`; credentials never go in command arguments or work logs.
+`access:release` owns explicit verified administrator handover, versioned opening,
+closing and restore-epoch quarantine. Follow the [user-management release
+runbook](../runbooks/user-management-release.md); workspace checks use disposable
+fixtures, and never retire credentials or open the persistent installation.
+
 The browser uses same-origin API requests and needs no API-base environment variable.
 Any future VITE_* values are public build-time configuration. Keep machine credentials,
 enrollment keys, signing secrets, and storage credentials on trusted backends. Validate
@@ -78,7 +92,10 @@ globally by the application configuration.
 YAML/path checks and offline Better Auth CLI generation. `pnpm check:contracts`, included
 in `pnpm check`, verifies the pinned shared time-zone list and generated onboarding
 OpenAPI/examples/references against the
-executable contracts, including the existing auth permission enumeration. Regenerate with
+executable contracts, including the existing auth permission enumeration. UM-I02 also
+checks generated People/scoped-access and reusable authority-invitation OpenAPI, examples,
+route/security classification and local references; regenerate those with
+`pnpm docs:user-management`. New contract routes are not delivered handlers. Regenerate with
 `pnpm generate:turnstile-time-zones` and `pnpm docs:turnstile-onboarding` after deliberate
 contract changes; generated feature contracts do not imply implemented HTTP handlers.
 `pnpm build` builds all seven workspace projects. `pnpm test` runs shared contract/API
@@ -95,6 +112,12 @@ Focused web model tests use the pinned Node TypeScript support. The disposable H
 Playwright fixtures run through `pnpm test:browser:auth`,
 `pnpm test:browser:onboarding:structured` and `pnpm test:browser:structure`; they cover
 real owning HTTP and auth/permissions rather than a second browser-only state model.
+`pnpm test:browser:people` covers real private handover/opening, independent People
+permissions, scoped structure and recipient mail/acceptance through production entrypoints.
+`pnpm test:upgrade:user-management` exercises the owning archive/recipient release cases;
+`node scripts/test-auth-database.mjs --scoped-structure` selects its owning PostgreSQL cases.
+`pnpm test:images:user-management` binds the exact authority/API/web candidate and private
+commands. Source/isolated verification and actual target release are separate evidence.
 See [architecture.md](../../architecture.md#web-design-system) for component boundaries.
 Vitest/React Testing Library remains a possible later frontend addition when needed.
 Broaden checks when implemented behavior or a failure requires it, rather than creating

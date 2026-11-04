@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Req, Res } from '@nestjs/common';
 import { CONFIGURATION_MANAGE_PERMISSION } from '@thaarei/turnstile-contracts';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { RequirePermissions } from '../../infrastructure/access-policy.js';
 import { configurationActor } from '../../infrastructure/configuration-http.js';
 import { WorkspaceReadinessExempt } from '../../infrastructure/workspace-access.js';
-import { RequirePermissions } from '../auth/user-session/access-policy.js';
 import { OrganizationService } from './organization.service.js';
 
 @Controller('organization')

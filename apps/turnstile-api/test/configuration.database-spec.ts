@@ -14,10 +14,12 @@ import { Pool, type PoolClient } from 'pg';
 import { createApplication } from '../src/bootstrap.js';
 import { parseProductEnvironment } from '../src/infrastructure/auth-environment.js';
 import { withTenant } from '../src/infrastructure/database/postgres.js';
+import { accessCounts, readAccess } from '../src/modules/access/access-evaluator.js';
 import { BrowserAuthService } from '../src/modules/auth/browser-auth/browser-auth.service.js';
 import { setUserAccess } from '../src/modules/auth/set-user-access.js';
 import { configurationOperator } from '../src/modules/organization/configuration-operator.js';
 import { OrganizationService } from '../src/modules/organization/organization.service.js';
+import { policyFixtureAccess, resetAccessFixture } from './access-fixture.js';
 
 const ids = [
   'configuration-fixture-manager',
@@ -53,7 +55,7 @@ describe('canonical audited organization configuration', () => {
       async (client) =>
         (
           await client.query(
-            'SELECT count(*)::int AS total FROM turnstile.configuration_audit WHERE tenant_id = $1 AND ($2::text IS NULL OR action = $2)',
+            `SELECT count(*)::int AS total FROM turnstile.${action === 'legacy_replaced' ? 'access_audit' : 'configuration_audit'} WHERE tenant_id = $1 AND ($2::text IS NULL OR action = $2)`,
             [tenantId, action ?? null],
           )
         ).rows[0].total as number,
@@ -87,31 +89,21 @@ describe('canonical audited organization configuration', () => {
   beforeAll(start);
   beforeEach(async () => {
     // Disposable installation only. Do not replace production initialization with these fixture grants.
-    await owner.query('TRUNCATE turnstile.organization_configuration CASCADE');
-    await owned(async (client) => {
-      await client.query(
-        'DELETE FROM turnstile.user_access WHERE tenant_id = $1 AND user_id = ANY($2)',
-        [tenantId, ids],
-      );
-      for (const [index, userId] of ids.entries())
-        await client.query(
-          'INSERT INTO turnstile.user_access (tenant_id,user_id,enabled,permissions) VALUES ($1,$2,true,$3)',
-          [tenantId, userId, index === 2 ? ['turnstile:access'] : permissions],
-        );
-    });
+    await resetAccessFixture(
+      owner,
+      ids.map((userId, index) => ({
+        userId,
+        permissions: index === 2 ? ['turnstile:access'] : [...permissions],
+      })),
+      true,
+    );
   });
   afterEach(() => {
     vi.restoreAllMocks();
   });
   afterAll(async () => {
     await app?.close();
-    await owner.query('TRUNCATE turnstile.organization_configuration CASCADE');
-    await owned((client) =>
-      client.query('DELETE FROM turnstile.user_access WHERE tenant_id = $1 AND user_id = ANY($2)', [
-        tenantId,
-        ids,
-      ]),
-    );
+    await resetAccessFixture(owner);
     await owner.end();
     await runtime.end();
   });
@@ -843,21 +835,44 @@ describe('canonical audited organization configuration', () => {
     });
   });
 
+  it('rejects an actor context changed between its guard and the owning configuration transaction', async () => {
+    await initialize();
+    const prior = await owned((client) => readAccess(client, tenantId, ids[0]));
+    const checkedActor = { ...actor(), accessFingerprint: prior.context.fingerprint };
+    await setUserAccess({
+      ...operator,
+      userId: ids[0],
+      enabled: true,
+      permissions: ['turnstile:access'],
+    });
+    await expect(
+      organization.save(checkedActor, {
+        expectedRevision: 0,
+        name: 'Stale authority must not save',
+        timeZone: 'UTC',
+      }),
+    ).rejects.toMatchObject({
+      response: { code: 'ACCESS_CONTEXT_CHANGED', accessRevision: expect.any(Number) },
+    });
+    expect((await organization.read(actor(ids[1]))).revision).toBe(0);
+    expect(await auditCount('profile_saved')).toBe(0);
+    await expect(
+      organization.save(actor(), { expectedRevision: 0, name: 'Still denied', timeZone: 'UTC' }),
+    ).rejects.toMatchObject({ response: { code: 'PERMISSION_DENIED' } });
+  });
+
   it('requires initialized private grants, allows the first manager and preserves the last before and after activation', async () => {
     const assignment = { ...operator, userId: ids[0], enabled: true, permissions };
     await expect(setUserAccess(assignment)).rejects.toThrow('Setup initialization required');
     await initialize();
     await owned((client) =>
-      client.query('DELETE FROM turnstile.user_access WHERE tenant_id = $1 AND user_id = ANY($2)', [
-        tenantId,
-        ids,
-      ]),
+      client.query('DELETE FROM turnstile.access_legacy_source WHERE tenant_id = $1', [tenantId]),
     );
     expect((await setUserAccess(assignment)).changed).toBe(true);
     expect(
       (await setUserAccess({ ...assignment, permissions: [...permissions].reverse() })).changed,
     ).toBe(false);
-    expect(await auditCount('access_changed')).toBe(1);
+    expect(await auditCount('legacy_replaced')).toBe(1);
     for (const change of [
       { enabled: false, permissions },
       { enabled: true, permissions: ['turnstile:access'] },
@@ -892,7 +907,7 @@ describe('canonical audited organization configuration', () => {
     ).rejects.toMatchObject({ code: 'LAST_CONFIGURATION_MANAGER_REQUIRED' });
     const audit = await owned((client) =>
       client.query(
-        "SELECT actor_id,subject_user_id,changed_fields,revision_before,revision_after FROM turnstile.configuration_audit WHERE action = 'access_changed' AND tenant_id = $1",
+        "SELECT actor_id,subject_user_id,revision_before,revision_after FROM turnstile.access_audit WHERE action = 'legacy_replaced' AND tenant_id = $1",
         [tenantId],
       ),
     );
@@ -902,7 +917,7 @@ describe('canonical audited organization configuration', () => {
         (row) =>
           row.actor_id === operator.operatorId &&
           row.subject_user_id &&
-          row.revision_before === row.revision_after,
+          row.revision_before + 1 === row.revision_after,
       ),
     ).toBe(true);
     await expect(
@@ -929,21 +944,15 @@ describe('canonical audited organization configuration', () => {
         reason: expect.objectContaining({ code: 'LAST_CONFIGURATION_MANAGER_REQUIRED' }),
       }),
     ]);
-    const count = await owned((client) =>
-      client.query(
-        "SELECT count(*)::int AS total FROM turnstile.user_access WHERE tenant_id = $1 AND enabled AND permissions @> ARRAY['turnstile:access','turnstile:configuration:manage']::text[]",
-        [tenantId],
-      ),
-    );
-    expect(count.rows[0].total).toBe(1);
-    expect(await auditCount('access_changed')).toBe(1);
+    expect((await owned((client) => accessCounts(client, tenantId))).managers).toBe(1);
+    expect(await auditCount('legacy_replaced')).toBe(1);
     expect((await organization.status(actor(ids[2]))).status).toBe('incomplete');
   });
 
   it('rolls back the grant when its operator audit fails without changing configuration revision', async () => {
     await initialize();
     await owner.query(
-      "ALTER TABLE turnstile.configuration_audit ADD CONSTRAINT fixture_access_audit_failure CHECK (action <> 'access_changed') NOT VALID",
+      "ALTER TABLE turnstile.access_audit ADD CONSTRAINT fixture_access_audit_failure CHECK (action <> 'legacy_replaced') NOT VALID",
     );
     try {
       await expect(
@@ -953,7 +962,7 @@ describe('canonical audited organization configuration', () => {
       expect((await organization.read(actor())).revision).toBe(0);
     } finally {
       await owner.query(
-        'ALTER TABLE turnstile.configuration_audit DROP CONSTRAINT fixture_access_audit_failure',
+        'ALTER TABLE turnstile.access_audit DROP CONSTRAINT fixture_access_audit_failure',
       );
     }
   });
@@ -999,7 +1008,7 @@ describe('canonical audited organization configuration', () => {
     // Inspection reports enabled managers only; ordinary or disabled grants are excluded.
     await owned((client) =>
       client.query(
-        'UPDATE turnstile.user_access SET enabled = false WHERE tenant_id = $1 AND user_id = $2',
+        "UPDATE turnstile.access_member SET status = 'suspended',version = version + 1 WHERE tenant_id = $1 AND user_id = $2",
         [tenantId, ids[1]],
       ),
     );
@@ -1086,6 +1095,7 @@ describe('canonical audited organization configuration', () => {
             permissions: currentPermissions,
           },
           csrf: 'configuration-fixture-csrf',
+          access: policyFixtureAccess(currentPermissions),
         } as unknown as NonNullable<FastifyRequest['productUser']>;
         request.productUser = current;
         return current;
@@ -1201,7 +1211,7 @@ describe('canonical audited organization configuration', () => {
     // Revocation after a valid session check is still enforced by the domain transaction.
     await owned((client) =>
       client.query(
-        'UPDATE turnstile.user_access SET enabled = false WHERE tenant_id = $1 AND user_id = $2',
+        "UPDATE turnstile.access_member SET status = 'suspended',version = version + 1 WHERE tenant_id = $1 AND user_id = $2",
         [tenantId, userId],
       ),
     );

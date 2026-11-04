@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+export * from './identity-service.js';
+export * from './identity-service-routes.js';
+
 // Extend this ceiling only alongside the capability that implements the scope.
 export const DMS_MACHINE_SCOPES = ['dms:capabilities:read'] as const;
 export type DmsMachineScope = (typeof DMS_MACHINE_SCOPES)[number];
