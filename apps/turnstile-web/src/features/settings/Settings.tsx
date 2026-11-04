@@ -8,9 +8,8 @@ import { ScrollRegion } from '@/components/scroll-region';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import { OrganizationForm, SavedProfile, Structure } from '../configuration/ConfigurationEditors';
-import { resumePath, settingsPaths } from '../configuration/routes';
+import { OrganizationForm, SavedProfile } from '../configuration/ConfigurationEditors';
+import { resumePath } from '../configuration/routes';
 import { needsSession, notice } from '../configuration/shared';
 import { useConfiguration } from '../configuration/useConfiguration';
 
@@ -37,19 +36,19 @@ export function Settings({
     ? { snapshot, session, reload, onSnapshot: setSnapshot, onCheck }
     : undefined;
   return (
-    <div
-      className="settings-layout"
-      data-structure={(path === settingsPaths[2] && !!props) || undefined}
-    >
+    <div className="settings-layout">
       <aside className="settings-sidebar">
         <span className="eyebrow">SETTINGS</span>
         <nav aria-label="Settings sections" className="settings-navigation">
-          {['Setup overview', 'Organization', 'Structure', 'Workspace'].map((label, index) => (
+          {[
+            { label: 'Setup overview', href: '/settings' },
+            { label: 'General settings', href: '/settings/organization' },
+          ].map(({ label, href }) => (
             <ButtonLink
               key={label}
-              href={settingsPaths[index] ?? '/settings'}
-              variant={requestedPath === settingsPaths[index] ? 'secondary' : 'ghost'}
-              aria-current={requestedPath === settingsPaths[index] ? 'page' : undefined}
+              href={href}
+              variant={requestedPath === href ? 'secondary' : 'ghost'}
+              aria-current={requestedPath === href ? 'page' : undefined}
             >
               {label}
             </ButtonLink>
@@ -89,19 +88,9 @@ export function Settings({
               </div>
             </div>
           ) : (
-            <div
-              key={path}
-              className={cn(
-                'settings-section',
-                path === settingsPaths[2] ? 'settings-structure-section' : 'flex flex-col gap-6',
-              )}
-            >
-              {path === settingsPaths[1] ? (
-                <OrganizationForm {...props} mode="organization" />
-              ) : path === settingsPaths[2] ? (
-                <Structure {...props} manage />
-              ) : path === settingsPaths[3] ? (
-                <OrganizationForm {...props} mode="workspace" />
+            <div key={path} className="settings-section flex flex-col gap-6">
+              {path !== '/settings' ? (
+                <OrganizationForm {...props} mode="general" />
               ) : (
                 <Overview snapshot={props.snapshot} />
               )}
@@ -180,7 +169,7 @@ function Overview({ snapshot }: { snapshot: ConfigurationSnapshotDto }) {
           {snapshot.setup.requirementVersion === 1 && snapshot.units.length === 1 && (
             <p>Add sites or departments whenever you need them. Your workspace is ready to use.</p>
           )}
-          <ButtonLink variant="outline" className="self-start" href={settingsPaths[2]}>
+          <ButtonLink variant="outline" className="self-start" href="/structure">
             Manage organization structure
           </ButtonLink>
         </CardContent>

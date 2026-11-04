@@ -32,6 +32,8 @@ function run(command, args, env = process.env) {
 const name = `thaarei-auth-test-${randomBytes(6).toString('hex')}`;
 const password = randomBytes(48).toString('base64url');
 const image = parse(readFileSync('deploy/compose.local.yaml', 'utf8')).services.postgres.image;
+// The retired Settings-only structure suite now uses the canonical scoped workflow fixture.
+if (process.argv.includes('--structure-editor')) process.argv.push('--people-ui');
 const browser = process.argv.includes('--browser');
 let created = false;
 let mailpitCreated = false;

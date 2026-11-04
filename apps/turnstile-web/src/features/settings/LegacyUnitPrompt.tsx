@@ -26,7 +26,7 @@ export function LegacyUnitPrompt() {
         </CardDescription>
       </CardHeader>
       <CardFooter>
-        <ButtonLink href="/settings/organization/structure" variant="outline">
+        <ButtonLink href="/structure" variant="outline">
           Add an optional unit
         </ButtonLink>
       </CardFooter>

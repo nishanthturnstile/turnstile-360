@@ -1223,3 +1223,722 @@
     scroll-behavior: auto;
   }
 }
+
+/* People and access: one directory surface, an adjacent editor and canonical hierarchy. */
+@layer components {
+  .workspace-view:has(.access-workspace) {
+    width: min(82rem, 100%);
+  }
+  .access-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 0;
+  }
+  .access-heading .page-title {
+    margin-bottom: 0.5rem;
+  }
+  .access-heading .intro {
+    margin-bottom: 0;
+    max-width: 44rem;
+  }
+  .access-sections {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .access-workbench {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+  }
+  .access-workbench[data-editing="true"] {
+    grid-template-columns: minmax(0, 1fr) minmax(22rem, 26rem);
+  }
+  .access-surface {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--card);
+    color: var(--card-foreground);
+  }
+  .access-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .access-search {
+    flex: 1 1 14rem;
+    min-width: 0;
+    max-width: 28rem;
+  }
+  .access-filter {
+    flex: 0 1 10rem;
+  }
+  .access-toolbar > .access-search:first-child {
+    margin-right: auto;
+  }
+  .access-role-table [data-slot="table-cell"] {
+    white-space: normal;
+    vertical-align: top;
+    padding: 1.25rem 1rem;
+  }
+  .access-role-table [data-slot="table-head"] {
+    color: var(--muted-foreground);
+    background: var(--muted);
+    padding-inline: 1rem;
+    font-size: 0.75rem;
+    height: 2.5rem;
+  }
+  .access-role-table [data-slot="table-cell"]:first-child {
+    width: 40%;
+    min-width: 12rem;
+  }
+  .access-role-table [data-slot="table-cell"]:last-child {
+    width: 5rem;
+  }
+  .access-role-name {
+    display: flex;
+    align-items: start;
+    gap: 0.75rem;
+  }
+  .access-role-name > svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    flex: none;
+    margin-top: 0.125rem;
+    color: var(--primary);
+  }
+  .access-role-name h2,
+  .access-unit-label h2,
+  .access-surface-heading h2 {
+    font-weight: 600;
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+  }
+  .access-role-name p,
+  .access-surface-heading p {
+    color: var(--muted-foreground);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    margin-top: 0.25rem;
+    overflow-wrap: anywhere;
+  }
+  .access-badges,
+  .access-permission-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+  .access-badges {
+    margin-top: 0.625rem;
+  }
+  .access-permission-summary [data-slot="badge"] {
+    white-space: normal;
+    text-align: left;
+  }
+  .access-directory-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .access-directory-content > [data-slot="card"] {
+    margin: 1rem 1rem 0;
+  }
+  .access-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .access-pagination > span {
+    margin-right: auto;
+  }
+  .access-caption {
+    padding: 0.875rem 1rem;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: var(--muted-foreground);
+    border-top: 1px solid var(--border);
+    background: var(--muted);
+  }
+  .access-inspector {
+    min-width: 0;
+    scroll-margin-top: 1rem;
+    border-radius: var(--radius-xl);
+  }
+  .access-inspector:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+  .access-surface-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .access-outline {
+    padding: 1rem;
+  }
+  .access-outline ul {
+    border-left: 1px solid var(--border);
+    margin-left: 1rem;
+    padding-left: 1rem;
+  }
+  .access-branch {
+    position: relative;
+  }
+  .access-branch-toggle {
+    position: absolute;
+    left: 0;
+  }
+  .access-unit-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 0.625rem 0.875rem 2rem;
+    min-height: 4rem;
+    border-radius: var(--radius-lg);
+  }
+  .access-unit-row[data-selected="true"] {
+    background: var(--accent);
+  }
+  .access-unit-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    flex: none;
+    color: var(--muted-foreground);
+  }
+  .access-unit-label {
+    flex: 1;
+    min-width: 0;
+  }
+  .access-unit-label > span {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+  }
+  .access-unit-row > [data-slot="badge"] {
+    font-size: 0.6875rem;
+  }
+  @media (max-width: 70rem) {
+    .access-workbench[data-editing="true"] {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .access-workbench[data-editing="true"] > .access-inspector {
+      grid-row: 1;
+    }
+  }
+  @media (max-width: 40rem) {
+    .access-toolbar {
+      gap: 0.5rem;
+    }
+    .access-search {
+      flex-basis: 100%;
+      max-width: none;
+    }
+    .access-role-table [data-slot="table-cell"] {
+      padding: 1rem 0.625rem;
+    }
+    .access-role-table [data-slot="table-cell"]:first-child {
+      min-width: 10rem;
+    }
+    .access-role-table [data-slot="table-cell"]:nth-child(2),
+    .access-role-table [data-slot="table-head"]:nth-child(2) {
+      display: none;
+    }
+    .access-outline {
+      padding: 0.5rem;
+    }
+    .access-outline ul {
+      margin-left: 0.625rem;
+      padding-left: 0.375rem;
+    }
+    .access-unit-row {
+      gap: 0.375rem;
+    }
+    .access-unit-row > .access-unit-icon {
+      display: none;
+    }
+    .access-unit-row > [data-slot="badge"] {
+      max-width: 4rem;
+      white-space: normal;
+    }
+  }
+}
+
+@layer components {
+  .workspace-navigation-entry {
+    min-width: 0;
+  }
+  .workspace-navigation-entry > [data-slot="button"] {
+    width: 100%;
+  }
+  .workspace-navigation-group {
+    padding: 1rem 0.75rem 0.375rem;
+    font-size: 0.6875rem;
+    color: var(--muted-foreground);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .workspace-navigation a[aria-current="page"],
+  .access-sections a[aria-current="page"] {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: inset 0 0 0 1px var(--primary);
+  }
+  .access-structure-view {
+    overflow: auto;
+  }
+  .access-structure-view[data-view="chart"] .access-outline {
+    display: flex;
+    justify-content: center;
+    width: max-content;
+    min-width: 100%;
+  }
+  .access-structure-view[data-view="chart"] .access-branch > ul {
+    display: flex;
+    align-items: start;
+    gap: 1rem;
+    margin: 0;
+    padding: 1.25rem 0.5rem;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  .access-structure-view[data-view="chart"] .access-branch > ul[hidden] {
+    display: none;
+  }
+  .access-structure-view[data-view="chart"] .access-unit-row {
+    border: 1px solid var(--border);
+    margin: 0 auto 1.25rem;
+    width: 18rem;
+    background: var(--card);
+  }
+}
+
+/* Members: identity first, scoped role summaries, deliberate access editing. */
+@layer components {
+  .member-table [data-slot="table-cell"] {
+    padding: 1.125rem 1rem;
+    vertical-align: top;
+    white-space: normal;
+  }
+  .member-table [data-slot="table-head"] {
+    height: 2.75rem;
+    padding-inline: 1rem;
+    background: var(--muted);
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+  }
+  .member-table [data-slot="table-cell"]:first-child {
+    width: 38%;
+  }
+  .member-table [data-slot="table-cell"]:last-child {
+    width: 7rem;
+  }
+  .member-identity {
+    display: flex;
+    align-items: start;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+  .member-avatar {
+    display: grid;
+    place-items: center;
+    width: 2.375rem;
+    height: 2.375rem;
+    flex: none;
+    border-radius: 50%;
+    background: var(--secondary);
+    color: var(--primary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+  }
+  .member-identity-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 0.25rem;
+  }
+  .member-identity h2 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .member-identity p,
+  .member-meta {
+    font-size: 0.75rem;
+    line-height: 1.65;
+    color: var(--muted-foreground);
+    overflow-wrap: anywhere;
+  }
+  .member-role-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    overflow-wrap: anywhere;
+  }
+  .member-role-list strong {
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+  .member-role-list p {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+  }
+  .member-overview {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .member-overview-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 0.625rem;
+  }
+  .member-overview-heading p,
+  .member-status-section p {
+    font-size: 0.8125rem;
+    color: var(--muted-foreground);
+    line-height: 1.65;
+  }
+  .member-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .member-access-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+  .member-access-section h3,
+  .member-status-section h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .member-grant {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .member-grant-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .member-grant-title > svg {
+    width: 1rem;
+    height: 1rem;
+    color: var(--primary);
+    flex: none;
+  }
+  .member-grant h4 {
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+  .member-grant dl > div {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+  }
+  .member-grant dt {
+    color: var(--muted-foreground);
+  }
+  .member-overview summary,
+  .member-permission-preview summary,
+  .member-choice-refresh summary {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+    cursor: pointer;
+  }
+  .member-grant details[open] > summary {
+    margin-bottom: 0.75rem;
+  }
+  .member-status-section {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 0.75rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1.25rem;
+  }
+  .member-account-details {
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+  .member-account-details dl {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    font-size: 0.75rem;
+  }
+  .member-account-details dt {
+    color: var(--muted-foreground);
+  }
+  .member-account-details dd {
+    overflow-wrap: anywhere;
+  }
+  .member-account-details p {
+    font-size: 0.75rem;
+    margin-top: 1rem;
+    color: var(--muted-foreground);
+  }
+  .member-assignment-fields {
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+
+  @media (max-width: 48rem) {
+    .member-table [data-slot="table-cell"] {
+      padding: 0.875rem 0.625rem;
+    }
+    .member-table [data-slot="table-cell"]:nth-child(3),
+    .member-table [data-slot="table-head"]:nth-child(3) {
+      display: none;
+    }
+    .member-avatar {
+      display: none;
+    }
+  }
+}
+
+/* Shared access inspectors: one header, a bounded working area and persistent actions. */
+@layer components {
+  .access-inspector:focus-visible {
+    outline: none;
+  }
+  .access-inspector .access-panel {
+    max-height: max(24rem, calc(100dvh - 10rem));
+    gap: 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 20px color-mix(in oklch, var(--foreground) 4%, transparent);
+    --tw-ring-shadow: 0 0 transparent;
+  }
+  .access-panel-header {
+    position: relative;
+    flex-shrink: 0;
+    padding: 1.375rem 3.5rem 1.25rem 1.375rem;
+    border-bottom: 1px solid var(--border);
+    gap: 0.5rem;
+  }
+  .access-panel-kicker {
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.625rem;
+    font-weight: 600;
+  }
+  .access-panel-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+  .access-panel-body {
+    min-height: 0;
+    overflow: auto;
+    padding: 1.375rem;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  .access-panel-fields {
+    gap: 1.5rem;
+  }
+  .access-panel-footer {
+    display: flex;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    gap: 0.625rem;
+    padding: 1rem 1.375rem;
+    border-top: 1px solid var(--border);
+    background: var(--card);
+  }
+  .access-panel-footer > [data-slot="button"]:last-child {
+    margin-left: auto;
+  }
+  .panel-help {
+    font-size: 0.75rem;
+    line-height: 1.65;
+    color: var(--muted-foreground);
+  }
+  .permission-picker {
+    gap: 1.25rem;
+  }
+  .permission-group {
+    gap: 0.625rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  .permission-group > [data-slot="field-legend"] {
+    font-size: 0.8125rem;
+    margin-bottom: 0;
+  }
+  .permission-option {
+    padding: 0.625rem 0;
+  }
+  .permission-option [data-slot="field-label"] {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+  }
+  .permission-option [data-slot="badge"] {
+    font-size: 0.625rem;
+  }
+  .permission-option[data-checked="true"] {
+    color: var(--foreground);
+  }
+  .permission-option > .panel-help {
+    padding-left: 1.625rem;
+    margin-top: 0.375rem;
+  }
+  .assignment-empty {
+    padding: 1.25rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--muted);
+  }
+  .assignment-empty h3 {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    margin-bottom: 0.375rem;
+  }
+  .assignment-empty p {
+    font-size: 0.75rem;
+    line-height: 1.65;
+    color: var(--muted-foreground);
+  }
+  .invitation-saved {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .invitation-saved h3 {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .access-review {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .access-review-heading {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+  }
+  .access-review-heading > span {
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--primary);
+  }
+  .access-review-heading h2 {
+    font-size: 1rem;
+    line-height: 1.5;
+    font-weight: 600;
+    margin-top: 0.375rem;
+  }
+  .access-review-heading p {
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+    overflow-wrap: anywhere;
+  }
+  .access-review-note {
+    padding: 0.875rem;
+    border-radius: var(--radius-lg);
+    background: var(--muted);
+    font-size: 0.75rem;
+    line-height: 1.65;
+  }
+  .access-review [data-slot="button"] {
+    align-self: start;
+  }
+  @media (max-width: 70rem) {
+    .access-inspector .access-panel {
+      max-height: none;
+    }
+    .access-panel-body {
+      overflow: visible;
+    }
+  }
+}
+
+@layer components {
+  .access-review-footer {
+    width: 100%;
+  }
+  .access-review-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    align-items: center;
+  }
+  .access-review-actions > [data-slot="button"]:last-child {
+    margin-left: auto;
+  }
+  .access-review-note h3 {
+    font-weight: 600;
+    margin-bottom: 0.375rem;
+  }
+  .access-panel .member-grant {
+    background: var(--muted);
+    border-color: transparent;
+  }
+  .access-panel .member-status-section {
+    padding-top: 1rem;
+  }
+  .access-panel .member-account-details {
+    padding-top: 0.875rem;
+  }
+  .access-panel .member-overview {
+    gap: 1.25rem;
+  }
+}
+
+@layer components {
+  .access-panel-header .member-identity h2 {
+    font-size: 1rem;
+  }
+  .access-unit-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+  }
+  .access-unit-actions h3,
+  .access-unit-actions p {
+    flex-basis: 100%;
+    font-size: 0.8125rem;
+    line-height: 1.65;
+  }
+  .access-unit-actions > [data-slot="button"]:last-child {
+    margin-left: auto;
+  }
+}

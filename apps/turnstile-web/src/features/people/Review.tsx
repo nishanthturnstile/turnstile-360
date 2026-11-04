@@ -5,7 +5,9 @@ import {
   type UserSessionDto,
 } from '@thaarei/turnstile-contracts';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Notice } from '@/components/notice';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { usePeopleActivity } from './activity';
 import { execute, message, PeopleError, request } from './client';
@@ -17,12 +19,16 @@ export function Review({
   onSaved,
   onCancel,
   target,
+  onBusyChange,
+  actionsTarget,
 }: {
   command: unknown;
   session: UserSessionDto;
   onSaved: () => Promise<void>;
   onCancel: () => void;
   target: string;
+  onBusyChange?: (busy: boolean) => void;
+  actionsTarget?: HTMLDivElement | null;
 }) {
   const active = usePeopleActivity();
   const detail = peopleCommandSchema.parse(command);
@@ -49,6 +55,9 @@ export function Review({
   const [uncertain, setUncertain] = useState(false);
   const [done, setDone] = useState(false);
   useEffect(() => {
+    onBusyChange?.(busy || uncertain);
+  }, [busy, uncertain, onBusyChange]);
+  useEffect(() => {
     void active;
     void session.access?.fingerprint;
     void session.csrfToken;
@@ -57,6 +66,7 @@ export function Review({
   async function run(work: () => Promise<void>) {
     if (!active || busy) return;
     setBusy(true);
+    onBusyChange?.(true);
     setFailure(undefined);
     try {
       await work();
@@ -86,34 +96,20 @@ export function Review({
       await onSaved();
     });
   }
-  return (
-    <section
-      aria-label="Review access change"
-      className="flex flex-col gap-5 rounded-xl border p-5"
-    >
-      <h2 className="section-title">{title}</h2>
-      <p className="break-words">{target}</p>
-      {'name' in detail && <p>Name: {detail.name}</p>}
-      {'email' in detail && <p>Recipient: {detail.email}</p>}
-      {detail.operation === 'member.assignments' && (
-        <p>
-          {detail.retireLegacyVersion === null
-            ? 'Imported grants are retained.'
-            : 'Imported grants will be retired.'}
-        </p>
-      )}
-      {'permissions' in detail && (
-        <p>Requested permissions: {detail.permissions.map(permissionLabel).join(', ')}</p>
-      )}
-      {!!failure && <Notice message={message(failure)} />}
-      {done ? (
-        <Notice success message="Saved. Current access has been refreshed." />
-      ) : uncertain ? (
+  const assess = () =>
+    run(async () => {
+      const current = await request('/api/people/impact', impactReviewSchema, {
+        method: 'POST',
+        csrf: session.csrfToken,
+        body: { command },
+      });
+      setReview(current);
+      setUncertain(false);
+    });
+  const actions = (
+    <div className="access-review-actions">
+      {done ? null : uncertain ? (
         <>
-          <p>
-            We could not confirm whether this command committed. Check its current outcome before
-            starting another change. No request will be replayed automatically.
-          </p>
           <Button
             disabled={busy}
             onClick={() =>
@@ -127,86 +123,108 @@ export function Review({
           >
             Check command status
           </Button>
-          <Button
-            disabled={busy}
-            onClick={() =>
-              void run(async () => {
-                const current = await request('/api/people/impact', impactReviewSchema, {
-                  method: 'POST',
-                  csrf: session.csrfToken,
-                  body: { command },
-                });
-                setReview(current);
-                setUncertain(false);
-              })
-            }
-          >
+          <Button disabled={busy} variant="outline" onClick={() => void assess()}>
             Review current state for the same command
           </Button>
-          <p className="text-sm text-muted-foreground">
-            If no completed command is available, reload current data and compare it with this draft
-            before reviewing another change.
-          </p>
         </>
       ) : review ? (
-        <>
+        <Button
+          variant={
+            ['role.delete', 'member.suspend', 'invitation.cancel'].includes(detail.operation)
+              ? 'destructive'
+              : 'default'
+          }
+          disabled={busy || Date.parse(review.expiresAt) <= Date.now()}
+          onClick={() => void save()}
+        >
+          {busy ? 'Saving…' : 'Confirm and save'}
+        </Button>
+      ) : (
+        <Button disabled={busy} onClick={() => void assess()}>
+          {busy ? 'Checking impact…' : 'Review current impact'}
+        </Button>
+      )}
+      <Button disabled={busy || uncertain} variant="outline" onClick={onCancel}>
+        {done ? 'Close' : 'Back to draft'}
+      </Button>
+    </div>
+  );
+  return (
+    <section aria-label="Review access change" className="access-review">
+      <div className="access-review-heading">
+        <span>
+          {uncertain ? 'Check saved outcome' : review ? 'Ready to confirm' : 'Review before saving'}
+        </span>
+        <h2>{title}</h2>
+        <p>{target}</p>
+      </div>
+      {'name' in detail && <p>Name: {detail.name}</p>}
+      {'email' in detail && <p>Recipient: {detail.email}</p>}
+      {detail.operation === 'member.assignments' && (
+        <p className="panel-help">
+          {detail.retireLegacyVersion === null
+            ? 'Any retained imported access stays in place.'
+            : 'Retained imported access will be retired.'}
+        </p>
+      )}
+      {'permissions' in detail && (
+        <div className="access-permission-summary">
+          {detail.permissions.map((p) => (
+            <Badge key={p} variant="outline">
+              {permissionLabel(p)}
+            </Badge>
+          ))}
+        </div>
+      )}
+      {!!failure && <Notice message={message(failure)} />}
+      {done ? (
+        <Notice success message="Saved. Current access has been refreshed." />
+      ) : uncertain ? (
+        <div className="access-review-note">
+          <h3>Save outcome is uncertain</h3>
           <p>
-            Review is valid until {new Date(review.expiresAt).toLocaleTimeString()}. Saving checks
-            current access again.
+            Check the command outcome before making another change. Nothing is replayed
+            automatically. If no completed outcome is available, compare current saved access with
+            this draft before reviewing the same command.
           </p>
-          {review.visibility === 'people' ? (
-            <>
+        </div>
+      ) : review ? (
+        <>
+          <div className="access-review-note">
+            <h3>Current impact</h3>
+            {review.visibility === 'people' ? (
               <p>
                 {review.memberCount} members · {review.invitationCount} invitations affected
               </p>
-              <AssignmentSummary assignments={review.assignments} session={session} />
-            </>
+            ) : (
+              <p>Role definitions only; this review does not list member identities.</p>
+            )}
+          </div>
+          {review.visibility === 'people' ? (
+            <AssignmentSummary assignments={review.assignments} session={session} />
           ) : (
-            review.roles.map((r) => (
-              <p key={r.id}>
-                {r.name} · version {r.version}
-              </p>
-            ))
+            review.roles.map((r) => <p key={r.id}>{r.name}</p>)
           )}
-          <p className="text-sm">
-            Shared role edits affect everyone using that role. Retained imported grants remain
-            effective unless explicitly retired.
+          <p className="panel-help">
+            Valid until {new Date(review.expiresAt).toLocaleTimeString()}. Saving checks current
+            access again.
           </p>
-          <Button
-            variant={
-              ['role.delete', 'member.suspend', 'invitation.cancel'].includes(detail.operation)
-                ? 'destructive'
-                : 'default'
-            }
-            disabled={busy || Date.parse(review.expiresAt) <= Date.now()}
-            onClick={() => void save()}
-          >
-            Confirm and save
-          </Button>
+          <p className="access-review-note">
+            {detail.operation === 'role.patch' && detail.change === 'permissions'
+              ? 'This changes access for people and invitations using this shared role.'
+              : detail.operation === 'member.suspend'
+                ? 'This pauses every source of workspace access. The identity account is preserved.'
+                : detail.operation === 'invitation.issue'
+                  ? 'Confirmation approves the invitation and queues delivery. The recipient must verify and accept it before becoming a member.'
+                  : 'Confirmation applies only the reviewed change. Other independent access sources remain unless explicitly removed.'}
+          </p>
         </>
       ) : (
-        <Button
-          disabled={busy}
-          onClick={() =>
-            void run(async () =>
-              setReview(
-                await request('/api/people/impact', impactReviewSchema, {
-                  method: 'POST',
-                  csrf: session.csrfToken,
-                  body: { command },
-                }),
-              ),
-            )
-          }
-        >
-          Review current impact
-        </Button>
+        <p className="panel-help">
+          Check the latest affected access, then confirm. No changes have been saved yet.
+        </p>
       )}
-      {!busy && (
-        <Button disabled={uncertain} variant="outline" onClick={onCancel}>
-          {done ? 'Close' : 'Back to draft'}
-        </Button>
-      )}
+      {actionsTarget ? createPortal(actions, actionsTarget) : actions}
     </section>
   );
 }

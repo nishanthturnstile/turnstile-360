@@ -16,7 +16,6 @@ import { testOnboarding } from './test-onboarding-browser.mjs';
 import { testPeople } from './test-people-browser.mjs';
 import { testSettings } from './test-settings-browser.mjs';
 import { testStructuredOnboarding } from './test-structured-onboarding-browser.mjs';
-import { testVisualStructure } from './test-visual-structure-browser.mjs';
 
 assert.equal(process.env.INSTALLATION_CUSTOMER_KEY, 'auth-fixture', 'Disposable harness required');
 const temporary = await mkdtemp(join(tmpdir(), 'thaarei-auth-browser-'));
@@ -45,7 +44,11 @@ const nginx = await readFile('deploy/nginx/nginx.conf', 'utf8');
 const csp = /add_header Content-Security-Policy "([^"]+)"/.exec(nginx)?.[1];
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: 'utf8', timeout: 30000, ...options });
-  assert.equal(result.status, 0, 'Private browser fixture command failed');
+  assert.equal(
+    result.status,
+    0,
+    `Private browser fixture command failed: ${command}, status=${result.status}, signal=${result.signal ?? 'none'}, error=${result.error?.code ?? 'none'}`,
+  );
   return result.stdout.trim();
 }
 async function waitFor(check) {
@@ -567,15 +570,6 @@ dns.lookup = function(host, options, callback) {
       ),
       'Sensitive browser data must not enter application logs',
     );
-  } else if (process.argv.includes('--structure-editor')) {
-    stage = 'visual structure editor';
-    await testVisualStructure({
-      page,
-      context,
-      origin,
-      login,
-      clearRateLimits: () => command('clear-rate-limits'),
-    });
   } else if (process.argv.includes('--structured-onboarding')) {
     stage = 'fresh required-Department onboarding web journey';
     await testStructuredOnboarding({
