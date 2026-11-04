@@ -18,6 +18,8 @@ restored. Earlier preserved-v1 statements below describe historical release mile
 PR #7 is merged to development as ec07a12, with green PR and post-merge CI.
 The local installation is ready for owner login. Documentation PR #8 passed every
 push/PR check on bacf7c4 and merged to development as 266044b (2026-11-04).
+The access UI redesign is merged through PR #9 as bd7f1a2, after all push/PR checks
+passed on 8611279. Local development matches that merge and the tested UI remains running.
 
 The workspace foundation and AUTH-01–07 implementation and local verification are complete. The DMS authority supports
 persisted verified accounts, sessions, signing keys, controlled recovery and managed distinct
@@ -112,18 +114,31 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
-UM-UI-PR-01 — **In progress** (owner: Codex, 2026-11-04). Owner authorized checking
-in the accumulated access navigation/directory/panel redesign, creating a PR to parent
-development, resolving CI/review issues and merging after green checks. Preserve the
-running installation and existing data. Next: inspect final diff/verification, commit and
-open the PR, then verify its exact head and CI/review state before merging.
-Pre-commit review: branch matches current origin/development at 266044b. Accumulated
-changes are web presentation/navigation, focused tests and documentation only; no backend,
-schema, dependency/lockfile, License/notices or private runtime/credential file is included.
-Required check/build/test/integration and expanded People HTTPS browser verification passed
-in UM-PANELS-UI-01; current compiled smoke and both CI Compose configuration validations
-also pass. Final diff review found no blocking issue. All existing progress entries and
-the running local installation are preserved. Remote CI and merge are still pending.
+UM-UI-PR-01 — **Completed** (owner: Codex, 2026-11-04). Owner authorized checking
+in the accumulated access UI redesign, creating a PR to parent development, resolving
+CI/review issues and merging after green checks. Committed all 27 intended web/test/doc
+files as 86112792dadb7a4d8be8b6bf7c010f2a7826a3c8 and created PR #9 targeting
+development. No backend/schema/dependency/lockfile, License/notices or private runtime/
+credential file was included. Preserved the previous work and other agents' entries.
+
+Both push and PR workflows passed their checks job and all five image builds on the exact
+8611279 head: 12 successful check runs, no failures. PR was clean/mergeable with no review
+or comment objections. Merged through the SHA-matched PR merge API at 2026-11-04T11:24:38Z
+as bd7f1a28f0d76fc47f070e7f8430c337105eb779. GitHub initially returned internal Git/
+GraphQL errors; HTTP/1.1 non-thin Git push and REST PR creation/merge succeeded without
+creating duplicates. Local development now matches origin/development at bd7f1a2.
+The merge tree matches the reviewed feature head. No main branch operation occurred.
+
+Local check/build/test/integration and expanded real HTTPS People browser suite passed
+as recorded in UM-PANELS-UI-01; compiled smoke and both CI Compose configurations also
+passed during PR preparation. Read-only post-merge runtime verification confirms all seven
+services running, six configured healthchecks healthy and web HTTP 200. No runtime/data
+reset, reseed, account change or service replacement occurred during this PR task.
+The development post-merge workflow 41820619096 was still running at handoff; its result
+is not claimed as passed. All pre-merge checks are green and merge is confirmed. The prior
+development workflow 41800545904 also passed. T3 PR watch is stopped before owner handback.
+Only this current local progress handoff remains uncommitted; application source is merged.
+Next: owner continues acceptance testing at localhost:23600 with existing credentials.
 
 UM-PANELS-UI-01 — **Completed** (owner: Codex, 2026-11-04). Owner requested
 Members Invite person to navigate and open the composer in one action and consistent
