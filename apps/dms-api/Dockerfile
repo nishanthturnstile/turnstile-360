@@ -12,6 +12,7 @@ WORKDIR /app
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3001
 COPY --from=build --chown=node:node /runtime/ ./
 COPY LICENSE ./LICENSE
+COPY THIRD_PARTY_NOTICES ./THIRD_PARTY_NOTICES
 USER node
 EXPOSE 3001
 CMD ["node", "dist/main.api.js"]

@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-11-04
+Last updated: 2026-11-05
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -113,6 +113,177 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+DMS-I03-REVIEW — **Completed** (owner: Codex, 2026-11-05). Owner requested
+Open Code Review plugin review of I03, fixes and commit. Used the installed OCR
+host-delegation skill for deterministic selection/rules and a separate read-only reviewer.
+All 93 staged I01–I03 paths were reviewed (73 OCR-selected plus 20 supplemental exclusions),
+with zero skips; I03 was the primary scope. No critical/high finding or authorization/RLS
+bypass was found. Both reported findings are corrected: the medium formatted-timestamp
+alias sort now orders on stored timestamp/ID and has a real PostgreSQL EXPLAIN regression
+against the production page SQL; the low fresh-setup omission now explains optional private
+role credentials, distinct passwords and NOLOGIN behavior. Reviewer inspected both fixes.
+
+Post-fix pnpm check/build/test/test:integration pass; integration ran uncached with 28
+Fastify and 230 PostgreSQL cases across 16 database files. All three generated contract
+drift checks and git diff checks pass. No post-fix image rebuild is claimed; I03's earlier
+standalone image evidence remains recorded below. OCR artifacts:
+/tmp/dms-i03-ocr-{preview,rules,review}.json and pagination-explain.txt. The review report
+accounts for every path and records both finding dispositions. The owner-authorized local
+commit includes the staged I01/I02 dependencies, I03 and these corrections on
+feat/dms-i01-standalone-foundation. No live installation/data/credentials changes,
+deployment, push or PR. Future document audit and dispatch remain with their owning features.
+
+DMS-I03 — **Completed** (owner: Codex, 2026-11-05). Implemented owning
+persistence/access/audit on feat/dms-i01-standalone-foundation while preserving I01/I02
+and the existing installation. Scope: transaction-scoped principal/tenant context on
+the owning pool, live resource policy, immutable bounded application audit and atomic
+outbox intent, narrowly privileged private operator reads with fresh identity/current
+grants, generated public/private contracts and real PostgreSQL boundary verification.
+Document-specific records/routes extend this boundary with their owning feature; no
+placeholder document schema, live installation migration or deployment is authorized.
+Implemented owning machine transactions with live locked registration/scope checks, local
+principal context reset and failed-rollback pool eviction; migrated enrollment/capabilities
+to this boundary. Added forced-RLS bounded application audit/outbox with composite
+references and atomic enrollment/replay behavior, owner-scoped GET /v1/audit, signed keyset
+cursors, a distinct private operator read context and dedicated least-privilege operator/
+coordinator roles. Private reads authenticate every invocation, recheck installation/current
+grant and record attributed inspection evidence; supported grant/revoke uses the same
+command fence. Generated public and separate private command contracts, documented the
+explicit role-provision-before-migration upgrade, and preserved I01/I02 behavior.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration pass. Integration ran uncached: 28 Fastify cases and 230 PostgreSQL
+cases across 16 files. Real database regressions cover role escalation/auth separation,
+forced RLS, cross-tenant/application references, pooled context after commit/rollback,
+owner isolation, live scopes/operator grants, supported revocation/recovery, signed cursor
+binding/timestamp tie-breakers, no fictitious state-change replay and failed-outbox atomic
+rollback. The freshly built thaarei-dms-i03:verification image passes all ten isolated
+standalone cases, including independent consumers and source/packaged Chromium explorer.
+Generated consumer, legacy auth and private operator contracts pass drift checks;
+git diff --check passes. Fixture cleanup preserves independent first-bootstrap testing.
+The interrupted run's two disposable fixtures were removed, and final fixtures cleaned up.
+
+No existing installation data, credentials, live containers or deployed release were
+changed. At the implementation handoff these changes were uncommitted and no I03 review had
+been claimed; the subsequent authorized OCR review/fixes and local commit are recorded
+above. The feature branch contains freshly fetched development and preserves I01/I02. Before target rollout, provision the new private roles and run
+the owned DMS migrations using the audit runbook. Document-specific audit/resource-grant
+extensions and actual outbox dispatch remain with their later owning features.
+
+DMS-I02-REVIEW — **Completed** (owner: Codex, 2026-11-04). Owner requested an
+OpenCode DeepSeek V4.1 Flash review with high thinking effort and fixes for findings.
+The read-only delegate ran opencode-go/deepseek-v4.1-flash with variant high and found
+one confirmed P2 stock-explorer alias issue, one P3 generated-description defect, and an
+unverified operational concern about ambient proxies. No authority bypass was reported.
+
+Fixed the stock entry/config surface in the docs scope after its existing access check:
+index/directory aliases redirect to /docs/, only explicit schema/static assets are served,
+and stock top-level initializer/other wildcard files are rejected. Required local assets
+and packaged third-party notices remain available. Added authenticated/unauthenticated
+alias/config regressions and real Chromium checks that index.html reaches the hardened
+UI; image checks also probe canonicalization and stock-initializer rejection.
+Corrected public identity, capability and enrollment create/replay descriptions in the
+shared OpenAPI builder, regenerated the artifact and added semantic distinction checks.
+Made Python and curl examples explicitly direct-only (ProxyHandler({}), noproxy), updated
+the runbook/architecture and verified Python ignores unusable ambient proxy settings with
+an isolated HTTP probe. Existing I01 work and owner installation remain preserved.
+
+Post-fix verification: pnpm check/build/test/test:integration all pass with normal Turbo
+caches. Integration runs uncached: 28 Fastify tests and 225 PostgreSQL cases across 16
+files. The freshly built thaarei-dms-i02-review:verification image passes the reviewer's
+bare-Fastify reproducer; the dedicated standalone/image lane passes all ten cases,
+including independent Python/curl, source/packaged real Chromium, alias handling,
+read-only enrollment, cleared bearer state, expired-token denial and no external loads.
+Biome and git diff --check pass. Parent verified the corrections; no second delegated
+review is claimed. No remaining actionable finding, live data/credential change,
+installation migration, deployment, commit or PR. Changes remain uncommitted on
+feat/dms-i01-standalone-foundation. Customer ingress/TLS/SMTP acceptance stays separate.
+
+DMS-I02 — **Completed** (owner: Codex, 2026-11-04). Owner authorized contract growth
+and manual testing. Extended feat/dms-i01-standalone-foundation, preserving I01's
+uncommitted implementation and the existing installation.
+
+Delivered explicit consumer/private package exports with a compatibility root barrel;
+the public client uses the consumer entrypoint under dependency-rule enforcement.
+Generated docs/api/dms.openapi.json from shared Zod schemas and the implemented
+route/security catalog; retained and drift-checked the legacy dms-auth artifact. Root
+checks cover finite errors/status families, request/header examples, local references,
+unique operations and shared positive/negative fixtures in Zod, Ajv 2020 and Python.
+Runtime checks observe every physical versioned Fastify route (including HEAD) and
+compare Nest handler/guard metadata with the catalog. Responses retain authoritative
+request IDs/no-store caching and now provide bounded 503 retry guidance; revision/202
+conventions are reserved without introducing future feature endpoints or schemas.
+
+The protected bundled explorer serves /docs and /docs/openapi.json on the DMS listener,
+with protected JSON/YAML/configuration/assets. It is off by default; enabled access uses
+a separate generated key, loopback/controlled binding policy and production HTTPS.
+The browser offers only ephemeral machine bearer input, clears it on reload and disables
+enrollment execution/key input. It loads local assets only, with restricted CSP and no
+validator/CDN/analytics. Independent stdlib Python/curl recipes obtain a token, enroll and
+read capabilities without workspace imports. Architecture, environment examples and the
+manual operator-to-token runbook are updated. Exact dependencies/lockfiles and packaged
+third-party notices retain the Swagger asset licenses; Scarf's install script is disabled.
+
+Verification (2026-11-04): pnpm check/build/test/test:integration all pass, retaining
+normal Turbo caches. Integration runs uncached: 27 Fastify tests plus 225 PostgreSQL
+cases across 16 database files. The dedicated standalone lane with the freshly rebuilt
+thaarei-dms-i02:verification image passes all ten cases, including independent Python/curl,
+real Chromium source/packaged explorer, token acquisition outside the browser, capability
+read, missing/wrong/genuinely expired JWT denial, cleared auth after reload, disabled
+enrollment execution and no external requests/browser storage. Docker Desktop carries
+image browser requests over private fixture IPC to real container HTTP; authorization
+and responses are not mocked and no host service port is published. Manual image
+inventory verifies nonroot execution, local assets/LICENSE/NOTICE/bundled dependency
+notices and no Turnstile package/schema. All 180 checked relative documentation targets
+resolve; Biome and git diff --check pass. Browser verification corrected an upstream
+query/relative-URL issue and fixture selectors/transport; initial failing attempts are
+not represented as passing. The final complete checks and image qualification pass.
+
+No I02 database migration, live credential/data modification, deployment, commit or PR
+was performed. Documentation stays disabled on the preserved owner installation. Actual
+customer ingress/TLS/access-control/SMTP rollout remains separate. No I02 blocker or
+remaining implementation work; next planned package is DMS-I03, pending owner instruction.
+Changes remain uncommitted on the current branch for review.
+
+DMS-I01 — **Completed** (owner: Codex, 2026-11-04). Owner authorized standalone
+foundation implementation and subsequent DeepSeek V4.1 Flash high-effort review.
+Implemented on feat/dms-i01-standalone-foundation from fetched origin/development.
+
+Delivered explicit standalone configuration, exact per-client login/recovery/logout
+policies, persisted browser-bound authorization continuation, auth/DMS-only provisioning
+and foundation Compose/environment/runbook. Private operator bootstrap, assignment,
+revocation and recovery use fresh verified identity, separate maintenance authority,
+explicit tenant-bound grants, forced RLS migration 0005 and attributed atomic audit.
+No document capability, Swagger UI, Turnstile schema or new runtime dependency is added.
+
+Post-review verification: pnpm check/build/test/test:integration all pass with normal
+Turbo caches retained; integration runs uncached and passes 21 Fastify plus 225 PostgreSQL
+tests across 16 database files. The separate standalone lane passes all eight cases,
+including real Chromium, two independent machine enrollments/capability reads, recovery,
+operator denial/recovery, unchanged audit on rejected commands and bounded continuation
+cleanup preserving active/provider records. DMS_STANDALONE_IMAGE verification proves the
+refreshed production image becomes ready and serves direct discovery with auth/DMS-only
+schemas/runtime credentials. Separate manual image inventory confirms nonroot execution,
+private tools and auth/DMS migrations without Turnstile packages/schema/source. An
+unprovisioned image returns liveness 200/readiness 503. Installed Docker Compose validates
+the standalone profile; relative documentation targets and git diff --check pass.
+An initial overlapping local build/compiled-fixture run failed; serial reruns pass.
+
+DeepSeek V4.1 Flash (opencode-go/deepseek-v4.1-flash, variant high) completed the requested
+read-only review. Fixed both P2 findings: operator commands now validate installation
+read-only, installation bootstrap audits only real creation, and interaction capture
+reclaims at most 100 expired continuation rows with SKIP LOCKED. Addressed both P3
+findings with supported new-client destination migration, current combined/standalone
+auth guidance and concrete private-network/environment-file commands. Aligned subject
+input with the 128-character audit bound. Existing authority SDK tests already cover the
+reviewer's suggested combined login-page regression; no duplicate test was added.
+The parent verified the corrections; no second delegated review is claimed.
+
+No existing installation migration, data/credential reset, deployment, commit or PR was
+performed. Customer Dokploy/TLS/SMTP acceptance remains separate from isolated local
+verification. No I01 blocker or remaining implementation work. Subsequent owner-authorized
+I02 work is tracked above. Changes remain uncommitted on the requested branch for review.
 
 DOC-ORG-01 — **Completed** (owner: Codex, 2026-11-04).
 Owner requested organizing documentation before DMS implementation and updating references.

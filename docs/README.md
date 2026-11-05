@@ -30,3 +30,9 @@ Keep new documents in the owning area, use relative links and update references 
 moving a file. Keep `architecture.md`, `IN_PROGRESS.md`, `AGENTS.md`, `README.md`, LICENSE
 and third-party notices at their established root locations. Technical design stays in
 architecture; requirement IDs stay in specifications and completed work stays in progress.
+
+Standalone foundation operations: [DMS runbook](runbooks/dms-standalone.md).
+
+DMS contract/explorer operations: [manual testing runbook](runbooks/dms-api-explorer.md).
+
+DMS owning audit/private inspection: [audit runbook](runbooks/dms-audit.md).

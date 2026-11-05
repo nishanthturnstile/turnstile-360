@@ -17,12 +17,17 @@ const provisionInput = z
   })
   .strict();
 
-export async function provisionUser(auth: Authority, input: unknown, origin: string) {
+export async function provisionUser(
+  auth: Authority,
+  input: unknown,
+  origin: string,
+  verificationUrl = `${origin}/sign-in`,
+) {
   const body = provisionInput.parse(input);
   // Server API only: no request/headers, no public admin route and no automatic verification bypass.
   const { user } = await auth.api.createUser({ body });
   await auth.api.sendVerificationEmail({
-    body: { email: body.email, callbackURL: `${origin}/sign-in` },
+    body: { email: body.email, callbackURL: verificationUrl },
   });
   return { id: user.id };
 }
@@ -45,7 +50,20 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
       actorId: 'private-account-provisioner',
     };
     await captureAuthorityEvent(config, { ...event, subjectId: randomUUID(), outcome: 'pending' });
-    const user = await provisionUser(auth, JSON.parse(input), config.AUTH_PUBLIC_ORIGIN);
+    const parsed = z
+      .object({ verificationUrl: z.string().optional() })
+      .passthrough()
+      .parse(JSON.parse(input));
+    const { verificationUrl, ...account } = parsed;
+    const returnUrl =
+      verificationUrl ??
+      (config.AUTH_MODE === 'standalone' ? `${config.AUTH_PUBLIC_ORIGIN}/identity/ok` : undefined);
+    if (
+      verificationUrl &&
+      !config.AUTH_LOGIN_CLIENTS.some((client) => client.verificationUrl === verificationUrl)
+    )
+      throw new Error('Unapproved verification screen');
+    const user = await provisionUser(auth, account, config.AUTH_PUBLIC_ORIGIN, returnUrl);
     await captureAuthorityEvent(config, { ...event, subjectId: user.id, outcome: 'success' });
     console.log('Account provisioned; email verification is required before login');
   } catch {

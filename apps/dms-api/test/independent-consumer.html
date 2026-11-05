@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Independent consumer fixture</title>
+<form><label>Email<input name="email" type="email" autocomplete="username" required></label>
+<label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+<button type="submit">Sign in</button><p role="status"></p></form>
+<script>
+// Test/example screen hosted on the authority origin by the consumer. Credentials
+// go directly to the identity endpoint, never through a document API or consumer backend.
+document.querySelector('form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const fields = new FormData(event.target);
+  const response = await fetch('/identity/sign-in/email', {method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({email:fields.get('email'),password:fields.get('password')})});
+  if (!response.ok) { document.querySelector('[role=status]').textContent='Sign in failed'; return; }
+  const transaction = new URL(location.href).searchParams.get('transaction');
+  location.assign(`/identity/continue?transaction=${encodeURIComponent(transaction)}`);
+});
+</script></html>

@@ -287,8 +287,9 @@ at root. AUTH-02 also installs `nodemailer` 10.3.1 with development `@types/node
 explicit Fastify 5.12.7 in both APIs and root development `pg` 8.23.1 for isolated database
 tooling. Authority/BFF and real browser-to-DMS evidence are recorded in progress; actual
 deployment and customer provisioning remain separate. Python currently has no runtime dependencies.
-The S3 SDK, Celery/processing engines, OpenAPI generation, OpenTelemetry and
-React Testing Library remain later additions. The web design system is now selected
+DMS-I02 adds the contract/explorer and development-only JSON Schema tooling documented
+in [its owning section](#consumer-api-contract-and-explorer-dms-i02). The S3 SDK,
+Celery/processing engines, OpenTelemetry and React Testing Library remain later additions. The web design system is now selected
 and installed as documented below; React Router owns web navigation. No client-state/form library, mobile library,
 or Turnstile domain dependency has been added.
 
@@ -2880,7 +2881,8 @@ SMTP uses fixed configured transport/from values and plain-text templates. Produ
 requires implicit TLS or STARTTLS; plain SMTP is loopback-only for local/test profiles.
 Transport connections/greetings are bounded to five seconds and sockets to 10 seconds;
 file/URL attachment access and SMTP debug logging are disabled. Verification and reset
-links expire in 30 minutes; callback paths are fixed to `/sign-in` and `/reset-password`.
+links expire in 30 minutes; combined-mode callbacks remain `/sign-in` and `/reset-password`.
+Standalone consumer and private-operator returns follow the DMS-I01 policy below.
 Mail availability is checked before account lookup for known/unknown recovery addresses,
 after rate limiting. Request-local delivery tracking also detects the pinned library's
 caught background callback failures; failed sends return controlled unavailability.
@@ -2927,7 +2929,7 @@ Three managed client purposes are supported (the third is staged in UM-I06):
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Turnstile login            | Confidential `client_secret_basic`; code/refresh only; required S256 PKCE; exact configured callback and `/sign-in` logout destination; explicit first-party consent skipping | UserInfo resource only; `openid profile email offline_access`; no DMS machine scopes                                     |
 | Authority identity service | Confidential `client_secret_basic`; client credentials only; fixed configured client/installation/application; no redirect/refresh/login grants or DMS enrollment             | Exact identity-service resource; `identity:invitation:prepare identity:subjects:read`; live client/resource/scope fences |
-| DMS machine application    | Confidential `client_secret_basic`; client credentials only; explicit operator-assigned scopes and persisted client-resource link; no login callback                          | Exact DMS resource; current catalog is `dms:capabilities:read`, enforced by the AUTH-05 capability endpoint              |
+| DMS machine application    | Confidential `client_secret_basic`; client credentials only; explicit operator-assigned scopes and persisted client-resource link; no login callback                          | Exact DMS resource; current catalog is `dms:capabilities:read` and `dms:audit:read`, with live owning-route policy       |
 
 Every authorize/token request validates a server-owned approval record, installation
 ownership, purpose and resource in addition to the provider's grant, scope, secret and
@@ -3098,10 +3100,11 @@ private authority account/client commands durably record an attempt before cross
 the independent authority pool, then record completion. A pending outcome requires operator
 inspection; it cannot promise atomicity across pools. Audit retention defaults to 90 days;
 expired receipt/key/session cleanup remains an explicit maintenance follow-up, with no
-scheduler or public audit API in this increment.
+scheduler in AUTH-05. DMS-I03 adds the separate owning resource audit API described below.
 
-`GET /v1/capabilities` requires `dms:capabilities:read` and reports only enrollment and
-capability-read operations; formats, profiles and languages are empty. Shared Zod schemas
+`GET /v1/capabilities` requires `dms:capabilities:read` and reports enrollment,
+capability-read and, for tokens granted `dms:audit:read`, application-audit reads; formats,
+profiles and languages remain empty. Shared Zod schemas
 in `@thaarei/dms-contracts` author enrollment/capability/error DTOs once and export JSON
 Schema. `pnpm docs:dms-auth` generates the [OpenAPI contract](docs/api/dms-auth.openapi.json).
 Responses use stable error codes, server-generated request IDs and `private, no-store`;
@@ -3653,6 +3656,7 @@ Use `/v1` JSON/HTTP APIs. Public response schemas and examples are part of the r
 | `GET`                    | `/search`                                         | Authorized current-version search with bounded query/filter parameters                                        |
 | `POST`, `DELETE`         | `/documents/{id}/references[/{referenceId}]`      | Create or remove an authorized external reference                                                             |
 | `PUT`                    | `/documents/{id}/permissions`                     | Guarded replacement of same-tenant application grants                                                         |
+| `GET`                    | `/audit`                                          | Current owning-application audit access with bounded pagination                                               |
 | `GET`                    | `/documents/{id}/audit`                           | Owner/admin audit access with pagination                                                                      |
 | `GET`                    | `/capabilities`                                   | Active format/profile/limit/language and contract capabilities                                                |
 
@@ -3902,6 +3906,90 @@ by the Dokploy deployment, not this development reservation.
 
 ### Standalone DMS delivery target
 
+DMS-I01 implements explicit `AUTH_MODE=standalone` (default remains `combined`) and
+`DATABASE_PROFILE=dms` private provisioning (default remains `combined`). Standalone
+startup requires auth/DMS runtime configuration only, with no configured default login
+callback/client or machine ID. Private client issuance requires explicit client IDs.
+The foundation Compose is `deploy/compose.dms.yaml`: DMS production image, isolated
+PostgreSQL volume/network and external TLS mail transport; Dokploy owns all ingress/TLS.
+No product schema/container/runtime dependency or document capability is introduced.
+Operator instructions and consumer integration are in the
+[standalone runbook](docs/runbooks/dms-standalone.md).
+
+`AUTH_LOGIN_CLIENTS` is a bounded server-owned array (maximum 32) of exact per-client
+login/consent/callback/logout/verification/reset URLs. Production requires HTTPS;
+local/test requires loopback. Credential/recovery screens share the authority origin
+and are consumer-owned ingress routes; there is no cross-origin credential transport.
+Managed login clients retain required S256 PKCE, confidential Basic authentication and
+explicit first-party consent skipping. Persisted redirect/logout metadata must match
+configured policy. Combined mode retains its configured Turnstile policy.
+Provider interaction redirects become opaque browser-bound transactions for independent
+consumers. The existing authority verification store records the signed query with a five-minute
+expiry; only hashed transaction and browser binding form the lookup key; an authority-secret
+HMAC protects the stored client/query against substitution.
+GET `/identity/continue` atomically consumes it and resumes authorization internally.
+Each capture reclaims up to 100 expired namespace-only continuation rows with
+`FOR UPDATE SKIP LOCKED`; provider records and active transactions are preserved.
+The HttpOnly SameSite=Lax binding cookie is Secure for HTTPS. Replays, missing/substituted
+browser binding, expiry and removed client policy fail. No signed query is sent to an
+independent consumer screen. Recovery returns match exact registered URLs; machine-only
+private recovery uses the fixed `/identity/ok` return and existing reset API.
+
+`dms.operator_authorization` stores tenant/authority-subject grants and revocation state.
+Migration 0005 forces tenant RLS and excludes runtime privileges. Private
+`dms:manage-operator` authenticates a verified active authority identity freshly (60-second
+proof budget) on every invocation. Bootstrap/recovery require explicit maintenance
+credentials and administrator self proof; assign/revoke additionally require an active
+DMS operator grant. Installation creation remains exclusively `db:bootstrap`. An
+installation row lock and tenant command advisory fence serialize assignment/revocation,
+last-operator protection and concurrent inspection. Mutations and attributed bounded
+security events commit atomically. Authority administration alone grants no document
+operator powers; the explicit private recovery command is a separately authorized action.
+
+DMS-I03 adds `audit-read` on this same private stdin interface, using the distinct
+`thaarei_dms_operator` login, not migration authority. It has only schema usage, installation
+and own-operator-grant reads, permitted audit reads and attributed inspection-evidence
+inserts. Each invocation verifies installation identity, fresh verified authority identity
+and the current tenant-bound grant; every page/retry repeats verification. Its shared
+command fence prevents a supported revocation from completing during a read. Forced-RLS
+operator policies independently require the active grant. No operator HTTP endpoint exists.
+The private registry/schema is generated separately as `docs/api/dms-operator.contract.json`.
+
+The owning DmsDatabaseService supplies transaction-local tenant/machine context on its
+existing bounded pool. Current registration, consumer principal kind and scope ceiling are
+rechecked under a shared registration lock through commit (enrollment uses UPDATE NOWAIT).
+All existing protected resource handlers use this boundary in addition to the HTTP guard.
+Each transaction clears and locally sets tenant, principal kind, application and actor; commit
+and rollback discard context before pooled reuse. Future owning routes load current
+resources/grants inside this transaction and use the resource-policy interface. Audit is
+owner/operator only; a future document read grant does not imply audit permission.
+
+Migrations 0006–0007 add forced-RLS, identifier-only `audit_event` and `outbox_intent` records
+with composite tenant/application references. The implemented application-enrollment change,
+audit record and outbox intent commit or roll back together; receipt replay adds no second
+state-change audit/intent. Runtime cannot update/delete audit, read operator grants, assume
+operator/coordinator roles or read auth SQL. Fixed action/resource fields, bounded actor and
+optional explicitly application-asserted human identity prevent arbitrary audit payloads;
+no file bytes, text, secrets or transfer URLs are accepted. End-user context supplies no
+authority. Security telemetry stays separate from consumer-visible resource audit.
+
+GET `/v1/audit` requires `dms:audit:read` and returns only the current consumer's application
+audit. The private `audit-read` returns permitted installation application audit, optionally
+filtered by application. Both use limit 1–100 (default 50), descending timestamp/UUID keyset
+pagination and opaque HMAC cursors bound to tenant/principal/filter. Every page reauthorizes;
+listings remain live views. Changing the authority secret invalidates outstanding cursors.
+Only `application.enrolled` exists today. The already selected `/v1/documents/{id}/audit`
+route and document/operator audit resource policy extend this implementation when the owning
+document feature ships; no placeholder document tables or document endpoint are introduced.
+
+`thaarei_dms_coordinator` is a distinct, read-only tenant-filtered outbox role with no audit,
+registration, operator, auth, DDL or publication-state privileges. I03 supplies no dispatch
+process or broker publication; I07 adds only the privileges/use cases it implements. Private
+operator/coordinator URLs never enter long-running API environment references. Provisioning
+creates these roles as NOLOGIN unless separate protected credentials are provided. Existing
+installations provision just the two roles with `--dms-access-only` before owned migrations;
+no automatic role provisioning, installation migration or credential rotation occurs.
+
 The DMS must also be installable and usable without Turnstile API/web, product-owned
 schemas, product secrets or a product ingress proxy. Independently registered backends
 consume its public HTTP contract; the workspace TypeScript client is optional. Keep
@@ -3921,23 +4009,91 @@ proving code/PKCE, expiry/revocation and recovery while Turnstile is absent.
 
 Tenant-operator document administration uses private commands with fresh verified authority
 identity plus explicit active DMS operator authorization bound to the installation tenant.
-Bootstrap/assignment/revocation/recovery and attributed owning-use-case execution will be
-implemented in DMS-I01/I03 and extended with each feature. Authority-admin status alone,
+DMS-I01 implements private bootstrap/assignment/revocation/recovery. DMS-I03 implements
+attributed paginated application audit reads; each document feature extends the same
+execution context and live operator checks. Authority-admin status alone,
 ordinary consumer scopes and browser sessions never supply document operator powers.
 Keep maintenance credentials private, operator contracts outside consumer OpenAPI and
 public machine-resource checks separate. No DMS management UI or end-user ACL model is
 introduced by this operator interface.
 
-Provide generated public OpenAPI 3.1 plus a locally bundled Swagger-style explorer on
-the existing DMS listener. The planned Fastify static-document serving integration must
-consume the shared-schema-generated artifact, keep private contracts separate and prove
-compatible pinned packages during implementation. Documentation is off by default in
-production and enabled only under controlled operator access. Manual requests use a
-short-lived bearer token obtained outside the browser; never embed machine credentials,
-persist authorization, load external validators/assets or bypass resource policy. File
-bytes still use direct signed storage transfers. Exact routes/configuration and executable
-limits are frozen with the implementing capability; no docs service or new host port
-is introduced by this documentation decision.
+DMS-I02 implements the generated consumer OpenAPI 3.1 artifact and protected, locally
+bundled explorer on the existing DMS listener, as specified below. Private contracts
+remain separate, and documentation never substitutes for endpoint authorization. Signed
+file transfers remain the owning storage/upload increments; no docs service or new
+host port is introduced.
+
+### Consumer API contract and explorer (DMS-I02)
+
+The framework-independent `@thaarei/dms-contracts/public` entry owns consumer Zod
+schemas, finite error/status families, the implemented route/operation/security catalog
+and HTTP conventions. `/private` owns authority identity-service and reserved principal
+contracts; the root barrel remains compatible for existing trusted integrations. The
+public DMS client imports only `/public`, enforced by dependency checks. Owning controllers
+use `DmsOperation` metadata to select existing public/enrollment/machine guard policy;
+Integration tests observe every physical Fastify `/v1` route (including automatic HEAD),
+then compare Nest handlers and effective guard metadata with the catalog. Health,
+identity-protocol and docs routes remain separate. No future feature route is exported.
+
+`@thaarei/dms-contracts/openapi` builds one public OpenAPI 3.1.0 document from those
+schemas/catalogs. `docs/api/dms.openapi.json` is its drift-checked 1.1.0 artifact, with
+relative `/` server and explicit versioned paths (including exact `/v1` service identity).
+The legacy `dms-auth.openapi.json` and its `/v1` server/two paths remain compatible and
+are now included in root drift checks. Public artifacts do not include private identity,
+operator, job or dispatch contracts. Ajv 8.20.0/draft-2020-12 plus ajv-formats 3.0.1 check
+schemas/examples and fixture parity with Zod. Development-only Python jsonschema 4.26.0
+and regex 2026.9.29 check the same fixtures; regex handles exported Unicode properties.
+Shared identity/request/error and generated response examples contain no real credentials.
+
+Each versioned response has a server-generated UUID `X-Request-Id` and
+`Cache-Control: private, no-store`; error envelopes retain finite code/requestId/retryable.
+401 includes the Bearer challenge. 503 and `ENROLLMENT_IN_PROGRESS` include
+`Retry-After: 1`; a different-body idempotency conflict does not authorize blind retry.
+Enrollment retains its bounded 16–128-character idempotency key and 24-hour replay window.
+Reserved resource revisions use strong quoted positive decimal ETags (up to 19 digits)
+and `If-Match`. Future 202 operations must provide a status `Location` and bounded integer
+`Retry-After` (1–3600 seconds), with initial two-second polling/backoff/jitter. No current
+route emits a resource revision or 202; owning features implement those behaviors later.
+Existing control routes retain the 16 KiB body limit; feature-specific metadata/batch
+limits are introduced with their owning routes rather than permitting file bodies globally.
+
+The explorer is `/docs` (plus trailing-slash alias), with canonical schema
+`/docs/openapi.json`. The bundled UI's `/docs/json` and `/docs/yaml` aliases render the
+same public document. Static/configuration routes remain under `/docs/*`. Documentation
+is off by default in every profile. `DMS_DOCS_MODE=loopback` requires a loopback listener;
+`controlled` explicitly permits container/remote binding under operator-controlled
+ingress. Both enabled modes require a separate generated `DMS_DOCS_ACCESS_KEY` (32–256
+characters, at least 16 distinct characters, no colon/newline); reuse of configured
+authority or machine/login client secrets is rejected. Basic username `operator`
+and that key protect the entire encapsulated docs scope, including every static asset;
+production additionally requires configured HTTPS ingress. These credentials grant no
+machine or DMS-operator authority. No docs account, grant or client is seeded at startup.
+
+Pinned Fastify integrations are @fastify/swagger 9.9.3 in static mode and
+@fastify/swagger-ui 6.1.3, with explicit swagger-ui-dist 5.34.0 assets/license notices.
+Static mode preserves JSON Schema 2020-12/3.1 fields unchanged despite its older upstream
+TypeScript document typing. Asset, configuration and schema access are covered together;
+all are no-store. CSP allows self-hosted scripts/styles/fonts/connections and local/data
+images, with inline style attributes only; no unsafe script, CDN or remote validator.
+Only the hardened docs entries/schema and explicit static-asset allowlist are served.
+Stock index/directory aliases redirect to `/docs/`; stock top-level configuration and
+other wildcard paths are rejected after access checks. UI query overrides are discarded,
+bearer state is memory-only, persistence is disabled
+and reload clears authorization. Only implemented GETs can execute; enrollment is
+read-only documentation and its key input is excluded from the authorization dialog.
+A same-origin/read-only interceptor adds a browser guard; backend machine verification
+and current registration/scope checks remain authoritative. No service secret is supplied
+to browser code. The Scarf installation helper's script is explicitly disabled.
+
+The [explorer/manual-testing runbook](docs/runbooks/dms-api-explorer.md) supplies private
+operator-to-token/enrollment steps and HTTP-only Python-standard-library/curl examples
+that explicitly ignore ambient proxies (Python ProxyHandler({}), curl --noproxy).
+The standalone lane exercises the real browser and independent backend chain; with a
+built image it also exercises the packaged UI and actual authenticated capability HTTP.
+Docker Desktop uses private test IPC to carry browser requests to container HTTP without
+publishing a new host port. This is fixture transport, not a production proxy. The
+incremental [third-party notice inventory](THIRD_PARTY_NOTICES) accompanies the DMS image;
+lockfiles pin integrity. Complete distribution qualification remains the owning release gate.
 
 ### Linux, Dokploy, Traefik, and Nginx
 

@@ -243,6 +243,8 @@ async function close() {
       applicationId,
     ]);
     await client.query('DELETE FROM dms.enrollment_key WHERE application_id=$1', [applicationId]);
+    await client.query('DELETE FROM dms.outbox_intent WHERE application_id=$1', [applicationId]);
+    await client.query('DELETE FROM dms.audit_event WHERE application_id=$1', [applicationId]);
     await client.query('DELETE FROM dms.application_registration WHERE id=$1', [applicationId]);
   });
   await dmsOwner.end();

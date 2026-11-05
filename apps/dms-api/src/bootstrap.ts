@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { LogController } from 'fastify';
+import { LogController, type onRouteHookHandler } from 'fastify';
 import { AppModule } from './app.module.js';
+import { mountApiDocs } from './infrastructure/api-docs/api-docs.js';
 import { SecurityTelemetryService } from './infrastructure/security-telemetry.service.js';
 import { DmsExceptionFilter } from './modules/access/dms-errors.js';
 import { AuthorityService } from './modules/platform-auth/authority/authority.service.js';
@@ -10,7 +11,10 @@ import { mountAuthorityHandler } from './modules/platform-auth/authority-handler
 import { mountIdentityHandler } from './modules/platform-auth/identity-handler.js';
 import { IdentityServiceService } from './modules/platform-auth/identity-service.service.js';
 
-export async function createApplication(logging = true): Promise<NestFastifyApplication> {
+export async function createApplication(
+  logging = true,
+  observeRoute?: onRouteHookHandler,
+): Promise<NestFastifyApplication> {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({
@@ -21,7 +25,9 @@ export async function createApplication(logging = true): Promise<NestFastifyAppl
     }),
     logging ? {} : { logger: false },
   );
+  if (observeRoute) app.getHttpAdapter().getInstance().addHook('onRoute', observeRoute);
   app.setGlobalPrefix('v1', { exclude: ['health/live', 'health/ready/auth'] });
+  await mountApiDocs(app.getHttpAdapter().getInstance());
   const telemetry = app.get(SecurityTelemetryService);
   telemetry.enable(logging);
   app

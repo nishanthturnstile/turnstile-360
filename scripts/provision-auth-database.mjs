@@ -3,12 +3,18 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 
 // Explicit operator action for a dedicated installation database. Never called at API startup.
-export async function provisionDatabase(environment) {
+export async function provisionDatabase(environment, dmsAccessOnly = false) {
+  const selection = environment.DATABASE_PROFILE ?? 'combined';
+  if (!['combined', 'dms'].includes(selection)) throw new Error('Invalid DATABASE_PROFILE');
   const adminUrl = environment.PROVISION_DATABASE_URL;
   if (!adminUrl || !URL.canParse(adminUrl)) throw new Error('Missing operator database connection');
   const admin = new URL(adminUrl);
   const connections = [];
-  for (const owner of ['auth', 'dms', 'turnstile']) {
+  for (const owner of dmsAccessOnly
+    ? []
+    : selection === 'dms'
+      ? ['auth', 'dms']
+      : ['auth', 'dms', 'turnstile']) {
     for (const kind of ['runtime', 'migrator']) {
       const key = `${owner.toUpperCase()}_${kind === 'runtime' ? '' : 'MIGRATION_'}DATABASE_URL`;
       const value = environment[key];
@@ -28,7 +34,30 @@ export async function provisionDatabase(environment) {
       connections.push({ role, kind, password: decodeURIComponent(url.password) });
     }
   }
-  if (new Set(connections.map((connection) => connection.password)).size !== connections.length)
+  for (const kind of ['operator', 'coordinator']) {
+    const key = `DMS_${kind.toUpperCase()}_DATABASE_URL`;
+    const value = environment[key];
+    const role = `thaarei_dms_${kind}`;
+    if (!value) {
+      connections.push({ role, kind, password: null });
+      continue;
+    }
+    const url = new URL(value);
+    if (
+      !['postgres:', 'postgresql:'].includes(url.protocol) ||
+      url.username !== role ||
+      !url.password ||
+      url.host !== admin.host ||
+      url.pathname !== admin.pathname ||
+      url.hash
+    )
+      throw new Error(`Invalid ${key}`);
+    connections.push({ role, kind, password: decodeURIComponent(url.password) });
+  }
+  if (
+    new Set(connections.filter((c) => c.password).map((connection) => connection.password)).size !==
+    connections.filter((c) => c.password).length
+  )
     throw new Error('Use separate role credentials');
   const client = new pg.Client({ connectionString: adminUrl, connectionTimeoutMillis: 3000 });
   let stage = 'connect';
@@ -47,7 +76,11 @@ export async function provisionDatabase(environment) {
         [connection.role, connection.password],
       );
       // Re-running refuses existing roles; this command never silently rotates credentials.
-      await client.query(sql.command);
+      await client.query(
+        connection.password
+          ? sql.command
+          : `CREATE ROLE ${connection.role} NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS`,
+      );
     }
     stage = 'revoke_public';
     const {
@@ -96,7 +129,7 @@ export async function provisionDatabase(environment) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   try {
-    await provisionDatabase(process.env);
+    await provisionDatabase(process.env, process.argv.includes('--dms-access-only'));
     console.log(
       'Installation database roles provisioned; run each owned migration and bootstrap command next',
     );

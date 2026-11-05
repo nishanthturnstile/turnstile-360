@@ -5,6 +5,7 @@ import { parseDocument } from 'yaml';
 
 const configurations = new Map();
 for (const file of [
+  'deploy/compose.dms.yaml',
   'deploy/compose.local.yaml',
   'deploy/compose.dev.yaml',
   'deploy/compose.dokploy.yaml',
@@ -110,3 +111,10 @@ for (const name of ['dms-api', 'turnstile-api', 'turnstile-web']) {
   );
 }
 console.log('Single Compose development entry and separate production deployment paths validated');
+
+const standalone = configurations.get('deploy/compose.dms.yaml').services;
+assert.deepEqual(Object.keys(standalone).sort(), ['dms-api', 'postgres']);
+assert.equal(standalone['dms-api'].build.context, '..');
+assert.equal(standalone['dms-api'].environment.AUTH_MODE, 'standalone');
+for (const service of Object.values(standalone)) assert.ok(!service.ports, 'Dokploy owns ingress');
+console.log('Standalone foundation has only DMS and PostgreSQL, private service ports');

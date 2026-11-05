@@ -1,0 +1,26 @@
+Thaarei third-party notices — incremental DMS-I02 inventory
+
+Thaarei-owned source and documentation remain confidential and proprietary under LICENSE.
+This inventory records the additions for the consumer API explorer and contract validation.
+It is not a distribution-wide license audit or a complete software bill of materials.
+
+Runtime additions (exact package and transitive integrity pins are in pnpm-lock.yaml):
+- @fastify/swagger 9.9.3: MIT. Retain its packaged LICENSE.
+- @fastify/swagger-ui 6.1.3: MIT. Retain its packaged LICENSE.
+- swagger-ui-dist 5.34.0: Apache-2.0. Includes Swagger UI by SmartBear Software Inc.
+  Retain the packaged LICENSE, NOTICE and *.LICENSE.txt bundled dependency notices.
+  The direct runtime dependency preserves these notices alongside the locally served assets.
+  Transitive Fastify/static, serialization, YAML and bundled browser libraries retain their
+  respective licenses in node_modules. No license of the wrapper replaces those licenses.
+- @scarf/scarf is a transitive installation helper; its postinstall is explicitly disabled
+  in pnpm-workspace.yaml. No install telemetry is authorized by this dependency addition.
+
+Development-only schema verification additions:
+- ajv 8.20.0 and ajv-formats 3.0.1: MIT. Packaged license texts remain in node_modules.
+- jsonschema 4.26.0: MIT; regex 2026.9.29: Apache-2.0 AND CNRI-Python.
+  Their development dependency artifacts, versions and hashes are pinned in
+  apps/dms-processing/uv.lock. These are not DMS processing runtime dependencies.
+
+Other existing dependencies retain their original licenses and notices. The deployment
+inventory and covered-source obligations for the complete service set remain subject to
+architecture.md's Ownership and distribution policy and the owning release qualification.

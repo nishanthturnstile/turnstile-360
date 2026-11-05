@@ -12,7 +12,7 @@ import {
 } from '../dist/index.js';
 
 test('authority contracts keep the new service purpose separate from DMS trust', () => {
-  assert.deepEqual(DMS_MACHINE_SCOPES, ['dms:capabilities:read']);
+  assert.deepEqual(DMS_MACHINE_SCOPES, ['dms:capabilities:read', 'dms:audit:read']);
   assert.deepEqual(IDENTITY_SERVICE_SCOPES, [
     'identity:invitation:prepare',
     'identity:subjects:read',

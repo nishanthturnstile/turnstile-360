@@ -58,6 +58,15 @@ export async function migrateDatabase(owner: Owner, environment = process.env) {
 }
 
 export async function bootstrapInstallation(environment = process.env) {
+  return installationOperation(environment, true);
+}
+
+/** Validate an existing installation and maintenance role without any DMS writes. */
+export async function assertInstallation(environment = process.env) {
+  return installationOperation(environment, false);
+}
+
+async function installationOperation(environment: NodeJS.ProcessEnv, bootstrap: boolean) {
   const owner = 'dms';
   const tenantId = z.uuid().toLowerCase().parse(environment.INSTALLATION_TENANT_ID);
   const customerKey = z
@@ -86,25 +95,29 @@ export async function bootstrapInstallation(environment = process.env) {
         role.rolcreatedb
       )
         throw new Error('Unsafe migration role');
-      await client.query('BEGIN');
-      await client.query(
-        'INSERT INTO dms.installation (singleton, tenant_id, customer_key) VALUES (1, $1, $2) ON CONFLICT (singleton) DO NOTHING',
-        [tenantId, customerKey],
-      );
+      await client.query(bootstrap ? 'BEGIN' : 'BEGIN READ ONLY');
+      const inserted = bootstrap
+        ? await client.query(
+            'INSERT INTO dms.installation (singleton, tenant_id, customer_key) VALUES (1, $1, $2) ON CONFLICT (singleton) DO NOTHING RETURNING singleton',
+            [tenantId, customerKey],
+          )
+        : undefined;
       const { rows } = await client.query(
-        'SELECT tenant_id, customer_key FROM dms.installation WHERE singleton = 1 FOR UPDATE',
+        `SELECT tenant_id, customer_key FROM dms.installation WHERE singleton = 1${bootstrap ? ' FOR UPDATE' : ''}`,
       );
       const row = rows[0];
       if (row?.tenant_id !== tenantId || row.customer_key !== customerKey)
         throw new Error('Installation identity cannot be replaced');
-      await client.query("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
-      await insertSecurityEvent(client, tenantId, {
-        action: 'installation.bootstrap',
-        outcome: 'success',
-        actorKind: 'operator',
-        actorId: 'thaarei_dms_migrator',
-        subjectId: tenantId,
-      });
+      if (inserted?.rowCount) {
+        await client.query("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
+        await insertSecurityEvent(client, tenantId, {
+          action: 'installation.bootstrap',
+          outcome: 'success',
+          actorKind: 'operator',
+          actorId: 'thaarei_dms_migrator',
+          subjectId: tenantId,
+        });
+      }
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK').catch(() => {});

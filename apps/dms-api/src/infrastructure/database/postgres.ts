@@ -15,7 +15,14 @@ export function createPool(connectionString: string, max = 5): Pool {
 }
 
 export async function assertRuntimeRole(pool: Pool, owner: 'auth' | 'dms' | 'turnstile') {
-  const role = `thaarei_${owner}_runtime`;
+  return assertDatabaseRole(pool, `thaarei_${owner}_runtime`, owner);
+}
+
+export async function assertDatabaseRole(
+  pool: Pool,
+  role: string,
+  owner: 'auth' | 'dms' | 'turnstile',
+) {
   const { rows } = await pool.query<{ safe: boolean }>(
     `
     SELECT current_user = $1 AND session_user = $1 AND NOT (rolsuper OR rolbypassrls OR rolcreatedb OR rolcreaterole)
@@ -38,16 +45,24 @@ export async function withTenant<T>(
   work: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
   const client = await pool.connect();
+  let discard = false;
   try {
     await client.query('BEGIN');
-    await client.query("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
+    await client.query(
+      "SELECT set_config('app.tenant_id', $1, true), set_config('app.principal_kind','',true), set_config('app.application_id','',true), set_config('app.actor_id','',true)",
+      [tenantId],
+    );
     const result = await work(client);
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    await client.query('ROLLBACK').catch(() => {});
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      discard = true;
+    }
     throw error;
   } finally {
-    client.release();
+    client.release(discard);
   }
 }

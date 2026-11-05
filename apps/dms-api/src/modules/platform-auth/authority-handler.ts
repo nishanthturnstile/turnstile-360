@@ -1,9 +1,13 @@
 import { fromNodeHeaders } from 'better-auth/node';
 import type { FastifyInstance } from 'fastify';
+import { decodeJwt } from 'jose';
 import type { AuthorityService } from './authority/authority.service.js';
+import { loginPolicy } from './authority-configuration.js';
+import { captureContinuation, consumeContinuation } from './authorization-continuation.js';
 
 const getPaths = new Set([
   '/identity/ok',
+  '/identity/continue',
   '/identity/get-session',
   '/identity/list-sessions',
   '/identity/verify-email',
@@ -103,7 +107,7 @@ export async function mountAuthorityHandler(server: FastifyInstance, authority: 
       const url = new URL(origin);
       url.pathname = incoming.pathname;
       url.search = incoming.search;
-      const path = url.pathname;
+      let path = url.pathname;
       const resetLink = /^\/identity\/reset-password\/[A-Za-z0-9_-]+$/.test(path);
       if (request.method === 'GET' ? !getPaths.has(path) && !resetLink : !postPaths.has(path)) {
         return reply.code(404).send({ code: 'NOT_FOUND' });
@@ -111,13 +115,33 @@ export async function mountAuthorityHandler(server: FastifyInstance, authority: 
       if (path.startsWith('/identity/oauth2/')) {
         if (request.method === 'POST' && url.search)
           return reply.code(400).send({ error: 'invalid_request' });
-        const keys = [...url.searchParams.keys()];
+        const keys = [...url.searchParams.keys()].filter(
+          (key) =>
+            key !== 'ba_param' ||
+            path !== '/identity/oauth2/authorize' ||
+            !url.searchParams.has('sig'),
+        );
         if (keys.length !== new Set(keys).size)
           return reply.code(400).send({ error: 'invalid_request' });
       }
       if (!authority.auth || !authority.config || !(await authority.ready()))
         return reply.code(503).send({ code: 'AUTH_UNAVAILABLE' });
       try {
+        if (path === '/identity/continue') {
+          try {
+            const location = await consumeContinuation(
+              authority,
+              url,
+              request.headers.cookie ?? '',
+            );
+            const resumed = new URL(location, origin);
+            url.pathname = resumed.pathname;
+            url.search = resumed.search;
+            path = resumed.pathname;
+          } catch {
+            return reply.code(400).send({ code: 'INVALID_CONTINUATION' });
+          }
+        }
         const headers = fromNodeHeaders(request.headers);
         for (const key of [...headers.keys()])
           if (
@@ -137,27 +161,80 @@ export async function mountAuthorityHandler(server: FastifyInstance, authority: 
         const payload = form
           ? Object.fromEntries(new URLSearchParams(String(body)))
           : { ...object(body) };
-        // Recovery redirects are fixed destinations, never arbitrary same-origin paths.
+        if (
+          path === '/identity/oauth2/end-session' &&
+          payload.post_logout_redirect_uri !== undefined
+        ) {
+          let clientId = payload.client_id;
+          if (clientId === undefined && typeof payload.id_token_hint === 'string') {
+            try {
+              clientId = decodeJwt(payload.id_token_hint).aud;
+            } catch {
+              /* Fail closed below. */
+            }
+          }
+          // Unverified audience selects only an allowlist; the provider still verifies
+          // the signed hint and its client/session binding before ending a session.
+          const policy =
+            typeof clientId === 'string'
+              ? loginPolicy(authority.config, clientId, true)
+              : undefined;
+          if (!policy || payload.post_logout_redirect_uri !== policy.logoutUrl)
+            return reply.code(400).send({ code: 'INVALID_CALLBACK' });
+        }
+        // Recovery accepts only exact operator-approved screen destinations.
+        const approvedRecovery = (value: unknown, purpose: 'resetUrl' | 'verificationUrl') =>
+          typeof value === 'string' &&
+          authority.config?.AUTH_LOGIN_CLIENTS.some((client) => client[purpose] === value);
+
         const destination =
           path === '/identity/request-password-reset'
-            ? ['redirectTo', `${origin}/reset-password`]
+            ? [
+                'redirectTo',
+                authority.config.AUTH_MODE === 'standalone'
+                  ? `${origin}/identity/ok`
+                  : `${origin}/reset-password`,
+              ]
             : path === '/identity/send-verification-email'
-              ? ['callbackURL', `${origin}/sign-in`]
+              ? [
+                  'callbackURL',
+                  authority.config.AUTH_MODE === 'standalone'
+                    ? `${origin}/identity/ok`
+                    : `${origin}/sign-in`,
+                ]
               : undefined;
         if (destination) {
           const [key, expected] = destination as [string, string];
-          if (payload[key] !== undefined && payload[key] !== expected)
-            return reply.code(400).send({ code: 'INVALID_CALLBACK' });
-          payload[key] = expected;
-        }
-        if (path === '/identity/verify-email' || resetLink) {
-          const expected = `${origin}/${resetLink ? 'reset-password' : 'sign-in'}`;
           if (
-            url.searchParams.has('callbackURL') &&
-            url.searchParams.get('callbackURL') !== expected
+            payload[key] !== undefined &&
+            payload[key] !== expected &&
+            !approvedRecovery(
+              payload[key],
+              path === '/identity/request-password-reset' ? 'resetUrl' : 'verificationUrl',
+            )
           )
             return reply.code(400).send({ code: 'INVALID_CALLBACK' });
-          url.searchParams.set('callbackURL', expected);
+          if (payload[key] === undefined) {
+            payload[key] = expected;
+          }
+        }
+        if (path === '/identity/verify-email' || resetLink) {
+          const expected =
+            authority.config.AUTH_MODE === 'standalone'
+              ? `${origin}/identity/ok`
+              : `${origin}/${resetLink ? 'reset-password' : 'sign-in'}`;
+          if (
+            url.searchParams.has('callbackURL') &&
+            url.searchParams.get('callbackURL') !== expected &&
+            !approvedRecovery(
+              url.searchParams.get('callbackURL'),
+              resetLink ? 'resetUrl' : 'verificationUrl',
+            )
+          )
+            return reply.code(400).send({ code: 'INVALID_CALLBACK' });
+          if (!url.searchParams.has('callbackURL')) {
+            url.searchParams.set('callbackURL', expected);
+          }
         }
         if (request.method === 'POST')
           body = form
@@ -182,7 +259,11 @@ export async function mountAuthorityHandler(server: FastifyInstance, authority: 
         for (const [key, value] of response.headers)
           if (!['set-cookie', 'content-length', 'cache-control', 'referrer-policy'].includes(key))
             reply.header(key, value);
+        const location = response.headers.get('location');
+        const continuation = location ? await captureContinuation(authority, location) : undefined;
+        if (continuation) reply.header('location', continuation.location);
         const cookies = response.headers.getSetCookie();
+        if (continuation?.cookie) cookies.push(continuation.cookie);
         if (cookies.length) reply.header('set-cookie', cookies);
         return content ? reply.send(content) : reply.send();
       } catch {

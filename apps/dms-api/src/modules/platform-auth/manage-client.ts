@@ -9,6 +9,7 @@ import { DmsDatabaseService } from '../access/dms-database/dms-database.service.
 import { captureAuthorityEvent } from '../audit/security-event.js';
 import {
   type AuthorityConfiguration,
+  loginPolicy,
   parseAuthorityEnvironment,
 } from './authority-configuration.js';
 import { type Authority, createAuthority } from './authority-instance.js';
@@ -58,13 +59,16 @@ export async function manageOAuthClient(
       : identity
         ? (config.IDENTITY_SERVICE_CLIENT_ID ?? '')
         : config.DMS_MACHINE_CLIENT_ID);
+  if (clientId.startsWith('unused-')) throw new Error('Explicit client identity required');
+  const login = request.kind === 'login' ? loginPolicy(config, clientId, true) : undefined;
+  if (request.kind === 'login' && !login) throw new Error('Approved login policy required');
   if (
     (identity && clientId !== config.IDENTITY_SERVICE_CLIENT_ID) ||
     (!identity && clientId === config.IDENTITY_SERVICE_CLIENT_ID)
   )
     throw new Error('Client purposes must be distinct');
   if (
-    (request.kind !== 'login' && clientId === config.AUTH_LOGIN_CLIENT_ID) ||
+    (request.kind !== 'login' && !!loginPolicy(config, clientId)) ||
     (request.kind === 'login' && clientId === config.DMS_MACHINE_CLIENT_ID)
   )
     throw new Error('Client purposes must be distinct');
@@ -144,10 +148,10 @@ export async function manageOAuthClient(
             request.kind === 'login'
               ? ['authorization_code', 'refresh_token']
               : ['client_credentials'],
-          ...(request.kind === 'login'
+          ...(login
             ? {
-                redirect_uris: [config.AUTH_LOGIN_CALLBACK_URL],
-                post_logout_redirect_uris: [`${config.AUTH_PUBLIC_ORIGIN}/sign-in`],
+                redirect_uris: [login.callbackUrl],
+                post_logout_redirect_uris: [login.logoutUrl],
                 response_types: ['code' as const],
                 scope: LOGIN_SCOPES.join(' '),
                 require_pkce: true,

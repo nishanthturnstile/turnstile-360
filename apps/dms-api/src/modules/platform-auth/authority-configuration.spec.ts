@@ -47,6 +47,17 @@ describe('authority configuration boundary', () => {
     }
   });
 
+  it('starts explicit machine-only mode without product callback or default client IDs', () => {
+    const env = authorityEnvironment();
+    env.AUTH_MODE = 'standalone';
+    delete env.AUTH_LOGIN_CALLBACK_URL;
+    delete env.AUTH_LOGIN_CLIENT_ID;
+    delete env.DMS_MACHINE_CLIENT_ID;
+    expect(parseAuthorityEnvironment(env).AUTH_MODE).toBe('standalone');
+    env.AUTH_MODE = 'combined';
+    expect(() => parseAuthorityEnvironment(env)).toThrow();
+  });
+
   it('does not invent secrets or clients when unset', () => {
     expect(() => parseAuthorityEnvironment({})).toThrow(/AUTH_SECRET/);
   });

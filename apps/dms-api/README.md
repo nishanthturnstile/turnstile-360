@@ -40,3 +40,14 @@ migrations before starting the updated runtime. No real installation is provisio
 
 Local host testing uses fixed port 23601. Browser authentication uses
 http://localhost:23600. See the [reserved ports](../../architecture.md#reserved-local-ports).
+
+Standalone foundation installation and private operators: [runbook](../../docs/runbooks/dms-standalone.md).
+
+Protected consumer explorer and external-backend examples: [manual testing](../../docs/runbooks/dms-api-explorer.md).
+
+DMS-I03 adds owning transaction/principal context, immutable application audit and atomic
+outbox intent. GET /v1/audit requires dms:audit:read and remains owner-scoped; private
+dms:manage-operator audit-read uses fresh identity and a current DMS operator grant.
+Provision the two private roles before DMS migrations 0006–0007; see the
+[audit runbook](../../docs/runbooks/dms-audit.md). Document audit extends this boundary
+when document persistence ships; no dispatcher or document endpoint is added here.

@@ -3,7 +3,7 @@ import { DMS_MACHINE_SCOPES, IDENTITY_SERVICE_SCOPES } from '@thaarei/dms-contra
 import type { GenericEndpointContext } from 'better-auth';
 import { APIError } from 'better-auth/api';
 import { z } from 'zod';
-import type { AuthorityConfiguration } from './authority-configuration.js';
+import { type AuthorityConfiguration, loginPolicy } from './authority-configuration.js';
 
 export const LOGIN_SCOPES = ['openid', 'profile', 'email', 'offline_access'] as const;
 export const clientApproval = z.object({
@@ -80,6 +80,9 @@ export async function enforceOAuthPolicy(
   )
     return reject('invalid_client');
   const login = approval.kind === 'login';
+  const policy = loginPolicy(config, clientId, login);
+  if (login && !policy) return reject('invalid_client');
+  if (!login && loginPolicy(config, clientId)) return reject('invalid_client');
   const identity = approval.kind === 'identity_service';
   if (
     identity &&
@@ -112,9 +115,9 @@ export async function enforceOAuthPolicy(
         !client.skipConsent ||
         client.clientCredentialsScopes?.length ||
         client.redirectUris?.length !== 1 ||
-        client.redirectUris[0] !== config.AUTH_LOGIN_CALLBACK_URL ||
+        client.redirectUris[0] !== policy?.callbackUrl ||
         client.postLogoutRedirectUris?.length !== 1 ||
-        client.postLogoutRedirectUris[0] !== `${config.AUTH_PUBLIC_ORIGIN}/sign-in`
+        client.postLogoutRedirectUris[0] !== policy?.logoutUrl
       : !client.clientCredentialsScopes?.length ||
         client.clientCredentialsScopes.some((scope) => !allowedScopes.includes(scope)) ||
         client.redirectUris?.length
@@ -132,6 +135,7 @@ export async function enforceOAuthPolicy(
   )
     return reject('invalid_scope');
   if (authorize) {
+    if (input.redirect_uri !== policy?.callbackUrl) return reject('invalid_request');
     if (
       input.response_type !== 'code' ||
       input.code_challenge_method !== 'S256' ||

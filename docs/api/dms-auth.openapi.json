@@ -212,7 +212,10 @@
           },
           "operations": {
             "type": "array",
-            "items": { "type": "string", "enum": ["application-enrollment", "capabilities:read"] }
+            "items": {
+              "type": "string",
+              "enum": ["application-enrollment", "capabilities:read", "audit:read"]
+            }
           },
           "formats": { "type": "array", "items": { "not": {} } },
           "profiles": { "type": "array", "items": { "not": {} } },

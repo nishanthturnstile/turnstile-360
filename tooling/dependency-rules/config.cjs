@@ -3,6 +3,12 @@ const { resolve } = require('node:path');
 module.exports = {
   forbidden: [
     {
+      name: 'public-dms-client-uses-consumer-contracts-only',
+      severity: 'error',
+      from: { path: '^packages/dms-client/' },
+      to: { path: '^packages/dms-contracts/(src|dist)/(index|private|identity-service)' },
+    },
+    {
       name: 'no-unresolved-imports',
       severity: 'error',
       from: {},

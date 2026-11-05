@@ -1,0 +1,113 @@
+[
+  {
+    "schema": "EnrollmentRequest",
+    "valid": true,
+    "value": {
+      "name": "Independent backend"
+    }
+  },
+  {
+    "schema": "EnrollmentRequest",
+    "valid": true,
+    "value": {
+      "name": "\u6587\u6863 DMS"
+    }
+  },
+  {
+    "schema": "EnrollmentRequest",
+    "valid": false,
+    "value": {
+      "name": "App",
+      "tenantId": "untrusted"
+    }
+  },
+  {
+    "schema": "EnrollmentRequest",
+    "valid": false,
+    "value": {
+      "name": ""
+    }
+  },
+  {
+    "schema": "EnrollmentRequest",
+    "valid": false,
+    "value": {
+      "name": "bad/name"
+    }
+  },
+  {
+    "schema": "IdempotencyKey",
+    "valid": true,
+    "value": "request_0123456789"
+  },
+  {
+    "schema": "IdempotencyKey",
+    "valid": false,
+    "value": "short"
+  },
+  {
+    "schema": "ResourceETag",
+    "valid": true,
+    "value": "\"123\""
+  },
+  {
+    "schema": "ResourceETag",
+    "valid": false,
+    "value": "W/\"123\""
+  },
+  {
+    "schema": "RequestId",
+    "valid": false,
+    "value": "caller-chosen"
+  },
+  {
+    "schema": "RetryAfterSeconds",
+    "valid": false,
+    "value": 0
+  },
+  {
+    "schema": "RetryAfterSeconds",
+    "valid": false,
+    "value": 3601
+  },
+  {
+    "schema": "DmsError",
+    "valid": false,
+    "value": {
+      "code": "RAW_SQL_ERROR",
+      "requestId": "safe",
+      "retryable": false
+    }
+  },
+  {
+    "schema": "AuditPage",
+    "valid": true,
+    "value": {
+      "items": [],
+      "nextCursor": null
+    }
+  },
+  {
+    "schema": "AuditQuery",
+    "valid": false,
+    "value": {
+      "limit": "101"
+    }
+  },
+  {
+    "schema": "AuditQuery",
+    "valid": false,
+    "value": {
+      "applicationId": "untrusted"
+    }
+  },
+  {
+    "schema": "AuditPage",
+    "valid": false,
+    "value": {
+      "items": [],
+      "nextCursor": null,
+      "token": "untrusted"
+    }
+  }
+]

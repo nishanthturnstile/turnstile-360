@@ -1,4 +1,4 @@
-import type { DmsErrorCode } from '@thaarei/dms-contracts';
+import type { DmsErrorCode } from '@thaarei/dms-contracts/public';
 
 export type DmsClientErrorCode =
   | 'DMS_UNAVAILABLE'

@@ -1,0 +1,210 @@
+{
+  "interface": "private-process-json-stdin",
+  "command": "dms:manage-operator",
+  "commands": ["bootstrap", "assign", "revoke", "recover", "audit-read"],
+  "description": "Fresh verified authority credentials on every invocation. Explicit tenant-bound DMS grant for audit reads. No HTTP operator route. Bootstrap/recovery require explicit maintenance authority and administrator self proof; assign/revoke require current operator grant. Never enter credentials in argv or consumer Swagger.",
+  "input": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "oneOf": [
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "bootstrap" }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "recover" }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "assign" },
+          "subjectId": { "type": "string", "minLength": 1, "maxLength": 128 }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action", "subjectId"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "revoke" },
+          "subjectId": { "type": "string", "minLength": 1, "maxLength": 128 }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action", "subjectId"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "audit-read" },
+          "applicationId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
+          "cursor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action"],
+        "additionalProperties": false
+      }
+    ]
+  },
+  "auditReadOutput": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "items": {
+        "maxItems": 100,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "applicationId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "resourceType": { "type": "string", "const": "application" },
+            "resourceId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "action": { "type": "string", "const": "application.enrolled" },
+            "actor": {
+              "type": "object",
+              "properties": {
+                "kind": { "type": "string", "const": "machine" },
+                "id": { "type": "string", "minLength": 1, "maxLength": 200 }
+              },
+              "required": ["kind", "id"],
+              "additionalProperties": false
+            },
+            "assertedHuman": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "source": { "type": "string", "const": "application-asserted" },
+                    "subject": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^[A-Za-z0-9_.:@-]+$"
+                    }
+                  },
+                  "required": ["source", "subject"],
+                  "additionalProperties": false
+                },
+                { "type": "null" }
+              ]
+            },
+            "requestId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                { "type": "null" }
+              ]
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          "required": [
+            "id",
+            "applicationId",
+            "resourceType",
+            "resourceId",
+            "action",
+            "actor",
+            "assertedHuman",
+            "requestId",
+            "createdAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "nextCursor": { "anyOf": [{ "type": "string", "maxLength": 2048 }, { "type": "null" }] }
+    },
+    "required": ["items", "nextCursor"],
+    "additionalProperties": false
+  }
+}

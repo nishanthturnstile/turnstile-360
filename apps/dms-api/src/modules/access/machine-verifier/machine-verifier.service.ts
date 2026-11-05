@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DMS_MACHINE_SCOPES } from '@thaarei/dms-contracts';
+import { DMS_MACHINE_SCOPES } from '@thaarei/dms-contracts/public';
 import {
   createRemoteJWKSet,
   customFetch,

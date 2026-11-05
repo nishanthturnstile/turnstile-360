@@ -1,5 +1,5 @@
 import { type ArgumentsHost, Catch, type ExceptionFilter, HttpException } from '@nestjs/common';
-import type { DmsErrorCode } from '@thaarei/dms-contracts';
+import { type DmsErrorCode, dmsErrorSchema } from '@thaarei/dms-contracts/public';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 export function dmsError(status: number, code: DmsErrorCode): never {
@@ -24,12 +24,19 @@ export class DmsExceptionFilter implements ExceptionFilter {
       : typeof inputStatus === 'number' && inputStatus >= 400 && inputStatus < 500
         ? inputStatus
         : 503;
-    const code =
+    const proposed =
       details && typeof details === 'object' && 'code' in details
         ? details.code
         : status === 503
           ? 'DMS_UNAVAILABLE'
           : 'INVALID_REQUEST';
+    const parsed = dmsErrorSchema.shape.code.safeParse(proposed);
+    const code = parsed.success
+      ? parsed.data
+      : status === 503
+        ? 'DMS_UNAVAILABLE'
+        : 'INVALID_REQUEST';
+    if (status === 503) reply.header('retry-after', '1');
     if (status === 401) reply.header('www-authenticate', 'Bearer realm="dms"');
     if (code === 'ENROLLMENT_IN_PROGRESS') reply.header('retry-after', '1');
     return reply

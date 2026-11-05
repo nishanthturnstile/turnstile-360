@@ -316,11 +316,18 @@ pnpm --filter @thaarei/dms-api auth:manage-client < /secure/operator-input.json 
 ```
 
 The input accepts `action`, `kind` (`login` or `machine`), `operatorEmail`,
-`operatorPassword`, optional `clientId` and action-specific fields below. Passwords and
-credentials must never appear in command arguments or shell history. The default client ID
-comes from the corresponding `AUTH_LOGIN_CLIENT_ID` or `DMS_MACHINE_CLIENT_ID`; keep both
-backend configurations consistent. An explicit ID can provision another independent machine
-application. The login policy currently uses the configured Turnstile callback/logout URLs.
+`operatorPassword`, `clientId` and action-specific fields below. Passwords and
+credentials must never appear in command arguments or shell history. In default
+`AUTH_MODE=combined`, omitted IDs use `AUTH_LOGIN_CLIENT_ID`/`DMS_MACHINE_CLIENT_ID`;
+privately managed login aliases retain the fixed Turnstile callback/logout policy.
+In `AUTH_MODE=standalone`, supply an explicit client ID. Machine IDs are independent;
+login IDs must have an exact server-owned `AUTH_LOGIN_CLIENTS` entry. Each entry contains
+`clientId`, `loginUrl`, `consentUrl`, `callbackUrl`, `logoutUrl`, `verificationUrl`,
+`resetUrl`; URL validation and credential-screen origin rules are maintained in
+[architecture](../../architecture.md#standalone-dms-delivery-target).
+Standalone database provisioning selects `DATABASE_PROFILE=dms` to require only auth/DMS
+roles. Follow the [standalone runbook](dms-standalone.md) for private network commands,
+configuration, consumer integration and changing a consumer's registered destinations.
 
 | Action               | Additional fields                                                              | When to use                                                                                                 |
 | -------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |

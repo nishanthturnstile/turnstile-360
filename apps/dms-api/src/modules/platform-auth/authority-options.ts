@@ -74,8 +74,8 @@ export function createAuthorityOptions(
         disableSettingJwtHeader: true,
       }),
       oauthProvider({
-        loginPage: `${config.AUTH_PUBLIC_ORIGIN}/sign-in`,
-        consentPage: `${config.AUTH_PUBLIC_ORIGIN}/sign-in`,
+        loginPage: `${config.AUTH_PUBLIC_ORIGIN}/identity/interaction/login`,
+        consentPage: `${config.AUTH_PUBLIC_ORIGIN}/identity/interaction/consent`,
         scopes: [...LOGIN_SCOPES, ...DMS_MACHINE_SCOPES, ...IDENTITY_SERVICE_SCOPES],
         grantTypes: ['authorization_code', 'refresh_token', 'client_credentials'],
         accessTokenExpiresIn: 300,

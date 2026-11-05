@@ -1,4 +1,4 @@
-import { DMS_MACHINE_SCOPES, type DmsMachineScope } from '@thaarei/dms-contracts';
+import { DMS_MACHINE_SCOPES, type DmsMachineScope } from '@thaarei/dms-contracts/public';
 import { DmsClientError, fixedUrl, jsonRequest, timeout } from './http.js';
 
 export interface MachineAccessToken {

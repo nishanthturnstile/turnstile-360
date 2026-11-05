@@ -7,8 +7,10 @@ export default defineConfig({
   dialect: 'postgresql',
   schema: [
     './src/modules/access/persistence/dms.schema.ts',
+    './src/modules/access/persistence/operator.schema.ts',
     './src/modules/enrollment/persistence/enrollment.schema.ts',
     './src/modules/audit/persistence/security.schema.ts',
+    './src/modules/audit/persistence/audit.schema.ts',
   ],
   out: './database/dms/migrations',
   migrations: { schema: 'dms_migrations' },

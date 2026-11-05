@@ -7,7 +7,7 @@ import {
   type EnrollmentResponse,
   enrollmentRequestSchema,
   enrollmentResponseSchema,
-} from '@thaarei/dms-contracts';
+} from '@thaarei/dms-contracts/public';
 import { DmsClientError, fixedUrl, jsonRequest, timeout } from './http.js';
 import type { MachineTokenProvider } from './tokens.js';
 

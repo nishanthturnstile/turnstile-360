@@ -36,6 +36,27 @@
       "when": 1793451874932,
       "tag": "0004_machine_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793806912073,
+      "tag": "0005_standalone_operator",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793850507830,
+      "tag": "0006_owning_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793850508533,
+      "tag": "0007_audit_privileges",
+      "breakpoints": true
     }
   ]
 }

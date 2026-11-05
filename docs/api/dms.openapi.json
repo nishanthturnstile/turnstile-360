@@ -1,0 +1,1018 @@
+{
+  "openapi": "3.1.0",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "info": {
+    "title": "Thaarei DMS consumer API",
+    "version": "1.2.0",
+    "description": "Implemented consumer control routes only. Obtain short-lived machine tokens outside the browser. Identity sessions do not authorize DMS calls. Enrollment is CLI/backend-only; no document or processing feature is advertised before implementation."
+  },
+  "servers": [{ "url": "/" }],
+  "paths": {
+    "/v1/audit": {
+      "get": {
+        "operationId": "getDmsAudit",
+        "summary": "Read own application audit",
+        "x-dms-policy": "machine",
+        "x-required-scopes": ["dms:audit:read"],
+        "x-browser-execution": true,
+        "description": "Authorization always uses current registration and scope policy. Cookies and explorer access credentials grant no machine access.",
+        "security": [{ "MachineBearer": [] }],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": { "type": "string", "maxLength": 2048 },
+            "description": "Opaque signed keyset cursor, bound to current tenant/principal/filter; every page reauthorizes."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bounded owner-only application audit page; no document resources exist yet.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuditPage" },
+                "example": { "items": [], "nextCursor": null }
+              }
+            }
+          },
+          "400": {
+            "description": "Controlled DMS error (400). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "INVALID_REQUEST",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Controlled DMS error (401). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              },
+              "WWW-Authenticate": {
+                "schema": { "type": "string", "const": "Bearer realm=\"dms\"" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "MACHINE_TOKEN_REQUIRED",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Controlled DMS error (403). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "APPLICATION_DENIED",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Controlled DMS error (503). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              },
+              "Retry-After": {
+                "description": "Seconds before retry. Present on temporary unavailability and ENROLLMENT_IN_PROGRESS; other conflicts are not automatically retryable.",
+                "schema": { "$ref": "#/components/schemas/RetryAfterSeconds" },
+                "example": 1
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "DMS_UNAVAILABLE",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1": {
+      "get": {
+        "operationId": "getDmsServiceInfo",
+        "summary": "Read service identity",
+        "x-dms-policy": "public",
+        "x-required-scopes": [],
+        "x-browser-execution": true,
+        "description": "Unauthenticated service identity only; no registration or scope is required. This endpoint does not claim dependency readiness.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service identity; available independently of consumer registration.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ServiceInfo" },
+                "example": { "name": "Thaarei DMS API" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/capabilities": {
+      "get": {
+        "operationId": "getDmsCapabilities",
+        "summary": "Read implemented capabilities",
+        "x-dms-policy": "machine",
+        "x-required-scopes": ["dms:capabilities:read"],
+        "x-browser-execution": true,
+        "description": "Authorization always uses current registration and scope policy. Cookies and explorer access credentials grant no machine access.",
+        "security": [{ "MachineBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Implemented capabilities and verified application context for the active consumer.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CapabilitiesResponse" },
+                "example": {
+                  "contractVersion": 1,
+                  "applicationId": "11111111-1111-4111-8111-111111111111",
+                  "tenantId": "22222222-2222-4222-8222-222222222222",
+                  "operations": ["application-enrollment", "capabilities:read"],
+                  "formats": [],
+                  "profiles": [],
+                  "languages": [],
+                  "limits": { "accessTokenSeconds": 300, "idempotencyWindowSeconds": 86400 }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Controlled DMS error (400). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "INVALID_REQUEST",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Controlled DMS error (401). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              },
+              "WWW-Authenticate": {
+                "schema": { "type": "string", "const": "Bearer realm=\"dms\"" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "MACHINE_TOKEN_REQUIRED",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Controlled DMS error (403). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "APPLICATION_DENIED",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Controlled DMS error (503). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              },
+              "Retry-After": {
+                "description": "Seconds before retry. Present on temporary unavailability and ENROLLMENT_IN_PROGRESS; other conflicts are not automatically retryable.",
+                "schema": { "$ref": "#/components/schemas/RetryAfterSeconds" },
+                "example": 1
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "DMS_UNAVAILABLE",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/application-enrollments": {
+      "post": {
+        "operationId": "enrollDmsApplication",
+        "summary": "Enroll a privately registered consumer (CLI/backend only)",
+        "x-dms-policy": "enrollment",
+        "x-required-scopes": [],
+        "x-browser-execution": false,
+        "description": "Same Idempotency-Key and body replay the same receipt for 24 hours, after reauthorization. Different bodies conflict. Concurrent work returns ENROLLMENT_IN_PROGRESS with Retry-After: 1. A private enrollment key is required only here. Do not enter it in Swagger.",
+        "security": [{ "MachineBearer": [], "EnrollmentKey": [] }],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/IdempotencyKey" },
+            "example": "11111111-1111-4111-8111-111111111111"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EnrollmentRequest" },
+              "example": { "name": "Independent backend" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated identical enrollment replay; no reactivation of a disabled consumer.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnrollmentResponse" },
+                "example": {
+                  "applicationId": "11111111-1111-4111-8111-111111111111",
+                  "tenantId": "22222222-2222-4222-8222-222222222222",
+                  "status": "active",
+                  "receiptId": "33333333-3333-4333-8333-333333333333",
+                  "replayUntil": "2026-11-05T12:00:00Z"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Enrollment activation and receipt committed atomically.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnrollmentResponse" },
+                "example": {
+                  "applicationId": "11111111-1111-4111-8111-111111111111",
+                  "tenantId": "22222222-2222-4222-8222-222222222222",
+                  "status": "active",
+                  "receiptId": "33333333-3333-4333-8333-333333333333",
+                  "replayUntil": "2026-11-05T12:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Controlled DMS error (400). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "INVALID_REQUEST",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Controlled DMS error (401). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              },
+              "WWW-Authenticate": {
+                "schema": { "type": "string", "const": "Bearer realm=\"dms\"" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "MACHINE_TOKEN_REQUIRED",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Controlled DMS error (403). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "APPLICATION_DENIED",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Controlled DMS error (409). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              },
+              "Retry-After": {
+                "description": "Seconds before retry. Present on temporary unavailability and ENROLLMENT_IN_PROGRESS; other conflicts are not automatically retryable.",
+                "schema": { "$ref": "#/components/schemas/RetryAfterSeconds" },
+                "example": 1
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "IDEMPOTENCY_CONFLICT",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Controlled DMS error (410). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "ENROLLMENT_KEY_EXPIRED",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Controlled DMS error (413). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "INVALID_REQUEST",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Controlled DMS error (415). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "INVALID_REQUEST",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Controlled DMS error (503). See the finite DmsError codes and retryable flag.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server-generated UUID; untrusted caller IDs are not reflected.",
+                "schema": { "$ref": "#/components/schemas/RequestId" },
+                "example": "11111111-1111-4111-8111-111111111111"
+              },
+              "Cache-Control": {
+                "description": "Sensitive control responses are never cached.",
+                "schema": { "type": "string", "const": "private, no-store" },
+                "example": "private, no-store"
+              },
+              "Retry-After": {
+                "description": "Seconds before retry. Present on temporary unavailability and ENROLLMENT_IN_PROGRESS; other conflicts are not automatically retryable.",
+                "schema": { "$ref": "#/components/schemas/RetryAfterSeconds" },
+                "example": 1
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DmsError" },
+                "example": {
+                  "code": "DMS_UNAVAILABLE",
+                  "requestId": "11111111-1111-4111-8111-111111111111",
+                  "retryable": true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "MachineBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "RS256 at+jwt",
+        "description": "Backend client-credentials token for the exact DMS audience, lasting at most 300 seconds. Never enter a machine client secret here."
+      },
+      "EnrollmentKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Thaarei-Enrollment-Key",
+        "description": "Private CLI/backend enrollment only. Browser execution is disabled for enrollment."
+      }
+    },
+    "schemas": {
+      "EnrollmentRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "pattern": "^[\\p{L}\\p{N} ._'()-]+$"
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      },
+      "EnrollmentResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "status": { "type": "string", "const": "active" },
+          "receiptId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "replayUntil": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": ["applicationId", "tenantId", "status", "receiptId", "replayUntil"],
+        "additionalProperties": false
+      },
+      "CapabilitiesResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "contractVersion": { "type": "number", "const": 1 },
+          "applicationId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["application-enrollment", "capabilities:read", "audit:read"]
+            }
+          },
+          "formats": { "type": "array", "items": { "not": {} } },
+          "profiles": { "type": "array", "items": { "not": {} } },
+          "languages": { "type": "array", "items": { "not": {} } },
+          "limits": {
+            "type": "object",
+            "properties": {
+              "accessTokenSeconds": { "type": "number", "const": 300 },
+              "idempotencyWindowSeconds": { "type": "number", "const": 86400 }
+            },
+            "required": ["accessTokenSeconds", "idempotencyWindowSeconds"],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "contractVersion",
+          "applicationId",
+          "tenantId",
+          "operations",
+          "formats",
+          "profiles",
+          "languages",
+          "limits"
+        ],
+        "additionalProperties": false
+      },
+      "DmsError": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "INVALID_REQUEST",
+              "MACHINE_TOKEN_REQUIRED",
+              "INVALID_MACHINE_TOKEN",
+              "MACHINE_TOKEN_EXPIRED",
+              "APPLICATION_DENIED",
+              "SCOPE_DENIED",
+              "OPERATION_DENIED",
+              "TENANT_INPUT_REJECTED",
+              "ENROLLMENT_KEY_INVALID",
+              "ENROLLMENT_KEY_EXPIRED",
+              "ENROLLMENT_KEY_REVOKED",
+              "ENROLLMENT_KEY_USED",
+              "ENROLLMENT_NAME_MISMATCH",
+              "IDEMPOTENCY_CONFLICT",
+              "REPLAY_WINDOW_EXPIRED",
+              "ENROLLMENT_IN_PROGRESS",
+              "DMS_UNAVAILABLE"
+            ]
+          },
+          "requestId": { "type": "string" },
+          "retryable": { "type": "boolean" }
+        },
+        "required": ["code", "requestId", "retryable"],
+        "additionalProperties": false
+      },
+      "ServiceInfo": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": { "name": { "type": "string", "const": "Thaarei DMS API" } },
+        "required": ["name"],
+        "additionalProperties": false
+      },
+      "IdempotencyKey": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_-]{16,128}$"
+      },
+      "ResourceETag": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+        "pattern": "^\"[1-9][0-9]{0,18}\"$"
+      },
+      "RetryAfterSeconds": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3600
+      },
+      "RequestId": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "AuditEvent": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "applicationId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "resourceType": { "type": "string", "const": "application" },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "action": { "type": "string", "const": "application.enrolled" },
+          "actor": {
+            "type": "object",
+            "properties": {
+              "kind": { "type": "string", "const": "machine" },
+              "id": { "type": "string", "minLength": 1, "maxLength": 200 }
+            },
+            "required": ["kind", "id"],
+            "additionalProperties": false
+          },
+          "assertedHuman": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "source": { "type": "string", "const": "application-asserted" },
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_.:@-]+$"
+                  }
+                },
+                "required": ["source", "subject"],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          },
+          "requestId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              { "type": "null" }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "applicationId",
+          "resourceType",
+          "resourceId",
+          "action",
+          "actor",
+          "assertedHuman",
+          "requestId",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "AuditPage": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "items": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "applicationId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "resourceType": { "type": "string", "const": "application" },
+                "resourceId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "action": { "type": "string", "const": "application.enrolled" },
+                "actor": {
+                  "type": "object",
+                  "properties": {
+                    "kind": { "type": "string", "const": "machine" },
+                    "id": { "type": "string", "minLength": 1, "maxLength": 200 }
+                  },
+                  "required": ["kind", "id"],
+                  "additionalProperties": false
+                },
+                "assertedHuman": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "source": { "type": "string", "const": "application-asserted" },
+                        "subject": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128,
+                          "pattern": "^[A-Za-z0-9_.:@-]+$"
+                        }
+                      },
+                      "required": ["source", "subject"],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "requestId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                }
+              },
+              "required": [
+                "id",
+                "applicationId",
+                "resourceType",
+                "resourceId",
+                "action",
+                "actor",
+                "assertedHuman",
+                "requestId",
+                "createdAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "nextCursor": { "anyOf": [{ "type": "string", "maxLength": 2048 }, { "type": "null" }] }
+        },
+        "required": ["items", "nextCursor"],
+        "additionalProperties": false
+      },
+      "AuditQuery": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "limit": { "type": "string", "pattern": "^(?:[1-9]|[1-9][0-9]|100)$" },
+          "cursor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "headers": {
+      "ResourceETag": {
+        "description": "Future resource revisions use strong quoted positive decimal ETags. No current route emits one.",
+        "schema": { "$ref": "#/components/schemas/ResourceETag" }
+      },
+      "RetryAfter": {
+        "description": "Seconds before retry. Present on temporary unavailability and ENROLLMENT_IN_PROGRESS; other conflicts are not automatically retryable.",
+        "schema": { "$ref": "#/components/schemas/RetryAfterSeconds" },
+        "example": 1
+      },
+      "OperationLocation": {
+        "description": "Future 202 operations provide a same-origin status URL and Retry-After. No asynchronous operation is currently implemented.",
+        "schema": { "type": "string", "format": "uri-reference" }
+      }
+    }
+  }
+}
