@@ -156,6 +156,13 @@ crypto, tamper/component-swap assertions or runtime limits are changed.
 Local verification: focused crypto test passes in 70 ms versus 2.24 seconds before;
 uncached API unit suite 24/24 passes across four files. Biome and git diff --check pass.
 Remaining CI on the corrected head gates merge.
+2026-11-06 a7cffd0 CI follow-up: all seven PR jobs passed, including standalone
+packaged browser tests and workspace/container checks. The duplicate push checks job
+was cancelled at its 15-minute deadline: Chromium setup alone consumed 8m35s; subsequent
+check/build/test passed and database tests were still passing at cancellation. GitHub's
+annotation confirms the job time limit. Raised only the checks job budget to 25 minutes;
+application/test deadlines are unchanged. Workflow YAML/Biome/diff verification applies;
+await corrected-head push and PR checks before merge.
 Next: resolve any CI/review findings and merge after readiness checks.
 I20 exact-candidate/customer acceptance remains pending under its existing handoff.
 
