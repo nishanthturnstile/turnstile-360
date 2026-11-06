@@ -36,3 +36,33 @@ Standalone foundation operations: [DMS runbook](runbooks/dms-standalone.md).
 DMS contract/explorer operations: [manual testing runbook](runbooks/dms-api-explorer.md).
 
 DMS owning audit/private inspection: [audit runbook](runbooks/dms-audit.md).
+
+Secured DMS storage boundary: [storage runbook](runbooks/dms-storage.md).
+
+DMS document registry/admission: [admission runbook](runbooks/dms-admission.md).
+
+Document upload/batch lifecycle and direct transfer: [runbook](runbooks/dms-uploads.md).
+
+Authoritative work, private roles and broker recovery: [runbook](runbooks/dms-work.md).
+Native assessment, isolation and publication: [runbook](runbooks/dms-assessment.md).
+First usable secure document transfer: [runbook](runbooks/dms-secure-transfer.md).
+Version history and reassessed binary restoration: [runbook](runbooks/dms-versions.md).
+
+- [Document metadata, tags and references](runbooks/dms-metadata.md)
+
+- [Explicit application sharing](runbooks/dms-sharing.md)
+
+- [Soft deletion and logical restoration](runbooks/dms-lifecycle.md)
+
+I14 native/Office/tabular/email runtime and manual qualification: [extraction runbook](runbooks/dms-extraction.md).
+
+I15 English OCR, mixed pages and qualification: [OCR runbook](runbooks/dms-ocr.md).
+I20 synthetic qualification, independent consumers, upgrade/rollback and controlled target acceptance: [handover runbook](runbooks/dms-handover.md).
+
+I16 results, reprocessing and optional offline structure: [results runbook](runbooks/dms-results.md).
+
+Permission-aware discovery: [runbook](runbooks/dms-discovery.md).
+
+- [Standalone distribution and operations](runbooks/dms-distribution.md)
+
+- [DMS coherent backup, recovery and disposal](runbooks/dms-recovery.md)

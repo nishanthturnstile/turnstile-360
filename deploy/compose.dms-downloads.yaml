@@ -1,0 +1,8 @@
+# Add after the uploads/work/assessment overlays to enable original-read signing.
+services:
+  dms-api:
+    env_file:
+      - { path: ../.env.dms, format: raw }
+      - { path: ../.env.dms-upload, format: raw }
+      - { path: ../.env.dms-download, format: raw }
+    networks: [default, storage, work]

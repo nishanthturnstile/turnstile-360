@@ -49,6 +49,7 @@ export async function verifyMachineToken(
   keys: JWTVerifyGetKey,
   issuer: string,
   audience: string,
+  allowedScopes: readonly string[] = DMS_MACHINE_SCOPES,
 ): Promise<MachinePrincipal> {
   try {
     const header = decodeProtectedHeader(token);
@@ -95,7 +96,7 @@ export async function verifyMachineToken(
     const scopes = payload.scope.split(' ');
     if (
       !scopes.length ||
-      scopes.some((scope) => !(DMS_MACHINE_SCOPES as readonly string[]).includes(scope)) ||
+      scopes.some((scope) => !allowedScopes.includes(scope)) ||
       new Set(scopes).size !== scopes.length
     )
       return dmsError(403, 'SCOPE_DENIED');

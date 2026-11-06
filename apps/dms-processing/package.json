@@ -7,8 +7,8 @@
   "scripts": {
     "build": "uv lock --check && uv build",
     "typecheck": "uv run --locked mypy src",
-    "check": "uv run --locked ruff check . ../../examples/dms ../../scripts/check-dms-contracts.py && uv run --locked ruff format --check . ../../examples/dms ../../scripts/check-dms-contracts.py && uv run --locked mypy src ../../examples/dms/backend.py ../../scripts/check-dms-contracts.py",
-    "test": "uv run --locked turnstile-processing"
+    "check": "uv run --locked ruff check . ../../examples/dms ../../scripts/check-dms-contracts.py && uv run --locked ruff format --check . ../../examples/dms ../../scripts/check-dms-contracts.py && uv run --locked mypy src ../../examples/dms/backend.py ../../examples/dms/transfer.py ../../examples/dms/secure_transfer.py ../../examples/dms/metadata.py ../../examples/dms/results.py ../../examples/dms/discovery.py ../../scripts/check-dms-contracts.py",
+    "test": "uv run --locked turnstile-processing check && uv run --locked pytest -q"
   },
   "description": "Document processing runtime for the Thaarei Document Management System",
   "author": "Thaarei"

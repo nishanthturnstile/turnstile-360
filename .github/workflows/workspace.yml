@@ -12,6 +12,26 @@ env:
   TURBO_TELEMETRY_DISABLED: "1"
 
 jobs:
+  dms-standalone:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+      - run: npm install --global pnpm@12.16.1
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          version: "0.13.6"
+          python-version: "3.13.18"
+      - run: pnpm install --frozen-lockfile
+      - run: docker build -f apps/dms-api/Dockerfile -t thaarei-dms-api:ci .
+      - name: Independent DMS authority database lane
+        run: pnpm test:dms:standalone
+        env:
+          DMS_STANDALONE_IMAGE: thaarei-dms-api:ci
+
   checks:
     runs-on: ubuntu-24.04
     timeout-minutes: 15

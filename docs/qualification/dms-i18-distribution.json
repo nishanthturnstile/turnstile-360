@@ -1,0 +1,84 @@
+{
+  "version": "0.18.0",
+  "checkedAt": "2026-11-06T06:49:21.624Z",
+  "scope": "Isolated local Linux-container qualification; no installed environment or customer target changed.",
+  "environment": {
+    "engine": "Docker 29.9.2",
+    "compose": "5.6.1",
+    "host": "Docker Desktop / WSL2 Linux 6.18.54.1-microsoft-standard-WSL2",
+    "platform": "linux/amd64"
+  },
+  "authority": "bundled-better-auth",
+  "mail": "Private Mailpit STARTTLS with trusted test CA; no external email sent.",
+  "sourceContacts": ["nishanth@thaarei.com", "technology@thaarei.com", "muthurema@thaarei.com"],
+  "images": [
+    {
+      "name": "thaarei-dms-api:0.18.0",
+      "id": "sha256:5a4ca48e25d5a9fc1f2a22b578f3e414fffce86968eaf56b6413bafc2eda8146"
+    },
+    {
+      "name": "thaarei-dms-processing:0.18.0",
+      "id": "sha256:cc8e66b8300fbfb6dfd648572bf6162c98a8b23c5c886ee46f93c820699c5fa8"
+    },
+    {
+      "name": "thaarei-dms-storage:0.18.0",
+      "id": "sha256:7d233d20d6409c0d319ce84dae659070ee62a78665cb38da240646019826e62f"
+    },
+    {
+      "name": "thaarei-dms-bundled-scanner:0.18.0",
+      "id": "sha256:b2cd36661404c1d03dc2355ba98a6f11ece4ce9787f54b1b15931985fea6416c"
+    },
+    {
+      "name": "thaarei-dms-processing-structured:0.18.0",
+      "id": "sha256:64f0a101d4d50ad87940dd0e78529d0446ce105e75fecd1f1d0c2d40a913be31"
+    },
+    {
+      "name": "thaarei-dms-bundled-postgres:0.18.0",
+      "id": "sha256:5c4783a8cc3f0074912164f94dfa1be4e043438f0f707cf968d7af9a0d31a2c8",
+      "upstream": "postgres:18.6-bookworm@sha256:5c4783a8cc3f0074912164f94dfa1be4e043438f0f707cf968d7af9a0d31a2c8"
+    },
+    {
+      "name": "thaarei-dms-bundled-broker:0.18.0",
+      "id": "sha256:1528a88eebf2bc4d0ab7e9d5d9bc542e9bdf5e1b105e65848fcf8de5c2186528",
+      "upstream": "rabbitmq:4.3.7-management-alpine@sha256:1528a88eebf2bc4d0ab7e9d5d9bc542e9bdf5e1b105e65848fcf8de5c2186528"
+    }
+  ],
+  "inventory": {
+    "images": 7,
+    "packageOccurrences": 1523,
+    "installedLegalFiles": 1533,
+    "embeddedJarNoticeCopies": 338,
+    "checksumsVerified": true
+  },
+  "verified": [
+    "Fresh protected configuration, distinct database/S3/AMQP/authority credentials, auth/DMS-only provisioning and migrations without Turnstile.",
+    "Actual previous I17 schema/authority installation upgraded through migrations 0044\u20130045, preserving issuer/signing keys, operator/work grants and enrolled consumer.",
+    "Canonical container DNS/HTTPS discovery and token issuance; private-route exposure denied; API readiness independent of processing outages.",
+    "Official main/daily/bytecode CVD hash and signature verification, atomic offline import, corrupt manifest rejected without changing active set; read-only online updater startup.",
+    "Real broker/coordinator/publisher/native scanner/extractor flow: independent HTTPS upload, accepted original and hash-matching authorized download.",
+    "Optional structured profile off/on/off, actual offline Docling execution and immutable accepted artifact delivery; private maintenance sees enabled structure.",
+    "Real coordinator/broker/publisher/worker restarts and existing-download availability during processing outage.",
+    "RS256 staged JWKS prepublication, early activation rejected, explicit activation after 60 seconds, new key selected and old JWT grace.",
+    "OAuth secret rotation rejects retired secret; local-first application disable rejects already issued machine token.",
+    "Mailpit verification and recovery, old password/session rejection, fresh private administrator proof after reset.",
+    "All long-running service users/resource limits, no published host ports, Docker health probes match configured endpoints.",
+    "Production authentication failure: credential/query marker absent from response and real API container logs.",
+    "Offline default/structured processing preflight under nonroot, dropped capabilities, seccomp, read-only root and bounded resources.",
+    "Partially initialized distribution export rejected before Docker operations."
+  ],
+  "workspace": {
+    "check": "pass",
+    "build": "pass",
+    "test": "pass",
+    "pythonUnitPassed": 31,
+    "pythonOptionalRuntimeSkips": 24,
+    "integration": "pass",
+    "databasePassed": 294,
+    "databaseRuntimeSkips": 6,
+    "databaseFiles": 16,
+    "owningDmsPassed": 75,
+    "owningDmsRuntimeSkips": 3,
+    "realStorageBrowserNodePython": "pass"
+  },
+  "remaining": "DMS-I19 coherent backup/recovery/disposal and DMS-I20 complete customer release/redistribution review, target Linux/Dokploy ingress/real customer mail and hardware acceptance. No external-authority option or high availability claimed."
+}

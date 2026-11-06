@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "candidateVersion": null,
+  "sourceRevision": null,
+  "candidateInventorySha256": null,
+  "customerInstallation": null,
+  "deploymentAuthorized": false,
+  "targetAccepted": false,
+  "manualJourneyCompleted": false,
+  "acceptedBy": null,
+  "acceptedAt": null,
+  "gates": {
+    "canonicalDnsTlsAndDokployIngress": {
+      "passed": false,
+      "evidence": null,
+      "reviewer": null,
+      "reviewedAt": null
+    },
+    "clockAndSecretDelivery": {
+      "passed": false,
+      "evidence": null,
+      "reviewer": null,
+      "reviewedAt": null
+    },
+    "singleTenantAndIntendedAuthority": {
+      "passed": false,
+      "evidence": null,
+      "reviewer": null,
+      "reviewedAt": null
+    },
+    "applicationScopesGrantsAndRevocation": {
+      "passed": false,
+      "evidence": null,
+      "reviewer": null,
+      "reviewedAt": null
+    },
+    "manualExplorerAndIndependentConsumerJourney": {
+      "passed": false,
+      "evidence": null,
+      "reviewer": null,
+      "reviewedAt": null
+    },
+    "enabledOfflineProcessorModelsAndUpdates": {
+      "passed": false,
+      "evidence": null,
+      "reviewer": null,
+      "reviewedAt": null
+    },
+    "declaredWorkloadAndSustainedBurstCapacity": {
+      "passed": false,
+      "evidence": null,
+      "reviewer": null,
+      "reviewedAt": null
+    },
+    "independentOffHostRepositoryAndKeyEscrow": {
+      "passed": false,
+      "evidence": null,
+      "reviewer": null,
+      "reviewedAt": null
+    },
+    "realisticVolumeRecoveryRpoRto": {
+      "passed": false,
+      "evidence": null,
+      "reviewer": null,
+      "reviewedAt": null
+    },
+    "compatibleUpgradeRollbackAndIncidentOwnership": {
+      "passed": false,
+      "evidence": null,
+      "reviewer": null,
+      "reviewedAt": null
+    },
+    "licenseNoticesAndCoveredSourceReview": {
+      "passed": false,
+      "evidence": null,
+      "reviewer": null,
+      "reviewedAt": null
+    },
+    "cleanReviewedSourceAndExactInventory": {
+      "passed": false,
+      "evidence": null,
+      "reviewer": null,
+      "reviewedAt": null
+    }
+  },
+  "privacy": "Record redacted outcomes and evidence references only; no passwords, tokens, signed URLs or customer documents."
+}

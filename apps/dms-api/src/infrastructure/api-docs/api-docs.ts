@@ -151,7 +151,11 @@ export async function mountApiDocs(server: FastifyInstance) {
             target.pathname.startsWith('/docs/') ||
             target.pathname === '/v1' ||
             target.pathname === '/v1/capabilities' ||
-            target.pathname === '/v1/audit'
+            target.pathname === '/v1/audit' ||
+            target.pathname === '/v1/admission-policy' ||
+            target.pathname === '/v1/documents' ||
+            /^\/v1\/(?:uploads|upload-batches)\/[a-f0-9-]{36}$/.test(target.pathname) ||
+            /^\/v1\/documents\/[a-f0-9-]{36}(?:\/audit)?$/.test(target.pathname)
           )
         )
           throw new Error(

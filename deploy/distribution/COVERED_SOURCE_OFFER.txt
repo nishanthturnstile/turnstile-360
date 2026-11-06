@@ -1,0 +1,35 @@
+Thaarei — third-party covered-source offer
+
+For third-party programs in this distribution whose licenses require a source offer,
+Thaarei offers any third party the complete corresponding source for the exact covered
+binaries, including covered modifications and required build/installation materials,
+under the applicable upstream licenses. Identify the release and image digest from
+RELEASE.json and the SPDX inventories when requesting source.
+
+Contact any or all of:
+  nishanth@thaarei.com
+  technology@thaarei.com
+  muthurema@thaarei.com
+
+This offer remains valid for at least three years from the date Thaarei last supplies
+these binaries. Where the applicable license requires a longer period while spare
+parts or customer support are offered for a product model, that longer period applies.
+Network delivery is available without charge. If physical delivery is requested,
+charges will not exceed the reasonable physical cost of conveying the source.
+No further restriction is placed on recipients' rights under the applicable license.
+
+source-access.json records upstream source locations and versions. The included build
+recipes, patch/configuration files, notices and image-specific legal archives accompany
+this offer; requests are not limited to the files already present in the bundle.
+RabbitMQ's MPL source is available at the pinned upstream release location recorded
+there, with the MPL terms retained. ClamAV and covered OS/native components retain their
+respective GPL/LGPL and other source obligations, including any required installation
+information. Component separation does not remove those distribution obligations.
+
+This offer covers the third-party material and any modifications covered by its
+applicable license. It does not grant an open-source license to independent Thaarei-owned
+application code or documentation, which remains under the accompanying LICENSE.
+Third-party license texts, notices and exceptions remain applicable and are retained.
+
+This file is part of the candidate's distribution materials. A locally assembled or
+verified candidate does not itself authorize publishing, customer release or deployment.

@@ -187,3 +187,5 @@ Runtime/image/Dokploy/customer TLS acceptance must be reported separately from s
 
 For current-grant private audit inspection with the dedicated operator database role, see
 [the audit runbook](dms-audit.md). Inspection does not require migration credentials.
+
+Complete versioned installation and operations: [distribution runbook](dms-distribution.md).

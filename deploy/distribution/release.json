@@ -1,0 +1,39 @@
+{
+  "version": "0.20.0",
+  "platform": "linux/amd64",
+  "authority": "bundled-better-auth",
+  "sourceContacts": ["nishanth@thaarei.com", "technology@thaarei.com", "muthurema@thaarei.com"],
+  "sourceOfferYears": 3,
+  "sbom": {
+    "tool": "syft",
+    "version": "1.57.0",
+    "archive": "https://github.com/anchore/syft/releases/download/v1.57.0/syft_1.57.0_linux_amd64.tar.gz",
+    "sha256": "9c077a7d43029b3b13e98a8db720661e700c4d58db6352153a06395ae4a2a704"
+  },
+  "images": [
+    {
+      "name": "thaarei-dms-api:0.20.0",
+      "dockerfile": "apps/dms-api/Dockerfile"
+    },
+    {
+      "name": "thaarei-dms-processing:0.20.0",
+      "dockerfile": "apps/dms-processing/Dockerfile",
+      "target": "default"
+    },
+    {
+      "name": "thaarei-dms-storage:0.20.0",
+      "dockerfile": "deploy/storage/Dockerfile",
+      "target": "standalone"
+    },
+    {
+      "name": "thaarei-dms-bundled-scanner:0.20.0",
+      "dockerfile": "deploy/assessment/Dockerfile"
+    },
+    {
+      "name": "thaarei-dms-processing-structured:0.20.0",
+      "dockerfile": "apps/dms-processing/Dockerfile",
+      "target": "structured",
+      "optional": true
+    }
+  ]
+}

@@ -38,7 +38,13 @@ export class DmsExceptionFilter implements ExceptionFilter {
         : 'INVALID_REQUEST';
     if (status === 503) reply.header('retry-after', '1');
     if (status === 401) reply.header('www-authenticate', 'Bearer realm="dms"');
-    if (code === 'ENROLLMENT_IN_PROGRESS') reply.header('retry-after', '1');
+    if (code === 'CAPACITY_EXCEEDED') reply.header('retry-after', '2');
+    if (
+      code === 'ENROLLMENT_IN_PROGRESS' ||
+      code === 'ADMISSION_IN_PROGRESS' ||
+      code === 'PROCESSING_IN_PROGRESS'
+    )
+      reply.header('retry-after', '1');
     return reply
       .code(status)
       .header('cache-control', 'no-store')
@@ -46,7 +52,12 @@ export class DmsExceptionFilter implements ExceptionFilter {
       .send({
         code,
         requestId: request.id,
-        retryable: status === 503 || code === 'ENROLLMENT_IN_PROGRESS',
+        retryable:
+          status === 503 ||
+          code === 'ENROLLMENT_IN_PROGRESS' ||
+          code === 'ADMISSION_IN_PROGRESS' ||
+          code === 'PROCESSING_IN_PROGRESS' ||
+          code === 'CAPACITY_EXCEEDED',
       });
   }
 }

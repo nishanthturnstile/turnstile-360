@@ -1,0 +1,52 @@
+{
+  "dataset": "thaarei-owned-structure-v1",
+  "scope": "Repository-owned printed table PNG/PDF and native/scanned/mixed/blank PDF; bounded fixture evidence, not a general table accuracy claim.",
+  "processor": "docling",
+  "processorVersion": "2.146.0",
+  "configurationVersion": "docling-layout-v1",
+  "layoutRevision": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8",
+  "tableRevision": "fc0f2d45e2218ea24bce5045f58a389aed16dc23",
+  "image": "sha256:e44057c7cb2941d57f69308a462af64e4d7d4d303e1fe4cc092e407cc6acb63c",
+  "enforcedRuntime": {
+    "network": "none",
+    "readOnlyRoot": true,
+    "capabilitiesDropped": "ALL",
+    "cpu": 1,
+    "containerMemoryBytes": 4294967296,
+    "virtualAddressBytes": 8589934592,
+    "parserScratchBytes": 134217728,
+    "intermediateFileBytes": 104857600,
+    "artifactBytes": 26214400,
+    "pageSeconds": 120,
+    "documentSeconds": 480,
+    "outerSeconds": 510
+  },
+  "offline": true,
+  "uid": 10001,
+  "cases": [
+    {
+      "case": "table.png",
+      "status": "SUCCEEDED",
+      "sourceUnits": 1,
+      "layoutPages": 1,
+      "artifactBytes": 5564,
+      "wallSeconds": 72.97
+    },
+    {
+      "case": "table.pdf",
+      "status": "SUCCEEDED",
+      "sourceUnits": 1,
+      "layoutPages": 1,
+      "artifactBytes": 5182,
+      "wallSeconds": 62.119
+    },
+    {
+      "case": "mixed.pdf",
+      "status": "SUCCEEDED",
+      "sourceUnits": 4,
+      "layoutPages": 4,
+      "artifactBytes": 5774,
+      "wallSeconds": 209.811
+    }
+  ]
+}

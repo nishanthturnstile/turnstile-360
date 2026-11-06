@@ -20,7 +20,7 @@ describe('protected consumer explorer and route contract', () => {
     vi.stubEnv('HOST', '127.0.0.1');
     vi.stubEnv('AUTH_SECRET', '');
     app = await createApplication(false, (route) => {
-      const path = route.url.replace(/\/$/, '');
+      const path = route.url.replace(/\/$/, '').replace(/:([^/]+)/g, '{$1}');
       if (path === '/v1' || path.startsWith('/v1/'))
         for (const method of Array.isArray(route.method) ? route.method : [route.method])
           physicalRoutes.push({ method, path });
@@ -63,12 +63,39 @@ describe('protected consumer explorer and route contract', () => {
     expect(
       (await app.inject({ method: 'GET', url: '/docs/json', headers: { authorization } })).json(),
     ).toEqual(dmsPublicOpenApi);
-    expect(Object.keys(spec.json().paths).sort()).toEqual([
-      '/v1',
-      '/v1/application-enrollments',
-      '/v1/audit',
-      '/v1/capabilities',
-    ]);
+    expect(Object.keys(spec.json().paths).sort()).toEqual(
+      [
+        '/v1',
+        '/v1/search',
+        '/v1/application-enrollments',
+        '/v1/admission-policy',
+        '/v1/audit',
+        '/v1/documents',
+        '/v1/documents/{documentId}',
+        '/v1/documents/{documentId}/audit',
+        '/v1/documents/{documentId}/permissions',
+        '/v1/documents/{documentId}/lifecycle',
+        '/v1/documents/{documentId}/restore',
+        '/v1/documents/{documentId}/references',
+        '/v1/documents/{documentId}/references/{referenceId}',
+        '/v1/documents/{documentId}/download',
+        '/v1/documents/{documentId}/processing',
+        '/v1/documents/{documentId}/content',
+        '/v1/documents/{documentId}/versions',
+        '/v1/documents/{documentId}/versions/uploads',
+        '/v1/documents/{documentId}/versions/{versionId}',
+        '/v1/documents/{documentId}/versions/{versionId}/restore',
+        '/v1/documents/{documentId}/versions/{versionId}/reprocess',
+        '/v1/capabilities',
+        '/v1/uploads',
+        '/v1/uploads/{uploadId}',
+        '/v1/uploads/{uploadId}/complete',
+        '/v1/uploads/{uploadId}/refresh',
+        '/v1/upload-batches',
+        '/v1/upload-batches/{batchId}',
+        '/v1/upload-batches/{batchId}/close',
+      ].sort(),
+    );
   });
   it('normalizes stock UI entries and rejects alternate configuration or wildcard assets', async () => {
     for (const url of [
@@ -182,13 +209,26 @@ describe('protected consumer explorer and route contract', () => {
           const method = Reflect.getMetadata(METHOD_METADATA, handler);
           if (method === undefined) continue;
           const suffix = Reflect.getMetadata(PATH_METADATA, handler) as string;
-          const path = `/v1/${root ?? ''}/${suffix ?? ''}`.replace(/\/+/g, '/').replace(/\/$/, '');
+          const path = `/v1/${root ?? ''}/${suffix ?? ''}`
+            .replace(/\/+/g, '/')
+            .replace(/\/$/, '')
+            .replace(/:([^/]+)/g, '{$1}');
           const id = reflector.getAllAndOverride<string>(DMS_OPERATION, [handler, type]);
           const contract = DMS_PUBLIC_ROUTES.find((route) => route.operationId === id);
           expect(contract, `Undocumented handler ${path}`).toBeDefined();
           expect(contract?.path).toBe(path);
           expect(contract?.method).toBe(
-            method === 0 ? 'GET' : method === 1 ? 'POST' : 'UNSUPPORTED',
+            method === 0
+              ? 'GET'
+              : method === 1
+                ? 'POST'
+                : method === 2
+                  ? 'PUT'
+                  : method === 3
+                    ? 'DELETE'
+                    : method === 4
+                      ? 'PATCH'
+                      : 'UNSUPPORTED',
           );
           const isPublic =
             reflector.getAllAndOverride<boolean>(DMS_PUBLIC, [handler, type]) ?? false;

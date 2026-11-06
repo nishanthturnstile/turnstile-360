@@ -21,7 +21,7 @@ services:
     build:
       context: ..
       dockerfile: apps/dms-api/Dockerfile
-    env_file: ../.env.dms
+    env_file: [{ path: ../.env.dms, format: raw }]
     environment:
       AUTH_MODE: standalone
       AUTH_PROFILE: production

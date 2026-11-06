@@ -18,15 +18,49 @@ export async function createApplication(
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({
-      logger: logging,
+      logger: logging
+        ? {
+            serializers: {
+              err: () => ({ type: 'RequestError', message: 'Request rejected', stack: '' }),
+              req: () => ({
+                method: 'REDACTED',
+                url: 'REDACTED',
+                hostname: '',
+                remoteAddress: '',
+                remotePort: 0,
+              }),
+              res: (reply: { statusCode: number }) => ({ statusCode: reply.statusCode }),
+            },
+          }
+        : false,
       genReqId: () => randomUUID(),
       bodyLimit: 16384,
+      requestTimeout: 30000,
+      connectionTimeout: 10000,
+      keepAliveTimeout: 5000,
+      forceCloseConnections: 'idle',
       logController: new LogController({ disableRequestLogging: true }),
     }),
     logging ? {} : { logger: false },
   );
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .addHook('onRoute', (options) => {
+      if (
+        (options.method === 'POST' || options.method === 'PATCH') &&
+        (options.url === '/v1/documents/:documentId' ||
+          options.url === '/v1/uploads' ||
+          options.url === '/v1/documents/:documentId/versions/uploads')
+      )
+        options.bodyLimit = 32768;
+      if (options.method === 'POST' && options.url === '/v1/upload-batches')
+        options.bodyLimit = 266240;
+    });
   if (observeRoute) app.getHttpAdapter().getInstance().addHook('onRoute', observeRoute);
-  app.setGlobalPrefix('v1', { exclude: ['health/live', 'health/ready/auth'] });
+  app.setGlobalPrefix('v1', {
+    exclude: ['health/live', 'health/ready/auth', 'health/ready/api', 'health/ready/processing'],
+  });
   await mountApiDocs(app.getHttpAdapter().getInstance());
   const telemetry = app.get(SecurityTelemetryService);
   telemetry.enable(logging);
@@ -44,7 +78,10 @@ export async function createApplication(
     .getInstance()
     .addHook('onSend', async (request, reply, payload) => {
       if (request.url.startsWith('/v1'))
-        reply.header('cache-control', 'private, no-store').header('x-request-id', request.id);
+        reply
+          .header('cache-control', 'private, no-store')
+          .header('referrer-policy', 'no-referrer')
+          .header('x-request-id', request.id);
       return payload;
     });
   app.enableShutdownHooks();

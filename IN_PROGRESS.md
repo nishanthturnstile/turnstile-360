@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-11-05
+Last updated: 2026-11-06
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -31,8 +31,10 @@ registration/scope checks, bound transactional enrollment, local-first disableme
 bounded audit. The typed DMS client and product-permission-protected capability request
 use a separate machine token over real HTTP. Login/recovery/reset and safe session/logout UI,
 bounded security telemetry and Mailpit development/pilot configuration are implemented.
-Real client provisioning/enrollment,
-document/processing/business capabilities and source/data migration remain incomplete.
+DMS-I01–I19 now implement and locally qualify standalone identity, document and processing
+capabilities, coherent backup/recovery and controlled disposal. Customer onboarding, customer
+release and target acceptance (I20), Turnstile business functionality and source/data migration
+remain pending their authorized scopes.
 A persistent local-development authentication installation has now been provisioned and
 passes live login/recovery/logout and machine-enrollment/capability checks. Earlier feature
 verification used disposable fixtures; no real customer has been onboarded.
@@ -113,6 +115,904 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+DMS-REVIEW-02 — **In progress** (owner: Codex, 2026-11-06). Address the four
+review findings: terminal upload accounting, recovery inventory of unconfirmed copies,
+transient binary-restore storage failures and disposal fairness. Add focused production-path
+regressions, run workspace checks, then commit all authorized branch work and open/merge
+a PR to development after checks/review. Preserve installed services and private evidence.
+
+
+DMS-I20 — **In progress** (owner: Codex, 2026-11-06), on
+feat/dms-i01-standalone-foundation. Implementing the requirement evidence ledger, independent
+consumer/manual qualification, exact candidate inventory, upgrade/rollback and handover
+recipes, operating-mix measurements and controlled target acceptance. Preserve all existing
+uncommitted work and the installed environment. Development/test mail stays in Mailpit.
+Local evidence must not imply customer deployment or target acceptance.
+
+Implemented the 0.20.0 draft candidate configuration, generated 203-ID FR/NFR evidence
+ledger, standard-library-only independent A/B HTTPS consumer, synthetic 24-file timed mix
+plus 13 format-family cases, separate read-only private queue/resource observations,
+exact-image qualification wrapper, standalone DMS CI job and handover/target templates.
+The selected local profile is owner-authorized; working days/hours, arrival/burst bounds,
+OCR/structured share and measurement limitations are explicit. No new migration or consumer
+API was added. Compatibility qualification adds explicit I19 application rollback/forward;
+full recovery and optional structured on/off checks reuse the isolated distribution lane.
+All human/customer/legal approvals remain false/pending. External authority qualification
+is explicitly conditional rather than inferred from the bundled authority tests.
+
+2026-11-06 verification: pnpm check, build and test pass (Turbo cache use recorded in private
+logs). Fastify integration passes 28 tests across seven files, then pnpm test:integration
+fails entering the database lane because Docker Desktop disconnected. Candidate build
+also stopped with Docker EOF during the optional structured image build. The Linux socket
+is absent; docker desktop start reports "Docker Desktop terminated unexpectedly". No I20
+exact-image, operating-mix, recovery or rollback pass is claimed; no release acceptance report
+has been generated. Candidate/evidence remain private under .dms-i20-verification, outside
+/tmp. No fixture stack was created and no installed environment was changed by this work.
+Docker/WSL integration is restored as of the owner-requested retry on 2026-11-06:
+Engine 29.9.2, Compose 5.6.1 and /var/run/docker.sock respond. Resuming the isolated
+candidate build and runtime qualification; the earlier failed checks remain historical.
+The resumed seven-image 0.20.0 bundle assembled, and fresh workspace integration passed
+(296 DB passes/six explicit native skips), standalone authority and native OCR checks passed.
+The first run needed the missing pinned Chromium binary installed; its launch now passes.
+The independent burst exposed task-scoped private HTTP clients discarding their token cache,
+with delivered/unclaimed work entering dead queues under the authority token request ceiling.
+Fixed FixedTask to reuse one role-bound client per registered worker task/process across claim
+and execution, preserving token expiry/renewal and live server grant fences. Focused production
+task/token-cache regression: nine passes; Ruff/mypy pass. The interrupted failed fixture was
+cleaned up. Rebuilding the changed images before a fresh exact-candidate run; no workload or
+recovery pass is claimed yet. Next: finish rebuilt bundle and rerun qualification before marking
+I20 complete. The rebuilt images pass full workspace, standalone authority and native OCR
+checks in run-3. The independent journey then correctly rejected the selected upstream ODS
+sample for declared expansion/cell limits. The qualification now generates an owned bounded
+ODS file instead, verified through actual inspection/extraction; processor limits are unchanged.
+Safe filename/source-line diagnostics were added to the independent consumer. Starting the
+fresh frozen qualification run-4 with that harness correction. Customer deployment/target
+acceptance remain separate and unauthorized.
+
+Latest 2026-11-06 handoff after the intentional turn interruption: run-6's host controller
+was terminated while its isolated consumer container completed successfully. Current code
+passes pnpm check/build/test and full pnpm test:integration; 296 database passes/six explicit
+native skips, standalone authority and exact-image native OCR pass. The independent consumer
+passes all 24 timed files, 13 format-family cases, A/B grants/revocation, metadata/references,
+three-version binary restoration, logical deletion/restoration and token renewal. The bounded
+mix finished in 76.02 seconds at 18.94 documents/minute; metadata p95 is 22.45 ms across
+51 samples. These are synthetic sample measurements, not sustained/customer capacity.
+Harness corrections preserve the documented 404 write denial, current metadata on version
+creation and deterministic source selection across parallel completions. They do not change
+server authorization/admission policy. The earlier ODS limit rejection remains correct.
+The controller did not execute final recovery, optional structure/restart/security checks or
+final source/image verification. No I20 acceptance report was generated; I20 remains in progress.
+Private partial evidence: .dms-i20-verification/run-6/INTERRUPTED.json and its referenced
+consumer result. All orphaned fixture containers, volumes and the unique ingress network
+were removed after interruption; no installed environment was touched. Next: rerun the final
+frozen qualification to completion and generate the report/ledger before marking I20 complete.
+
+DMS-I19 — **Completed** (owner: Codex, 2026-11-06), on
+feat/dms-i01-standalone-foundation. Implemented and locally qualified the standard 0.19.0
+coherent backup/recovery/disposal increment. All prior uncommitted work/review fixes and the
+installed environment are preserved; these changes remain uncommitted. No customer restore,
+cutover, external email or actual off-host destination was used.
+
+Migrations 0046–0053 provide forced-RLS recovery state, reserved/sealed catalog horizons and
+application-bound durable disposal intents. Private Docker-operator workflows capture and
+verify DB/base/WAL, complete SeaweedFS data/metadata, configuration, signatures, inventories
+and pinned images, with streamed encryption and remote readback before the completion marker.
+Empty-target recovery stays CLOSED until full hash/system/catalog verification and fresh
+administrator/operator access review. JWT/storage signing epochs reset, broker authority is
+discarded, and pending jobs retain budgets with new generations. Controlled cleanup protects
+shared references and recovery horizons, confirms authenticated absence before quota release,
+and preserves required provenance. REUSE sessions never require nonexistent staging bytes.
+
+Latest pnpm check/build/test/test:integration PASS. Database: 296 passed/6 native skips across
+16 files; owning DMS: 77 passed/3 native skips; Python: 31 passed/24 optional-runtime skips.
+Real S3 lost DELETE acknowledgement + failed HEAD/retry and shared-original exactly-once
+accounting pass. Crypto tamper/component-swap checks and browser/Node/Python storage pass.
+Final exact-image drill PASS: I18 upgrade, three historical/restored versions, hard-killed
+real base-backup controller/keyless source release, wrong-key rejection, new empty project,
+repeated CLOSED verification, keyless reviewed reopening, old-token/URL and stale-work
+rejection, retained results and native pending execution. Follow-up restart/rotation/recovery
+checks pass. Fixture resources were removed; installed resources were not changed.
+
+Measured fixture: 9 objects/3,076 bytes, 980,318,982 encrypted cohort bytes including DB,
+images/signatures/configuration; recovery-point age at remote completion 73.096 seconds;
+restore plus application acceptance 122.23 seconds. Tool limit: 1 CPU/2 GiB; Docker Desktop
+host 12 CPUs/~20.97 GB. These measurements qualify only this synthetic local dataset.
+Durable summary: docs/qualification/dms-i19-recovery.json. Private evidence and candidate:
+.dms-i19-verification/fixtures/dms-i18-qualification-8Yf0W1 and
+.dms-i19-verification/candidate/bundle. The WSL restart's lost /tmp run was superseded by
+this completed persistent-evidence run. Next: I20 customer release/target acceptance,
+including independent off-host survival and realistic operating-volume/hardware RPO/RTO.
+The local bundle remains a draft customer release; optional structure was not rerun in
+this standard-profile I19 recovery drill.
+
+DMS-I18 — **Completed** (owner: Codex, 2026-11-06). Implemented and locally qualified
+versioned standalone distribution 0.18.0 on feat/dms-i01-standalone-foundation. All prior
+uncommitted implementation/review fixes are preserved; these changes remain uncommitted.
+No installed services, volumes, credentials or customer data were changed or deployed.
+
+Migrations 0044–0045 and private contracts provide forced-RLS service evidence, bounded
+operational snapshots/alerts, backup attestations, controlled enrichment redrive and narrow
+90-day legacy/security-history pruning. Liveness, API and processing readiness are separate.
+Eligible dispatches receive application rounds before the batch limit. Bounded fixed-label
+telemetry/correlation, safe request/error serializers and orderly drain/recovery are implemented.
+Backup attestation does not implement or prove the I19 recovery process; accepted provenance,
+artifacts, original/reference history and business audit are retained.
+
+Complete Compose entries cover private stateful/processing services, explicit ownership tools,
+nonroot runtime/resource/log limits, trusted canonical TLS and optional offline structure.
+The Docker-only target wrapper initializes protected raw configuration and invokes dedicated
+private provisioning/operator/application/key commands without secret arguments. Scanner
+imports verify complete signed CVD sets before atomic activation; failed imports preserve
+active data. The separate read-only online updater starts successfully. Explicit configured
+scanner health replaces the incompatible upstream probe. Private maintenance inherits the
+selected structure profile. Signing-key staging/activation prepublishes public keys and
+preserves bounded retired-key grace; root AUTH_SECRET is preserved.
+
+The sealed seven-image local candidate at /tmp/dms-i18-candidate/bundle has verified archive
+checksums, 1,523 package occurrences in per-image SPDX/Syft inventories, actual image legal
+archives (1,533 files plus 338 embedded JAR notice copies), model/data records and covered-source
+access/offer material. All three owner-provided source contacts are configured: nishanth@thaarei.com,
+technology@thaarei.com and muthurema@thaarei.com. Development/testing mail uses Mailpit;
+no external email was sent. The root proprietary LICENSE remains intact. Assembly remains
+a local candidate; complete customer redistribution review/release belongs to I20.
+
+Verification on 2026-11-06:
+
+- `pnpm check`, `pnpm build`, `pnpm test` and full `pnpm test:integration` pass. Database
+  verification passes 294 cases with six explicit native-runtime skips across 16 files;
+  owning DMS passes 75 with three native skips. Python unit execution passes 31 with 24
+  optional-runtime skips. Real storage/browser/Node/Python boundary checks pass.
+- The sealed bundle passes actual isolated Linux-container fresh provisioning and I17-to-I18
+  upgrade, canonical container DNS/TLS/issuer, Mailpit STARTTLS verification/recovery/session
+  revocation, private exposure checks, native upload/scan/extraction/download hash checks,
+  offline signed/invalid scanner updates, updater startup, real service restarts and independent
+  readiness, optional structure on/off/accepted artifact delivery, private structure commands,
+  signing/secret rotation and live local-first application revocation. All Docker health,
+  nonroot/resource and no-published-port assertions pass. Disposable containers/volumes removed.
+- Both processing images pass offline preflight under production isolation/resource settings.
+  A production authentication-failure probe confirms its credential/query marker is absent
+  from response and real API logs. Partial-initialization export guard passes.
+
+See [qualification evidence](docs/qualification/dms-i18-distribution.json) and the
+[distribution runbook](docs/runbooks/dms-distribution.md). The actual engine is Docker Desktop
+with a WSL2 Linux kernel; this is local container evidence, not bare-server/Dokploy or customer
+acceptance. External authority is not selected and no single-host HA claim is made.
+At the I18 handoff, next increments were I19 coherent backup/recovery/disposal and I20 customer
+release/target/hardware/redistribution acceptance; no work on them has begun here.
+
+DMS-I17 — **Completed** (owner: Codex, 2026-11-06). Implemented permission-aware
+English discovery on feat/dms-i01-standalone-foundation, preserving all prior uncommitted
+implementation/review fixes. Changes remain uncommitted. Installed services, credentials,
+volumes and customer data were not changed; no deployment was performed.
+
+POST /v1/search provides bounded English source-chunk FTS, pg_trgm title/filename matching,
+exact title/name/tag/application-owned reference filters and string-only category/status
+metadata filters. Strict body validation rejects unsupported historical selectors, arbitrary
+metadata paths and PostgreSQL-invalid text. Signed cursors bind installation/application/
+filters/limit. SQL eligibility and forced RLS apply live READ, active applications, current
+available version, lifecycle epoch and passed matching source evidence before results,
+snippets or pagination; there is no broad count. Metadata-only discovery supports secure-only.
+Source provenance and snippets are untrusted data, not HTML or business/tool authority.
+
+Migrations 0042–0043 add stage-bound search generations, bounded source chunks/generated
+English vectors, GIN/trigram and two metadata indexes, restricted grants and eligibility/
+index-status projections. Trusted validated artifact acceptance stages the index in its
+transaction; existing final-run promotion makes it visible atomically. Failed/pending
+replacement preserves prior useful results; historical/intermediate/unsafe generations
+remain private despite retained rows. Document searchable uses the same live eligibility
+helper. Index state is independently PENDING/READY/PARTIAL/NOT_INDEXED. Pre-I17 artifacts
+retain metadata/title matching and require explicit reprocessing for text indexing.
+
+Contracts/generated API docs, readiness checks, capabilities, architecture, independent
+protected Python example and the [discovery runbook](docs/runbooks/dms-discovery.md) are
+current. No additional search service, runtime model or new service credential is required.
+
+Verification on 2026-11-06:
+
+- Final `pnpm check`, `pnpm build` and `pnpm test` pass, including Biome, boundaries,
+  generated contracts, TypeScript, Ruff/mypy, deployment and auth-schema checks. Python
+  execution passes 31 cases with 24 explicit optional-runtime skips. Contract regressions
+  cover valid Unicode, PostgreSQL-invalid text and the optional default-limit input schema.
+- Full `pnpm test:integration` passes: 28 Fastify cases, 292 PostgreSQL cases across 16 files
+  (six explicit skips: three optional native cases and three standalone-image cases),
+  and real pinned SeaweedFS/browser/Node/Python transfer checks. The owning suite passes
+  73 cases, including real Celery acceptance/index replacement and live RLS exclusion.
+  Log: /tmp/dms-i17-integration-3.log.
+- After the final searchable-eligibility correction, native owning qualification passes
+  77 cases with one explicitly unselected ClamAV-native case. Actual pinned OCR and offline
+  Docling PDF/image processing exercise the index acceptance path. Regressions include
+  pending/failed replacement, exact accepted source-unit identity, grant revocation while
+  rows remain, security invalidation, current-version isolation, secure-only filters,
+  cursor binding, and Unicode-heavy source chunk/snippet bounds. The first attempt stopped
+  during private broker/Python fixture startup before work tests; its retry passed.
+  Log: /tmp/dms-i17-final-native-2.log.
+- Final generated-contract/default-limit documentation checks and focused API-docs tests
+  pass. Final nonroot offline API/coordinator package checks verify authenticated public
+  search, absence from the private worker API, private work routes and migration/schema
+  inclusion. Actual final image standalone readiness/discovery and all 10 standalone
+  assertions pass. Log: /tmp/dms-i17-standalone-final.log.
+- `git diff --check` passes. Disposable fixtures/workers were cleaned up. No validation
+  runner remains; the fixture/build lane is released.
+
+Final local verification image: thaarei-dms-i17-api:verification =
+sha256:1f3352e983c0fa322d4e95949df6b827a66a95012602429fa0b304b2240f5568.
+This is not a production release. Customer deployment and representative large-corpus
+latency/throughput qualification remain separate. No I17 blocker remains; I18 is unstarted.
+
+DMS-REVIEW-01 — **Completed** (owner: Codex review/fix thread, 2026-11-05).
+Fixed all four validated I01–I15 findings in parallel on the existing
+feat/dms-i01-standalone-foundation branch, preserving concurrent I16 work. Changes remain
+uncommitted; no installed services, credentials, volumes or customer data were changed.
+
+- Dispatch selection filters live jobs/current generations before LIMIT, preventing completed
+  jobs with lost delivery acknowledgements from starving new work.
+- Transfer ingress accepts a finite set of proxy metadata headers and discards them before
+  storage forwarding, retaining signature/header restrictions and socket-based rate limits.
+- Production worker transport errors enter the existing bounded retry mechanism for temporary
+  connection/timeouts and selected HTTP statuses; permanent errors remain terminal.
+- Restore idempotency binds stable operation/document/revision/profile/source inputs, retaining
+  the original descriptor and operation identity after intervening metadata edits.
+
+Focused regressions cover forty completed jobs with expired unacknowledged dispatches,
+restore replay and conflicting inputs/current access, actual proxy-header PUT/GET through
+SeaweedFS, and eight schema-validated production task transport failure cases. Updated the
+owning architecture paragraphs and added one focused failure-path verification rule to the
+existing root AGENTS.md. No additional skills or agent framework were introduced.
+
+Verification on 2026-11-05: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. Combined integration completed Fastify/API-docs, 290 PostgreSQL
+cases across 16 files (six explicit skips: three standalone-only and three optional native
+runtime cases), and real pinned SeaweedFS/browser/Node/Python transfer checks. The owning
+DMS database suite passes 71 cases, including the dispatch and restore regressions. Python
+unit execution passes 29 cases with 21 optional native/JVM/OCR runtime skips. Targeted
+Biome, Python Ruff/mypy and `git diff --check` also pass. Initial integration failures in
+I16 route inventory, result-code fixtures and cleanup order were corrected by the I16 owner
+before the successful combined rerun. Disposable verification fixtures were cleaned up.
+
+No blocker or remaining work for these four fixes. Actual Dokploy/customer ingress and a
+new production image release were not exercised; I16 completion and packaging remain with
+its owning thread. Fixture/build validation lane is released to that thread.
+
+DMS-I16 — **Completed** (owner: Codex, 2026-11-05). Implemented version/run-bound
+results, authorized artifacts, owner/private-operator reprocessing and optional offline
+Docling layout/table extraction on feat/dms-i01-standalone-foundation. Preserved all
+uncommitted I04–I15 and concurrent DMS-REVIEW-01 changes. All changes remain uncommitted;
+installed services, credentials, volumes and customer data were not changed.
+
+Migrations 0040–0041 establish forced-RLS processing runs, actor-bound replay receipts,
+immutable accepted provenance, exact version/run selection and fenced active promotion.
+Pending/failed replacement preserves the previous active result; stale/duplicate work cannot
+replace it. Public history/content and owner-only reprocessing use live rights, source hash,
+security/lifecycle checks, signed bounded pagination and read-only artifact capabilities.
+Private operator reprocessing uses the same authoritative admission/quota/audit function.
+Reprocessing allocates no binary/revision and grants its own work deadline without changing
+lifecycle recovery state or contributor upload authority. Valid receipts remain replayable
+after profile disablement; new requests reject. Index status remains NOT_INSTALLED for I17.
+
+The separate structured image locks Docling 2.146.0, CPU-only Torch and pinned hash-verified
+Heron/TableFormer models with licenses/notices. Its secret-free no-network namespace,
+per-page processing, fixed English OCR, resource/output bounds and explicit partial/failure
+coverage preserve native text and original bytes. Default images exclude the optional
+models/dependencies. Versioned approximate layout/table artifacts are untrusted data and
+cannot write authoritative business fields. Contracts, generated documentation, deployment
+overlays, independent protected Python example, architecture and the
+[results runbook](docs/runbooks/dms-results.md) are current. Actual packaged table/mixed-page
+outcomes and enforced resource bounds are recorded in docs/qualification/dms-i16-structure.json.
+
+Verification on 2026-11-05:
+
+- `pnpm check`, `pnpm build`, `pnpm test` and full `pnpm test:integration` pass. Full
+  all-native integration passed 295 database cases across 16 files (three standalone-image
+  skips), all 76 owning cases, 28 Fastify cases, and real storage/browser/Node/Python checks.
+  Log: /tmp/dms-i16-verified-integration.log.
+- After the final work-deadline fix, check/build/unit gates pass again; the final owning
+  suite passes 72 cases with three explicit optional-runtime skips, including expired
+  contributor-upload reprocessing. The preceding native rerun passed all OCR/structure
+  cases; its one new-fixture expiry-order failure was corrected and verified by this rerun.
+  Log: /tmp/dms-i16-final-owning-corrected.log.
+- Final API image standalone verification passes all 10 cases, including auth/DMS-only
+  readiness, discovery and packaged route/DB assertions. Offline nonroot API/coordinator
+  isolation checks also pass. Log: /tmp/dms-i16-standalone-image.log.
+- Parser qualification passes 55 cases (54 in the complete native suite plus the added
+  blank/nontext structure regression); ordinary Python execution passes 31 with 24 explicit
+  optional-runtime skips. Actual read-only nonroot offline structured packaging passes
+  PNG/PDF tables and mixed native/scanned/blank pages at 4 GiB/one CPU. Default packaging
+  rejects structured processing and excludes its dependencies/models.
+- Generated contract checks, Biome/Ruff/mypy, deployment checks and `git diff --check` pass.
+  Production capacity pulses and real OAuth token renewal keep longer native fixtures valid.
+  Disposable fixture containers/workers are cleaned up; no validation runner remains.
+
+Final verification images (local verification tags only, not a deployment):
+API thaarei-dms-i16-api:verification =
+sha256:eb3c1eecb2234ad4172b8293e3562756258e75f36cf47edb9aa4ed0b410751e1;
+default thaarei-dms-i16-processing:verification =
+sha256:4d51ff7ee08005e56dc6b9890f36fd76ed6257791536a0cbafa60c065b651725;
+structured thaarei-dms-i16-structured:verification =
+sha256:e44057c7cb2941d57f69308a462af64e4d7d4d303e1fe4cc092e407cc6acb63c.
+
+No I16 blocker remains. Actual customer deployment/ingress and general-document accuracy
+qualification are separate; the committed qualification covers owned fixtures only.
+I17 permission-aware discovery remains unstarted. Fixture/build lane is released.
+
+DMS-I15 — **Completed** (owner: Codex, 2026-11-05). Implemented selective bounded
+English OCR on feat/dms-i01-standalone-foundation, preserving uncommitted I04–I14.
+Changes remain uncommitted. Installed services, credentials, volumes and customer data
+were not migrated, initialized or deployed; disposable verification fixtures were removed.
+
+Searchable JPEG/PNG/TIFF/BMP/static WebP sources queue private heavy work after independent
+security approval. PDFs retain ordinary native extraction first and atomically schedule
+heavy OCR only for incomplete pages. Pinned Tesseract 5.5.4 and English/orientation data,
+isolated per-page PDFium/Pillow processing, glyph-based duplicate suppression, EXIF/rotation,
+ordered TIFF frames, source word boxes and engine-specific confidence are implemented.
+Native text and original bytes are preserved. Partial/time-bound results retain completed
+units and explicitly identify missing coverage. Lease-aware budgets leave output/acceptance
+time; heavy workers cannot assert security approval. Migration 0039 projects current-epoch
+heavy processing status, while stage history and generation/lifecycle/accounting fences
+remain authoritative. Effective capabilities, generated private contracts, notices,
+architecture and the [OCR runbook](docs/runbooks/dms-ocr.md) are updated.
+
+Verification on 2026-11-05: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. Full integration passes 28 Fastify tests, 290 database cases
+across 16 suites (three standalone-only skips), and real SeaweedFS/browser/Node/Python
+transfer checks. A final native-security/OCR owning rerun passes all 71 cases after the
+lease-budget adjustment, using production Celery, private HTTP, RabbitMQ and real storage.
+The complete isolated parser suite passes all 42 cases with pinned OCR and Tika/Java
+available; the ordinary workspace Python run passes 21 and explicitly skips the 21
+runtime-dependent cases. Fresh official ClamAV plus isolated structural assessment passes
+all 23 supported content types. Offline, non-root production image checks pass for the
+API/coordinator and OCR worker, including native/mixed/rotated PDFs, images, TIFF order,
+coordinates, pinned models and immutable sources. Qualified image IDs:
+processing `sha256:bf6cb0d2c8dfd9fbc68262f74b673b724ccb437dc734b4bead90ed951c04a6c9`;
+API `sha256:3377761c204cc29ba083d19618dc683126d4a2b8527e9cf6fefe3140fe35c8d9`.
+
+The committed [qualification record](docs/qualification/dms-i15-english-ocr.json) measures
+0% normalized word error on four versioned clean-print PNG/JPEG/rotated/mixed-PDF cases
+against the 10% ceiling. Total measured CPU is 17.555 seconds, maximum observed per-process
+RSS 66,080 KiB, peak parser scratch 204,800 bytes and largest artifact 23,513 bytes under
+the enforced runtime bounds. This evidence is limited to generated clean English print
+with the pinned font; arbitrary real-world, handwriting, table and multilingual accuracy
+is not claimed. I16 result selection/reprocessing/optional structure remains unstarted.
+
+DMS-I14 — **Completed** (owner: Codex, 2026-11-05). Implemented bounded native,
+Office, tabular and email extraction on feat/dms-i01-standalone-foundation, preserving
+uncommitted I04–I13. Changes remain uncommitted. Installed services, credentials, volumes
+and customer data were not migrated, initialized or deployed.
+
+The selected paths cover 18 content types: PDFium native PDF text, UTF-8 text/Markdown,
+standard CSV/TSV, Calamine XLS/XLSX/XLSB/ODS and Tika Word/PowerPoint/OpenDocument/RTF/EML/MSG.
+Versioned private manifests/artifacts bind document/version/job, work and lifecycle
+generations, source SHA-256, processor/configuration/profile and actual source units.
+Coverage distinguishes native text, blank/mixed/OCR-needed PDF pages, paragraphs/slides,
+lines, sheet/cached-cell values and omitted attachment inventory. Formula expressions
+unavailable in the binding are disclosed; no recalculation, markup/document execution,
+external fetch, invented pagination or attachment import occurs. secure-only explicitly
+omits enrichment; existing admission policies are unchanged and capabilities intersect
+installed support with current operator policy, including explicit format capabilities.
+
+Private extractor-only input/output/result handling uses current lease/identity, passed
+source/security and lifecycle fences, unpredictable attempt-specific create-only artifact
+keys and exact capacity reservation before signing. Stored output hash, schema, coverage
+and manifest/source bindings are verified before immutable acceptance. Verified outputs
+become charged artifact bytes once; ambiguous issued outputs retain reservations pending
+I19 disposal. Original availability remains independent of extraction failure. Required
+structural assessment discards enrichment text and uses metadata-only Tika traversal,
+so enrichment text limits cannot replace a security decision. Upload and batch status
+project independent waiting/queued/running/success/partial/failure outcomes. Forced-RLS
+migrations 0037–0038 add composite attempt/job integrity, limited grants and an authorized
+status projection; public/coordinator readiness includes the new owning table.
+
+Parser supervision clears secrets, denies network access, mounts only approved runtime
+and read-only input, and bounds CPU, wall time, output, scratch, memory and native process
+failure. ZIP/XML/embedded expansion, macros/encryption, sparse ranges and image dimensions
+are checked under the declared limits. The image bundles locked PDFium/Calamine/Pillow,
+SHA-512-verified Tika 4.2.0 and digest-pinned Java, retaining upstream licenses/notices;
+no parser fetcher/emitter plugins, OCR recognizers or runtime downloads are enabled.
+Architecture, generated public/private artifacts, deployment budgets and the
+[extraction runbook](docs/runbooks/dms-extraction.md) describe actual behavior. I16 consumer
+content/history/reprocessing/promotion APIs and I17 search are not installed by this stage.
+
+Verification (2026-11-05): pnpm check, pnpm build, pnpm test and sequential
+DMS_TEST_NATIVE_ASSESSMENT=true pnpm test:integration pass. Full integration passed
+288 cases across 16 disposable database-lane suites, 28 Fastify cases and seven real
+pinned-SeaweedFS storage cases; three standalone-only cases were skipped. After final
+artifact limits/readiness and structural-inspection separation, workspace check/build/unit
+and all 69 native owning cases pass again, including production Celery/private HTTP/
+RabbitMQ/storage, failed extraction preserving verified original bytes, foreign/mismatched
+artifacts, runtime privilege denial and lifecycle/role fences. Default unit execution has
+21 passing Python cases and eight explicit Tika/Java skips; direct qualification with the
+pinned runtimes passes all 29. Fresh official ClamAV plus isolated structural assessment
+passes representative inputs from all 18 content types. Offline non-root processing-image
+qualification passes ten routed inputs with no network; the API/coordinator image passes
+guarded private extraction routes, packaged migrations/schema and product-package exclusion.
+Verification images: thaarei-dms-i14-api:verification
+(sha256:2ba5e55070fd95c2ac655bb87c09e0c156b22f24e98b1ec4ff50c0eab55ad5e0)
+and thaarei-dms-i14-processing:verification
+(sha256:909c5a1d118864f926d057710633a95c25d376f61faf88349ab34b8490cba7ce).
+Disposable fixtures were removed; git diff --check passes. No implementation blocker
+remains. DMS-I15 OCR is the next planned package and has not been started.
+
+DMS-I13 — **Completed** (owner: Codex, 2026-11-05). Implemented revision-checked
+owner/operator soft deletion, lifecycle inspection and 30-day logical restoration on
+feat/dms-i01-standalone-foundation, preserving uncommitted I04–I12. Installed services,
+credentials, volumes and customer data were not migrated or deployed; changes remain
+uncommitted.
+
+The Lifecycle module owns public lifecycle/delete/restore routes and private restoration
+coordination. Strong expected revisions, actor-bound restore receipts, current machine
+scope/ownership and fresh explicit DMS operator authority protect mutations. Migrations
+0035–0036 add forced-RLS lifecycle queues, immutable assessment history and a narrowly
+granted lifecycle command. Generation fences and cancellation prevent stale uploads,
+leases, result replays or publication from reactivating a deleted document. Normal owned
+and shared projections/download issuance disappear immediately. Retained versions,
+objects, grants and physical usage remain; previously issued bounded GET capabilities
+retain their documented lifetime.
+
+Logical restore verifies retained original bytes against immutable integrity evidence,
+then schedules fresh security assessment under a new generation without allocating a
+binary version or reopening an expired upload window. Current policy/capacity may defer
+work; unavailable, changed or failed originals remain unavailable, with explicit pending,
+partial and failed status and no fallback to an older current version. Fresh work uses
+separate bounded reservation/deadline accounting. Restore rejects expired deadlines and
+PURGING/PURGED states. Physical purge remains disabled until I19. Public/private contracts,
+generated artifacts, architecture and the [lifecycle runbook](docs/runbooks/dms-lifecycle.md)
+describe the implemented behavior; the current text/plain secure-only processing matrix
+remains unchanged. Format extraction/search remain future packages.
+
+Verification (2026-11-05): pnpm check, pnpm build, pnpm test and sequential
+DMS_TEST_NATIVE_ASSESSMENT=true pnpm test:integration pass. Full integration passed
+285 PostgreSQL cases across 16 suites, 28 Fastify cases and seven pinned-SeaweedFS storage
+cases; only three standalone-only cases were skipped. Following final Lifecycle module
+wiring and native-fixture retry alignment, workspace check/build/unit, 11 DMS Fastify cases
+and all 66 owning cases passed again. Owning regressions exercise expired original upload
+windows, stale leases/results, policy pause/resume, owner/shared isolation, fresh operator
+proof/grant, deadlines/PURGING, direct runtime privilege denial and actual missing/changed
+storage. Native qualification uses production Celery/ClamAV over private HTTP/RabbitMQ and
+real storage, restores the same binary version, verifies downloaded bytes and retained
+quota. The non-root production image thaarei-dms-i13:verification
+(sha256:ab4e66d9652130ab43aefc3962e1b6f8e1f1ba5c76b034e12179dd3a1896ebd6)
+passed offline packaged API/coordinator startup, guarded lifecycle routes, private surface
+separation and compiled migration/restoration checks. Disposable fixtures were removed;
+git diff --check passes. No implementation blocker remains; DMS-I14 is the next planned
+package and has not been started.
+
+DMS-I12 — **Completed** (owner: Codex, 2026-11-05). Implemented explicit application
+sharing (FR-13.01–06) on feat/dms-i01-standalone-foundation, preserving uncommitted I04–I11.
+Installed services, credentials, volumes and customer data were not migrated or deployed.
+
+Owner GET/PUT document permissions and fresh private document-permissions-read/set commands
+manage bounded same-installation consumer grants with strong expected revisions and atomic
+attributed audit/outbox. READ, EDIT_METADATA and ADD_VERSION are independent resource rights;
+current machine scopes remain an additional ceiling. Document/list/history/version/upload
+status, original capabilities, logical edits, references, version admission/replay and upload
+controls enforce their current rights. Batch projections require READ independently from
+control rights. Audit, grant administration and binary restoration remain owner/operator-only.
+Self, unknown, pending, disabled, worker and foreign targets cannot receive new grants.
+Authority administration alone cannot invoke private operator commands without a current
+tenant-bound DMS operator grant. Operator target validation holds registration locks without
+granting registration-update privilege to the operator role.
+
+Migrations 0032–0034 add composite tenant/owner/recipient grant integrity, forced RLS,
+restricted migrator-owned resource evaluators, owner/contributor admission and batch
+identities, and caller-private completion receipts with tenant-aware upload FKs and a
+restrictive current-control insert policy. Ownership, storage paths and physical/work
+quota charges remain with the document owner. Both owner and current contributor can
+complete a shared upload without reading each other's receipts. Reference creators are
+explicit application IDs; shared editors manage their own reference namespace and the
+owner can remove any reference. Internal helper queries reveal no unrelated document IDs.
+An installation sharing fence serializes grant replacement with public transactions/signing;
+current SQL authorization filters before selection/pagination. Revocation stops new
+projections, capabilities and upload replays/controls. Previously issued bounded storage
+capabilities and accepted owning work retain their documented lifetime/ownership semantics.
+
+Public/private schemas, generated artifacts, capabilities, guard/route coverage, architecture
+and the [sharing runbook](docs/runbooks/dms-sharing.md) describe the implemented policy.
+No new HTTP operator surface, ownership transfer or SaaS tenant selection was introduced.
+
+Verification (2026-11-05): pnpm check, pnpm build, pnpm test and sequential
+DMS_TEST_NATIVE_ASSESSMENT=true pnpm test:integration pass. Full integration passed
+279 PostgreSQL cases across 16 suites, 28 Fastify cases and seven pinned-SeaweedFS storage
+cases; only three standalone-only cases were skipped. The initial authority-fixture startup
+failure during concurrent builds did not recur with sequential verification. After final
+helper/receipt tightening, static/build/unit checks and fresh native owning qualification
+pass again: 60/60 cases, including actual private HTTP/storage/RabbitMQ, production Celery,
+current ClamAV signatures and verified native transfer/replacement/restoration. Sharing
+regressions cover independent rights, stale revisions, caller/owner disablement, current
+scope ceilings, cross-installation RLS, private operator revocation, owner storage/quota,
+contributor batch binding, READ-only versus ADD_VERSION-only batch projections, owner and
+contributor completion, revocation/signing contention, retained preissued GET and denial
+of later capabilities. Biome, TypeScript, Ruff/mypy, contract drift, repeated migrations,
+runtime privilege isolation and git diff --check pass.
+
+thaarei-dms-i12:verification builds and passes network-disabled non-root API bootstrap,
+GET/PUT/HEAD permissions authentication, private operator/work exclusion, rights schema
+and packaged migration qualification; image
+sha256:a99c5aee651ad3ad29daca6880903b10effd276a63f2fcfb9e193bec5b5b0666.
+No customer deployment or production acceptance is claimed. Verification fixtures are
+cleaned up; I04–I12 remain uncommitted. I13 owns logical lifecycle/delete/restore; broader
+content/search, format assessment and recovery-aware disposal retain their owning increments.
+
+DMS-I11 — **Completed** (owner: Codex, 2026-11-05). Implemented FR-12.01–07 on
+feat/dms-i01-standalone-foundation, preserving uncommitted I04–I10. Installed services,
+credentials, volumes and customer data were not migrated, initialized or deployed.
+
+PATCH document supports bounded title/metadata/tags replacement without allocating a
+binary revision. Metadata remains scalar/scalar-array JSON with key/value/encoded-size
+bounds; NUL and unpaired-surrogate strings fail before PostgreSQL. Reference POST/DELETE
+retains multiple opaque namespace/type/external-ID tuples in bounded owning arrays with
+generated reference IDs. The fixed tenant and registered owner application namespace
+every tuple; references neither grant access nor fetch external records. Mutations use
+current live owner/scope policy, strong If-Match, a canonical document fence and row lock,
+logical revision increments and atomic identifier-only audit/outbox. Duplicate links are
+documented no-ops after revision checking; stale requests return 412.
+
+Document detail exposes tags/references; list summaries expose tags. Exact title, filename,
+tag and complete reference-tuple filters combine with AND. Signed bounded cursors bind
+all filters to the installation/application. Arbitrary metadata queries remain unsupported.
+Migrations 0030–0031 add default-empty arrays, bounds/indexes, audit actions and narrowly
+scoped runtime UPDATE privileges under existing forced owner RLS. Runtime receives no
+publication privilege. Shared schemas, generated public/private artifacts, route/guard
+coverage, capabilities, architecture and the [metadata runbook](docs/runbooks/dms-metadata.md)
+are updated. The independent stdlib example uses authenticated HTTP to edit metadata and
+link/unlink multiple records without any Turnstile contract/source dependency.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration pass. Full integration passed 274 PostgreSQL cases across 16 suites,
+28 Fastify cases and seven pinned-SeaweedFS storage cases. Three standalone-only cases
+and the explicit online native-assessment case were skipped in the default combined lane;
+I10's separate native qualification remains recorded below. A final focused owning rerun
+passes 55 cases with one online-only skip, including unsafe/oversized inputs, concurrent
+edits, stale revisions, unchanged binary identity/history, attributed audit, namespace
+isolation, filter-bound cursors and the independent Python link/unlink round trip.
+The capability enum and PATCH method coverage omissions found during verification are fixed.
+Biome, TypeScript, Ruff/mypy (including the new example), contract drift, repeated owned
+migrations/bootstrap, runtime privilege checks and git diff --check pass.
+
+thaarei-dms-i11:verification builds and passes network-disabled non-root API bootstrap,
+metadata/reference route authentication, private-work exclusion, metadata string validation
+and packaged owning migration checks; image
+sha256:97b0940a76b6759ee5d08961524ecdf25e2b523fe8500c00ebd4ca3dbb50370c.
+This is packaged-image qualification, not a customer deployment or production acceptance.
+Handoff: I04–I11 remain uncommitted. I12 owns explicit sharing; lifecycle restoration,
+broader format assessment and recovery-aware disposal remain with their owning increments.
+
+DMS-I10 — **Completed** (owner: Codex, 2026-11-05). Implemented guarded
+new-version uploads, bounded history/status, explicit historical downloads and binary
+restoration as a new reassessed revision on feat/dms-i01-standalone-foundation.
+Uncommitted I04–I09 are preserved. Verification used disposable fixtures; installations,
+credentials, volumes and stored customer data were not migrated, initialized or deployed.
+
+New-version uploads and restore require current owner/scopes, an expected logical revision
+and an idempotency key. New-version batch items bind exactly once. History uses bounded,
+application/document-bound signed cursors and exposes authoritative per-version upload,
+security, availability and restoration status. Pending replacement leaves the current valid
+original available, and late lower revisions cannot replace a higher current revision.
+Binary restoration preserves document identity and current logical metadata, allocates a
+new highest candidate and reuses the protected object with an immutable owning reference.
+It verifies source integrity and captures the source invalidation generation; fresh
+coordinator work hashes and reassesses the bytes before publication. Approval is not copied.
+Shared-object invalidation closes every affected reference; other valid originals remain
+eligible. Retained physical bytes stay charged once, while restore reserves/releases its
+own work capacity without charging duplicate storage or allowing premature source removal.
+
+Migrations 0025–0029 own restoration references, forced RLS, constrained runtime/coordinator
+privileges, candidate immutability/generation checks, attributed audit and reference indexes.
+Runtime receives no publication/candidate mutation authority. Public/private contracts,
+generated artifacts, capabilities, architecture and the
+[version runbook](docs/runbooks/dms-versions.md) describe the implemented boundary.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+DMS_TEST_NATIVE_ASSESSMENT=true pnpm test:integration pass. Full integration passed
+272 PostgreSQL cases across 16 suites, 28 Fastify cases and seven pinned-SeaweedFS storage
+cases; the combined lane skips three standalone-only cases. The owning suite passes all
+53 cases with the native lane enabled, including independent backend HTTP, real storage,
+RabbitMQ/production Celery, current ClamAV signatures, fresh replacement/restoration
+assessment and SHA-256-verified current/historical GET. Focused regressions cover stale
+revisions, replay, concurrent publication/restores, lower-revision completion, application
+isolation, missing source objects, reference retention, invalidation generations, storage
+accounting and new-version batch binding. git diff --check passes.
+
+thaarei-dms-i10:verification builds and passes network-disabled non-root API/coordinator
+bootstrap, protected history/upload/restore routes, private-work exclusion and packaged
+restoration/migration checks; image
+sha256:929f7b773acda9d5639e3acba26d60b90f10d9a51b807db2d3aae8e9f129db59.
+This packaging check is distinct from native component-chain qualification; no complete
+customer deployment or production acceptance is claimed.
+
+Handoff: I04–I10 remain uncommitted. Metadata/tags/references are I11, explicit application
+sharing is I12, lifecycle restoration is I13 and recovery-aware physical disposal is I19.
+The installed assessment matrix remains text/plain + secure-only. Physical purge and
+other format families remain unavailable.
+
+DMS-I09 — **Completed** (owner: Codex, 2026-11-05). Implemented the first usable
+secure document transfer increment on feat/dms-i01-standalone-foundation, preserving
+uncommitted I04–I08. Scope remains text/plain + secure-only; this is not full DMS v1,
+customer deployment or production acceptance. Existing installation data, volumes,
+credentials and services were not migrated, initialized or deployed.
+
+Implemented: guarded GET /v1/documents/{documentId}/download returns a short-lived
+current-original capability after live registration/scope, owner, lifecycle, version and
+accepted-candidate checks. The same SQL predicate drives detail/list downloadable flags.
+A canonical UUID per-document shared/exclusive advisory fence serializes issuance with
+publication/invalidation through signing and audit commit. Runtime receives no new
+publication or write privilege. Unknown/unowned documents, unavailable originals, invalid
+tokens, current disablement/scope changes and unsupported historical queries fail closed.
+
+The dedicated original-read signer supplies attachment/octet-stream response overrides,
+bounded ASCII/UTF-8 safe filenames and at most 120 seconds of authority. Ingress preserves
+no-store/no-referrer/nosniff and supports single prefix/open-ended/suffix byte ranges;
+unsigned override edits and multiple ranges are rejected. Previously issued URLs remain
+usable only for their disclosed bounded lifetime after disablement/invalidation.
+Migration 0024 adds document.download-authorized to owning audit/outbox constraints.
+Signing failures roll back; identifier-only issuance audit never claims actual byte fetch.
+Public audit schemas now include the I08 security/publication actions and I09 issuance,
+so current business audit pages remain readable. No auth schema migration was added.
+
+Public/private contracts, generated OpenAPI/operator artifacts, route catalog and shared
+installed-catalog DI are updated. Capabilities project configured supported formats/profiles
+and token-permitted download operations. The optional downloads overlay adds only the API
+original-read credential, without published ports or privileged storage roles. The
+independent stdlib backend example obtains create-only transfer authority, uploads known
+bytes, sends a separately keyed completion command, polls authoritative state and verifies
+full downloaded size/SHA-256 against its input and server evidence. Configuration/tokens
+enter protected files/stdin; capabilities, credentials and bodies are never printed.
+Architecture and the secure-transfer/assessment runbooks document the exact boundary.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration pass. Full integration passed 266 PostgreSQL cases across 16 suites,
+28 Fastify cases and seven pinned-SeaweedFS storage cases with real browser/Node/Python
+transfers. The default combined lane skips three standalone-only cases and the explicit
+online native transfer case. DMS_TEST_NATIVE_ASSESSMENT=true owning qualification passes
+48/48, including the independent backend over actual HTTP, S3, confirmed RabbitMQ,
+production Celery scanner task, current official ClamAV signatures, isolated text checks,
+fenced publication and SHA-256-verified GET. Regression coverage includes wrong/unrelated
+principals, unavailable/invalidation states, scope/disablement, signing rollback and audit,
+uppercase UUID fence contention, live URL use after disablement and actual expiry,
+range/disposition hardening and signed-override tampering. Repeated disposable migrations,
+contract drift, Python/Ruff/mypy, Biome, private Compose validation without installed env
+files and git diff --check pass.
+
+thaarei-dms-i09:verification builds and passes network-disabled non-root public bootstrap,
+download-route 401 gating, private-work exclusion and packaged migration checks; image
+sha256:0280de6836537fb3472959555d21bb6dc9f8fa847bbbf4d5bb654f20c5627ba5.
+Native component-chain qualification is distinct from that offline packaged-image check;
+no complete production/customer rollout is claimed. Interrupted-run disposable fixtures
+were explicitly cleaned up, and completed verification leaves no test containers running.
+
+Handoff: I04–I09 remain uncommitted. I10 owns version history, explicit historical
+selection and binary restoration; application sharing remains I12. Other format-family
+assessment/enrichment, lifecycle restoration and recovery-aware physical disposal remain
+with their owning increments. The secure-transfer runbook records installation prerequisites,
+protected backend examples and the bounded signed-URL revocation behavior.
+
+DMS-I08 — **Completed (initial staged matrix)** (owner: Codex, 2026-11-05).
+Implemented assessment/isolation/publication for text/plain + secure-only on
+feat/dms-i01-standalone-foundation, preserving uncommitted I04–I07. Other document
+families are explicitly not installed/advertised; adding a family requires its complete
+qualified assessment before enrichment can use it. No installed environment, credentials,
+volumes or customer data were changed; all verification fixtures were disposable.
+
+Implemented: server-owned immutable candidate intent persisted before source-conditional
+S3 copy, bounded crash handling and retained exact ambiguous references; current scanner-
+only candidate capabilities and closed evidence under the existing attempt/lease fence;
+streamed SHA-256/size, unchanged native ClamAV signature generation and 48-hour freshness;
+isolated bounded UTF-8 inspection, quarantine and atomic availability/current-pointer,
+audit/outbox publication. Lower binary revisions cannot replace higher current revisions.
+Explicit invalidation closes availability without automatically choosing older bytes.
+Measured quarantined bytes remain charged; only settled mandatory work is released.
+COPYING/selected identity and terminal evidence are protected by an owning database trigger.
+No extraction-role result can assert approval. Downloads remain I09; no format or
+configuration value substitutes for an installed qualified security handler.
+
+Owning migrations 0016–0023 add forced-RLS security candidates, bounded evidence,
+column-specific coordinator privileges, current-operator read policy, immutable-copy
+protection and publication/audit/outbox states. No auth schema migration. Private generated
+work contracts add candidate/evidence shapes independently of consumer OpenAPI; public
+status/batch projections expose truthful security and availability, with plain-text
+examples. The architecture and assessment/work/upload/admission runbooks are updated.
+
+Native runtime: pinned ClamAV 1.5.1 daemon with limit/encryption alerts and isolated
+signature updates; processing image pins Bubblewrap 0.8.0-2+deb12u1 and util-linux
+2.38.1-5+deb12u3. Trusted supervision supplies stdin only to a fresh user/mount/PID/network
+namespace with cleared environment and hidden application mounts. CPU, memory, wall,
+scratch/input and regular-file output limits apply; no unrestricted fallback exists.
+The scanner uses a vendored Apache-2.0 Moby default filter with only namespace/mount
+setup calls added. The default Docker filter fails closed; the dedicated filter is
+qualified with a non-root, read-only, capability-free, network-disabled final image.
+ClamAV limit alerts produce INCONCLUSIVE, malware detections REJECTED; neither publishes.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration pass. Full integration passed 266 PostgreSQL cases across 16 suites,
+28 Fastify cases and seven pinned-SeaweedFS storage cases (three standalone-only database
+cases remain skipped in the default combined lane). All 47 focused owning cases pass.
+The additional DMS_TEST_NATIVE_ASSESSMENT=true owning lane passes 47/47 using actual fresh
+ClamAV evidence for the protected S3 candidate, accepted over private JWT HTTP into the
+publication transaction. The explicit native daemon qualification with current official
+daily signatures passes clean text, EICAR, streamed hash, hash mismatch, malformed UTF-8,
+exceeded-limit distinction and outage checks. Seven actual isolated-parser regressions
+pass. Repeated disposable migrations/bootstrap, contract/schema drift, Python/Ruff/mypy,
+Compose validation without installed env files, Biome and git diff --check pass.
+
+Final images build and pass offline packaging/runtime qualification:
+thaarei-dms-i08:verification, sha256:59e62b8b8cb5355aac31813aaa3067be8f1cf35bf4985af166ea2786cab9e315;
+thaarei-dms-processing-i08:verification, sha256:5459f472603d5c90a4d0ae90c8ea935d383137d66fd11c159eeca4cb854ac5b3.
+The API image boots the private coordinator as non-root, gates the candidate route with
+401, excludes the public surface from that listener and packages the owning migrations.
+The final processing image verifies a separate parser network namespace, hidden application
+mount, cleared environment and enforced CPU/memory/output limits. Native component-chain
+verification is distinct from these offline image checks; no complete customer deployment
+or production rollout is claimed.
+
+Handoff: I04–I08 remain uncommitted. I09 owns authorized content/download and the first
+consumer transfer increment. Additional format-family security inspectors remain staged
+and unavailable until separately implemented/qualified; enrichment, reassessment/redrive,
+reference-aware physical cleanup and broader operational acceptance stay with their owning
+increments. Preserve exact installation/project/volume bindings and qualify the target's
+user-namespace support before enabling the optional assessment overlay.
+
+DMS-I07 — **Completed** (owner: Codex, 2026-11-05). Implemented authoritative work
+and private execution on feat/dms-i01-standalone-foundation, preserving uncommitted I04–I06.
+Scope: coordinator/private HTTP entry, persisted jobs/dispatch/attempt fences and recovery,
+versioned private contracts, Python Celery publisher/fixed tasks and locked runtime image.
+Real RabbitMQ confirms/routing/retries and PostgreSQL execution budgets are verified
+with disposable fixtures. Security assessment/publication remain I08; no existing
+installation, credentials or stored data are migrated/deployed by this work.
+Implemented: separate private coordinator listener, purpose-bound authority clients and
+live DMS work grants, forced-RLS jobs/dispatch/attempt records, fenced claims/results,
+ordinary retry eligibility and bounded recovery, leased callback-independent upload
+observation and periodic batch/session expiry. Python fixed Celery tasks/publisher use
+mandatory confirmed JSON publication for both initial sends and retries, separate native
+broker roles and an explicitly locked production image. Private contracts and operator
+inspection are separate from consumer OpenAPI. No absent security/parser handler passes.
+Owning migrations 0013–0015 constrain work identities, jobs, dispatches, attempts and
+upload observation/expiry. Source checks hold the current application, batch/session and
+admission fences in the public issuance order and require a held mandatory-work reservation;
+released accounting cannot authorize new execution. No auth-schema migration or document
+publication/current-pointer privilege was added. Private work-authorize/disable/inspect
+commands require fresh verified identity and a current explicit DMS operator grant.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration pass. Full integration passed 265 PostgreSQL cases across 16 files,
+28 Fastify cases and seven pinned-SeaweedFS storage cases with real Chromium/Node/Python
+transfers. All 46 focused owning access/admission/upload/work cases pass, including 14
+new I07 cases over actual private JWT HTTP, RabbitMQ and Celery prefork workers. Coverage
+includes native queue/topic ACLs, non-JSON dead-lettering, durable/persistent Celery protocol,
+mandatory routing/returns/confirms, lost delivery receipts, normal/lost retry publication,
+killed workers, concurrent claims/recovery, stale leases/results, one execution/elapsed
+budget, live role revocation, released accounting and missed completion callbacks.
+Repeated disposable migrations/bootstrap, schema/contract drift, Python/Ruff/mypy,
+deployment checks and git diff --check pass. Three standalone-only database cases remain
+skipped by the default combined-mode run.
+
+Both images build: thaarei-dms-i07:verification and
+thaarei-dms-processing-i07:verification. Network-disabled container checks verify non-root
+locked Celery/AMQP/native dependencies and packaged private contracts, the coordinator
+module/bootstrap and owned migrations, private 401 gating and absence of work routes on
+the public application. The combined optional Compose reference validates without loading
+installed secrets. Source-based broker/worker integration is distinct from this offline
+image packaging verification; no complete installed target rollout is claimed.
+
+Handoff: I04–I07 remain uncommitted on feat/dms-i01-standalone-foundation. All runtime
+fixtures were disposable and cleaned up; the existing installation, volumes, stored data
+and credentials were unchanged. I08 owns immutable candidate selection, streamed security
+evidence, native assessment and publication. Production task handlers explicitly return
+UNSUPPORTED until their owning implementation exists, and effective formats/profiles
+remain empty. No arbitrary job creation, public work endpoint, automatic redrive, object
+inventory/purge or security-pass substitute was introduced. The work runbook documents
+explicit role/broker provisioning, preserved project/volume bindings and bounded inspection.
+
+DMS-I06 — **Completed** (owner: Codex, 2026-11-05). Implemented upload and batch
+lifecycle on feat/dms-i01-standalone-foundation while preserving uncommitted I04/I05.
+Scope: guarded begin/status/complete/refresh/cancel, bounded manifest-only batches,
+transactional request receipts and race/expiry handling, exact single-PUT capabilities.
+Processing dispatch/security/publication remain later increments. Existing installation
+data and credentials stay unchanged; migrations/tests use disposable fixtures.
+Implemented: upload/session/batch/receipt persistence and constrained RLS, guarded lifecycle
+routes, stable item binding, current-state retries/refresh, exact bounded PUT issuance,
+completion intent with atomic audit/outbox, per-stage batch status/cursors, and fresh private
+upload/batch inspection. Added the optional API upload-signer network overlay and lifecycle
+runbook. Effective installed formats remain empty; trusted verification/publication and
+recurring reconciliation stay with their owning later increments.
+Owning migrations 0010–0012 enforce one session per batch item, owner/composite integrity,
+immutable keys/descriptors/receipts and separate coordinator/operator privileges. Issuance
+holds the admission row through signing/max-expiry recording, verifies RESERVED state and
+orders refresh's policy fence before its session lock. This prevents new capabilities after
+trusted accounting settlement/release and avoids reversing admission's lock order.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration all pass. Full integration passed 251 PostgreSQL cases across 16
+files, 28 Fastify cases and seven pinned-SeaweedFS storage cases with real Chromium,
+Node and Python transfers. The 32 owning access/admission/lifecycle cases include 14 new
+I06 cases: real signed PUT/repeated 412, stable replay and changed hashes, signing rollback,
+current policy/scopes/ownership, cancellation/completion/expiry, reservation settlement,
+allocation-free manifests, item binding and isolated admission pressure, batch close/cancel
+races, pagination isolation, metadata/control envelope limits, application/tenant batch
+ceilings, receipt contention/expiry and runtime immutability. Fresh private upload/batch
+inspection and repeated fresh migrations/bootstrap pass. Generated public/private
+contracts, examples/Python parity, role boundaries and git diff --check pass. Three
+standalone-only database cases remain skipped in the default combined-mode run; no new
+production-image or target-deployment verification is claimed.
+
+Handoff: I04–I06 remain uncommitted on this branch. All runtime fixtures were disposable;
+the existing installation, stored data and credentials were unchanged. I07 owns recurring
+discovery, authoritative verification/work and coordination; security/publication remain
+later increments. I06 records completion intent, not measured-byte verification or security
+approval, and the production format/profile catalog remains empty. New-version HTTP
+admission stays gated by I11. The lifecycle runbook covers explicit operator setup and
+safe independent/backend/browser transfers; no scheduler or processor starts automatically.
+
+DMS-I05 — **Completed** (owner: Codex, 2026-11-05). Implemented document registry
+and admission while preserving uncommitted I04 on feat/dms-i01-standalone-foundation.
+Scope: owning persistence for stable documents/candidates, transactional bounded admission
+and usage, versioned policy/capability projection, authorized registry/audit reads and
+private policy/capacity administration. Upload lifecycle HTTP/signing stays I06; no future
+processor/format is advertised, and no existing installation is migrated or deployed.
+Implemented: forced-RLS registry/admission/policy/usage persistence (0008–0009), internal
+transactional upload-begin allocation, version/revision guards, owner-only registry/audit
+reads, effective policy projection, fresh operator policy/inspection commands and private
+capacity observation/measured accounting kernels. Generated public/private contracts and
+the admission runbook describe the I06 boundary. The implementation-owned upload/format
+catalog remains empty.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration all pass. Full integration passed 28 Fastify cases, 237 PostgreSQL
+cases across 16 files (including all 18 owning access/admission cases), and seven real
+pinned-SeaweedFS storage cases with Chromium/Node/Python transfers. Three explicit
+standalone-only database cases are skipped by the default combined-mode run; no I05
+production-image or target-deployment verification is claimed. Admission coverage verifies
+concurrent capacity contention, rollback after allocation, stable replay/version identity,
+revision conflict, application isolation, audit attribution, unavailable-version protection,
+stale/failed observations including lock-wait expiry, shared filesystem pressure, metadata/
+control envelope bounds, measured usage/work release, backlog limits and current private
+operator authority. Generated contracts, Python parity and runtime privilege isolation pass.
+git diff --check passes. All runtime fixtures are disposable; the existing installation,
+credentials and stored data were not changed.
+
+Handoff: I04 and I05 changes remain uncommitted. I06 owns public upload/batch routes,
+transfer issuance and storage-verified completion wiring; recurring capacity observation,
+work coordination, security assessment and publication remain their planned increments.
+The runbook documents explicit policy/capacity setup; no policy or scheduler is created
+automatically, and configuration alone cannot advertise installed document processing.
+
+DMS-I04 — **Completed** (owner: Codex, 2026-11-05). Implemented the planned
+storage boundary on feat/dms-i01-standalone-foundation after committed I01–I03.
+Scope: role-separated S3 adapter, restricted signed transfer ingress, immutable snapshots,
+exact-key cleanup and pinned SeaweedFS integration verified with browser/Node/Python.
+No document admission, parser credentials, live storage changes or deployment.
+Implemented explicit path-style SigV4 clients with separate bucket/role policies, private
+identity-file/bucket/CORS provisioning, structured UUID keys, source-conditional immutable
+snapshots, exact-key cleanup and safe ambiguous-copy cleanup references. Added a separate
+credential-free Nest/Fastify streaming ingress with signed length/type/create-only checks,
+extension rejection, exact CORS, bounded transfer/rate budgets and no capability logging.
+The new optional profile binds internal SeaweedFS interfaces to loopback and exposes only
+private authenticated S3 to transfer ingress. Missing/unusable backend authentication
+fails closed per operation, including after restart.
+
+Final verification (2026-11-05): pnpm check/build/test/test:integration pass. Full
+integration includes 28 Fastify cases, 230 PostgreSQL cases across 16 files and seven
+real pinned-SeaweedFS storage cases. Storage verification covers signed length/type,
+concurrent atomic create-only PUT, source/destination copy preconditions, HEAD, range,
+read-after-write, expiry, staging-independent snapshots, exact deletion, artifacts,
+chunked rejection, unsigned header/query/vendor injection, anonymous access, restricted
+IAM/enumeration, loopback-only non-S3 interfaces and authentication-loss fail-closed
+behavior. Real Chromium Blob upload/GET, Node transfers and independent Python upload/
+range-download agree. All disposable fixtures cleaned up; no installed data was used.
+
+Both final images build: thaarei-dms-storage-i04:verification and
+thaarei-dms-i04:verification. The packaged DMS image resolves the S3 adapter/provisioning
+SDK imports and its actual Nest/Fastify transfer entrypoint starts in network isolation
+and denies unsigned requests with no-store headers. Core storage byte-transfer checks
+use the same source ingress and wrapper against the real pinned provider; a packaged
+browser/full customer TLS deployment is not claimed. Deployment/schema/boundary/Python
+checks and git diff --check pass. SDK versions/integrities/licenses and configuration,
+limits, topology and setup are recorded in architecture and docs/runbooks/dms-storage.md.
+
+Changes remain uncommitted on feat/dms-i01-standalone-foundation. No live installation,
+credentials, existing containers, data, migration, commit, push or deployment changed.
+Consumer capability discovery still advertises only implemented application operations;
+document admission, signing issuance/resource policy and publication orchestration extend
+these internal storage primitives in I05–I06. Customer DNS/TLS and actual rollout remain
+operator deployment work.
 
 DMS-I03-REVIEW — **Completed** (owner: Codex, 2026-11-05). Owner requested
 Open Code Review plugin review of I03, fixes and commit. Used the installed OCR
@@ -3920,7 +4820,7 @@ These are recorded follow-ups, not active tasks or additional release commitment
 
 | ID         | Status      | Scope                                                                                    | Next step when authorized                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ---------- | ----------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OPS-001    | Planned     | Remaining infrastructure/container validation                                            | All four application images and isolated startup checks pass. Verify broker/storage behavior, production stateful/processing services, persistence and actual Linux-container canonical issuer DNS/TLS; the Docker Desktop-to-WSL fixture probe was unavailable.                                                                                                                                                                                                                                                              |
+| OPS-001    | Planned     | Remaining infrastructure/container validation                                            | I18 now qualifies the complete standalone images, broker/storage/processing persistence and real canonical container DNS/TLS in isolated Linux containers. I19 coherent backup/recovery/disposal is locally qualified; target Linux/Dokploy ingress, independent off-host survival and hardware acceptance remain I20; older AUTH-07 unavailable probes are historical.                                                                                                                                                       |
 | OPS-002    | Planned     | Dokploy deployment verification                                                          | Deploy the implemented services to the intended Linux environment and verify domains, TLS, API routing, and health checks.                                                                                                                                                                                                                                                                                                                                                                                                    |
 | OPS-003    | In progress | Stable host/WSL time for reliable authentication verification                            | UM-VERIFY-02 now passes the 180-second preflight and 573-second runtime observation with no backward intervals/steps above 5 ms, plus complete integration and four browser suites. Prior enrollment failure did not recur; cause is not assigned. Windows latest resync still reports stale time data (error 2) despite leap 0/stratum 5: follow up source freshness and recheck time before cutover/after resume. No additional host setting, kernel clocksource change, WSL restart or target cutover was performed.       |
 | UM-REL-001 | Planned     | Coordinated user-management installation cutover and target acceptance                   | Private bundle and complete UM-VERIFY-02 local suites now pass, including measured clock stability. Before cutover, recheck target time/source freshness and obtain separate target authorization; then follow the user-management runbook: coherent backup/rehearsal, stopped incompatible processes, credential retirement, owning migrations/import, distinct service provisioning, real first-administrator handover, exact-image startup/opening and target verification. No existing-installation cutover has occurred. |
@@ -3931,10 +4831,11 @@ These are recorded follow-ups, not active tasks or additional release commitment
 | MOB-001    | Deferred    | Expo/React Native application                                                            | Add the mobile client only when explicitly requested; preserve the shared backend and platform-independent contracts now.                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 Authentication contracts/OpenAPI, owned migrations, the BFF and machine enrollment are
-implemented, including the typed cross-service capability request. Remaining feature contracts,
-coordinator/publisher/worker execution, scanning, extraction, search, and document workflows
-remain pending their respective DMS requirements. Empty modules and folders do not count
-as implemented capabilities.
+implemented, including the typed cross-service capability request. DMS-I01–I19 now implement
+and locally qualify document workflows, coordinator/publisher/private execution, scanning,
+extraction/OCR/optional structure, results, discovery and the standalone distribution.
+I19 coherent backup/recovery/disposal is locally qualified; customer release and target off-host/hardware acceptance remain I20.
+Empty modules and folders do not count as implemented capabilities.
 
 ## Reference documents
 

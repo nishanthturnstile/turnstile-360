@@ -1,0 +1,9 @@
+# Add after the uploads/downloads/work overlays for accepted artifact GET signing.
+services:
+  dms-api:
+    env_file:
+      - { path: ../.env.dms, format: raw }
+      - { path: ../.env.dms-upload, format: raw }
+      - { path: ../.env.dms-download, format: raw }
+      - { path: ../.env.dms-results, format: raw }
+    networks: [default, storage, work]

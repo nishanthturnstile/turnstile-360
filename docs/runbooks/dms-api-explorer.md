@@ -4,9 +4,11 @@ DMS-I02 exposes only implemented consumer operations. Use the
 [standalone foundation runbook](dms-standalone.md) first for database migration/bootstrap,
 verified operator setup and independent client provisioning. The accepted technical
 contract is maintained in [architecture](../../architecture.md#consumer-api-contract-and-explorer-dms-i02).
-No document upload, processing, revisioned resource or asynchronous job endpoint is
-implemented by this increment. Swagger does not replace business authorization in a
-consumer backend, or its separate machine authorization at DMS.
+The explorer includes implemented registry, upload and batch status reads. Use the
+[lifecycle runbook](dms-uploads.md) for backend-only mutations and direct transfer;
+completion intent is not processing approval or publication. Effective formats remain
+closed until their owning security implementations are installed. Swagger does not
+replace business authorization in a consumer backend or its machine authorization at DMS.
 
 ## Enable controlled access
 

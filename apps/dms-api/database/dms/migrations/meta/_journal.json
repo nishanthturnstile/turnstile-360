@@ -57,6 +57,328 @@
       "when": 1793850508533,
       "tag": "0007_audit_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793855925042,
+      "tag": "0008_document_admission",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793855925813,
+      "tag": "0009_document_admission_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793858187148,
+      "tag": "0010_upload_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793858217248,
+      "tag": "0011_upload_lifecycle_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793859007675,
+      "tag": "0012_upload_item_binding",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793861720123,
+      "tag": "0013_authoritative_work",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793861721153,
+      "tag": "0014_authoritative_work_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1793862203032,
+      "tag": "0015_coordinator_batch_expiry",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793869387828,
+      "tag": "0016_assessment_publication",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793869413743,
+      "tag": "0017_assessment_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793869518161,
+      "tag": "0018_assessment_states",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793869989940,
+      "tag": "0019_assessment_operator_read",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793869990835,
+      "tag": "0020_assessment_operator_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793870075639,
+      "tag": "0021_immutable_copy_intent",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793870076566,
+      "tag": "0022_candidate_immutability",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793870162865,
+      "tag": "0023_assessment_outbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793871573436,
+      "tag": "0024_download_issuance_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793875065796,
+      "tag": "0025_version_restore_references",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793875066664,
+      "tag": "0026_version_restore_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1793875286486,
+      "tag": "0027_version_restore_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1793875466827,
+      "tag": "0028_restore_reference_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793876141807,
+      "tag": "0029_single_admission_per_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1793883611120,
+      "tag": "0030_document_metadata_references",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793883623145,
+      "tag": "0031_document_metadata_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793884632321,
+      "tag": "0032_document_sharing",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793884675622,
+      "tag": "0033_sharing_policy",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1793886135615,
+      "tag": "0034_shared_completion_receipts",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793887756557,
+      "tag": "0035_document_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793887911780,
+      "tag": "0036_lifecycle_authority",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793891233254,
+      "tag": "0037_extraction_stage",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1793891314128,
+      "tag": "0038_extraction_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1793894806394,
+      "tag": "0039_ocr_stage_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1793898207073,
+      "tag": "0040_processing_results",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793898327196,
+      "tag": "0041_processing_authority",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1793931169287,
+      "tag": "0042_permission_aware_discovery",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793931195195,
+      "tag": "0043_discovery_authority",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1793934396027,
+      "tag": "0044_service_observations",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1793940685684,
+      "tag": "0045_operations_authority",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1793949416116,
+      "tag": "0046_recovery_disposal",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1793949511551,
+      "tag": "0047_backup_receipt",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1793949735878,
+      "tag": "0048_disposal_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1793949738611,
+      "tag": "0049_recovery_authority",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1793951601816,
+      "tag": "0050_disposal_application_integrity",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1793951859336,
+      "tag": "0051_recovery_retention",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1793951877009,
+      "tag": "0052_disposal_outbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1793953173102,
+      "tag": "0053_pending_recovery_horizon",
+      "breakpoints": true
     }
   ]
 }
