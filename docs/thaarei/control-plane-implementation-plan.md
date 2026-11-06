@@ -15,14 +15,14 @@ No preliminary scaffold or dashboard counts as a functioning control plane.
 
 ## Existing foundation and missing capability
 
-| Area | Already planned or present | Added work |
-| --- | --- | --- |
-| Deployment model | One tenant per customer installation; multiple independent DMS consumers | Central client/installation/product inventory, preserving that local model |
-| User authentication | Customer-local Better Auth authority and Turnstile BFF | Separate staff identity, sessions, MFA and fixed staff roles in Next.js |
-| Machine authorization | Local client-credentials tokens, scopes, active registrations and resource policy | Per-product central credential and signed deployment decision; existing checks stay |
-| Enrollment | Local operator issues a bound one-time key; DMS activates pending consumer | Central pairing, employee approval and renewable product activation |
-| Visibility | Local health/security telemetry; DMS-I18 operational projections under construction separately | Disclosed outbound summaries and central status/usage history |
-| Distribution | Standalone DMS delivery in another branch | Coordinated activation/reporting integration after its contracts settle; no live patch now |
+| Area                  | Already planned or present                                                                     | Added work                                                                                 |
+| --------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Deployment model      | One tenant per customer installation; multiple independent DMS consumers                       | Central client/installation/product inventory, preserving that local model                 |
+| User authentication   | Customer-local Better Auth authority and Turnstile BFF                                         | Separate staff identity, sessions, MFA and fixed staff roles in Next.js                    |
+| Machine authorization | Local client-credentials tokens, scopes, active registrations and resource policy              | Per-product central credential and signed deployment decision; existing checks stay        |
+| Enrollment            | Local operator issues a bound one-time key; DMS activates pending consumer                     | Central pairing, employee approval and renewable product activation                        |
+| Visibility            | Local health/security telemetry; DMS-I18 operational projections under construction separately | Disclosed outbound summaries and central status/usage history                              |
+| Distribution          | Standalone DMS delivery in another branch                                                      | Coordinated activation/reporting integration after its contracts settle; no live patch now |
 
 The separate DMS checkout was inspected read-only for the current I18 handoff and enrollment
 boundary. This branch is based on development's earlier committed foundation. Reuse current

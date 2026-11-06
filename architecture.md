@@ -23,7 +23,7 @@ feature implementation.
 | [DMS product blueprint](docs/dms/headless_dms_product_blueprint_v1.md)                           | Product promise, included/deferred scope, product correctness, deployment inputs, and product decision history                                                                           |
 | [DMS functionality requirements](docs/dms/headless_dms_functionality_requirements_v1.md)         | Stable FR/NFR IDs and capability dependency order                                                                                                                                        |
 | [Standalone DMS implementation plan](docs/dms/dms_implementation_plan.md)                        | Requirement-mapped delivery, independent installation/integration, API explorer and standalone verification gates; planned work is not implementation                                    |
-| [Thaarei control-plane specification](docs/thaarei/control-plane-specification.md) | Proposed central client/product approval and reporting requirements; architecture proposal below and linked delivery plan remain unimplemented |
+| [Thaarei control-plane specification](docs/thaarei/control-plane-specification.md)               | Proposed central client/product approval and reporting requirements; architecture proposal below and linked delivery plan remain unimplemented                                           |
 | [Onboarding specification](docs/turnstile/onboarding/onboarding_specification.md)                | Accepted ONB-R01–13 product scope and acceptance; delivery packages remain in the linked implementation plans                                                                            |
 | [User-management specification](docs/turnstile/user-management/user_management_specification.md) | Accepted UM-R01–22 product requirements and D01–03 decisions; the proposal preserves discovery and the linked plan sequences delivery                                                    |
 | [Workspace standards](docs/standards/workspace.md)                                               | Coding, formatting, configuration, and verification conventions                                                                                                                          |
@@ -2703,9 +2703,9 @@ one customer host per installation. Containers do not span those hosts and Docke
 names resolve only inside their owning host/network. Customer runtime databases never
 move to Thaarei. The central API receives reports, not access to customer databases.
 
-| Host | Required components | Persistence and ingress |
-| --- | --- | --- |
-| Thaarei | Next.js app with integrated endpoints, central PostgreSQL, staff SMTP integration | Independent central auth/registry/report/audit database and signing-key recovery; own Dokploy HTTPS hostname |
+| Host          | Required components                                                                                                                                    | Persistence and ingress                                                                                                                                                |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Thaarei       | Next.js app with integrated endpoints, central PostgreSQL, staff SMTP integration                                                                      | Independent central auth/registry/report/audit database and signing-key recovery; own Dokploy HTTPS hostname                                                           |
 | Each customer | Turnstile Vite/Nginx frontend, Turnstile Nest/Fastify backend, DMS API with local identity; DMS coordinator/transfer and installed processing services | Customer PostgreSQL with separately owned auth, DMS and Turnstile data; customer-only storage, broker, signatures and enabled workers/parsers; own Dokploy domains/TLS |
 
 The three customer applications are not the entire DMS runtime. PostgreSQL, SeaweedFS,
@@ -2728,20 +2728,20 @@ composed into a customer product release rather than mistaken for a Turnstile re
 
 For the existing supported combined customer flow, use customer-owned origins, for example:
 
-| Configuration or route | Customer combined deployment contract |
-| --- | --- |
-| `AUTH_PUBLIC_ORIGIN` | Customer Turnstile HTTPS origin, e.g. `https://turnstile.customer.example`; never the Thaarei control-plane origin |
-| `AUTH_MODE` on DMS | `combined` for this established shared-origin Turnstile flow |
-| `AUTH_ISSUER_URL` | That customer origin plus `/identity` |
-| `AUTH_LOGIN_CALLBACK_URL` | That customer origin plus `/api/auth/callback`; exact registered callback |
-| `AUTH_LOGIN_CLIENT_ID` / secret | Customer-local login client; confidential secret only in Turnstile backend |
-| `DMS_RESOURCE_URL` | Exact customer DMS audience, e.g. `https://dms.customer.example/v1` |
-| `DMS_API_URL` | Private customer transport, e.g. `http://dms-api:3001/v1`; same logical DMS resource, not central API |
-| `DMS_MACHINE_CLIENT_ID` / secret | Separate local DMS consumer identity, plus its existing registration/enrollment |
-| `IDENTITY_SERVICE_RESOURCE_URL` | Customer authority origin plus `/identity/services/accounts` |
-| `IDENTITY_SERVICE_API_URL` | Private customer DMS origin, e.g. `http://dms-api:3001`, using its dedicated identity-service client/secret |
-| Fixed installation IDs | `INSTALLATION_TENANT_ID`, `INSTALLATION_CUSTOMER_KEY` and Turnstile's `TURNSTILE_APPLICATION_ID` match owned bootstrap; never selected from browser/report input |
-| Database/secret settings | Auth and DMS URLs/secrets stay in DMS owning processes; Turnstile URL/cookie/token/invitation keys stay in Turnstile; no runtime gets migrator credentials |
+| Configuration or route           | Customer combined deployment contract                                                                                                                            |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_PUBLIC_ORIGIN`             | Customer Turnstile HTTPS origin, e.g. `https://turnstile.customer.example`; never the Thaarei control-plane origin                                               |
+| `AUTH_MODE` on DMS               | `combined` for this established shared-origin Turnstile flow                                                                                                     |
+| `AUTH_ISSUER_URL`                | That customer origin plus `/identity`                                                                                                                            |
+| `AUTH_LOGIN_CALLBACK_URL`        | That customer origin plus `/api/auth/callback`; exact registered callback                                                                                        |
+| `AUTH_LOGIN_CLIENT_ID` / secret  | Customer-local login client; confidential secret only in Turnstile backend                                                                                       |
+| `DMS_RESOURCE_URL`               | Exact customer DMS audience, e.g. `https://dms.customer.example/v1`                                                                                              |
+| `DMS_API_URL`                    | Private customer transport, e.g. `http://dms-api:3001/v1`; same logical DMS resource, not central API                                                            |
+| `DMS_MACHINE_CLIENT_ID` / secret | Separate local DMS consumer identity, plus its existing registration/enrollment                                                                                  |
+| `IDENTITY_SERVICE_RESOURCE_URL`  | Customer authority origin plus `/identity/services/accounts`                                                                                                     |
+| `IDENTITY_SERVICE_API_URL`       | Private customer DMS origin, e.g. `http://dms-api:3001`, using its dedicated identity-service client/secret                                                      |
+| Fixed installation IDs           | `INSTALLATION_TENANT_ID`, `INSTALLATION_CUSTOMER_KEY` and Turnstile's `TURNSTILE_APPLICATION_ID` match owned bootstrap; never selected from browser/report input |
+| Database/secret settings         | Auth and DMS URLs/secrets stay in DMS owning processes; Turnstile URL/cookie/token/invitation keys stay in Turnstile; no runtime gets migrator credentials       |
 
 Route customer `/` and SPA paths to `turnstile-web:8080`; give `/api` priority to
 `turnstile-api:3002`; route `/identity` and its exact well-known metadata alias to
@@ -2820,14 +2820,14 @@ be labelled as configured/reported, not an independently observed browser uptime
 
 ### Authentication and authorization boundaries
 
-| Caller | Credential and verifier | Permitted authority |
-| --- | --- | --- |
-| Thaarei employee browser | Central Better Auth database-backed session; host-only Secure HttpOnly cookie | Staff role checked on every server entry; never customer administration by implication |
-| Deployed Turnstile backend | Unique central machine bearer secret, SHA-256 digest stored centrally | Activate/sync/rotate only its product record |
-| Deployed DMS coordinator | Different unique central machine secret | Activate/sync/rotate only its DMS product record |
-| Customer browser | Existing local product session | Local product permissions; no direct central machine API access |
-| Turnstile or another backend calling DMS | Existing local OAuth machine token and active DMS registration | Existing scopes, ownership/grants and tenant checks, plus DMS installation approval |
-| Workers, publisher, storage | Existing private local identities | No central staff or product credential; local work policy still applies |
+| Caller                                   | Credential and verifier                                                       | Permitted authority                                                                    |
+| ---------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Thaarei employee browser                 | Central Better Auth database-backed session; host-only Secure HttpOnly cookie | Staff role checked on every server entry; never customer administration by implication |
+| Deployed Turnstile backend               | Unique central machine bearer secret, SHA-256 digest stored centrally         | Activate/sync/rotate only its product record                                           |
+| Deployed DMS coordinator                 | Different unique central machine secret                                       | Activate/sync/rotate only its DMS product record                                       |
+| Customer browser                         | Existing local product session                                                | Local product permissions; no direct central machine API access                        |
+| Turnstile or another backend calling DMS | Existing local OAuth machine token and active DMS registration                | Existing scopes, ownership/grants and tenant checks, plus DMS installation approval    |
+| Workers, publisher, storage              | Existing private local identities                                             | No central staff or product credential; local work policy still applies                |
 
 Start staff access with explicit administrator-created accounts, verified email/password,
 MFA for administrators and approvers, controlled recovery and three fixed roles: Admin,
@@ -2922,16 +2922,16 @@ The owner selected seven-day renewable approval with daily renewal on 2026-11-06
 That policy is agreed but unimplemented. Other values and the restriction exceptions below
 remain proposed defaults; none are existing configured limits.
 
-| Setting | Proposed value and meaning |
-| --- | --- |
-| Outbound product sync | Every 15 minutes with jitter; one elected reporter per product installation |
-| Approval renewal | Renew when less than 6 days remain, normally once daily |
-| Signed approval lifetime | 7 days from issuance; no additional implicit grace after expiry |
-| Reporting freshness | Fresh within 45 minutes; afterwards report “not recently seen,” not “down” |
-| Transport | 5-second timeout; bounded backoff with jitter up to 15 minutes; respect Retry-After |
-| Report size | 32 KiB maximum, strict schema; numeric aggregates, no document/user payloads |
-| History | 90 days of report snapshots; one year of staff/security audit; review retention at TCP-I01 |
-| Staff session | At most 8 hours absolute, 30 minutes idle; recent MFA within 10 minutes for sensitive changes |
+| Setting                  | Proposed value and meaning                                                                                                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Outbound product sync    | Every 15 minutes with jitter; one elected reporter per product installation                                                                                                                                  |
+| Approval renewal         | Renew when less than 6 days remain, normally once daily                                                                                                                                                      |
+| Signed approval lifetime | 7 days from issuance; no additional implicit grace after expiry                                                                                                                                              |
+| Reporting freshness      | Fresh within 45 minutes; afterwards report “not recently seen,” not “down”                                                                                                                                   |
+| Transport                | 5-second timeout; bounded backoff with jitter up to 15 minutes; respect Retry-After                                                                                                                          |
+| Report size              | 32 KiB maximum, strict schema; numeric aggregates, no document/user payloads                                                                                                                                 |
+| History                  | 90 days of report snapshots; one year of staff/security audit; review retention at TCP-I01                                                                                                                   |
+| Staff session            | At most 8 hours absolute, 30 minutes idle; recent MFA within 10 minutes for sensitive changes                                                                                                                |
 | Central machine rotation | Product-owned lock plus generation compare-and-swap; durable candidate/operation journal; recover by candidate-authenticated sync before atomic local promotion; old secret denied after central replacement |
 
 Missing approval blocks initial business use. During a central outage, previously approved
@@ -2939,14 +2939,14 @@ products keep normal operation until their signed grant expires, including ordin
 restarts. An outage is not a signed suspension. The following read/recovery exception is
 proposed for owner review; seven-day approval and daily renewal are already selected.
 
-| Local state | Business access under the proposed restriction policy |
-| --- | --- |
-| Current verified approval | Normal operations, subject to existing user/resource rights |
+| Local state                                                                                                       | Business access under the proposed restriction policy                                                                                            |
+| ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Current verified approval                                                                                         | Normal operations, subject to existing user/resource rights                                                                                      |
 | Naturally expired approval, or verified signed suspension, with verified prior activation for the current binding | No new business writes/uploads/processing admission; retain only already-authorized existing reads/downloads and specified recovery/safety paths |
-| Pending, rejected before activation, suspended before activation, or no verified prior activation | No business reads or writes, even if restored document data exists |
-| Invalid incoming signature, unknown verification key or malformed response | Reject the candidate without changing usable retained verified state; it creates no approval or prior-activation evidence |
-| Corrupt/unverifiable stored decision, explicitly revoked trust key, or backward-clock error | Close business reads/writes and reconcile; an uncertain clock or invalid stored proof is not ordinary expiry |
-| Supported restore/rebind quarantine | Close business access until explicit online reconciliation; cached history alone cannot reopen it |
+| Pending, rejected before activation, suspended before activation, or no verified prior activation                 | No business reads or writes, even if restored document data exists                                                                               |
+| Invalid incoming signature, unknown verification key or malformed response                                        | Reject the candidate without changing usable retained verified state; it creates no approval or prior-activation evidence                        |
+| Corrupt/unverifiable stored decision, explicitly revoked trust key, or backward-clock error                       | Close business reads/writes and reconcile; an uncertain clock or invalid stored proof is not ordinary expiry                                     |
+| Supported restore/rebind quarantine                                                                               | Close business access until explicit online reconciliation; cached history alone cannot reopen it                                                |
 
 Eligibility for the read exception requires retained signed approval plus evidence that it
 was validated and applied while valid for this exact binding/epoch. Existing documents or
@@ -3061,14 +3061,14 @@ transactions while fencing approval revision before response.
 
 Proposed versioned HTTP surface, independent of Next internals:
 
-| Surface | Authentication | Purpose |
-| --- | --- | --- |
-| `/api/auth/*` | Native staff auth policy | Staff sign-in, MFA, recovery and logout |
-| `/api/staff/*` | Live staff session/role and CSRF for writes | Client/installation/product registry, approval, suspension, pairing, staff and audit |
-| `POST /api/machine/v1/activate` | Bound pairing code plus generated secret | Pair exact expected product; returns pending state/receipt |
-| `POST /api/machine/v1/sync` | Product machine bearer secret | Accept bounded summary, return receipt/server time/current signed decision |
-| `POST /api/machine/v1/rotate-credential` | Current machine secret | Replace only its own secret; never approval or product binding |
-| `/health/live`, `/health/ready` | Minimal public output | Central liveness/dependency readiness, without registry data |
+| Surface                                  | Authentication                              | Purpose                                                                              |
+| ---------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `/api/auth/*`                            | Native staff auth policy                    | Staff sign-in, MFA, recovery and logout                                              |
+| `/api/staff/*`                           | Live staff session/role and CSRF for writes | Client/installation/product registry, approval, suspension, pairing, staff and audit |
+| `POST /api/machine/v1/activate`          | Bound pairing code plus generated secret    | Pair exact expected product; returns pending state/receipt                           |
+| `POST /api/machine/v1/sync`              | Product machine bearer secret               | Accept bounded summary, return receipt/server time/current signed decision           |
+| `POST /api/machine/v1/rotate-credential` | Current machine secret                      | Replace only its own secret; never approval or product binding                       |
+| `/health/live`, `/health/ready`          | Minimal public output                       | Central liveness/dependency readiness, without registry data                         |
 
 Typed contracts include binding, protocol/schema version, idempotency/report identity,
 signed decision state, binding epoch, policy revision/decision sequence, credential generation,

@@ -128,7 +128,11 @@ the PR's existing full CI must complete before merge. The eight documentation pa
 committed and pushed; [PR #12](https://github.com/nishanthturnstile/turnstile-360/pull/12)
 is open against development. The connector returned HTTP 403 on PR creation, so the
 already-authenticated GitHub CLI created it; T3 linking succeeded. CI/review readiness is
-pending. Next: follow checks/review requirements and merge through the PR only when ready.
+pending. The initial d224a2f CI checks stopped at Biome formatting in five changed
+Markdown files; no application failure was reached. Applied installed Biome 2.6.4 to those
+files and confirmed the correction preserves their text apart from whitespace/table rules.
+Local full Biome CI and refreshed documentation-reference checks pass. Next: push the
+format-only correction and follow the new full CI/review checks before merging the PR.
 Handoff while CI runs: after merge, fetch updated development, then create
 feat/thaarei-control-plane-implementation from freshly fetched development and stop before
 implementation. The plan's remaining product defaults are not adopted by this docs merge.
