@@ -122,6 +122,19 @@ transient binary-restore storage failures and disposal fairness. Add focused pro
 regressions, run workspace checks, then commit all authorized branch work and open/merge
 a PR to development after checks/review. Preserve installed services and private evidence.
 
+Implemented and locally verified all four findings. Added terminal no-scanner accounting
+reconciliation using expired capabilities and authenticated exact-key storage observations;
+required backup inventory excludes unconfirmed copy destinations; transient binary-restore
+HEAD errors remain retryable; disposal eligibility precedes the bounded batch limit.
+Regression coverage runs the production services against PostgreSQL/SeaweedFS, with HTTP
+503 injection for restore, copy failure, repeated settlement and blocked cleanup intents.
+2026-11-06: pnpm check/build/test/test:integration PASS. DMS database: 80 passes/three
+explicit native skips; full DB: 299 passes/six skips across 16 files. Browser/Node/Python
+transfer verification passes. Merged current origin/development planning documentation,
+preserving both progress histories. All authorized DMS implementation is committed.
+Next: push branch, open PR against development, resolve CI/review findings and merge.
+I20 exact-candidate/customer acceptance remains pending under its existing handoff.
+
 
 DMS-I20 — **In progress** (owner: Codex, 2026-11-06), on
 feat/dms-i01-standalone-foundation. Implementing the requirement evidence ledger, independent
