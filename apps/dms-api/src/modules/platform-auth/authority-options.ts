@@ -1,5 +1,5 @@
 import { oauthProvider } from '@better-auth/oauth-provider';
-import { DMS_MACHINE_SCOPES, IDENTITY_SERVICE_SCOPES } from '@thaarei/dms-contracts';
+import { DMS_MACHINE_SCOPES, IDENTITY_SERVICE_SCOPES, WORK_SCOPES } from '@thaarei/dms-contracts';
 import type { BetterAuthOptions } from 'better-auth';
 import { createAuthMiddleware } from 'better-auth/api';
 import { admin } from 'better-auth/plugins/admin';
@@ -69,14 +69,19 @@ export function createAuthorityOptions(
     plugins: [
       admin(),
       jwt({
-        jwks: { keyPairConfig: { alg: config.AUTH_SIGNING_ALGORITHM } },
+        jwks: { keyPairConfig: { alg: config.AUTH_SIGNING_ALGORITHM }, gracePeriod: 86400 },
         jwt: { issuer: config.AUTH_ISSUER_URL, expirationTime: '5m' },
         disableSettingJwtHeader: true,
       }),
       oauthProvider({
         loginPage: `${config.AUTH_PUBLIC_ORIGIN}/identity/interaction/login`,
         consentPage: `${config.AUTH_PUBLIC_ORIGIN}/identity/interaction/consent`,
-        scopes: [...LOGIN_SCOPES, ...DMS_MACHINE_SCOPES, ...IDENTITY_SERVICE_SCOPES],
+        scopes: [
+          ...LOGIN_SCOPES,
+          ...DMS_MACHINE_SCOPES,
+          ...IDENTITY_SERVICE_SCOPES,
+          ...WORK_SCOPES,
+        ],
         grantTypes: ['authorization_code', 'refresh_token', 'client_credentials'],
         accessTokenExpiresIn: 300,
         m2mAccessTokenExpiresIn: 300,

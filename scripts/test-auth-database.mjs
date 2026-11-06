@@ -18,7 +18,9 @@ function run(command, args, env = process.env) {
       args[0] === 'scripts/test-auth-browser.mjs'
         ? 240000
         : args.includes('test:database')
-          ? 360000
+          ? env.DMS_TEST_NATIVE_STRUCTURE === 'true'
+            ? 900000
+            : 360000
           : 120000,
   });
   assert.equal(
@@ -351,29 +353,36 @@ try {
     process.argv.includes('--scoped-structure') ||
     process.argv.includes('--user-management-release')
       ? ['turnstile-api']
-      : standalone || process.argv.includes('--dms-only') || process.argv.includes('--dms-access')
+      : standalone ||
+          process.argv.includes('--dms-only') ||
+          process.argv.includes('--dms-access') ||
+          process.argv.includes('--dms-admission')
         ? ['dms-api']
         : ['dms-api', 'turnstile-api']) {
-      const selected = process.argv.includes('--dms-access')
-        ? ['test/enrollment.database-spec.ts']
-        : standalone
-          ? ['test/standalone.database-spec.ts']
-          : process.argv.includes('--user-management-release')
-            ? ['test/user-management-upgrade.database-spec.ts', 'test/recipients.database-spec.ts']
-            : process.argv.includes('--identity-service')
-              ? ['test/identity-service.database-spec.ts']
-              : process.argv.includes('--people')
-                ? ['test/people.database-spec.ts']
-                : process.argv.includes('--scoped-structure')
-                  ? ['test/scoped-structure.database-spec.ts']
-                  : process.argv.includes('--recipients')
-                    ? ['test/recipients.database-spec.ts']
-                    : process.argv.includes('--invitations')
-                      ? ['test/invitations.database-spec.ts']
-                      : readdirSync(`apps/${application}/test`)
-                          .filter((file) => file.endsWith('.database-spec.ts'))
-                          .sort()
-                          .map((file) => `test/${file}`);
+      const selected =
+        process.argv.includes('--dms-access') || process.argv.includes('--dms-admission')
+          ? ['test/enrollment.database-spec.ts']
+          : standalone
+            ? ['test/standalone.database-spec.ts']
+            : process.argv.includes('--user-management-release')
+              ? [
+                  'test/user-management-upgrade.database-spec.ts',
+                  'test/recipients.database-spec.ts',
+                ]
+              : process.argv.includes('--identity-service')
+                ? ['test/identity-service.database-spec.ts']
+                : process.argv.includes('--people')
+                  ? ['test/people.database-spec.ts']
+                  : process.argv.includes('--scoped-structure')
+                    ? ['test/scoped-structure.database-spec.ts']
+                    : process.argv.includes('--recipients')
+                      ? ['test/recipients.database-spec.ts']
+                      : process.argv.includes('--invitations')
+                        ? ['test/invitations.database-spec.ts']
+                        : readdirSync(`apps/${application}/test`)
+                            .filter((file) => file.endsWith('.database-spec.ts'))
+                            .sort()
+                            .map((file) => `test/${file}`);
       assert.ok(selected.length, `No database tests for ${application}`);
       for (const file of selected)
         console.log(

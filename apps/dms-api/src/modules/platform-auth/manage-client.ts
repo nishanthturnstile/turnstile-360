@@ -2,7 +2,12 @@ import { closeSync, fsyncSync, openSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { OAuthClient } from '@better-auth/oauth-provider';
-import { DMS_MACHINE_SCOPES, IDENTITY_SERVICE_SCOPES } from '@thaarei/dms-contracts';
+import {
+  DMS_MACHINE_SCOPES,
+  IDENTITY_SERVICE_SCOPES,
+  WORK_ROLE_SCOPE,
+  WORK_SCOPES,
+} from '@thaarei/dms-contracts';
 import { z } from 'zod';
 import { assertRuntimeRole, createPool } from '../../infrastructure/database/postgres.js';
 import { DmsDatabaseService } from '../access/dms-database/dms-database.service.js';
@@ -14,20 +19,34 @@ import {
 } from './authority-configuration.js';
 import { type Authority, createAuthority } from './authority-instance.js';
 import { withOAuthOperator } from './oauth-operator-context.js';
-import { clientApproval, LOGIN_SCOPES, userInfoResource } from './oauth-policy.js';
+import {
+  clientApproval,
+  LOGIN_SCOPES,
+  userInfoResource,
+  workResource,
+  workRole,
+} from './oauth-policy.js';
 import { createRecoveryDelivery } from './recovery-delivery.js';
 
 const inputSchema = z
   .object({
     action: z.enum(['issue', 'inspect', 'rotate', 'suspend', 'resume', 'set-scopes']),
-    kind: z.enum(['login', 'machine', 'identity_service']),
+    kind: z.enum([
+      'login',
+      'machine',
+      'identity_service',
+      'work_publisher',
+      'work_scanner',
+      'work_extractor',
+      'work_heavy',
+    ]),
     clientId: z
       .string()
       .regex(/^[A-Za-z0-9_-]{3,128}$/)
       .optional(),
     applicationId: z.uuid().toLowerCase().optional(),
     scopes: z
-      .array(z.enum([...DMS_MACHINE_SCOPES, ...IDENTITY_SERVICE_SCOPES]))
+      .array(z.enum([...DMS_MACHINE_SCOPES, ...IDENTITY_SERVICE_SCOPES, ...WORK_SCOPES]))
       .min(1)
       .refine((values) => new Set(values).size === values.length)
       .optional(),
@@ -47,9 +66,15 @@ export async function manageOAuthClient(
 ) {
   const request = inputSchema.parse(input);
   const identity = request.kind === 'identity_service';
+  const role = workRole(request.kind);
+  if (role && !request.clientId) throw new Error('Explicit private work client identity required');
   if (identity && (!config.IDENTITY_SERVICE_CLIENT_ID || !config.IDENTITY_SERVICE_RESOURCE_URL))
     throw new Error('Identity service is not configured');
-  const allowedScopes: readonly string[] = identity ? IDENTITY_SERVICE_SCOPES : DMS_MACHINE_SCOPES;
+  const allowedScopes: readonly string[] = role
+    ? [WORK_ROLE_SCOPE[role]]
+    : identity
+      ? IDENTITY_SERVICE_SCOPES
+      : DMS_MACHINE_SCOPES;
   if (request.scopes?.some((scope) => !allowedScopes.includes(scope)))
     throw new Error('Scope purpose mismatch');
   const clientId =
@@ -59,6 +84,16 @@ export async function manageOAuthClient(
       : identity
         ? (config.IDENTITY_SERVICE_CLIENT_ID ?? '')
         : config.DMS_MACHINE_CLIENT_ID);
+  if (
+    role &&
+    [
+      config.AUTH_LOGIN_CLIENT_ID,
+      config.DMS_MACHINE_CLIENT_ID,
+      config.IDENTITY_SERVICE_CLIENT_ID,
+      ...config.AUTH_LOGIN_CLIENTS.map((c) => c.clientId),
+    ].includes(clientId)
+  )
+    throw new Error('Client purposes must be distinct');
   if (clientId.startsWith('unused-')) throw new Error('Explicit client identity required');
   const login = request.kind === 'login' ? loginPolicy(config, clientId, true) : undefined;
   if (request.kind === 'login' && !login) throw new Error('Approved login policy required');
@@ -97,8 +132,10 @@ export async function manageOAuthClient(
     await captureAuthorityEvent(config, { ...auditEvent, outcome: 'pending' });
   const managed = await withOAuthOperator(clientId, async () => {
     let result: OAuthClient;
-    const resource =
-      request.kind === 'login'
+    const resourceScopes = role ? WORK_SCOPES : allowedScopes;
+    const resource = role
+      ? workResource(config)
+      : request.kind === 'login'
         ? userInfoResource(config)
         : identity
           ? (config.IDENTITY_SERVICE_RESOURCE_URL ?? '')
@@ -120,7 +157,7 @@ export async function manageOAuthClient(
               name: identity ? 'Identity invitation service' : 'DMS API',
               accessTokenTtl: 300,
               signingAlgorithm: 'RS256',
-              allowedScopes: [...allowedScopes],
+              allowedScopes: [...resourceScopes],
             },
           });
         else if (
@@ -129,7 +166,7 @@ export async function manageOAuthClient(
           existing.accessTokenTtl > 300 ||
           existing.signingAlgorithm !== 'RS256' ||
           !existing.allowedScopes?.length ||
-          existing.allowedScopes.some((scope) => !allowedScopes.includes(scope))
+          existing.allowedScopes.some((scope) => !resourceScopes.includes(scope))
         )
           throw new Error('Existing resource requires operator policy review');
       }
@@ -265,7 +302,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
     pool = createPool(config.AUTH_DATABASE_URL, 1);
     await assertRuntimeRole(pool, 'auth');
     dms = new DmsDatabaseService();
-    if (!(await dms.ready())) throw new Error('Installation is unavailable');
+    if (!(await dms.ready(true))) throw new Error('Installation is unavailable');
     auth = createAuthority(config, pool, createRecoveryDelivery(config));
     const login = await auth.api.signInEmail({
       body: { email: operatorEmail, password: operatorPassword },

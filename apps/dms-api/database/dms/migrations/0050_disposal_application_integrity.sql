@@ -1,0 +1,1 @@
+ALTER TABLE "dms"."disposal_intent" ADD CONSTRAINT "disposal_application_integrity" FOREIGN KEY ("tenant_id","application_id") REFERENCES "dms"."application_registration"("tenant_id","id") ON DELETE no action ON UPDATE no action;

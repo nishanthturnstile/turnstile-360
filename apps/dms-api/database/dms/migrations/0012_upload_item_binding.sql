@@ -1,0 +1,3 @@
+ALTER TABLE "dms"."upload_receipt" DROP CONSTRAINT "upload_receipt_bounds";--> statement-breakpoint
+ALTER TABLE "dms"."upload_session" ADD CONSTRAINT "session_batch_item_identity" UNIQUE("tenant_id","application_id","batch_id","item_id");--> statement-breakpoint
+ALTER TABLE "dms"."upload_receipt" ADD CONSTRAINT "upload_receipt_bounds" CHECK (length("dms"."upload_receipt"."key_hash")=64 AND length("dms"."upload_receipt"."request_hash")=64 AND (("dms"."upload_receipt"."namespace" IN ('batch.create','batch.close') AND "dms"."upload_receipt"."batch_id" IS NOT NULL AND "dms"."upload_receipt"."upload_id" IS NULL) OR ("dms"."upload_receipt"."namespace"='upload.complete' AND "dms"."upload_receipt"."batch_id" IS NULL AND "dms"."upload_receipt"."upload_id" IS NOT NULL)));

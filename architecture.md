@@ -3944,6 +3944,175 @@ Require signed `If-None-Match: *` on staging PUTs to prevent replacement and sig
 
 Configure authentication before exposing SeaweedFS: `weed mini` otherwise permits unauthenticated access when credentials are absent. Keep filer, volume, master, administrative, and non-S3 interfaces private. Disable or block automatic archive extraction and vendor-specific write extensions on the transfer ingress; test unsigned header/query injection. Do not expose a path that bypasses S3 authorization. [SeaweedFS authentication defaults](https://github.com/seaweedfs/seaweedfs/wiki/Quick-Start-with-weed-mini), [SeaweedFS S3 API](https://github.com/seaweedfs/seaweedfs/wiki/Amazon-S3-API)
 
+### Implemented I04 boundary
+
+The owning storage module uses AWS SDK for JavaScript v3 `@aws-sdk/client-s3` and
+`@aws-sdk/s3-request-presigner` 3.1162.0, SigV4, mandatory explicit region and path-style
+endpoints. Credentials are supplied explicitly per role; there is no environment/default
+AWS credential-chain fallback. Configuration separates private S3 and public transfer
+origins. Public HTTP is allowed only for explicitly enabled loopback fixtures; customer
+transfer origins require HTTPS. Internal HTTP requires explicit opt-in on an isolated hop.
+Transfer ingress accepts the finite standard proxy metadata headers (Forwarded,
+X-Forwarded-For/Host/Port/Proto/Server and X-Real-IP), discards them before forwarding
+to storage, and continues to use the socket peer for its rate limit. Signed headers
+and storage extension restrictions remain enforced.
+
+| Identity      | Exact allowed S3 object actions                  | Bucket boundary                           |
+| ------------- | ------------------------------------------------ | ----------------------------------------- |
+| upload        | PutObject                                        | staging                                   |
+| originalRead  | GetObject (including HEAD)                       | originals                                 |
+| artifactRead  | GetObject (including HEAD)                       | artifacts                                 |
+| snapshot      | GetObject staging/originals; PutObject originals | private snapshot coordinator              |
+| artifactWrite | PutObject                                        | artifacts                                 |
+| cleanup       | DeleteObject                                     | three configured buckets, exact keys only |
+| bootstrap     | installation administration                      | private explicit provisioning only        |
+
+SeaweedFS coarse Write also permits deletion, so these roles use attached exact-action IAM
+policies instead. Secret pairs and buckets must be distinct. Private ListBuckets returns an
+empty authorized list for these object-only identities; bucket/object enumeration and
+administration are unavailable. Public transfer ingress rejects all listing/bucket requests.
+The API module initializes clients lazily for owning use cases; it neither provisions
+storage at startup nor adds an unguarded capability-issuing endpoint. Admission/issuance
+and resource authorization remain I05–I06; document capabilities remain unadvertised.
+
+The optional `deploy/compose.storage.yaml` profile uses the pinned SeaweedFS 4.51 image
+and a wrapper: mini's master/filer/volume listeners bind container loopback, and a separate
+S3 listener in the same namespace binds only the isolated storage network. WebDAV, admin
+UI and embedded IAM API are off. No backend ports are published. A separate Nest/Fastify
+`main.transfer` process holds only nonsecret signer IDs and forwards permitted signed
+requests unchanged to private S3. Dokploy routes the transfer hostname only to that
+process. The profile uses a new volume; it does not migrate or weaken existing local
+storage. Explicit local transfer binding uses reserved 23608 and fails on conflict.
+
+Transfer paths contain only bucket/tenant UUID/application UUID/object UUID. A strict
+query/header/method allowlist rejects unsigned semantic extensions, ACL/copy/archive and
+multipart operations. PUT requires signed exact length/type/create-only condition; chunked
+or unknown-length bodies fail before S3. Streaming preserves backpressure; files are never
+buffered in the API/ingress. Limits are 50 MiB per object, PUT expiry at most 900 seconds,
+GET expiry at most 120 seconds, eight active transfers, 120 requests per remote address
+per minute and at most 2,048 rate-limit entries. Proxy sources share the same remote-address
+budget unless separately isolated; caller-supplied forwarding headers never supply identity.
+Every adapter operation and ingress forward first verifies that a direct anonymous object
+probe receives 403; missing/unusable authentication fails closed even after backend restart.
+Transfer responses are no-store/attachment/nosniff/sandboxed, expose only bounded transfer
+headers and suppress provider error bodies. CORS uses exact configured origins, GET/PUT,
+content-type/if-none-match/range and no credentials. GET permits a single byte range.
+
+The snapshot primitive allocates a fresh unpredictable original key per attempt, requires
+source ETag match and destination If-None-Match, then HEADs the private candidate. An uncertain copy/HEAD error retains its exact candidate
+reference for owning-use-case cleanup. Exact
+cleanup has separate credentials and accepts only validated structured object references;
+there is no prefix/bucket deletion API. Domain state/CAS selection and recovery-aware
+retention belong to later owning features. The [storage runbook](docs/runbooks/dms-storage.md)
+describes private identity-file generation and bucket setup. `pnpm test:storage` verifies
+provider and ingress behavior with disposable storage and real Node/Chromium/Python clients;
+the lane is included in workspace integration. No parser/browser receives general keys.
+
+### Assessment and publication implementation (I08)
+
+The I08 initial matrix was `text/plain` + `secure-only`; I14 extends it with the selected
+format-routed paths documented below. At the I08 boundary no other family was
+advertised. Candidate destination intent is persisted before I/O; one create-only,
+source-conditional snapshot is selected per upload. Failed/ambiguous copies retain their
+exact references and reservations rather than retrying into an uncertain destination.
+Scanner-role private APIs expose short-lived original-read capabilities under the current
+attempt fence. Strict evidence records streamed SHA-256, measured size, scanner engine,
+signature generation/time, coverage and namespace inspection outcomes. New publication
+requires signatures at most 48 hours old, complete isolated format-specific assessment
+(UTF-8 validation for the initial text path) and exact candidate/
+size/declared-hash binding. Rejected and inconclusive candidates remain quarantined.
+The logical pointer, availability, terminal upload state and audit/outbox are changed in
+the lease-fenced PostgreSQL transaction; measured quarantine accounting is reconciled
+separately without discarding retained physical bytes. Invalidation closes eligibility.
+
+The trusted Python supervisor streams candidate bytes and ClamAV INSTREAM; an unchanged
+VERSION before/after scanning binds signature evidence. Bubblewrap isolates the bounded
+plain-text validator with fresh user/mount/PID/network namespaces, cleared environment,
+read-only interpreter libraries and stdin-only input. No credentials, application mounts,
+parser network or general storage keys are provided. Limits: 50 MiB input, 256 MiB virtual
+memory, ten CPU seconds, 15 wall seconds and fixed small output. No isolation fallback.
+The processing image pins Bubblewrap 0.8.0-2+deb12u1 and util-linux 2.38.1-5+deb12u3.
+The optional assessment overlay pins ClamAV 1.5.1 by digest, isolates the daemon from
+internet/application networks and supplies signatures through a distinct updater.
+Host/container namespace compatibility must be qualified before enabling this lane;
+repository/native qualification is distinct from rollout. Operational instructions are in
+[the assessment runbook](docs/runbooks/dms-assessment.md).
+
+### Authorized current-original transfer implementation (I09)
+
+The first usable increment is secure text/plain + secure-only document transfer, not full
+DMS v1 or production acceptance. GET /v1/documents/{documentId}/download returns a JSON
+capability for current by default; I10 adds explicit authorized historical selection. The current
+application registration/scope ceiling, owner, ACTIVE lifecycle, AVAILABLE current version
+and PASSED exact protected candidate are rechecked in one owning transaction. The same SQL
+predicate projects downloadable in detail/list reads. Publication/invalidation takes an
+exclusive per-tenant/document advisory fence; issuing a URL holds its shared fence through
+signing and audit commit. Future lifecycle/grant mutations must participate in this fence.
+No new runtime publication/update privilege is introduced. Valid assessments do not expire
+merely because scanner signatures age or enrichment is unavailable.
+
+Signed original GETs last at most 120 seconds. A separate API original-read signer adds
+signed response type/disposition overrides. Ingress forces attachment/octet-stream,
+UTF-8/ASCII safe filenames bounded to 180 UTF-8 bytes, nosniff, private no-store and
+no-referrer. It permits a single prefix/open-ended/suffix byte range and rejects listing,
+unsigned extensions and multiple ranges. It logs no signed URL/body or transfer capability.
+Already issued URLs remain usable until expiry after disablement/invalidation; revocation
+stops new capabilities. Audit/outbox action document.download-authorized records issuance
+separately from actual byte retrieval. Current history selection is deliberately closed.
+
+The optional downloads overlay adds only the API original-read credential; deployment
+preserves existing storage/project/volume bindings. Consumer capability projections include
+the current installed policy's text/plain and secure-only catalog plus token-permitted
+read/download/control operations. A standalone stdlib backend verifies begin/direct PUT,
+completion/poll, native security publication and full SHA-256-matching GET without importing
+application code. See [secure transfer operations](docs/runbooks/dms-secure-transfer.md).
+
+### Version history and binary restoration implementation (I10)
+
+I10 adds guarded POST documents/{id}/versions/uploads, GET versions and version status,
+explicit download?versionId, and POST versions/{versionId}/restore. Mutation headers require
+If-Match and Idempotency-Key. Binary numbers are allocated transactionally and never reused;
+failed candidates remain separate from the highest available current pointer. Publication,
+allocation/restoration, invalidation and download issuance share the canonical per-document
+fence. Allocation takes usage before that fence/document row; scanner acceptance never
+waits on usage, and accounting settlement follows the established usage/session order.
+New-version descriptors preserve logical title/metadata. Metadata/reprocessing features
+must not call binary allocation merely to change metadata or derived output.
+Restore retry fingerprints bind the operation, document, expected revision, profile and
+immutable source candidate. Logical title/metadata are captured once in the original
+descriptor; subsequent metadata edits do not change an identical restore retry.
+
+Historical restoration creates a normal new highest candidate under current policy,
+referencing a previously published protected object; it never copies old approval. A
+read-only HEAD checks existence/ETag/size, then fresh scanner work re-streams the exact
+object and checks the historical SHA-256 with current signatures and format inspection.
+The current available version survives pending/failed replacements; a late lower-number
+success cannot displace a higher current version. History uses bounded signed per-document
+number cursors and current security predicates; historical reads remain explicit.
+
+Immutable binary_restore intents bind source candidates in the same document/application,
+retain their source via composite foreign keys, and capture invalidation generations.
+Candidate object IDs may repeat only through the validated reuse path. Invalidation or
+negative assessment fences every version sharing those bytes, including pending materialized
+restores; a stale intent cannot create fresh apparently approved work after invalidation.
+A later explicit restoration can request reassessment of previously invalidated historical
+bytes, while only its newly passed revision becomes available. No implicit older fallback.
+
+REUSE admissions reserve zero additional physical storage and normal bounded scratch/work.
+Measured staging/original counters remain with the retained physical source; terminal reuse
+work settles with zero new bytes and releases only its own work reservation. Source-reference
+foreign keys and all live candidate object references must be honored by I19's recovery-aware
+collector; no physical purge or premature quota release is introduced. Each version has
+at most one owning admission. Runtime can insert immutable restore intents but has no
+candidate approval/job/publication mutation privilege. Only the coordinator materializes
+and assesses references; no worker receives general database/storage credentials.
+
+New-version batch manifests carry the document and expected revision but allocate nothing.
+Their item is admitted/bound exactly once through the new-version upload route. Other items'
+admission/cancellation cannot undo published versions. The matrix remains text/plain and
+secure-only; versioning does not install a format/parser or enrichment. See the
+[version operations runbook](docs/runbooks/dms-versions.md) for protected HTTP procedures.
+
 ### Upload and immutable publication
 
 1. The consumer backend calls `POST /v1/uploads` with metadata, declared size/type, optional SHA-256, processing profile, and an idempotency key.
@@ -4000,6 +4169,223 @@ Soft deletion immediately hides the document from normal listing/search/retrieva
 Restore checks the deadline, object existence/integrity, and current policy, then advances the lifecycle generation. Needed work is rescheduled under that new generation; old jobs cannot resume themselves. A restored document with an invalidated security assessment remains unavailable until reassessed. There is no restore after `PURGING` begins.
 
 If security status later changes to rejected/inconclusive, stop new reads and hide its derived content immediately. Invalidate affected runs and apply the new assessment to every version sharing those bytes. V1 does not automatically select an older revision as a replacement current version; an authorized restore creates a new revision.
+
+## Permission-aware discovery (I17)
+
+POST /v1/search is a machine READ operation with a strict bounded JSON body. It provides
+English PostgreSQL FTS over accepted source chunks, pg_trgm title/filename similarity and
+literal substring matching, exact title/name/tags/application-owned reference filters and
+string-only category/status metadata filters. No arbitrary JSON index, FTS expression,
+language selector or historical text search exists. Response order is document-ID ascending;
+there is no relevance/accuracy promise or unfiltered total. Limits are 1–50 (default 20),
+query text 3–128 characters, snippets at most 480 characters, statement timeout two seconds.
+HMAC cursors bind installation/application/filters/limit and reauthorize every live page.
+
+Migrations 0042–0043 add forced-RLS search_generation/search_chunk, generated English
+vectors with GIN, and pg_trgm in the DMS schema with title/name GIN and two explicit metadata
+expression indexes. Trusted validated artifact acceptance writes immutable-stage-bound
+index generations: 4,096 Unicode characters/chunk, at most 8,192 chunks/stage, original unit
+ID/kind/provenance retained. Partial source or index coverage is explicit. RLS and query
+predicates require live READ, active owner/caller, current available version, current epoch,
+active accepted final run and matching passed source hash before any snippet/result/cursor.
+Physical deindexing can lag without visibility. Original security approval remains separate.
+
+Acceptance builds generations transactionally and existing final-stage promotion makes the
+replacement visible atomically. Pending/failed work keeps the previous active result/index;
+intermediate native OCR stages cannot replace the required final result. Index status is
+PENDING/READY/PARTIAL/NOT_INDEXED independently of original availability and extraction
+coverage. Document searchable reports an eligible active index, including empty indexes.
+Existing pre-I17 artifacts remain NOT_INDEXED until explicit owner/private reprocessing;
+metadata-only discovery still works for secure-only and not-yet-indexed originals. Historical
+chunks are retained privately until I19 disposal. Text/snippets are untrusted data, not HTML,
+policy/tool instructions or authoritative business fields. See the
+[discovery runbook](docs/runbooks/dms-discovery.md) for filters, lag and independent testing.
+
+## Results, reprocessing and optional structure (I16)
+
+I16 introduces a tenant/application/version/source-bound processing_run with monotonic
+per-version run numbers, immutable accepted-stage identity, actor-bound 24-hour replay
+receipts and at most one active accepted result per version. Work jobs retain separate
+identities and generations; non-scan jobs reference their run, while the scan/legacy
+partial unique index remains independent. Migrations 0040–0041 force RLS, restrict grants,
+bind accepted-stage provenance and fence final results/promotion. Existing evidence is
+backfilled without rewriting original or artifact bytes. Runtime cannot directly write
+jobs, run state or accounting, nor directly read the private extraction-stage table.
+The optional compose.dms-results.yaml overlay supplies only artifact-read GET signing
+credentials to the API, separately from worker artifact writes. A narrowly authorized
+security-definer projection exposes only accepted metadata after
+current document/version/source/security checks.
+
+Public /processing provides signed keyset-paginated run history (1–50, default 20), active
+run identity, completion versus manifest coverage and independent I17 indexStatus. /content selects the exact current or explicit version/run and returns an
+untrusted-data manifest plus at most one 120-second read-only artifact capability. READ
+rights, active applications/lifecycle, current available version and matching passed source
+SHA-256 are rechecked under the original fence through signing and audit commit. Explicit
+history never falls back; retained pre-delete run history becomes readable only after the
+same version/hash is freshly available, and cannot automatically become active. Public
+ExtractionArtifact v1 covers native/tabular/OCR data and optional versioned structure.
+All issued outputs of one run, including abandoned attempts/native-to-OCR stages, are
+bounded together to 25 MiB and remain physically charged until trusted I19 disposal.
+
+Owner applications with current read/write API scopes and freshly authorized private
+operators can request searchable or enabled structured reprocessing through the same
+restricted database admission function. Shared read/add-version rights cannot do so.
+The run supplies the new processing window without changing lifecycle reassessment or
+contributor upload authority. The function fences lifecycle/policy/application/source/accounting,
+checks current file,
+profile, storage/scratch/capacity and queued-work ceilings, reserves one work slot and
+256 MiB scratch, and atomically commits the run, fixed dispatch, replay identity and
+attributed audit. It allocates no binary/revision. Pending or failed replacement preserves
+the previous active result; only the latest eligible current-epoch accepted final stage
+can switch it atomically. Immutable artifacts and attempt/generation/lifecycle fences
+prevent late or duplicate replacement. Native fallback from a failed heavy stage is not
+promoted as success. Index generation/promotion remains the I17 extension of this boundary.
+
+The optional structured Docker target installs locked Docling 2.146.0, CPU-only torch
+2.15.0 and torchvision 0.29.2, Heron layout revision
+8f39ad3c0b4c58e9c2d2c84a38465abf757272d8 and TableFormer fast revision
+fc0f2d45e2218ea24bce5045f58a389aed16dc23. A versioned SHA-256 file manifest and its pinned
+canonical contract hash bind the offline safetensors/config/card bundle. Model and code
+licenses/notices accompany it. The default image excludes these dependencies/models;
+compose.dms-structure.yaml selects a separate heavy image tag and explicitly enables
+API/coordinator/heavy support with DMS_STRUCTURE_ENABLED. Current operator policy must
+also permit each PDF/image/profile pair. Disabled or unsupported pairs reject explicitly.
+No language/model/tool/config selector is consumer input.
+
+Structured PDF/image/TIFF processing runs one source page/frame per isolated process,
+using PDFium for PDF input and the existing pinned English Tesseract CLI where necessary.
+Docling remote services, external plugins, extra enrichment models and runtime download
+paths are disabled; offline settings and a no-network secret-free namespace fail closed.
+Each page has 120 seconds; the document loop has at most 480 seconds including inspection,
+the outer namespace 510 seconds, with lease-aware reduction reserving 120 seconds for
+output/acceptance. Native/PyTorch/BLAS threads are one. Heavy container memory is 4 GiB,
+virtual-address space 8 GiB, scratch tmpfs 128 MiB, intermediate-file ceiling 100 MiB,
+with the existing 50 MiB input,
+100-page/frame and 25-million-pixel bounds. Mandatory scanners and ordinary extractors
+retain independent identities/resources. Failed or skipped pages retain usable native
+text and explicit warnings; no successful structure page means a failed replacement.
+
+Layout/table JSON uses original page/frame indices and top-left-normalized-page boxes
+(0–1 fractions of the Docling page frame), separate from OCR raster pixel coordinates.
+Cells preserve text, row/column offsets/spans, header flags and nullable source boxes;
+approximate layout, clipping, OCR and reading order are disclosed. Extracted content is
+untrusted data, cannot choose tools or change policy/business fields, and promises no
+exact table reconstruction. See the [results runbook](docs/runbooks/dms-results.md) for
+consumer/private operations, packaging and offline qualification.
+
+## English OCR and mixed pages (I15)
+
+I15 adds English OCR for PDF pages requiring recognition and JPEG/PNG/TIFF/BMP/static WebP.
+Current operator policy still gates every accepted format/profile; existing settings are
+not changed. Effective capabilities include per-format OCR and English only when an
+OCR-supported searchable path is enabled. secure-only omits all enrichment. Structural
+assessment validates actual bounded image decoding before the independent security pass;
+recognition never asserts or substitutes for malware/security approval.
+
+Images queue document.heavy after their security pass. PDFs retain ordinary native
+extraction first; acceptance atomically creates heavy work only when source pages remain
+OCR-needed. Native-only/blank pages are retained without rendering or recognition. Heavy
+work reuses the original source hash, immutable stage artifact kernel, identity/lease and
+lifecycle fences, exact output reservation and hash/schema acceptance. It preserves native
+units, recognizes selected source pages, and keeps work/scratch charged until all stages
+terminate. Migration 0039 makes the authorized processing-status projection prefer an
+existing current-epoch heavy job; prior native stage artifacts remain immutable history.
+No I16 result/promotion/reprocessing API or I17 search surface is added here.
+
+The processing image compiles Tesseract 5.5.4 from SHA-256-pinned source, without OpenMP,
+and bundles linked codecs/notices. tessdata_fast commit
+87416418657359cb625c412a48b6e1d6d41c29bd supplies checksum-verified eng/osd data; exact
+SHA-256 values live in the framework-independent OCR_RUNTIME contract. Models and the
+engine identity are verified in the isolated runtime, with no network or auto-downloads.
+Tika OCR remains disabled. Ordinary and heavy workers have separate one-process budgets;
+the heavy worker has one CPU and 1536 MiB container memory. Mandatory scanning retains its
+independent workers and authority.
+
+PDFium rendering and Tesseract/Pillow processing use a separate process per selected page,
+with at most 60 seconds including rendering/orientation/recognition. The OCR document loop
+is bounded to 480 seconds including inspection, and the lease-issued deadline reserves
+120 seconds for output/acceptance; the outer namespace is capped at 510 seconds, 480 CPU seconds,
+768 MiB virtual address space, 128 MiB tmpfs and 25 MiB output. Native/OpenMP thread ceilings
+are one. Limits remain 100 PDF/TIFF pages, 25 million raster pixels, 32 KiB text and 5,000
+OCR words per source unit. Rendering is 200 DPI. OSD has 15 seconds and an orientation-score
+threshold of 5; recognition uses the remaining per-page budget. Unknown orientation,
+low-confidence recognition, missing text, resource limits and skipped pages are explicit
+partial/failure outcomes; failed pages retain usable native text and other completed pages.
+
+Pillow applies EXIF orientation and alpha compositing before grayscale recognition.
+Artifacts identify native/OCR/mixed origin, one-based page/frame indices, clockwise
+rotation, raster dimensions/DPI and word boxes in top-left oriented-raster pixels. Native
+PDF rectangles map through PDFium's device transform and the same raster rotation before
+OCR overlap suppression. Native text is retained; OCR contributes only words outside its
+occupied rectangles. Native-only text receives no invented confidence. Tesseract word
+scores (0–100, low-confidence threshold 50) and its separate orientation score are reported
+as engine-specific measurements, not probabilities or universal quality. Only genuinely
+uniform near-white image pages are blank; missing image text remains explicit. Original
+bytes are immutable and a failed OCR stage never revokes an existing security pass.
+
+The [OCR runbook](docs/runbooks/dms-ocr.md) documents operation and coordinate conventions.
+A versioned repository-owned clean-print ground-truth set with pinned font/hash measures
+the accepted 10% maximum word-error target under its stated normalization and rendering
+conditions. Actual qualification includes native/scanned/mixed PDFs, rotated pages, TIFF
+order and model/limit failures, with CPU, per-process RSS, scratch and artifact measurements.
+Its [record](docs/qualification/dms-i15-english-ocr.json) is scoped evidence, not a general
+handwriting/table, multilingual or arbitrary real-world accuracy guarantee.
+
+## Native extraction and private artifacts (I14)
+
+I14 installs the selected bounded native/text, Office/email and tabular paths from the
+[supported format matrix](#supported-format-and-capability-matrix). AdmissionFeatures now
+supports those I14 families with secure-only/searchable; existing operator policies are
+unchanged and actual capability discovery intersects installed support with current policy.
+Image OCR, optional structured profiles, result history/reprocessing and search remain
+I15–I17. The first secure text transfer profile remains supported.
+
+Security and extraction are separate stages. The scanner requires fresh ClamAV coverage,
+immutable source integrity and isolated format/structure assessment before publication.
+Required structural inspection discards enrichment output (Tika uses metadata-only
+traversal), so text-output limits cannot substitute for a security decision. The original
+can publish before enrichment completes. A searchable pass atomically enqueues
+one private document.extract job; secure-only creates none. Work accounting stays reserved
+until both stages finish. Extraction failures never alter original security/availability.
+Normal upload/batch projections expose independent processing outcomes; private stage
+acceptance does not install the I16 consumer content or active-result promotion surface.
+
+The Python image pins pypdfium2 5.14.0, python-calamine 0.9.1, Pillow 13.0.0, defusedxml 0.7.1,
+olefile 0.47 and Tika 4.2.0 with the verified distribution SHA-512 recorded in its Dockerfile.
+It copies Temurin 21.0.13 from a digest-pinned image and preserves Tika/PDFium/native notices.
+Tika uses an explicit parser registry, no OCR recognizers and no fetcher/emitter plugins.
+A fresh JVM is forked per ordinary task with a 384 MiB heap, bounded metadata/embedded
+traversal, no network, 120-second parser deadline and one concurrent fork. PDFium runs in
+separate processes. The outer parser supervisor enforces namespace isolation, no secrets,
+read-only input/runtime mounts, 180 CPU seconds, 240 wall seconds, 25 MiB output, bounded
+file descriptors and 768 MiB address space (4 GiB virtual space for the JVM). Containers
+have a separate 1 GiB memory limit, one extraction CPU and bounded scratch/pids. Parser
+namespaces have an additional 128 MiB scratch tmpfs. The independent two-process scanner
+worker has a 2 GiB container limit and 384 MiB outer scratch for required structural
+inspection; its at-most-two security JVMs do not consume the ordinary worker's one-fork
+concurrency budget. ClamAV remains in its separate container.
+
+Private attempt input/output routes authorize only the live extractor identity and exact
+lease. Source bytes and resulting manifests bind document/version/job, work generation,
+lifecycle epoch, profile/configuration/processor versions and the passed source SHA-256.
+Results retain actual line/page/paragraph/slide/sheet-cell/email references. Sparse OOXML
+and ODS ranges, macros/encryption, expansion and embedded counts are bounded before
+conversion. Formula values are cached with unavailable expressions disclosed; no formula
+recalculation, document script, markup rendering or external-resource fetch occurs. Mixed
+PDF pages remain partial/OCR-needed; Office elements and omitted attachments are explicit
+coverage warnings rather than invented pagination or complete-coverage claims.
+
+Migrations 0037–0038 add a forced-RLS extraction_stage with composite job/attempt/generation
+integrity, a narrow read-authorized status function and immutable accepted manifests. The
+coordinator reserves exact artifact size against storage policy/capacity before issuing a
+create-only, attempt-specific private PUT, streams size/hash verification outside locks,
+then rechecks current identity/lease, source security and generations on acceptance.
+Verified outputs move from reservation to artifact-byte usage once. Ambiguous or abandoned
+issued outputs retain their reservation until I19 can prove safe disposal. No file text,
+capability URL or credential is persisted in audit/outbox or sent through RabbitMQ. Consumer
+and operator roles receive neither artifact-table access nor arbitrary storage authority.
+The [extraction runbook](docs/runbooks/dms-extraction.md) specifies manual qualification,
+coverage, private deployment and the separation from I16 results and I17 search.
 
 ## Processing, provenance, and AI readiness
 
@@ -4102,6 +4488,317 @@ Constraints and transactions must enforce:
 
 Better Auth owns its user, session, account, OAuth-client, token, and signing-key tables in the separate `auth` schema. DMS tenant RLS rules do not get applied blindly to global identity tables. Separate roles and explicit identity-module authorization protect that schema; DMS records store verified identity mappings rather than foreign keys into mutable session state.
 
+## Document registry and admission foundation (I05)
+
+DMS-I05 extends the existing DmsDatabaseService transaction boundary with owning
+`document`, `document_version`, `upload_admission`, `admission_policy`,
+`admission_capacity` and tenant/application usage records. Migrations 0008–0009 force RLS,
+use composite tenant/application/document/version references and restrict request roles
+to candidate creation and admission accounting. Runtime cannot configure policy/capacity,
+settle usage, rewrite audit, publish a version or set a current pointer. Coordinator usage
+reconciliation has a separate narrowly privileged role and fixed installation verification;
+operator policy writes/registry inspection use fresh authority proof plus the live DMS grant.
+
+Documents are allocated only by the upload-begin use case, never by a manifest or a policy
+command. Each admission has stable document/candidate/operation UUIDs, a canonical request
+hash, a tenant/application-bound idempotency hash and a 24-hour retry window. Under the
+owning transaction it holds current registration/scopes, a shared policy advisory fence,
+the tenant accounting lock, application accounting lock and, for another candidate, the
+document row lock. Policy updates take the matching exclusive fence; no policy UPDATE
+privilege is granted to requests just to obtain a read lock. Allocated version numbers are
+unique and monotonic; stale expected revisions fail. Existing logical metadata is preserved.
+Failed admission/issuance callbacks roll back IDs, counters, audit and outbox together.
+Retries return the original current operation state and do not reactivate terminal work.
+
+Baseline lifecycle is ACTIVE with independently PENDING binary candidates and a null
+current pointer. DB checks and grants prevent availability/pointer transitions until the
+security/publication feature owns them. Registry responses explicitly report unavailable
+for download/search; no placeholder download/search endpoint or processing success exists.
+GET `/v1/documents`, `/v1/documents/{documentId}` and `/v1/admission-policy` require
+`dms:documents:read`. Lists are owner-only with limit 1–50 (default 20), descending
+creation-time/UUID order and domain-separated HMAC cursors bound to current tenant/app.
+Document reads emit strong quoted revision ETags. Document audit at the frozen
+`/v1/documents/{documentId}/audit` additionally requires `dms:audit:read`; private operators
+can inspect permitted installation document audit. Audit now has a composite document FK,
+fixed document/admission actions and an explicit machine/coordinator actor kind. Human
+context remains explicitly application-asserted. Cursor namespaces bind document filters;
+I05 invalidates older audit cursors, which can be restarted from the first page.
+
+Private `admission-policy-read`, revision-checked `admission-policy-set` and
+`document-inspect` extend the existing operator command registry. Mutations and attributed
+security evidence commit together; identical policy-update retries do not fabricate another
+change. The operator DB role gains only policy insertion/settings-revision updates and
+registry reads. The coordinator role gains only installation/candidate/accounting reads,
+capacity observation/accounting updates and attributed audit/outbox inserts. No new
+operator HTTP endpoint, auth-schema access, cross-customer provisioning or implicit
+DMS operator grant is introduced.
+
+Policy has no automatic enabled installation defaults: its absence closes admission.
+Operator-configured storage/application/scratch byte budgets are required; all quota values
+are safe integers capped at 1 PiB. Per-file maximum remains 50 MiB; active admissions are
+at most 4/application and 16/tenant, with 100 queued work reservations/tenant and at most
+25/application (or the lower configured tenant ceiling). Every admission reserves twice
+declared bytes for staging/candidate storage, 256 MiB scratch and one mandatory-work slot.
+Lower configured limits are supported. Existing physical bytes remain separately charged
+as staging/original/artifact/retained usage; metadata is not counted as binary object usage.
+Settled admissions release their upload slot/storage reservation into measured byte usage;
+scan scratch/work stays reserved until trusted terminal work release. Release/settlement
+are idempotent, auditable and cannot create availability. A cancelled admission cannot
+release its reservation before the maximum issued capability expiry plus 60 seconds;
+trusted physical measurements retain any remaining bytes as charged usage.
+
+A private explicit capacity observer samples native storage/scratch filesystems while
+holding accounting steady. Observations expire after 30 seconds and never renew on failure.
+Admission subtracts existing reservations and measured usage growth since the observation;
+this avoids spending a stale free-space observation twice. Storage/scratch default to a
+shared capacity pool; only an explicit private declaration of physically independent pools
+allows independent headroom, and matching device IDs always remain shared. Filesystem
+sampling is not an OS reservation against unrelated external writers, so provisioned budgets
+and host headroom remain necessary. The observer needs only a coordinator DB connection,
+fixed installation identity and trusted absolute mount roots; public callers supply none.
+No new scheduler/daemon starts in I05; recurring observation belongs to the coordinator.
+
+The feature catalog is implementation-owned and empty for upload/processing in I05.
+Configuring MIME/profile names does not install them: effective projection intersects the
+configured catalog with verified owning implementations and their route enablement.
+GET `/v1/admission-policy` is version 1 with revision 0 when unconfigured and states
+not-configured/paused/not-installed/enabled. It exposes effective limits/catalogs, not
+other applications' usage or private filesystem/budget data. Existing capability-response
+shape/version is retained; document read scopes add only their corresponding operation
+identifiers. New public write/upload/batch operations remain I06, and installed format/
+security/processing claims follow their owning implementations.
+
+Shared contracts bound metadata to 64 keys, primitive values or arrays of at most 20
+values, and 16 KiB encoded JSON. The internal upload-begin envelope permits 32 KiB;
+batch manifests are bounded to 256 KiB with a 260 KiB envelope. I06 applies those route
+body limits when its HTTP routes ship; the existing authority/enrollment control limit
+stays 16 KiB. No batch persistence is introduced in I05. The
+[admission runbook](docs/runbooks/dms-admission.md) covers private policy/capacity setup.
+
+## Soft deletion and logical restore (I13)
+
+Owner GET document lifecycle, DELETE document and POST document restore routes implement
+logical administration under the existing live machine scope/owner policy. Shared rights
+confer none of these powers. Fresh private document-lifecycle-read/delete/restore commands
+require the current DMS operator grant independently of authority admin status. Mutations
+require strong expected revisions; restore additionally uses actor/document-bound hashed
+24-hour idempotency receipts. Deleted identities have a 30-day deadline; PURGING/PURGED
+cannot restore. A repeat accepted key reports current state rather than resurrecting a
+subsequently deleted identity. Successful transitions append attributed audit/outbox atomically.
+
+Migrations 0035–0036 add document/admission/version/job lifecycle generations, deadlines,
+forced-RLS lifecycle_restore and lifecycle_receipt records, and append-only prior security
+assessment history. The purpose-limited migrator-owned lifecycle function validates fixed
+tenant, actual database session role and live owner/operator authority before state changes.
+Runtime/operator receive EXECUTE rather than arbitrary publication/job/candidate UPDATE
+privileges. Physical purge has no implementation or enabled transition in this increment.
+
+Lifecycle writes first hold the public installation sharing fence exclusively, then an
+installation lifecycle barrier, the original fence and document row. Coordinator transactions
+hold the lifecycle barrier shared before accounting/source/job locks. This lock order lets
+delete atomically cancel pending sessions/attempts/jobs, obsolete dispatches and increment
+job generations without racing a result or deadlocking source locks against publication.
+No physical-byte counters or object references are released by deletion. Previously issued
+storage URLs retain their existing bounded lifetime.
+
+Logical restore preserves logical/binary identities, metadata and grants. Retained versions
+with a historical pass queue bounded private verification, initially unavailable under the
+new document generation. A five-version coordinator selection checks exact original ETag,
+size and streaming SHA-256 (50 MiB and 30-second read bounds) outside database locks, then
+rechecks captured lifecycle/object generations before applying. Current installed policy,
+fresh capacity, tenant/application backlog and scratch budgets gate fresh work. Prior
+immutable security evidence is archived before a narrowly checked pending-state reset;
+expected original SHA-256 remains immutable. Every original is freshly assessed before
+current-generation download eligibility, including previously invalidated originals.
+
+Reassessment reuses retained bytes and the existing binary version, with a fresh job
+lifecycle/generation and three-execution/30-minute budget. Attempts are unique per job
+generation/execution. A separate 24-hour reassessment deadline never extends original
+upload/admission replay authority or issues another PUT. Shared contributors cannot control
+owner-requested lifecycle reassessment. Scratch/queue reservation is separate from retained
+physical usage; existing accounting settlement releases work once without double-charging
+bytes. Settlement rechecks terminal jobs after source locking to avoid settling a restarted
+assessment. Former results cannot commit after delete/restore, including terminal replays.
+
+Metadata may reappear after logical activation while originals remain unavailable. Lifecycle
+inspection reports bounded pending/scanning/completed/failed counts and aggregate outcome.
+Missing/changed originals fail closed; transient availability/policy/capacity waits retry.
+Only freshly passed current-generation versions become downloadable. A failed current
+original never automatically falls back to older history. Unfinished uploads are cancelled,
+not resumed into publication; a new authorized upload may allocate the next revision.
+The [lifecycle runbook](docs/runbooks/dms-lifecycle.md) documents owner/operator commands,
+receipt/deadline semantics, asynchronous recovery and retained accounting. I19 still owns
+recovery-aware physical disposal; no installed service is migrated automatically.
+
+## Explicit application sharing (I12)
+
+I12 installs owner GET/PUT `/v1/documents/{documentId}/permissions` and private
+`document-permissions-read`/`document-permissions-set` operator commands. PUT replaces
+up to 64 distinct active same-installation consumer grants under strong If-Match,
+increments the logical document revision and atomically attributes audit/outbox to the
+actual actor. Empty grants revoke all. Self grants, worker/pending/disabled/unknown/foreign
+targets and ownership transfer are rejected. Fresh private operator proof plus the current
+DMS operator authorization is required; authority admin status alone remains insufficient.
+
+Rights are independent: READ covers document/list/history/version/upload status and
+available original capabilities; EDIT_METADATA covers logical metadata and caller-owned
+reference changes; ADD_VERSION covers candidate admission and its own submitted upload
+controls. API scopes remain an additional live ceiling. Audit, permissions, binary/lifecycle
+restoration and reprocessing stay owner/operator-only. All implemented read queries filter
+current rights before selection/pagination, and every public mutation/replay rechecks its
+resource right. Future content/search surfaces must reuse this evaluator.
+
+Migrations 0032–0034 add forced-RLS document_grant with composite tenant/document-owner
+and recipient FKs plus a recipient access index. Narrow migrator-owned SECURITY DEFINER
+functions evaluate tenant-bound active consumer/owner/grant eligibility without recursive
+RLS, using fixed pg_catalog search_path, qualified objects and revoked PUBLIC execution.
+Supplemental policies expose only granted documents and related owning rows; public
+services still enforce the operation-specific right. Owner policies remain unchanged.
+Operator target validation is a bounded function returning only eligible IDs while holding
+registration share locks; no operator registration-update privilege is granted. Runtime
+still cannot change candidate approval/publication, grants for another owner or audit rows.
+
+A shared installation advisory fence is acquired by public transactions before registration
+and resource locks. Owner/private-operator grant replacement takes it exclusively. Thus
+revocation serializes with signing, reads, writes, batches and admission replays, including
+SQL-filtered list pages. Per-document original fences still serialize security/publication.
+Already issued bounded storage capabilities and accepted owning work retain their existing
+semantics; revocation does not recall delivered bytes or delete accepted candidates.
+
+Document, versions, candidates, storage paths and quota charges retain the owning
+application. Admission separately records immutable contributor_application_id; session
+batch_application_id and composite FKs bind manifests/receipts to that contributor rather
+than changing document ownership. Completion receipts retain caller-scoped idempotency and tenant-aware upload FKs, with a restrictive current-control insert policy; owners can complete a contributor upload without reading its private receipts. Admission idempotency is scoped to the contributor; owner quota
+and tenant capacity apply to shared admission. Only the owner or current ADD_VERSION
+contributor can control a session. Batch reads retain their own descriptors but project
+sessions only with live document rights; cancellation skips no-longer-controlled sessions.
+
+References carry creating applicationId; existing values are backfilled to the owner.
+Shared editors link/unlink within their own application namespace, while owners can remove
+any reference. Detail retains explicit source identities and exact reference filters use
+the caller namespace. References and common tenancy never confer resource rights.
+The [sharing runbook](docs/runbooks/dms-sharing.md) specifies the scope/right matrix,
+private commands, revocation and owner accounting behavior. No installed service is
+migrated automatically by this implementation.
+
+## Metadata, tags and references (I11)
+
+Logical edits use PATCH `/v1/documents/{documentId}`; POST/DELETE document reference
+routes link/unlink opaque source-system tuples. Existing fixed-installation/owner RLS and
+live scope ceilings apply. All mutations use strong If-Match, canonical document fence
+before row locking, monotonic logical revisions and atomic attributed audit/outbox.
+They never call binary allocation or processing. Pending uploads retain their admitted
+binary descriptors; logical edits remain on the document through publication.
+
+Metadata remains at most 64 named keys, scalars or arrays of at most 20 scalars, strings
+up to 2048 characters and 16 KiB UTF-8 encoded JSON. Title is 1–240 characters; tags are
+at most 32 distinct, case-sensitive labels of 1–64 characters, without controls. PATCH
+replaces supplied values and rejects unknown/empty/nested/unbounded shapes. Its envelope
+is at most 32 KiB. Existing immutable filenames and binary revision descriptors are unchanged.
+
+Each document retains at most 32 references, each with a generated UUID, namespace and
+type (ASCII identifiers up to 64 characters) and opaque externalId (1–128 characters,
+no controls). References live in the owning document's bounded JSON array; tenant and
+registered application IDs supply the mandatory source namespace boundary. Custom source
+labels are subordinate to that boundary, never global authorization identifiers. Identical
+IDs across applications do not collide. Multiple tuples may link a document, and one tuple
+may link several documents. No external lookup, entity validation or access grant occurs.
+
+List supports exact case-sensitive title/filename, tag containment and complete reference
+triple containment, combined with AND. GIN indexes cover tags and references; an owner/title
+index covers exact title selection. No arbitrary JSON metadata query language is exposed.
+Signed created-descending cursors bind every filter plus installation/application, with
+50-row maximum pages. Reads are live pages rather than filter snapshots. Document detail
+includes bounded metadata/references; list summaries include tags but omit metadata/references.
+
+Migrations 0030–0031 add default-empty arrays (preserving existing documents), bounds and
+indexes, audit actions and only title/metadata/tags/references UPDATE privilege to runtime.
+Existing forced owner RLS remains authoritative; runtime cannot edit publication state.
+The [metadata runbook](docs/runbooks/dms-metadata.md) and independent stdlib HTTP example
+cover read/edit/link/unlink and conflict reconciliation. Sharing remains I12.
+
+## Upload and batch lifecycle foundation (I06)
+
+I06 installs the owning upload control API and bounded batch manifest lifecycle through
+DMS migrations 0010–0012. `upload_session` binds one admission/candidate to one unpredictable
+staging identity, the validated descriptor (including optional declared SHA-256), session
+expiry and completion intent. `upload_receipt` stores namespaced canonical request hashes
+and stable operation/resource IDs for completion, batch creation and closure. Signed URLs
+never enter persistence, audit, outbox or telemetry. Upload begin uses the I05 receipt;
+identical retries reauthorize and preserve session identity. Changed bodies conflict and
+expired receipts return 410. In-flight admission contention uses retry guidance.
+
+Implemented machine routes are POST `/v1/uploads`, GET/DELETE `/v1/uploads/{uploadId}`,
+POST `/v1/uploads/{uploadId}/complete` and `/refresh`, POST `/v1/upload-batches`,
+GET/DELETE `/v1/upload-batches/{batchId}`, and POST `/v1/upload-batches/{batchId}/close`.
+Read routes require `dms:documents:read`; mutations require `dms:documents:write` with
+current registration and owner checks inside the transaction, including every retry.
+I10 now implements new-version HTTP admission and new-version manifest execution;
+I06 did not install a placeholder version-write route. Manifests may
+record that intended operation without granting authority or allocating a candidate.
+
+Begin reserves capacity, allocates identities, inserts the session, binds its batch item
+and authorizes a single PUT in one owning transaction. Signing failure rolls all of that
+back. Only upload-role staging credentials enter the API. The API never needs snapshot,
+original-write, parser or cleanup credentials. Issuance signs exact Content-Length,
+Content-Type and If-None-Match `*`, bounds expiry to 900 seconds and the session deadline,
+and records the maximum issued expiry for cleanup accounting. The signer calculates its
+remaining lifetime after backend authentication checks. Browser code sends a known-size
+Blob/File and lets the browser provide Content-Length; Node/Python send the same exact
+bytes and returned headers. Retrying a PUT may return 412; inspect and complete the same
+session. A fresh capability targets that same immutable staging identity, never a new file.
+
+Completion requires an idempotency key and `{}` body, persists accepted intent and its
+atomic audit/outbox record, and returns 202 with Location and Retry-After 2. Status reports
+independent upload, security, candidate availability and processing fields. I06 writes only
+INITIATED/EXPIRED/CANCELLED upload transitions; security remains PENDING, availability
+CANDIDATE and processing NOT_SCHEDULED. No HEAD, checksum match, snapshot, assessment or
+publication is implied by completion intent. The later coordinator discovers and verifies
+persisted staging references independently of callbacks, then owns subsequent transitions.
+No path in I06 can set a document current pointer or make a version available.
+
+Lock order is current application authorization, operation receipt advisory fence where
+needed, batch, tenant/application accounting for new admission, then session. All grouped
+creation, inspection, completion, refresh, closure and cancellation hold the batch fence;
+session locks are acquired in UUID order for a batch. Issuance then locks the admission
+row, verifies its reservation is still RESERVED, and holds it through signing/max-expiry
+recording so coordinator settlement/release cannot race a fresh capability. Cancellation may supersede accepted
+completion intent while the upload remains INITIATED; a concurrent completion returns the
+recorded terminal state if cancellation won first. Expiry checks use wall-clock time after
+lock acquisition. Refresh and replay never revive terminal or completion-requested sessions.
+Cancellation/expiry records no physical deletion and does not release reservations while
+issued capabilities or retained bytes may remain; trusted cleanup/reconciliation owns that.
+
+Batches have at most 100 unique immutable item IDs, a 24-hour start window, and 4 open
+batches/application or 16/tenant. A tenant advisory fence and bounded identity-only
+`upload_batch_slot` records enforce both ceilings without exposing another application's
+manifest. Expired slots no longer consume open-batch capacity. Batch creation creates no
+document/session or byte reservation. Each admitted item binds exactly once to an ordinary
+session and descriptor; another key cannot allocate another session for that item. A failed
+admission leaves the item unstarted with a bounded error/retry hint, without undoing other
+items. Status counts each independent stage across the whole bounded manifest and returns
+1–50 items (default 20) with an HMAC cursor bound to tenant/application/batch. Every page
+reauthorizes. Closed/expired batches settle unstarted items and preserve existing sessions'
+own deadlines. Cancellation additionally cancels eligible INITIATED sessions, never
+logical documents or a published version. Batch close/cancel and begin cannot create an
+unlisted session across their common row fence.
+
+All five lifecycle tables force RLS. Runtime can insert owned records and change only
+lifecycle/intent/binding fields; it cannot rewrite staging keys, descriptors or receipts,
+settle accounting, or publish versions. Coordinator gets read-only discovery for I07;
+operator inspection has grant-filtered reads and bounded attributed evidence only.
+Private `upload-inspect` and paginated `batch-inspect` use fresh authority proof and the
+current DMS operator grant; they never sign URLs. Batch audit has a composite owner FK;
+fixed upload/batch actions and identifier-only outbox records commit with state changes.
+
+The upload route permits 32 KiB control JSON and the batch route 260 KiB, with a separate
+256 KiB manifest bound and each metadata object capped at 16 KiB. Other authority and
+enrollment limits stay 16 KiB. Capabilities list installed lifecycle control/read operations
+for the token's scopes; the effective format/profile catalog stays empty until the owning
+security implementations are installed. No multipart, resumable or archive-import
+capability is installed. See the [lifecycle runbook](docs/runbooks/dms-uploads.md) for the
+backend/browser transfer protocol and the optional private storage network overlay.
+
 ## Public API and consumer contract
 
 Use `/v1` JSON/HTTP APIs. Public response schemas and examples are part of the release, not optional follow-up documentation. This table describes the selected surface; executable OpenAPI is produced during implementation from shared schemas.
@@ -4150,6 +4847,115 @@ Tenant/operator bootstrap, enrollment-key issuance/revocation, OAuth-client prov
 - Capability responses use `Cache-Control: private, no-store`. No capabilities in logs, telemetry, events, or browser analytics. Browser origins and transfer headers are explicitly allowed in CORS.
 
 Ship login/backend-session and machine-token examples, Thaarei enrollment/rotation/revocation examples, browser single-file/batch transfer through a consumer backend, a standalone backend integration, and contract fixtures validated from Python as well as TypeScript. Examples must never put service credentials or enrollment keys in browser code. SDK packaging and webhooks remain deferred.
+
+## Authoritative work and private execution foundation (I07)
+
+I07 owns DMS migrations 0013–0015 and the private `main.coordinator.js` process from the
+DMS image. It runs its own Nest/Fastify module/listener on private container port 3003;
+public API bootstrap does not import its controllers, providers or credentials. No work
+route or schema enters consumer Swagger. The versioned private contract is generated
+from `packages/dms-contracts/src/work.ts` into `docs/api/dms-work.contract.json` and the
+Python package's identical runtime artifact. Both generations are checked for drift.
+
+The shared authority issues explicit `work_publisher`, `work_scanner`, `work_extractor`
+and `work_heavy` confidential clients with client-secret Basic, RS256 JWTs lasting at
+most five minutes, one role-specific scope, and the distinct audience
+`{canonical-issuer}/services/work`. The actual private API base is
+`http://coordinator:3003/internal/work` on the isolated work network. Canonical issuer/JWKS
+validation, exact audience/subject/client ID, token type/algorithm and scope checks apply;
+private and consumer tokens are not interchangeable. Fresh DMS operators separately
+`work-authorize` an approved authority client/role or `work-disable` it. The tenant-bound
+`work_identity` grant is checked under a shared advisory fence on every private mutation;
+operator changes take the exclusive fence. Identity-admin status and broker possession
+confer no DMS work grant. Suspending an OAuth credential stops new tokens; disabling its
+DMS work grant also stops already-issued token authority immediately while disabled.
+
+`work_job` owns source upload/task identity, execution count, current generation/attempt,
+retry eligibility, recovery time and the single elapsed execution budget. `work_dispatch`
+is its transactional transport outbox, with a bounded leased publisher receipt;
+`work_attempt` owns opaque hashed fencing tokens, claimant client, lease and hard deadline,
+result hash and fixed outcome. All four work tables force RLS, are tenant-bound and owned
+by the DMS migrator. Public runtime has no access. Coordinator reads work authorization
+but cannot create or enable an identity; the operator role can insert an approved identity
+and update only its enabled flag. Current application-status checks use a shared row lock;
+coordinator gains only timestamp-column UPDATE authority to acquire that lock, never
+application-status, scope, enrollment, operator-grant or auth-schema mutation authority.
+No coordinator permission to publish a document/current pointer is introduced.
+
+Owning features call the internal enqueue kernel, which holds current source policy and
+creates the job, dispatch and bounded audit/outbox record atomically. There is no HTTP
+job-creation, executable-name, storage-destination or subscription-management interface.
+The I07 coordinator does not enqueue absent security/extraction implementations. Fixed
+worker entrypoints explicitly return UNSUPPORTED/HANDLER_NOT_INSTALLED until an owning
+implementation supplies a handler. I08 supplies the scanner-only evidence acceptance
+transaction described above; generic job SUCCEEDED cannot imply a security pass. Only
+plain-text secure-only assessment is installed; other format/enrichment capabilities stay empty.
+
+The private publisher leases at most ten due dispatches for 30 seconds. It sends Celery
+protocol 2 JSON through the fixed `document.scan`, `document.extract` and `document.heavy`
+queues on the durable `dms.work` topic exchange, with persistent messages, mandatory
+routing, Basic.Return handling and publisher confirms. The same ConfirmedTask producer
+path wraps first publication and Celery Task.retry; no implicit binding repair or ambiguous
+producer retry hides routing failures. Explicit installation provisions topology. Delivery
+is recorded only after routing/confirmation. A crash before that receipt permits duplicate
+transport after lease expiry, while the private claim transaction permits one active attempt.
+Dispatch candidate selection excludes terminal jobs and obsolete generations before its
+bounded limit, so lost delivery receipts for completed jobs cannot starve new work.
+
+A successful claim increments the job's persisted execution count (maximum three), starts
+one 30-minute budget on its first execution, and allocates a claimant-bound random lease.
+Each attempt has a hard deadline of at most ten minutes within that same budget, a
+90-second lease and 20-second worker heartbeats. Heartbeats cannot renew an expired lease
+or extend the hard deadline. Source authorization, held mandatory-work reservation, upload state, generation, current
+attempt, claimant and fence are rechecked before heartbeat/result acceptance. Repeated
+identical results are idempotent; conflicting or stale results cannot commit. Security
+pass fields are absent from this contract; scanner/extractor/heavy role checks are distinct.
+
+Temporary connection/timeouts and HTTP 408/429/500/502/503/504 from production worker
+transport enter the existing retry path. Authorization/content-validation failures
+and direct-transfer certificate verification failures remain terminal.
+
+Normal transient execution records RETRY_WAIT with a bounded 4–30 second jittered delay;
+Celery then owns its confirmed retry publication. Reconciliation does not schedule a
+second ordinary retry. It recovers a missing retry only after its recorded eligibility plus
+90 seconds, or a lost attempt after lease expiry plus 30 seconds; these conditions are
+rechecked under lock. A confirmed unclaimed dispatch has a ten-minute recovery deadline.
+Each job allows at most three recovery generations, retaining its existing execution and
+elapsed budget. Exhaustion becomes an explicit FAILED outcome. Cancellation/expiry/live
+application disablement fences affected work. Per-job recovery transactions and source
+lock ordering avoid retaining a batch lock while recovering a different source.
+
+The coordinator runs bounded five-second cycles with independent failure handling for
+capacity sampling, batch/session expiry, upload discovery and job recovery. A failed
+filesystem observation never renews capacity or prevents unrelated lease recovery. Upload
+discovery persists a 60-second lease before HEAD I/O and rechecks it/current source state
+before accepting the observation. It polls exact persisted staging references without
+requiring the completion callback. Matching size/type metadata advances only to
+OBJECT_VERIFIED; mismatch records FAILED with a bounded reason. ETags remain opaque
+concurrency tokens. Authoritative streamed hash/type, immutable snapshot selection,
+security assessment and publication remain I08. No callback, HEAD or job outcome makes a
+version downloadable/searchable. Cleanup/accounting release still requires trusted
+physical operations after all capabilities expire; this increment does not inventory or
+purge stored objects.
+
+Python uses Celery 5.6.3 and the exact locked dependency graph. Its image installs the
+locked non-editable production environment, including native wheels, rather than building
+only an application wheel. Worker execution is prefork, two scan/one ordinary/one heavy
+processes, prefetch one, JSON-only, late-acknowledged and without a result backend, remote
+control, gossip, dynamic tasks or unbounded worker-loss requeue. Fixed tasks are the only
+registered execution entries; expired attempts recover through PostgreSQL. Parser
+sandboxing and native assessment runtimes remain I08.
+
+The optional `compose.dms-work.yaml` overlay adds no host ports. Public API reaches the
+work network only for the existing OAuth endpoint; coordinator has private DB/storage/work
+connections. Publisher/workers have only work/broker networks, no DB or general storage
+credentials. Broker management binds loopback. Explicit protected broker definitions create
+separate per-role users, native queue/topic permissions, durable queues and dead-letter
+bindings; publisher cannot consume, and worker credentials cannot claim another queue or
+publish another role's routing key. RabbitMQ remains the existing pinned OSS image/digest.
+`work-inspect` provides fresh, grant-checked bounded job/dispatch/attempt diagnostics without
+lease secrets. See [the work runbook](docs/runbooks/dms-work.md) for installation, inspection
+and recovery boundaries. This foundation introduces no public job API or automatic redrive.
 
 ## Durable jobs, events, and reconciliation
 
@@ -4276,6 +5082,18 @@ Physical purge is delayed beyond the restore deadline by the oldest retained dat
 Retained backups expire through their own documented policy; physical removal from the live store does not promise immediate erasure from every backup. A future legal hold overrides disposal and requires a separate supported governance feature.
 
 After recovery, discard broker authority over business state: rebuild/reconcile dispatch from current PostgreSQL jobs/outbox records and reject stale generations. Run an application-level restore drill covering original/history retrieval, extraction, grants, pending work, and deletion. A green database restore command alone is insufficient.
+
+### I19 implemented recovery and disposal boundary
+
+The 0.19.0 small distribution implements **sealed quiesced cohorts**, not arbitrary database-only point-in-time advancement. A private short-lived Docker-operator tool uses Engine API 1.52 through the Unix socket; this is Docker-administrator authority and is absent from all long-running services. It drains writers, persists a source fence, disables the six auth/DMS application-role logins and terminates existing backends, inventories all required object sizes/hashes, runs PostgreSQL 18 `pg_basebackup` with streamed WAL and `pg_verifybackup`, and archives the stopped entire SeaweedFS `/data`, signatures and private configuration. Recovery point coverage never advances beyond the quiesced object state. Source release restores the recorded login flags and previously running services before long image export/encryption/upload. A durable fence supports explicit release after controller interruption.
+
+Six streamed AES-256-GCM authenticated components (DB/WAL, storage, configuration, signatures, logical object inventory, pinned images) and a final encrypted version-1 manifest form a cohort. The independent 32-byte key and repository configuration are excluded from capture. A pending catalog horizon is reserved before capture, remains conservative through interrupted upload/authorization, and can be sealed with verified proof exactly once. An S3-compatible TLS repository receives immutable component keys and full ciphertext readback checks; the manifest is the last completion marker. Multipart uses at most 9,999 parts and a 5-TiB component limit. Retention is selected before capture, minimum seven days; the repository expires whole cohorts no earlier than the authenticated expiry. Independent failure-domain attestation is required in production. Explicit fixture-only repositories cannot provide disposal authority. HTTP runtime has no backup/recovery endpoint, repository credentials, key or Docker socket.
+
+Restore requires a distinct empty project and exact image inventory. Authenticate every component before import, verify base/WAL, preserve root/auth/DMS roles and key-encryption material, then invalidate sessions, OAuth tokens, verification transactions and signing keys to establish a new JWT verification epoch. Rotate every recovered S3 signing role and IAM coherently so old storage capabilities also fail. PostgreSQL recovery state and a host wrapper marker keep HTTP and coordinator work closed. Full restored S3 inventory/hash/system-identifier verification and import of retained authenticated recovery horizons precede a fresh authority-administrator plus DMS-operator proof and explicit independent access review. The empty broker gets dispatch rebuilt from PostgreSQL with new generations, original budgets/deadlines and inactive-source cancellation; terminal jobs do not reopen. Host `up` refuses a blocked recovery. The [recovery runbook](docs/runbooks/dms-recovery.md) defines command order, key custody, failure/retry handling and measured acceptance.
+
+Forced-RLS recovery state, immutable backup catalog and application-bound disposal intents are DMS-owned. Originals/accepted artifacts require the restore deadline plus nine days, a confirmed off-host cohort within 24 hours, no retained cohort covering the deadline, and every shared/restored reference independently permitting disposal. Durable object tombstones and advisory fences reject new original references. Private operator requests select at most 100 objects; the coordinator leases at most five for 120 seconds and retries after 60 seconds. Network calls run outside database transactions. Cleanup refuses Enabled/Suspended S3 versioning, deletes only the canonical exact key, and requires an independent authenticated absence check before atomic usage release and completion. Minimal identity/version/security/artifact provenance and tombstones survive physical disposal. PURGED is reached only when every physical reference is complete; searchable text is removed then. Unpublished terminal staging and abandoned output use capability expiry plus one day and 60-second skew grace, separately from retained originals. Terminal uploads without scanner jobs reconcile expired transfer reservations against authenticated exact-key observations; unconfirmed copy destinations are optional inventory objects until their existence is established. Binary restore retries transient storage failures, and disposal eligibility is applied before the bounded batch limit.
+
+Bounded private history pruning retains failed/unsupported work and referenced provenance, expires upload/lifecycle/enrollment receipts one day after their disclosed expiry, unreferenced successful attempt detail after 30 days, unreferenced successful/cancelled jobs and identifier-only audit/security history after 90 days, and unreferenced terminal batch details after 30 days. Expired enrollment keys are pruned after 90 days only when no receipt depends on them; active application identity mappings remain. Referenced session/batch bindings remain provenance; pending disposal retains its application audit. The I18 attestation report is operational information only; disposal authority comes from verified cohorts. Local fixture timings qualify only the recorded fixture dataset and limits. Actual off-host survival and RPO/RTO on declared target hardware/volume remain I20 target acceptance.
 
 ## Development and current deployment
 
@@ -4428,7 +5246,8 @@ inserts. Each invocation verifies installation identity, fresh verified authorit
 and the current tenant-bound grant; every page/retry repeats verification. Its shared
 command fence prevents a supported revocation from completing during a read. Forced-RLS
 operator policies independently require the active grant. No operator HTTP endpoint exists.
-The private registry/schema is generated separately as `docs/api/dms-operator.contract.json`.
+I05 extends this role with bounded policy writes and document inspection as described
+in the admission foundation section. The private registry/schema is generated separately as `docs/api/dms-operator.contract.json`.
 
 The owning DmsDatabaseService supplies transaction-local tenant/machine context on its
 existing bounded pool. Current registration, consumer principal kind and scope ceiling are
@@ -4453,12 +5272,13 @@ audit. The private `audit-read` returns permitted installation application audit
 filtered by application. Both use limit 1–100 (default 50), descending timestamp/UUID keyset
 pagination and opaque HMAC cursors bound to tenant/principal/filter. Every page reauthorizes;
 listings remain live views. Changing the authority secret invalidates outstanding cursors.
-Only `application.enrolled` exists today. The already selected `/v1/documents/{id}/audit`
-route and document/operator audit resource policy extend this implementation when the owning
-document feature ships; no placeholder document tables or document endpoint are introduced.
+I05 adds `document.admitted` and `admission.reconciled` alongside `application.enrolled`.
+GET `/v1/documents/{documentId}/audit` and the private document filter use the owning
+registry and document/operator audit policy described in the I05 foundation above.
 
-`thaarei_dms_coordinator` is a distinct, read-only tenant-filtered outbox role with no audit,
-registration, operator, auth, DDL or publication-state privileges. I03 supplies no dispatch
+`thaarei_dms_coordinator` starts as a distinct tenant-filtered outbox reader in I03.
+I05 adds the constrained capacity/accounting and audit-insert privileges described above;
+registration, operator grants, auth, DDL and publication-state privileges remain absent. I03 supplies no dispatch
 process or broker publication; I07 adds only the privileges/use cases it implements. Private
 operator/coordinator URLs never enter long-running API environment references. Provisioning
 creates these roles as NOLOGIN unless separate protected credentials are provided. Existing
@@ -4497,6 +5317,94 @@ bundled explorer on the existing DMS listener, as specified below. Private contr
 remain separate, and documentation never substitutes for endpoint authorization. Signed
 file transfers remain the owning storage/upload increments; no docs service or new
 host port is introduced.
+
+### Operable standalone distribution (DMS-I18)
+
+The selected I18 distribution uses bundled Better Auth, one customer tenant and independent
+registered applications. External-authority support is not selected or claimed. Version
+0.18.0 composes the implemented storage/transfer/coordinator/broker/scanner and processing
+roles through `deploy/compose.dms-complete.yaml`; the structured variant adds the pinned
+optional image. Dokploy owns canonical HTTPS ingress to API:3001 and transfer:8333 only.
+No host ports are published. Trusted supervisors/coordinator can reach canonical TLS/JWKS;
+private broker/storage/scan/work networks and offline parser namespaces retain their
+boundaries. Development/testing email uses private Mailpit, including production-profile
+STARTTLS verification with a trusted test CA. Customer delivery uses its configured relay.
+
+The release builder emits exact local image IDs/archive, per-image SPDX/Syft inventories,
+actual license/notice archives including JAR legal material, source-access records and a
+covered-source offer using the owner's three Thaarei contacts. Lockfiles/build recipes,
+model manifests and root proprietary LICENSE accompany them. Syft 1.57.0 is pinned by
+archive hash. Unknown license declarations remain review items; candidate assembly is not
+customer-release approval. Initialization generates distinct private database/S3/AMQP/auth
+credentials and refuses an existing configuration. Runtime raw env files preserve literal
+values. The target wrapper uses Docker-only private tools with stdin/protected files,
+never automatic startup migration or plaintext credentials in arguments. Short-lived root
+volume tools initialize ownership; long-running application, storage, broker and scanner
+processes use their declared nonroot identities. All long-running services have fixed
+memory/CPU/PID budgets and bounded Docker log rotation; this single host is not HA.
+
+`/health/live` is process liveness, `/health/ready/api` checks auth and the 33 owning tables,
+and `/health/ready/processing` returns only availability through a fixed configured private
+coordinator origin. Missing workers/signatures/broker/capacity do not disable API reads.
+Authenticated role-bound private service observations arrive every 20 seconds and expire
+at 90 seconds. The coordinator checks authenticated storage access and capacity on its
+normal bounded cycle; private work database readiness checks 13 tables. Signature evidence
+must be at most 48 hours old, capacity observations at most 30 seconds old with the existing
+50 MiB storage/256 MiB scratch reserves. Backlog age above 300 seconds and outbox age
+above 120 seconds alert. Three consecutive coordinator failures alert. Backup evidence is
+only an attributed private operator attestation: missing or older-than-24-hour reports
+alert independently and do not prove recovery validity or block normal reads.
+
+Migrations 0044–0045 add a six-component forced-RLS observation table, constrained
+coordinator writes and live-grant operator reads/report/prune functions. No new consumer
+routes or HTTP operator surface exists. The private snapshot has bounded component/alert
+families and at most 32 oldest application backlogs. Dispatch ranks eligible work within
+each application before the batch limit, so a busy application's queue cannot fill every
+first-round slot. Eligibility still precedes the limit and dispatch does not authorize
+execution. Bounded fixed-label security events include server-generated correlation and
+latency buckets; supervisor logs contain only fixed endpoint/role/status/duration/request
+ID. Request/response/error serializers suppress request URLs, bodies and credential-bearing
+provider exception messages. Docker logs rotate at 10 MiB times three per service with a
+1 MiB nonblocking buffer; downstream collection/retention remains operator-managed.
+
+Shutdown fences new coordinator claims, stops publisher batches and drains active work
+within configured grace periods. Interrupted leases are recovered through current database
+authority. Private `work-redrive` creates an authorized new enrichment run from a failed
+job rather than resetting old attempt budgets; it cannot approve scanner failures.
+`operations-prune` uses the bounded separate I19 history-retention policies above. Required
+version/security/artifact/processing provenance and disposal tombstones survive. Physical
+cleanup and coherent backup/restore use the I19 boundary and recovery runbook above.
+
+Private signing-key stage/activate uses fresh verified authority admin plus the active DMS
+operator fence. RS256 private keys use the provider's encrypted storage format. Staged
+public keys are prepublished for at least 60 seconds before explicit activation, which
+must occur within 24 hours; retired public keys remain advertised for 24 hours, while
+machine JWT lifetime remains at most five minutes. Commands return only key metadata.
+There is no automatic root AUTH_SECRET replacement. Offline ClamAV imports require an
+exact three-file SHA-256 manifest plus real CVD signature validation, then an atomic active
+set switch preserving the previous set; freshness gates still apply.
+
+See the [distribution runbook](docs/runbooks/dms-distribution.md) for assembly, installation,
+upgrade, operational commands, source-offer material and isolated qualification. Actual
+completion/evidence is tracked in IN_PROGRESS.md; target acceptance remains separate.
+
+### Qualification and handover boundary (DMS-I20)
+
+Release qualification binds the exact image IDs, bundle checksums, dependency/model locks,
+consumer contracts and migration inventory to an immutable source fingerprint for the run.
+The independent standard-library HTTP consumer has application credentials and canonical
+ingress only. Private read-only queue/resource observation runs separately, with no new
+consumer or operator HTTP surface. A dedicated CI lane builds/tests the standalone DMS
+without starting Turnstile services.
+
+The declared local synthetic profile measures metadata latency, original availability,
+processing completion, indexing lag, admission backpressure and sampled resource usage
+separately. It does not establish sustained monthly capacity or off-host survival. The
+requirement ledger records automated evidence separately from manual, deployed and target
+acceptance. Compatible application rollback is qualified only for an explicit previous
+image/schema boundary; incompatible recovery requires the complete matching coherent
+cohort. Customer rollout, capacity, legal review and accountable sign-off remain separate.
+See the [handover runbook](docs/runbooks/dms-handover.md) and target acceptance template.
 
 ### Consumer API contract and explorer (DMS-I02)
 
@@ -4743,7 +5651,7 @@ The selected solution must run as a commercial B2B product without mandatory pai
 
 Do not bundle proprietary/commercial-only editions or models with noncommercial/research-only restrictions. PyMuPDF/MuPDF and a Ghostscript-based conversion pipeline are excluded from the default; their stronger-copyleft/commercial alternatives are unnecessary for the selected paths. Grafana is operator-supplied if desired, rather than a bundled AGPL dependency. This preference does not imply copyleft software prohibits commercial use, nor does container separation remove distribution obligations.
 
-As ordinary implementation/release work, pin package/image/model versions and hashes, retain a software bill of materials, and ship `THIRD_PARTY_NOTICES`, license texts, and required covered-source access/offer materials with customer distributions. Inventory TypeScript/Python dependencies, OS/JVM/native libraries, image codecs/fonts, OCR data, scanner signatures, and models, including optional profiles. Check hosted operation and customer redistribution separately; do not label the full stack license-free from top-level project licenses alone. Thaarei-owned application code and documentation are confidential and proprietary under the repository LICENSE; no open-source license is granted for that material. Third-party components retain their own licenses. No assembled distribution has yet been audited.
+As ordinary implementation/release work, pin package/image/model versions and hashes, retain a software bill of materials, and ship `THIRD_PARTY_NOTICES`, license texts, and required covered-source access/offer materials with customer distributions. Inventory TypeScript/Python dependencies, OS/JVM/native libraries, image codecs/fonts, OCR data, scanner signatures, and models, including optional profiles. Check hosted operation and customer redistribution separately; do not label the full stack license-free from top-level project licenses alone. Thaarei-owned application code and documentation are confidential and proprietary under the repository LICENSE; no open-source license is granted for that material. Third-party components retain their own licenses. I18 assembles candidate inventories and notices; complete customer-redistribution review remains an I20 release gate.
 
 [Better Auth license](https://github.com/better-auth/better-auth/blob/main/LICENSE.md), [OAuth plugin license](https://github.com/better-auth/better-auth/blob/main/packages/oauth-provider/package.json), [Celery license](https://github.com/celery/celery/blob/main/LICENSE), [Dramatiq license](https://dramatiq.io/license.html), [PDFium build licenses](https://github.com/pypdfium2-team/pypdfium2#licensing), [MPL distribution guidance](https://www.mozilla.org/en-US/MPL/2.0/FAQ/), [ClamAV linking/license guidance](https://docs.clamav.net/manual/Development/libclamav.html#license), [Docling code/model licenses](https://github.com/docling-project/docling#license)
 

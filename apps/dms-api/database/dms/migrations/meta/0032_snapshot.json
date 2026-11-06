@@ -1,0 +1,4159 @@
+{
+  "id": "01b9e0a3-2fcb-4de1-a47f-5b54cb1649de",
+  "prevId": "9ae51cf5-4f47-4dd0-b3ba-add58b404eed",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "dms.application_registration": {
+      "name": "application_registration",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "principal_kind": {
+          "name": "principal_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'consumer'"
+        },
+        "scope_ceiling": {
+          "name": "scope_ceiling",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "application_registration_tenant_id_installation_tenant_id_fk": {
+          "name": "application_registration_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "application_registration",
+          "tableTo": "installation",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "application_tenant_identity": {
+          "name": "application_tenant_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "id"]
+        },
+        "application_client_identity": {
+          "name": "application_client_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "issuer", "client_id"]
+        },
+        "application_enrollment_identity": {
+          "name": "application_enrollment_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "id", "issuer", "client_id"]
+        }
+      },
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator", "thaarei_dms_runtime"],
+          "using": "\"dms\".\"application_registration\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"dms\".\"application_registration\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "application_status": {
+          "name": "application_status",
+          "value": "\"dms\".\"application_registration\".\"status\" IN ('pending', 'active', 'disabled')"
+        },
+        "application_principal_kind": {
+          "name": "application_principal_kind",
+          "value": "\"dms\".\"application_registration\".\"principal_kind\" IN ('consumer', 'publisher', 'scanner', 'extractor')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.installation": {
+      "name": "installation",
+      "schema": "dms",
+      "columns": {
+        "singleton": {
+          "name": "singleton",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_key": {
+          "name": "customer_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "installation_tenant_id_unique": {
+          "name": "installation_tenant_id_unique",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id"]
+        },
+        "installation_customer_key_unique": {
+          "name": "installation_customer_key_unique",
+          "nullsNotDistinct": false,
+          "columns": ["customer_key"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "one_installation": {
+          "name": "one_installation",
+          "value": "\"dms\".\"installation\".\"singleton\" = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "dms.operator_authorization": {
+      "name": "operator_authorization",
+      "schema": "dms",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_id": {
+          "name": "subject_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "operator_authorization_tenant_id_installation_tenant_id_fk": {
+          "name": "operator_authorization_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "operator_authorization",
+          "tableTo": "installation",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "operator_authorization_tenant_id_subject_id_pk": {
+          "name": "operator_authorization_tenant_id_subject_id_pk",
+          "columns": ["tenant_id", "subject_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "\"dms\".\"operator_authorization\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"dms\".\"operator_authorization\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "dms.enrollment_key": {
+      "name": "enrollment_key",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deployment_id": {
+          "name": "deployment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "digest": {
+          "name": "digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consumed_at": {
+          "name": "consumed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "enrollment_key_application_idx": {
+          "name": "enrollment_key_application_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "application_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "enrollment_key_tenant_id_application_id_issuer_client_id_application_registration_tenant_id_id_issuer_client_id_fk": {
+          "name": "enrollment_key_tenant_id_application_id_issuer_client_id_application_registration_tenant_id_id_issuer_client_id_fk",
+          "tableFrom": "enrollment_key",
+          "tableTo": "application_registration",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "issuer", "client_id"],
+          "columnsTo": ["tenant_id", "id", "issuer", "client_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "enrollment_key_tenant_identity": {
+          "name": "enrollment_key_tenant_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator", "thaarei_dms_runtime"],
+          "using": "\"dms\".\"enrollment_key\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"dms\".\"enrollment_key\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "enrollment_digest": {
+          "name": "enrollment_digest",
+          "value": "\"dms\".\"enrollment_key\".\"digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "enrollment_expiry": {
+          "name": "enrollment_expiry",
+          "value": "\"dms\".\"enrollment_key\".\"expires_at\" > \"dms\".\"enrollment_key\".\"created_at\" AND \"dms\".\"enrollment_key\".\"expires_at\" <= \"dms\".\"enrollment_key\".\"created_at\" + interval '24 hours'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.enrollment_receipt": {
+      "name": "enrollment_receipt",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deployment_id": {
+          "name": "deployment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operation": {
+          "name": "operation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idempotency_hash": {
+          "name": "idempotency_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_hash": {
+          "name": "request_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enrollment_key_id": {
+          "name": "enrollment_key_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "enrollment_receipt_expiry_idx": {
+          "name": "enrollment_receipt_expiry_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "enrollment_receipt_tenant_id_application_id_application_registration_tenant_id_id_fk": {
+          "name": "enrollment_receipt_tenant_id_application_id_application_registration_tenant_id_id_fk",
+          "tableFrom": "enrollment_receipt",
+          "tableTo": "application_registration",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "enrollment_receipt_tenant_id_enrollment_key_id_enrollment_key_tenant_id_id_fk": {
+          "name": "enrollment_receipt_tenant_id_enrollment_key_id_enrollment_key_tenant_id_id_fk",
+          "tableFrom": "enrollment_receipt",
+          "tableTo": "enrollment_key",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "enrollment_key_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "enrollment_receipt_enrollment_key_id_unique": {
+          "name": "enrollment_receipt_enrollment_key_id_unique",
+          "nullsNotDistinct": false,
+          "columns": ["enrollment_key_id"]
+        },
+        "enrollment_idempotency_scope": {
+          "name": "enrollment_idempotency_scope",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tenant_id",
+            "deployment_id",
+            "issuer",
+            "client_id",
+            "operation",
+            "idempotency_hash"
+          ]
+        }
+      },
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator", "thaarei_dms_runtime"],
+          "using": "\"dms\".\"enrollment_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"dms\".\"enrollment_receipt\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "enrollment_receipt_hashes": {
+          "name": "enrollment_receipt_hashes",
+          "value": "\"dms\".\"enrollment_receipt\".\"idempotency_hash\" ~ '^[0-9a-f]{64}$' AND \"dms\".\"enrollment_receipt\".\"request_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "enrollment_receipt_expiry": {
+          "name": "enrollment_receipt_expiry",
+          "value": "\"dms\".\"enrollment_receipt\".\"expires_at\" > \"dms\".\"enrollment_receipt\".\"created_at\" AND \"dms\".\"enrollment_receipt\".\"expires_at\" <= \"dms\".\"enrollment_receipt\".\"created_at\" + interval '24 hours'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.security_event": {
+      "name": "security_event",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_kind": {
+          "name": "actor_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_id": {
+          "name": "subject_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "security_event_retention_idx": {
+          "name": "security_event_retention_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "security_event_tenant_id_installation_tenant_id_fk": {
+          "name": "security_event_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "security_event",
+          "tableTo": "installation",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "tenant_isolation": {
+          "name": "tenant_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator", "thaarei_dms_runtime"],
+          "using": "\"dms\".\"security_event\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "\"dms\".\"security_event\".\"tenant_id\" = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "security_event_bounds": {
+          "name": "security_event_bounds",
+          "value": "length(\"dms\".\"security_event\".\"actor_id\") BETWEEN 1 AND 200 AND length(\"dms\".\"security_event\".\"subject_id\") BETWEEN 1 AND 128 AND \"dms\".\"security_event\".\"action\" ~ '^[a-z][a-z0-9_.-]{0,47}$'"
+        },
+        "security_event_outcome": {
+          "name": "security_event_outcome",
+          "value": "\"dms\".\"security_event\".\"outcome\" IN ('success', 'denied', 'pending')"
+        },
+        "security_event_actor_kind": {
+          "name": "security_event_actor_kind",
+          "value": "\"dms\".\"security_event\".\"actor_kind\" IN ('operator', 'machine')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.audit_event": {
+      "name": "audit_event",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resource_id": {
+          "name": "resource_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resource_type": {
+          "name": "resource_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_kind": {
+          "name": "actor_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'machine'"
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "asserted_human": {
+          "name": "asserted_human",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "audit_document_page_idx": {
+          "name": "audit_document_page_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "application_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "document_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_application_page_idx": {
+          "name": "audit_application_page_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "application_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_operator_page_idx": {
+          "name": "audit_operator_page_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "audit_event_tenant_id_application_id_application_registration_tenant_id_id_fk": {
+          "name": "audit_event_tenant_id_application_id_application_registration_tenant_id_id_fk",
+          "tableFrom": "audit_event",
+          "tableTo": "application_registration",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "audit_event_tenant_id_application_id_document_id_document_tenant_id_application_id_id_fk": {
+          "name": "audit_event_tenant_id_application_id_document_id_document_tenant_id_application_id_id_fk",
+          "tableFrom": "audit_event",
+          "tableTo": "document",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "document_id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "audit_event_tenant_id_application_id_batch_id_upload_batch_tenant_id_application_id_id_fk": {
+          "name": "audit_event_tenant_id_application_id_batch_id_upload_batch_tenant_id_application_id_id_fk",
+          "tableFrom": "audit_event",
+          "tableTo": "upload_batch",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "batch_id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "audit_tenant_identity": {
+          "name": "audit_tenant_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "application_id", "id"]
+        }
+      },
+      "policies": {
+        "coordinator_insert": {
+          "name": "coordinator_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": ["thaarei_dms_coordinator"],
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND actor_kind='coordinator' AND actor_id='thaarei_dms_coordinator'"
+        },
+        "machine_read": {
+          "name": "machine_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true) = 'machine' AND application_id = nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "machine_insert": {
+          "name": "machine_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": ["thaarei_dms_runtime"],
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true) = 'machine' AND application_id = nullif(current_setting('app.application_id',true),'')::uuid AND actor_kind='machine' AND actor_id = current_setting('app.actor_id',true)"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true) = 'operator' AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id = audit_event.tenant_id AND oa.subject_id = current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "audit_application_resource": {
+          "name": "audit_application_resource",
+          "value": "(\"dms\".\"audit_event\".\"resource_type\"='application' AND \"dms\".\"audit_event\".\"resource_id\"=\"dms\".\"audit_event\".\"application_id\" AND \"dms\".\"audit_event\".\"document_id\" IS NULL AND \"dms\".\"audit_event\".\"batch_id\" IS NULL AND \"dms\".\"audit_event\".\"action\"='application.enrolled' AND \"dms\".\"audit_event\".\"actor_kind\"='machine') OR (\"dms\".\"audit_event\".\"resource_type\"='document' AND \"dms\".\"audit_event\".\"document_id\" IS NOT NULL AND \"dms\".\"audit_event\".\"batch_id\" IS NULL AND \"dms\".\"audit_event\".\"resource_id\"=\"dms\".\"audit_event\".\"document_id\" AND \"dms\".\"audit_event\".\"action\" IN ('document.admitted','admission.reconciled','upload.authorized','upload.completion-requested','upload.cancelled','upload.expired','upload.object-verified','upload.failed','work.queued','work.completed','work.recovered','work.cancelled','security.assessed','security.invalidated','document.published','document.download-authorized','document.permissions-changed','document.version-restored','document.metadata-updated','document.reference-linked','document.reference-unlinked') AND \"dms\".\"audit_event\".\"actor_kind\" IN ('machine','coordinator','operator')) OR (\"dms\".\"audit_event\".\"resource_type\"='upload-batch' AND \"dms\".\"audit_event\".\"batch_id\" IS NOT NULL AND \"dms\".\"audit_event\".\"document_id\" IS NULL AND \"dms\".\"audit_event\".\"resource_id\"=\"dms\".\"audit_event\".\"batch_id\" AND \"dms\".\"audit_event\".\"action\" IN ('batch.created','batch.closed','batch.cancelled','batch.expired') AND \"dms\".\"audit_event\".\"actor_kind\" IN ('machine','coordinator'))"
+        },
+        "audit_actor_bounds": {
+          "name": "audit_actor_bounds",
+          "value": "length(\"dms\".\"audit_event\".\"actor_id\") BETWEEN 1 AND 200 AND (\"dms\".\"audit_event\".\"asserted_human\" IS NULL OR \"dms\".\"audit_event\".\"asserted_human\" ~ '^[A-Za-z0-9_.:@-]{1,128}$')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.outbox_intent": {
+      "name": "outbox_intent",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "audit_id": {
+          "name": "audit_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "outbox_pending_idx": {
+          "name": "outbox_pending_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "outbox_intent_tenant_id_application_id_audit_id_audit_event_tenant_id_application_id_id_fk": {
+          "name": "outbox_intent_tenant_id_application_id_audit_id_audit_event_tenant_id_application_id_id_fk",
+          "tableFrom": "outbox_intent",
+          "tableTo": "audit_event",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "audit_id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "outbox_intent_tenant_id_application_id_application_registration_tenant_id_id_fk": {
+          "name": "outbox_intent_tenant_id_application_id_application_registration_tenant_id_id_fk",
+          "tableFrom": "outbox_intent",
+          "tableTo": "application_registration",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "outbox_audit_identity": {
+          "name": "outbox_audit_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "audit_id"]
+        }
+      },
+      "policies": {
+        "machine_insert": {
+          "name": "machine_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": ["thaarei_dms_runtime"],
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true) = 'machine' AND application_id = nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "coordinator_insert": {
+          "name": "coordinator_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": ["thaarei_dms_coordinator"],
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_read": {
+          "name": "coordinator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "outbox_kind": {
+          "name": "outbox_kind",
+          "value": "\"dms\".\"outbox_intent\".\"kind\" IN ('application.enrolled','document.admitted','admission.reconciled','upload.authorized','upload.completion-requested','upload.cancelled','upload.expired','upload.object-verified','upload.failed','work.queued','work.completed','work.recovered','work.cancelled','security.assessed','security.invalidated','document.published','document.download-authorized','document.permissions-changed','document.version-restored','document.metadata-updated','document.reference-linked','document.reference-unlinked','batch.created','batch.closed','batch.cancelled','batch.expired')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.upload_admission": {
+      "name": "upload_admission",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contributor_application_id": {
+          "name": "contributor_application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_id": {
+          "name": "version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idempotency_hash": {
+          "name": "idempotency_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_hash": {
+          "name": "request_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "policy_revision": {
+          "name": "policy_revision",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "profile": {
+          "name": "profile",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size": {
+          "name": "size",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'RESERVED'"
+        },
+        "storage_mode": {
+          "name": "storage_mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'UPLOAD'"
+        },
+        "work_released": {
+          "name": "work_released",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "reserved_storage": {
+          "name": "reserved_storage",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reserved_scratch": {
+          "name": "reserved_scratch",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "staging_bytes": {
+          "name": "staging_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "original_bytes": {
+          "name": "original_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "capability_expires_at": {
+          "name": "capability_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "admission_expiry_idx": {
+          "name": "admission_expiry_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "upload_admission_tenant_id_contributor_application_id_application_registration_tenant_id_id_fk": {
+          "name": "upload_admission_tenant_id_contributor_application_id_application_registration_tenant_id_id_fk",
+          "tableFrom": "upload_admission",
+          "tableTo": "application_registration",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "contributor_application_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "upload_admission_tenant_id_application_id_document_id_version_id_document_version_tenant_id_application_id_document_id_id_fk": {
+          "name": "upload_admission_tenant_id_application_id_document_id_version_id_document_version_tenant_id_application_id_document_id_id_fk",
+          "tableFrom": "upload_admission",
+          "tableTo": "document_version",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "document_id", "version_id"],
+          "columnsTo": ["tenant_id", "application_id", "document_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "admission_version_identity": {
+          "name": "admission_version_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "version_id"]
+        },
+        "admission_receipt_identity": {
+          "name": "admission_receipt_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "contributor_application_id", "idempotency_hash"]
+        },
+        "admission_contributor_identity": {
+          "name": "admission_contributor_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "contributor_application_id", "id"]
+        },
+        "admission_owner_identity": {
+          "name": "admission_owner_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "application_id", "id"]
+        }
+      },
+      "policies": {
+        "runtime_owner": {
+          "name": "runtime_owner",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_tenant": {
+          "name": "coordinator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "admission_bounds": {
+          "name": "admission_bounds",
+          "value": "\"dms\".\"upload_admission\".\"storage_mode\" IN ('UPLOAD','REUSE') AND (\"dms\".\"upload_admission\".\"storage_mode\"<>'REUSE' OR (\"dms\".\"upload_admission\".\"reserved_storage\"=0 AND \"dms\".\"upload_admission\".\"staging_bytes\"=0 AND \"dms\".\"upload_admission\".\"original_bytes\"=0 AND \"dms\".\"upload_admission\".\"capability_expires_at\" IS NULL)) AND \"dms\".\"upload_admission\".\"size\" BETWEEN 1 AND 52428800 AND \"dms\".\"upload_admission\".\"reserved_storage\">=0 AND \"dms\".\"upload_admission\".\"reserved_scratch\">=0 AND \"dms\".\"upload_admission\".\"staging_bytes\">=0 AND \"dms\".\"upload_admission\".\"original_bytes\">=0 AND \"dms\".\"upload_admission\".\"state\" IN ('RESERVED','RELEASED','SETTLED') AND \"dms\".\"upload_admission\".\"profile\" IN ('secure-only','searchable','structured') AND length(\"dms\".\"upload_admission\".\"request_hash\")=64 AND length(\"dms\".\"upload_admission\".\"idempotency_hash\")=64 AND (\"dms\".\"upload_admission\".\"capability_expires_at\" IS NULL OR \"dms\".\"upload_admission\".\"capability_expires_at\"<=\"dms\".\"upload_admission\".\"expires_at\")"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.admission_capacity": {
+      "name": "admission_capacity",
+      "schema": "dms",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "shared_device": {
+          "name": "shared_device",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "storage_free_bytes": {
+          "name": "storage_free_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scratch_free_bytes": {
+          "name": "scratch_free_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "used_at_observation": {
+          "name": "used_at_observation",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observed_at": {
+          "name": "observed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "admission_capacity_tenant_id_installation_tenant_id_fk": {
+          "name": "admission_capacity_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "admission_capacity",
+          "tableTo": "installation",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "runtime_tenant": {
+          "name": "runtime_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_tenant": {
+          "name": "coordinator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_tenant": {
+          "name": "operator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "capacity_bounds": {
+          "name": "capacity_bounds",
+          "value": "\"dms\".\"admission_capacity\".\"storage_free_bytes\">=0 AND \"dms\".\"admission_capacity\".\"scratch_free_bytes\">=0 AND \"dms\".\"admission_capacity\".\"used_at_observation\">=0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.admission_policy": {
+      "name": "admission_policy",
+      "schema": "dms",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "revision": {
+          "name": "revision",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "settings": {
+          "name": "settings",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "admission_policy_tenant_id_installation_tenant_id_fk": {
+          "name": "admission_policy_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "admission_policy",
+          "tableTo": "installation",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "runtime_tenant": {
+          "name": "runtime_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_tenant": {
+          "name": "coordinator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_tenant": {
+          "name": "operator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "admission_policy_bounds": {
+          "name": "admission_policy_bounds",
+          "value": "\"dms\".\"admission_policy\".\"revision\" BETWEEN 1 AND 999999999999999 AND jsonb_typeof(\"dms\".\"admission_policy\".\"settings\")='object' AND octet_length(\"dms\".\"admission_policy\".\"settings\"::text)<=16384"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.admission_application_usage": {
+      "name": "admission_application_usage",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reserved_storage": {
+          "name": "reserved_storage",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "reserved_scratch": {
+          "name": "reserved_scratch",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "staging_bytes": {
+          "name": "staging_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "original_bytes": {
+          "name": "original_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "artifact_bytes": {
+          "name": "artifact_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "retained_bytes": {
+          "name": "retained_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "active": {
+          "name": "active",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "queued": {
+          "name": "queued",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "admission_application_usage_tenant_id_application_id_application_registration_tenant_id_id_fk": {
+          "name": "admission_application_usage_tenant_id_application_id_application_registration_tenant_id_id_fk",
+          "tableFrom": "admission_application_usage",
+          "tableTo": "application_registration",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "application_usage_identity": {
+          "name": "application_usage_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "application_id"]
+        }
+      },
+      "policies": {
+        "runtime_owner": {
+          "name": "runtime_owner",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_tenant": {
+          "name": "coordinator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "usage_nonnegative": {
+          "name": "usage_nonnegative",
+          "value": "reserved_storage>=0 AND reserved_scratch>=0 AND staging_bytes>=0 AND original_bytes>=0 AND artifact_bytes>=0 AND retained_bytes>=0 AND active>=0 AND queued>=0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.document": {
+      "name": "document",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tags": {
+          "name": "tags",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "references": {
+          "name": "references",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "lifecycle": {
+          "name": "lifecycle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ACTIVE'"
+        },
+        "revision": {
+          "name": "revision",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "next_version": {
+          "name": "next_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "current_version_id": {
+          "name": "current_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "document_tags_idx": {
+          "name": "document_tags_idx",
+          "columns": [
+            {
+              "expression": "tags",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "document_references_idx": {
+          "name": "document_references_idx",
+          "columns": [
+            {
+              "expression": "references",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "document_title_idx": {
+          "name": "document_title_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "application_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "title",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "document_owner_page_idx": {
+          "name": "document_owner_page_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "application_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "document_tenant_id_application_id_application_registration_tenant_id_id_fk": {
+          "name": "document_tenant_id_application_id_application_registration_tenant_id_id_fk",
+          "tableFrom": "document",
+          "tableTo": "application_registration",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "document_owner_identity": {
+          "name": "document_owner_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "application_id", "id"]
+        }
+      },
+      "policies": {
+        "runtime_owner": {
+          "name": "runtime_owner",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_tenant": {
+          "name": "coordinator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "document_baseline": {
+          "name": "document_baseline",
+          "value": "\"dms\".\"document\".\"lifecycle\"='ACTIVE' AND \"dms\".\"document\".\"revision\" BETWEEN 1 AND 999999999999999 AND \"dms\".\"document\".\"next_version\">0"
+        },
+        "document_labels": {
+          "name": "document_labels",
+          "value": "length(\"dms\".\"document\".\"title\") BETWEEN 1 AND 240 AND octet_length(\"dms\".\"document\".\"title\") BETWEEN 1 AND 960 AND length(\"dms\".\"document\".\"file_name\") BETWEEN 1 AND 255 AND octet_length(\"dms\".\"document\".\"file_name\") BETWEEN 1 AND 1020 AND \"dms\".\"document\".\"title\" !~ '[[:cntrl:]]' AND \"dms\".\"document\".\"file_name\" !~ '[[:cntrl:]]' AND position('/' in \"dms\".\"document\".\"file_name\")=0 AND position(chr(92) in \"dms\".\"document\".\"file_name\")=0"
+        },
+        "document_metadata": {
+          "name": "document_metadata",
+          "value": "jsonb_typeof(\"dms\".\"document\".\"metadata\")='object' AND octet_length(\"dms\".\"document\".\"metadata\"::text)<=32768"
+        },
+        "document_tags_bounds": {
+          "name": "document_tags_bounds",
+          "value": "jsonb_typeof(\"dms\".\"document\".\"tags\")='array' AND jsonb_array_length(\"dms\".\"document\".\"tags\")<=32 AND octet_length(\"dms\".\"document\".\"tags\"::text)<=16384"
+        },
+        "document_references_bounds": {
+          "name": "document_references_bounds",
+          "value": "jsonb_typeof(\"dms\".\"document\".\"references\")='array' AND jsonb_array_length(\"dms\".\"document\".\"references\")<=32 AND octet_length(\"dms\".\"document\".\"references\"::text)<=65536"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.document_version": {
+      "name": "document_version",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "availability": {
+          "name": "availability",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PENDING'"
+        },
+        "size": {
+          "name": "size",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_type": {
+          "name": "content_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "document_version_tenant_id_application_id_document_id_document_tenant_id_application_id_id_fk": {
+          "name": "document_version_tenant_id_application_id_document_id_document_tenant_id_application_id_id_fk",
+          "tableFrom": "document_version",
+          "tableTo": "document",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "document_id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "version_owner_identity": {
+          "name": "version_owner_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "application_id", "document_id", "id"]
+        },
+        "document_version_number": {
+          "name": "document_version_number",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "document_id", "number"]
+        }
+      },
+      "policies": {
+        "runtime_owner": {
+          "name": "runtime_owner",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_tenant": {
+          "name": "coordinator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "version_baseline": {
+          "name": "version_baseline",
+          "value": "\"dms\".\"document_version\".\"number\">0 AND \"dms\".\"document_version\".\"availability\" IN ('PENDING','AVAILABLE','UNAVAILABLE') AND \"dms\".\"document_version\".\"size\" BETWEEN 1 AND 52428800 AND length(\"dms\".\"document_version\".\"content_type\") BETWEEN 3 AND 100 AND length(\"dms\".\"document_version\".\"file_name\") BETWEEN 1 AND 255"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.admission_tenant_usage": {
+      "name": "admission_tenant_usage",
+      "schema": "dms",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "reserved_storage": {
+          "name": "reserved_storage",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "reserved_scratch": {
+          "name": "reserved_scratch",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "staging_bytes": {
+          "name": "staging_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "original_bytes": {
+          "name": "original_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "artifact_bytes": {
+          "name": "artifact_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "retained_bytes": {
+          "name": "retained_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "active": {
+          "name": "active",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "queued": {
+          "name": "queued",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "admission_tenant_usage_tenant_id_installation_tenant_id_fk": {
+          "name": "admission_tenant_usage_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "admission_tenant_usage",
+          "tableTo": "installation",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "runtime_tenant": {
+          "name": "runtime_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_tenant": {
+          "name": "coordinator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_tenant": {
+          "name": "operator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "usage_nonnegative": {
+          "name": "usage_nonnegative",
+          "value": "reserved_storage>=0 AND reserved_scratch>=0 AND staging_bytes>=0 AND original_bytes>=0 AND artifact_bytes>=0 AND retained_bytes>=0 AND active>=0 AND queued>=0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.binary_restore": {
+      "name": "binary_restore",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_candidate_id": {
+          "name": "source_candidate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_generation": {
+          "name": "source_generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "restore_source_reference": {
+          "name": "restore_source_reference",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "application_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_candidate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "binary_restore_tenant_id_application_id_id_upload_admission_tenant_id_application_id_id_fk": {
+          "name": "binary_restore_tenant_id_application_id_id_upload_admission_tenant_id_application_id_id_fk",
+          "tableFrom": "binary_restore",
+          "tableTo": "upload_admission",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "binary_restore_tenant_id_application_id_source_candidate_id_security_candidate_tenant_id_application_id_id_fk": {
+          "name": "binary_restore_tenant_id_application_id_source_candidate_id_security_candidate_tenant_id_application_id_id_fk",
+          "tableFrom": "binary_restore",
+          "tableTo": "security_candidate",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "source_candidate_id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "runtime_owner": {
+          "name": "runtime_owner",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_read": {
+          "name": "coordinator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "restore_generation": {
+          "name": "restore_generation",
+          "value": "\"dms\".\"binary_restore\".\"source_generation\" BETWEEN 0 AND 2147483646"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.document_grant": {
+      "name": "document_grant",
+      "schema": "dms",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_application_id": {
+          "name": "owner_application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rights": {
+          "name": "rights",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "document_grant_recipient": {
+          "name": "document_grant_recipient",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "application_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "document_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "document_grant_tenant_id_owner_application_id_document_id_document_tenant_id_application_id_id_fk": {
+          "name": "document_grant_tenant_id_owner_application_id_document_id_document_tenant_id_application_id_id_fk",
+          "tableFrom": "document_grant",
+          "tableTo": "document",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "owner_application_id", "document_id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "document_grant_tenant_id_application_id_application_registration_tenant_id_id_fk": {
+          "name": "document_grant_tenant_id_application_id_application_registration_tenant_id_id_fk",
+          "tableFrom": "document_grant",
+          "tableTo": "application_registration",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "document_grant_identity": {
+          "name": "document_grant_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "document_id", "application_id"]
+        }
+      },
+      "policies": {
+        "machine_read": {
+          "name": "machine_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND (owner_application_id=nullif(current_setting('app.application_id',true),'')::uuid OR application_id=nullif(current_setting('app.application_id',true),'')::uuid)"
+        },
+        "owner_insert": {
+          "name": "owner_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": ["thaarei_dms_runtime"],
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND owner_application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "owner_delete": {
+          "name": "owner_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND owner_application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "operator_manage": {
+          "name": "operator_manage",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='operator' AND EXISTS(SELECT 1 FROM dms.operator_authorization WHERE tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND subject_id=current_setting('app.actor_id',true) AND revoked_at IS NULL)",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='operator' AND EXISTS(SELECT 1 FROM dms.operator_authorization WHERE tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND subject_id=current_setting('app.actor_id',true) AND revoked_at IS NULL)"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "document_grant_bounds": {
+          "name": "document_grant_bounds",
+          "value": "\"dms\".\"document_grant\".\"owner_application_id\"<>\"dms\".\"document_grant\".\"application_id\" AND cardinality(\"dms\".\"document_grant\".\"rights\") BETWEEN 1 AND 3 AND \"dms\".\"document_grant\".\"rights\"<@ARRAY['READ','EDIT_METADATA','ADD_VERSION']::text[]"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.upload_batch": {
+      "name": "upload_batch",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'OPEN'"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "batch_open_expiry_idx": {
+          "name": "batch_open_expiry_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "upload_batch_tenant_id_application_id_application_registration_tenant_id_id_fk": {
+          "name": "upload_batch_tenant_id_application_id_application_registration_tenant_id_id_fk",
+          "tableFrom": "upload_batch",
+          "tableTo": "application_registration",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "batch_owner_identity": {
+          "name": "batch_owner_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "application_id", "id"]
+        }
+      },
+      "policies": {
+        "runtime_owner": {
+          "name": "runtime_owner",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_read": {
+          "name": "coordinator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "batch_state": {
+          "name": "batch_state",
+          "value": "\"dms\".\"upload_batch\".\"state\" IN ('OPEN','CLOSED','CANCELLED','EXPIRED')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.upload_batch_item": {
+      "name": "upload_batch_item",
+      "schema": "dms",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operation": {
+          "name": "operation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descriptor": {
+          "name": "descriptor",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'UNSTARTED'"
+        },
+        "upload_id": {
+          "name": "upload_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "admission_error": {
+          "name": "admission_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "upload_batch_item_tenant_id_application_id_batch_id_upload_batch_tenant_id_application_id_id_fk": {
+          "name": "upload_batch_item_tenant_id_application_id_batch_id_upload_batch_tenant_id_application_id_id_fk",
+          "tableFrom": "upload_batch_item",
+          "tableTo": "upload_batch",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "batch_id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "upload_batch_item_tenant_id_application_id_upload_id_upload_admission_tenant_id_contributor_application_id_id_fk": {
+          "name": "upload_batch_item_tenant_id_application_id_upload_id_upload_admission_tenant_id_contributor_application_id_id_fk",
+          "tableFrom": "upload_batch_item",
+          "tableTo": "upload_admission",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "upload_id"],
+          "columnsTo": ["tenant_id", "contributor_application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "batch_item_identity": {
+          "name": "batch_item_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "application_id", "batch_id", "item_id"]
+        },
+        "batch_item_ordinal": {
+          "name": "batch_item_ordinal",
+          "nullsNotDistinct": false,
+          "columns": ["batch_id", "ordinal"]
+        },
+        "batch_item_upload": {
+          "name": "batch_item_upload",
+          "nullsNotDistinct": false,
+          "columns": ["upload_id"]
+        }
+      },
+      "policies": {
+        "runtime_owner": {
+          "name": "runtime_owner",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_read": {
+          "name": "coordinator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "batch_item_bounds": {
+          "name": "batch_item_bounds",
+          "value": "\"dms\".\"upload_batch_item\".\"item_id\" ~ '^[A-Za-z0-9_-]{1,64}$' AND \"dms\".\"upload_batch_item\".\"ordinal\" BETWEEN 0 AND 99 AND \"dms\".\"upload_batch_item\".\"operation\" IN ('create','new-version') AND jsonb_typeof(\"dms\".\"upload_batch_item\".\"descriptor\")='object' AND octet_length(\"dms\".\"upload_batch_item\".\"descriptor\"::text)<=32768 AND \"dms\".\"upload_batch_item\".\"state\" IN ('UNSTARTED','BOUND','CLOSED','CANCELLED','EXPIRED') AND ((\"dms\".\"upload_batch_item\".\"state\"='BOUND')=(\"dms\".\"upload_batch_item\".\"upload_id\" IS NOT NULL)) AND (\"dms\".\"upload_batch_item\".\"admission_error\" IS NULL OR \"dms\".\"upload_batch_item\".\"admission_error\" IN ('POLICY_DENIED','CAPACITY_EXCEEDED','CAPACITY_UNAVAILABLE','OPERATION_DENIED','REVISION_CONFLICT'))"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.upload_batch_slot": {
+      "name": "upload_batch_slot",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "batch_slot_capacity_idx": {
+          "name": "batch_slot_capacity_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "active",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "upload_batch_slot_tenant_id_application_id_id_upload_batch_tenant_id_application_id_id_fk": {
+          "name": "upload_batch_slot_tenant_id_application_id_id_upload_batch_tenant_id_application_id_id_fk",
+          "tableFrom": "upload_batch_slot",
+          "tableTo": "upload_batch",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "runtime_read": {
+          "name": "runtime_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "runtime_insert": {
+          "name": "runtime_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": ["thaarei_dms_runtime"],
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "runtime_update": {
+          "name": "runtime_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "dms.upload_receipt": {
+      "name": "upload_receipt",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "namespace": {
+          "name": "namespace",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key_hash": {
+          "name": "key_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_hash": {
+          "name": "request_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "upload_id": {
+          "name": "upload_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "upload_receipt_expiry_idx": {
+          "name": "upload_receipt_expiry_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "upload_receipt_tenant_id_application_id_batch_id_upload_batch_tenant_id_application_id_id_fk": {
+          "name": "upload_receipt_tenant_id_application_id_batch_id_upload_batch_tenant_id_application_id_id_fk",
+          "tableFrom": "upload_receipt",
+          "tableTo": "upload_batch",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "batch_id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "upload_receipt_tenant_id_application_id_upload_id_upload_session_tenant_id_batch_application_id_id_fk": {
+          "name": "upload_receipt_tenant_id_application_id_upload_id_upload_session_tenant_id_batch_application_id_id_fk",
+          "tableFrom": "upload_receipt",
+          "tableTo": "upload_session",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "upload_id"],
+          "columnsTo": ["tenant_id", "batch_application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "upload_operation_receipt": {
+          "name": "upload_operation_receipt",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "application_id", "namespace", "key_hash"]
+        }
+      },
+      "policies": {
+        "runtime_owner": {
+          "name": "runtime_owner",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_read": {
+          "name": "coordinator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "upload_receipt_bounds": {
+          "name": "upload_receipt_bounds",
+          "value": "length(\"dms\".\"upload_receipt\".\"key_hash\")=64 AND length(\"dms\".\"upload_receipt\".\"request_hash\")=64 AND ((\"dms\".\"upload_receipt\".\"namespace\" IN ('batch.create','batch.close') AND \"dms\".\"upload_receipt\".\"batch_id\" IS NOT NULL AND \"dms\".\"upload_receipt\".\"upload_id\" IS NULL) OR (\"dms\".\"upload_receipt\".\"namespace\"='upload.complete' AND \"dms\".\"upload_receipt\".\"batch_id\" IS NULL AND \"dms\".\"upload_receipt\".\"upload_id\" IS NOT NULL))"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.upload_session": {
+      "name": "upload_session",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "staging_id": {
+          "name": "staging_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descriptor": {
+          "name": "descriptor",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "batch_application_id": {
+          "name": "batch_application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "upload_state": {
+          "name": "upload_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'INITIATED'"
+        },
+        "completion_requested_at": {
+          "name": "completion_requested_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discovery_token": {
+          "name": "discovery_token",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discovery_until": {
+          "name": "discovery_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discovery_next_at": {
+          "name": "discovery_next_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "observed_etag": {
+          "name": "observed_etag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "observed_size": {
+          "name": "observed_size",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "observed_at": {
+          "name": "observed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_code": {
+          "name": "failure_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "session_discovery_due_idx": {
+          "name": "session_discovery_due_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "upload_state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "discovery_next_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "discovery_until",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "session_recovery_idx": {
+          "name": "session_recovery_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "upload_state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "upload_session_tenant_id_batch_application_id_id_upload_admission_tenant_id_contributor_application_id_id_fk": {
+          "name": "upload_session_tenant_id_batch_application_id_id_upload_admission_tenant_id_contributor_application_id_id_fk",
+          "tableFrom": "upload_session",
+          "tableTo": "upload_admission",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "batch_application_id", "id"],
+          "columnsTo": ["tenant_id", "contributor_application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "upload_session_tenant_id_application_id_id_upload_admission_tenant_id_application_id_id_fk": {
+          "name": "upload_session_tenant_id_application_id_id_upload_admission_tenant_id_application_id_id_fk",
+          "tableFrom": "upload_session",
+          "tableTo": "upload_admission",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "upload_session_tenant_id_batch_application_id_batch_id_item_id_upload_batch_item_tenant_id_application_id_batch_id_item_id_fk": {
+          "name": "upload_session_tenant_id_batch_application_id_batch_id_item_id_upload_batch_item_tenant_id_application_id_batch_id_item_id_fk",
+          "tableFrom": "upload_session",
+          "tableTo": "upload_batch_item",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "batch_application_id", "batch_id", "item_id"],
+          "columnsTo": ["tenant_id", "application_id", "batch_id", "item_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "upload_session_staging_id_unique": {
+          "name": "upload_session_staging_id_unique",
+          "nullsNotDistinct": false,
+          "columns": ["staging_id"]
+        },
+        "session_contributor_identity": {
+          "name": "session_contributor_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "batch_application_id", "id"]
+        },
+        "session_owner_identity": {
+          "name": "session_owner_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "application_id", "id"]
+        },
+        "session_batch_item_identity": {
+          "name": "session_batch_item_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "application_id", "batch_id", "item_id"]
+        }
+      },
+      "policies": {
+        "runtime_owner": {
+          "name": "runtime_owner",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine' AND application_id=nullif(current_setting('app.application_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator_read": {
+          "name": "coordinator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "session_bounds": {
+          "name": "session_bounds",
+          "value": "\"dms\".\"upload_session\".\"upload_state\" IN ('INITIATED','OBJECT_VERIFIED','COMPLETED','EXPIRED','CANCELLED','FAILED') AND jsonb_typeof(\"dms\".\"upload_session\".\"descriptor\")='object' AND octet_length(\"dms\".\"upload_session\".\"descriptor\"::text)<=32768 AND ((\"dms\".\"upload_session\".\"batch_id\" IS NULL)=(\"dms\".\"upload_session\".\"item_id\" IS NULL))"
+        },
+        "session_observation_bounds": {
+          "name": "session_observation_bounds",
+          "value": "(\"dms\".\"upload_session\".\"observed_size\" IS NULL OR \"dms\".\"upload_session\".\"observed_size\" BETWEEN 0 AND 1125899906842624) AND (\"dms\".\"upload_session\".\"observed_etag\" IS NULL OR length(\"dms\".\"upload_session\".\"observed_etag\") BETWEEN 1 AND 256) AND (\"dms\".\"upload_session\".\"failure_code\" IS NULL OR \"dms\".\"upload_session\".\"failure_code\" IN ('SIZE_MISMATCH','CONTENT_TYPE_MISMATCH','SECURITY_ASSESSMENT_FAILED'))"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.work_attempt": {
+      "name": "work_attempt",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dispatch_id": {
+          "name": "dispatch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "generation": {
+          "name": "generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "execution": {
+          "name": "execution",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lease_hash": {
+          "name": "lease_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'RUNNING'"
+        },
+        "lease_expires_at": {
+          "name": "lease_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deadline": {
+          "name": "deadline",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result_hash": {
+          "name": "result_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "result_code": {
+          "name": "result_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retry_after": {
+          "name": "retry_after",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "work_one_active_attempt": {
+          "name": "work_one_active_attempt",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"dms\".\"work_attempt\".\"state\"='RUNNING'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "work_attempt_lease_idx": {
+          "name": "work_attempt_lease_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lease_expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "work_attempt_tenant_id_job_id_dispatch_id_generation_work_dispatch_tenant_id_job_id_id_generation_fk": {
+          "name": "work_attempt_tenant_id_job_id_dispatch_id_generation_work_dispatch_tenant_id_job_id_id_generation_fk",
+          "tableFrom": "work_attempt",
+          "tableTo": "work_dispatch",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "job_id", "dispatch_id", "generation"],
+          "columnsTo": ["tenant_id", "job_id", "id", "generation"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "work_execution_identity": {
+          "name": "work_execution_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "job_id", "execution"]
+        }
+      },
+      "policies": {
+        "coordinator": {
+          "name": "coordinator",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "attempt_bounds": {
+          "name": "attempt_bounds",
+          "value": "\"dms\".\"work_attempt\".\"execution\" BETWEEN 1 AND 3 AND \"dms\".\"work_attempt\".\"state\" IN ('RUNNING','RETRY','SUCCEEDED','FAILED','UNSUPPORTED','LOST','CANCELLED') AND length(\"dms\".\"work_attempt\".\"lease_hash\")=64 AND \"dms\".\"work_attempt\".\"lease_expires_at\"<=\"dms\".\"work_attempt\".\"deadline\" AND \"dms\".\"work_attempt\".\"deadline\"<=\"dms\".\"work_attempt\".\"started_at\"+interval '10 minutes' AND (\"dms\".\"work_attempt\".\"result_hash\" IS NULL OR length(\"dms\".\"work_attempt\".\"result_hash\")=64) AND (\"dms\".\"work_attempt\".\"retry_after\" IS NULL OR \"dms\".\"work_attempt\".\"retry_after\" BETWEEN 1 AND 60)"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.work_dispatch": {
+      "name": "work_dispatch",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "generation": {
+          "name": "generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "task": {
+          "name": "task",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'READY'"
+        },
+        "delivery_hash": {
+          "name": "delivery_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivery_client": {
+          "name": "delivery_client",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivery_until": {
+          "name": "delivery_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "next_publish_at": {
+          "name": "next_publish_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failures": {
+          "name": "failures",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "work_dispatch_due_idx": {
+          "name": "work_dispatch_due_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "next_publish_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "delivery_until",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "work_dispatch_tenant_id_job_id_work_job_tenant_id_id_fk": {
+          "name": "work_dispatch_tenant_id_job_id_work_job_tenant_id_id_fk",
+          "tableFrom": "work_dispatch",
+          "tableTo": "work_job",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "job_id"],
+          "columnsTo": ["tenant_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "work_dispatch_generation": {
+          "name": "work_dispatch_generation",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "job_id", "generation"]
+        },
+        "work_dispatch_identity": {
+          "name": "work_dispatch_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "job_id", "id", "generation"]
+        }
+      },
+      "policies": {
+        "coordinator": {
+          "name": "coordinator",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "dispatch_bounds": {
+          "name": "dispatch_bounds",
+          "value": "\"dms\".\"work_dispatch\".\"generation\">0 AND \"dms\".\"work_dispatch\".\"task\" IN ('document.scan','document.extract','document.heavy') AND \"dms\".\"work_dispatch\".\"state\" IN ('READY','LEASED','DELIVERED','OBSOLETE') AND \"dms\".\"work_dispatch\".\"failures\">=0 AND (\"dms\".\"work_dispatch\".\"delivery_hash\" IS NULL OR length(\"dms\".\"work_dispatch\".\"delivery_hash\")=64) AND (\"dms\".\"work_dispatch\".\"last_error\" IS NULL OR \"dms\".\"work_dispatch\".\"last_error\" IN ('UNROUTABLE','BROKER_UNAVAILABLE'))"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.work_identity": {
+      "name": "work_identity",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "work_identity_tenant_id_installation_tenant_id_fk": {
+          "name": "work_identity_tenant_id_installation_tenant_id_fk",
+          "tableFrom": "work_identity",
+          "tableTo": "installation",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["tenant_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "work_client_identity": {
+          "name": "work_client_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "issuer", "client_id"]
+        }
+      },
+      "policies": {
+        "coordinator": {
+          "name": "coordinator",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        },
+        "operator_write": {
+          "name": "operator_write",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "work_identity_bounds": {
+          "name": "work_identity_bounds",
+          "value": "\"dms\".\"work_identity\".\"role\" IN ('publisher','scanner','extractor','heavy') AND \"dms\".\"work_identity\".\"client_id\" ~ '^[A-Za-z0-9_-]{3,128}$' AND length(\"dms\".\"work_identity\".\"issuer\") BETWEEN 1 AND 2048"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.work_job": {
+      "name": "work_job",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "upload_id": {
+          "name": "upload_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "task": {
+          "name": "task",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'QUEUED'"
+        },
+        "generation": {
+          "name": "generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "executions": {
+          "name": "executions",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "recoveries": {
+          "name": "recoveries",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "current_attempt_id": {
+          "name": "current_attempt_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "budget_started_at": {
+          "name": "budget_started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deadline": {
+          "name": "deadline",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "next_eligible_at": {
+          "name": "next_eligible_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recover_at": {
+          "name": "recover_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "result_code": {
+          "name": "result_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "work_job_recovery_idx": {
+          "name": "work_job_recovery_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recover_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "work_job_tenant_id_application_id_upload_id_upload_admission_tenant_id_application_id_id_fk": {
+          "name": "work_job_tenant_id_application_id_upload_id_upload_admission_tenant_id_application_id_id_fk",
+          "tableFrom": "work_job",
+          "tableTo": "upload_admission",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "upload_id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "work_job_source": {
+          "name": "work_job_source",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "upload_id", "task"]
+        },
+        "work_job_tenant_identity": {
+          "name": "work_job_tenant_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "id"]
+        }
+      },
+      "policies": {
+        "coordinator": {
+          "name": "coordinator",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        }
+      },
+      "checkConstraints": {
+        "work_job_bounds": {
+          "name": "work_job_bounds",
+          "value": "\"dms\".\"work_job\".\"task\" IN ('document.scan','document.extract','document.heavy') AND \"dms\".\"work_job\".\"state\" IN ('QUEUED','RUNNING','RETRY_WAIT','SUCCEEDED','FAILED','UNSUPPORTED','CANCELLED') AND \"dms\".\"work_job\".\"generation\">0 AND \"dms\".\"work_job\".\"executions\" BETWEEN 0 AND 3 AND \"dms\".\"work_job\".\"recoveries\" BETWEEN 0 AND 3 AND ((\"dms\".\"work_job\".\"deadline\" IS NULL)=(\"dms\".\"work_job\".\"budget_started_at\" IS NULL)) AND (\"dms\".\"work_job\".\"deadline\" IS NULL OR \"dms\".\"work_job\".\"deadline\"<=\"dms\".\"work_job\".\"budget_started_at\"+interval '30 minutes') AND (\"dms\".\"work_job\".\"result_code\" IS NULL OR length(\"dms\".\"work_job\".\"result_code\")<=64)"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "dms.security_candidate": {
+      "name": "security_candidate",
+      "schema": "dms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "upload_id": {
+          "name": "upload_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "object_id": {
+          "name": "object_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "etag": {
+          "name": "etag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size": {
+          "name": "size",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invalidation_generation": {
+          "name": "invalidation_generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PENDING'"
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evidence": {
+          "name": "evidence",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assessed_at": {
+          "name": "assessed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "candidate_object_refs": {
+          "name": "candidate_object_refs",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "object_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "security_candidate_tenant_id_application_id_upload_id_upload_admission_tenant_id_application_id_id_fk": {
+          "name": "security_candidate_tenant_id_application_id_upload_id_upload_admission_tenant_id_application_id_id_fk",
+          "tableFrom": "security_candidate",
+          "tableTo": "upload_admission",
+          "schemaTo": "dms",
+          "columnsFrom": ["tenant_id", "application_id", "upload_id"],
+          "columnsTo": ["tenant_id", "application_id", "id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "candidate_upload": {
+          "name": "candidate_upload",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "upload_id"]
+        },
+        "candidate_owner_identity": {
+          "name": "candidate_owner_identity",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "application_id", "id"]
+        }
+      },
+      "policies": {
+        "maintenance": {
+          "name": "maintenance",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_migrator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "coordinator": {
+          "name": "coordinator",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["thaarei_dms_coordinator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid",
+          "withCheck": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid"
+        },
+        "operator_read": {
+          "name": "operator_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_operator"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=security_candidate.tenant_id AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL)"
+        },
+        "runtime_read": {
+          "name": "runtime_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": ["thaarei_dms_runtime"],
+          "using": "tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND application_id=nullif(current_setting('app.application_id',true),'')::uuid AND current_setting('app.principal_kind',true)='machine'"
+        }
+      },
+      "checkConstraints": {
+        "candidate_generation": {
+          "name": "candidate_generation",
+          "value": "\"dms\".\"security_candidate\".\"invalidation_generation\" BETWEEN 0 AND 2147483646"
+        },
+        "candidate_bounds": {
+          "name": "candidate_bounds",
+          "value": "\"dms\".\"security_candidate\".\"size\" BETWEEN 1 AND 52428800 AND length(\"dms\".\"security_candidate\".\"etag\") BETWEEN 1 AND 130 AND \"dms\".\"security_candidate\".\"state\" IN ('COPYING','PENDING','PASSED','REJECTED','INCONCLUSIVE','INVALIDATED') AND (\"dms\".\"security_candidate\".\"sha256\" IS NULL OR \"dms\".\"security_candidate\".\"sha256\" ~ '^[a-f0-9]{64}$') AND (\"dms\".\"security_candidate\".\"evidence\" IS NULL OR octet_length(\"dms\".\"security_candidate\".\"evidence\"::text)<=8192) AND (\"dms\".\"security_candidate\".\"state\"<>'PASSED' OR (\"dms\".\"security_candidate\".\"sha256\" IS NOT NULL AND \"dms\".\"security_candidate\".\"evidence\" IS NOT NULL AND \"dms\".\"security_candidate\".\"assessed_at\" IS NOT NULL))"
+        }
+      },
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "dms": "dms"
+  },
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

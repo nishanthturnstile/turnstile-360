@@ -18,12 +18,17 @@
     "auth:generate": "auth generate --config src/modules/platform-auth/auth.ts --output src/modules/platform-auth/persistence/auth.generated.ts --yes",
     "auth:check": "auth check schema --config src/modules/platform-auth/auth.ts",
     "auth:provision-user": "node --env-file-if-exists=.env dist/modules/platform-auth/provision-user.js",
+    "auth:manage-keys": "node --env-file-if-exists=.env dist/modules/platform-auth/manage-keys.js",
     "auth:manage-client": "node --env-file-if-exists=.env dist/modules/platform-auth/manage-client.js",
     "dms:manage-application": "node --env-file-if-exists=.env --env-file-if-exists=.env.migrate dist/modules/enrollment/manage-application.js",
     "auth:prune-identity": "node --env-file-if-exists=.env.migrate dist/modules/platform-auth/prune-identity.js",
-    "dms:manage-operator": "node --env-file-if-exists=.env --env-file-if-exists=.env.migrate dist/modules/access/manage-operator.js"
+    "dms:manage-operator": "node --env-file-if-exists=.env --env-file-if-exists=.env.migrate dist/modules/access/manage-operator.js",
+    "dms:observe-capacity": "node --env-file-if-exists=.env.capacity dist/modules/uploads/admission-maintenance.js",
+    "dms:manage-recovery": "node dist/modules/lifecycle/manage-recovery.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1162.0",
+    "@aws-sdk/s3-request-presigner": "3.1162.0",
     "@better-auth/drizzle-adapter": "1.7.14",
     "@better-auth/oauth-provider": "1.7.14",
     "@fastify/swagger": "9.9.3",

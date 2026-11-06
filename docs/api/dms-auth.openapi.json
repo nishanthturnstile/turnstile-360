@@ -214,12 +214,97 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["application-enrollment", "capabilities:read", "audit:read"]
+              "enum": [
+                "application-enrollment",
+                "capabilities:read",
+                "audit:read",
+                "documents:read",
+                "documents:download",
+                "versions:read",
+                "versions:write",
+                "documents:edit-metadata",
+                "documents:references",
+                "documents:permissions",
+                "documents:lifecycle",
+                "versions:restore",
+                "discovery:search",
+                "processing:read",
+                "processing:reprocess",
+                "admission-policy:read",
+                "uploads:read",
+                "uploads:control",
+                "upload-batches:read",
+                "upload-batches:control"
+              ]
             }
           },
-          "formats": { "type": "array", "items": { "not": {} } },
-          "profiles": { "type": "array", "items": { "not": {} } },
-          "languages": { "type": "array", "items": { "not": {} } },
+          "formats": {
+            "maxItems": 32,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "text/plain",
+                "text/markdown",
+                "text/csv",
+                "text/tab-separated-values",
+                "application/pdf",
+                "image/jpeg",
+                "image/png",
+                "image/tiff",
+                "image/bmp",
+                "image/webp",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/vnd.ms-powerpoint",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                "application/vnd.oasis.opendocument.text",
+                "application/vnd.oasis.opendocument.presentation",
+                "application/rtf",
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "application/vnd.ms-excel.sheet.binary.macroenabled.12",
+                "application/vnd.oasis.opendocument.spreadsheet",
+                "message/rfc822",
+                "application/vnd.ms-outlook"
+              ]
+            }
+          },
+          "profiles": {
+            "maxItems": 3,
+            "type": "array",
+            "items": { "type": "string", "enum": ["secure-only", "searchable", "structured"] }
+          },
+          "formatCapabilities": {
+            "maxItems": 32,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "contentType": { "type": "string", "maxLength": 100 },
+                "securityAssessment": { "type": "boolean", "const": true },
+                "textExtraction": { "type": "boolean" },
+                "ocr": { "type": "boolean" },
+                "tabularData": { "type": "boolean" },
+                "structuredLayout": { "type": "boolean" },
+                "preview": { "type": "boolean", "const": false }
+              },
+              "required": [
+                "contentType",
+                "securityAssessment",
+                "textExtraction",
+                "tabularData",
+                "structuredLayout",
+                "preview"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "languages": {
+            "maxItems": 1,
+            "type": "array",
+            "items": { "type": "string", "const": "en" }
+          },
           "limits": {
             "type": "object",
             "properties": {
@@ -265,7 +350,25 @@
               "IDEMPOTENCY_CONFLICT",
               "REPLAY_WINDOW_EXPIRED",
               "ENROLLMENT_IN_PROGRESS",
-              "DMS_UNAVAILABLE"
+              "DMS_UNAVAILABLE",
+              "DOCUMENT_NOT_FOUND",
+              "DOCUMENT_UNAVAILABLE",
+              "VERSION_NOT_FOUND",
+              "PROCESSING_RUN_NOT_FOUND",
+              "RESULT_UNAVAILABLE",
+              "PROFILE_UNAVAILABLE",
+              "PROCESSING_IN_PROGRESS",
+              "POLICY_DENIED",
+              "CAPACITY_EXCEEDED",
+              "CAPACITY_UNAVAILABLE",
+              "ADMISSION_IN_PROGRESS",
+              "RESTORE_WINDOW_EXPIRED",
+              "REVISION_CONFLICT",
+              "UPLOAD_NOT_FOUND",
+              "BATCH_NOT_FOUND",
+              "BATCH_ITEM_NOT_FOUND",
+              "BATCH_ITEM_BOUND",
+              "BATCH_CLOSED"
             ]
           },
           "requestId": { "type": "string" },

@@ -15,7 +15,8 @@
       "!!**/generated",
       "!!pnpm-lock.yaml",
       "!!skills-lock.json",
-      "!!docs/headless_dms_*"
+      "!!docs/headless_dms_*",
+      "!!deploy/assessment/legal/README.md"
     ]
   },
   "formatter": {

@@ -1,11 +1,574 @@
 {
   "interface": "private-process-json-stdin",
   "command": "dms:manage-operator",
-  "commands": ["bootstrap", "assign", "revoke", "recover", "audit-read"],
+  "commands": [
+    "operations-inspect",
+    "operations-backup-report",
+    "operations-prune",
+    "work-redrive",
+    "document-reprocess",
+    "document-lifecycle-read",
+    "document-delete",
+    "document-restore",
+    "document-permissions-read",
+    "document-permissions-set",
+    "work-inspect",
+    "work-authorize",
+    "work-disable",
+    "bootstrap",
+    "assign",
+    "revoke",
+    "recover",
+    "audit-read",
+    "admission-policy-read",
+    "admission-policy-set",
+    "document-inspect",
+    "upload-inspect",
+    "batch-inspect"
+  ],
   "description": "Fresh verified authority credentials on every invocation. Explicit tenant-bound DMS grant for audit reads. No HTTP operator route. Bootstrap/recovery require explicit maintenance authority and administrator self proof; assign/revoke require current operator grant. Never enter credentials in argv or consumer Swagger.",
   "input": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "oneOf": [
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "operations-inspect" }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "operations-backup-report" },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "manifestSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        },
+        "required": [
+          "operatorEmail",
+          "operatorPassword",
+          "action",
+          "completedAt",
+          "manifestSha256"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "operations-prune" }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "work-redrive" },
+          "jobId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "idempotencyKey": { "type": "string", "pattern": "^[A-Za-z0-9_-]{16,128}$" }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action", "jobId", "idempotencyKey"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "document-lifecycle-read" },
+          "documentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action", "documentId"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "document-delete" },
+          "documentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "expectedRevision": { "type": "string", "pattern": "^[1-9][0-9]{0,14}$" }
+        },
+        "required": [
+          "operatorEmail",
+          "operatorPassword",
+          "action",
+          "documentId",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "document-restore" },
+          "documentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "expectedRevision": { "type": "string", "pattern": "^[1-9][0-9]{0,14}$" },
+          "idempotencyKey": { "type": "string", "pattern": "^[A-Za-z0-9_-]{16,128}$" }
+        },
+        "required": [
+          "operatorEmail",
+          "operatorPassword",
+          "action",
+          "documentId",
+          "expectedRevision",
+          "idempotencyKey"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "document-permissions-read" },
+          "documentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action", "documentId"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "document-permissions-set" },
+          "documentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "expectedRevision": { "type": "string", "pattern": "^[1-9][0-9]{0,14}$" },
+          "permissions": {
+            "type": "object",
+            "properties": {
+              "grants": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "applicationId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "rights": {
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": ["READ", "EDIT_METADATA", "ADD_VERSION"]
+                      }
+                    }
+                  },
+                  "required": ["applicationId", "rights"],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": ["grants"],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "operatorEmail",
+          "operatorPassword",
+          "action",
+          "documentId",
+          "expectedRevision",
+          "permissions"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "document-reprocess" },
+          "documentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "versionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "profile": { "type": "string", "enum": ["searchable", "structured"] },
+          "idempotencyKey": { "type": "string", "pattern": "^[A-Za-z0-9_-]{16,128}$" }
+        },
+        "required": [
+          "operatorEmail",
+          "operatorPassword",
+          "action",
+          "documentId",
+          "versionId",
+          "profile",
+          "idempotencyKey"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "work-inspect" },
+          "jobId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action", "jobId"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "work-authorize" },
+          "clientId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{3,128}$" },
+          "role": { "type": "string", "enum": ["publisher", "scanner", "extractor", "heavy"] }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action", "clientId", "role"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "work-disable" },
+          "clientId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{3,128}$" }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action", "clientId"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "upload-inspect" },
+          "uploadId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action", "uploadId"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "batch-inspect" },
+          "batchId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "after": { "type": "integer", "minimum": -1, "maximum": 99 },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 50 }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action", "batchId"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "admission-policy-read" }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "admission-policy-set" },
+          "expectedRevision": { "type": "string", "pattern": "^[0-9]{1,15}$" },
+          "policy": {
+            "type": "object",
+            "properties": {
+              "enabled": { "type": "boolean" },
+              "storageBudgetBytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1125899906842624
+              },
+              "applicationBudgetBytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1125899906842624
+              },
+              "scratchBudgetBytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1125899906842624
+              },
+              "maxFileBytes": { "type": "integer", "minimum": 1, "maximum": 52428800 },
+              "activePerApplication": { "type": "integer", "minimum": 1, "maximum": 4 },
+              "activePerTenant": { "type": "integer", "minimum": 1, "maximum": 16 },
+              "queuedWork": { "type": "integer", "minimum": 1, "maximum": 100 },
+              "profiles": {
+                "maxItems": 3,
+                "type": "array",
+                "items": { "type": "string", "enum": ["secure-only", "searchable", "structured"] }
+              },
+              "contentTypes": {
+                "maxItems": 32,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 100,
+                  "pattern": "^[a-z0-9!#$&^_.+-]+\\/[a-z0-9!#$&^_.+-]+$"
+                }
+              }
+            },
+            "required": [
+              "enabled",
+              "storageBudgetBytes",
+              "applicationBudgetBytes",
+              "scratchBudgetBytes",
+              "maxFileBytes",
+              "activePerApplication",
+              "activePerTenant",
+              "queuedWork",
+              "profiles",
+              "contentTypes"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action", "expectedRevision", "policy"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "operatorEmail": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "operatorPassword": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "action": { "type": "string", "const": "document-inspect" },
+          "documentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": ["operatorEmail", "operatorPassword", "action", "documentId"],
+        "additionalProperties": false
+      },
       {
         "type": "object",
         "properties": {
@@ -104,6 +667,11 @@
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
+          "documentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
           "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
           "cursor": {
             "type": "string",
@@ -116,6 +684,1452 @@
         "additionalProperties": false
       }
     ]
+  },
+  "authorityKeys": {
+    "command": "auth:manage-keys",
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "action": { "type": "string", "enum": ["inspect", "stage", "activate"] },
+        "keyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "operatorEmail": {
+          "type": "string",
+          "format": "email",
+          "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+        },
+        "operatorPassword": {
+          "type": "string",
+          "minLength": 15,
+          "maxLength": 128,
+          "writeOnly": true
+        }
+      },
+      "required": ["action", "operatorEmail", "operatorPassword"],
+      "additionalProperties": false
+    },
+    "prepublicationSeconds": 60,
+    "verificationGraceSeconds": 86400
+  },
+  "recovery": {
+    "command": "dms:manage-recovery",
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "const": "backup-authorize" },
+            "operatorEmail": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            },
+            "operatorPassword": { "type": "string", "minLength": 15, "maxLength": 128 }
+          },
+          "required": ["action", "operatorEmail", "operatorPassword"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "const": "backup-register" },
+            "operatorEmail": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            },
+            "operatorPassword": { "type": "string", "minLength": 15, "maxLength": 128 },
+            "manifest": {
+              "type": "object",
+              "properties": {
+                "schemaVersion": { "type": "number", "const": 1 },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "tenantId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "customerKey": { "type": "string", "minLength": 1, "maxLength": 48 },
+                "sourceProject": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,62}$" },
+                "recoveryPoint": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                },
+                "expiresAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                },
+                "postgresMajor": { "type": "number", "const": 18 },
+                "systemIdentifier": { "type": "string", "pattern": "^[0-9]+$" },
+                "checkpointLsn": { "type": "string", "pattern": "^[0-9A-F]+\\/[0-9A-F]+$" },
+                "releaseVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+                "imageLockSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "repositoryId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$" },
+                "confirmedOffHost": { "type": "boolean" },
+                "roles": {
+                  "minItems": 6,
+                  "maxItems": 6,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "pattern": "^thaarei_(auth|dms)_(runtime|migrator|operator|coordinator)$"
+                      },
+                      "login": { "type": "boolean" }
+                    },
+                    "required": ["name", "login"],
+                    "additionalProperties": false
+                  }
+                },
+                "services": {
+                  "maxItems": 20,
+                  "type": "array",
+                  "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$" }
+                },
+                "parts": {
+                  "minItems": 6,
+                  "maxItems": 6,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "enum": [
+                          "postgres",
+                          "storage",
+                          "configuration",
+                          "signatures",
+                          "objects",
+                          "images"
+                        ]
+                      },
+                      "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                      "bytes": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 1125899906842624
+                      }
+                    },
+                    "required": ["name", "sha256", "bytes"],
+                    "additionalProperties": false
+                  }
+                },
+                "objectCount": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                "sourceBytes": { "type": "integer", "minimum": 0, "maximum": 1125899906842624 },
+                "durationSeconds": { "type": "number", "minimum": 0 }
+              },
+              "required": [
+                "schemaVersion",
+                "id",
+                "tenantId",
+                "customerKey",
+                "sourceProject",
+                "recoveryPoint",
+                "expiresAt",
+                "postgresMajor",
+                "systemIdentifier",
+                "checkpointLsn",
+                "releaseVersion",
+                "imageLockSha256",
+                "repositoryId",
+                "confirmedOffHost",
+                "roles",
+                "services",
+                "parts",
+                "objectCount",
+                "sourceBytes",
+                "durationSeconds"
+              ],
+              "additionalProperties": false
+            },
+            "manifestSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "bytes": { "type": "integer", "exclusiveMinimum": 0, "maximum": 1125899906842624 }
+          },
+          "required": [
+            "action",
+            "operatorEmail",
+            "operatorPassword",
+            "manifest",
+            "manifestSha256",
+            "bytes"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "const": "recovery-open" },
+            "operatorEmail": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            },
+            "operatorPassword": { "type": "string", "minLength": 15, "maxLength": 128 },
+            "backupId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "manifestSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "accessReviewed": { "type": "boolean", "const": true }
+          },
+          "required": [
+            "action",
+            "operatorEmail",
+            "operatorPassword",
+            "backupId",
+            "manifestSha256",
+            "accessReviewed"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "const": "disposal-request" },
+            "operatorEmail": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            },
+            "operatorPassword": { "type": "string", "minLength": 15, "maxLength": 128 },
+            "documentId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "required": ["action", "operatorEmail", "operatorPassword", "documentId"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "enum": ["disposal-inspect", "backup-inspect"] },
+            "operatorEmail": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            },
+            "operatorPassword": { "type": "string", "minLength": 15, "maxLength": 128 }
+          },
+          "required": ["action", "operatorEmail", "operatorPassword"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "const": "cleanup-request" },
+            "operatorEmail": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            },
+            "operatorPassword": { "type": "string", "minLength": 15, "maxLength": 128 }
+          },
+          "required": ["action", "operatorEmail", "operatorPassword"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "manifest": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "schemaVersion": { "type": "number", "const": 1 },
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "customerKey": { "type": "string", "minLength": 1, "maxLength": 48 },
+        "sourceProject": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,62}$" },
+        "recoveryPoint": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        "postgresMajor": { "type": "number", "const": 18 },
+        "systemIdentifier": { "type": "string", "pattern": "^[0-9]+$" },
+        "checkpointLsn": { "type": "string", "pattern": "^[0-9A-F]+\\/[0-9A-F]+$" },
+        "releaseVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "imageLockSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "repositoryId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$" },
+        "confirmedOffHost": { "type": "boolean" },
+        "roles": {
+          "minItems": 6,
+          "maxItems": 6,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^thaarei_(auth|dms)_(runtime|migrator|operator|coordinator)$"
+              },
+              "login": { "type": "boolean" }
+            },
+            "required": ["name", "login"],
+            "additionalProperties": false
+          }
+        },
+        "services": {
+          "maxItems": 20,
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$" }
+        },
+        "parts": {
+          "minItems": 6,
+          "maxItems": 6,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "enum": ["postgres", "storage", "configuration", "signatures", "objects", "images"]
+              },
+              "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+              "bytes": { "type": "integer", "exclusiveMinimum": 0, "maximum": 1125899906842624 }
+            },
+            "required": ["name", "sha256", "bytes"],
+            "additionalProperties": false
+          }
+        },
+        "objectCount": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "sourceBytes": { "type": "integer", "minimum": 0, "maximum": 1125899906842624 },
+        "durationSeconds": { "type": "number", "minimum": 0 }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "tenantId",
+        "customerKey",
+        "sourceProject",
+        "recoveryPoint",
+        "expiresAt",
+        "postgresMajor",
+        "systemIdentifier",
+        "checkpointLsn",
+        "releaseVersion",
+        "imageLockSha256",
+        "repositoryId",
+        "confirmedOffHost",
+        "roles",
+        "services",
+        "parts",
+        "objectCount",
+        "sourceBytes",
+        "durationSeconds"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operationsOutput": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "version": { "type": "number", "const": 1 },
+      "observedAt": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+      },
+      "processingReady": { "type": "boolean" },
+      "components": {
+        "maxItems": 6,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "component": {
+              "type": "string",
+              "enum": ["coordinator", "publisher", "scanner", "extractor", "heavy", "backup"]
+            },
+            "state": { "type": "string", "enum": ["ready", "degraded", "stopping"] },
+            "observedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            },
+            "evidenceAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                },
+                { "type": "null" }
+              ]
+            },
+            "fresh": { "type": "boolean" },
+            "failures": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+          },
+          "required": ["component", "state", "observedAt", "evidenceAt", "fresh", "failures"],
+          "additionalProperties": false
+        }
+      },
+      "backlog": {
+        "type": "object",
+        "properties": {
+          "pending": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "oldestSeconds": { "type": "number", "minimum": 0 },
+          "failed": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "outbox": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "oldestOutboxSeconds": { "type": "number", "minimum": 0 },
+          "applications": {
+            "maxItems": 32,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "applicationId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "pending": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                "oldestSeconds": { "type": "number", "minimum": 0 }
+              },
+              "required": ["applicationId", "pending", "oldestSeconds"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "pending",
+          "oldestSeconds",
+          "failed",
+          "outbox",
+          "oldestOutboxSeconds",
+          "applications"
+        ],
+        "additionalProperties": false
+      },
+      "capacity": {
+        "type": "object",
+        "properties": {
+          "fresh": { "type": "boolean" },
+          "storageFreeBytes": { "type": "number", "minimum": 0 },
+          "scratchFreeBytes": { "type": "number", "minimum": 0 }
+        },
+        "required": ["fresh", "storageFreeBytes", "scratchFreeBytes"],
+        "additionalProperties": false
+      },
+      "alerts": {
+        "maxItems": 11,
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "COMPONENT_UNAVAILABLE",
+            "SIGNATURE_STALE",
+            "CAPACITY_STALE",
+            "STORAGE_LOW",
+            "SCRATCH_LOW",
+            "BACKUP_UNREPORTED",
+            "BACKUP_LAG",
+            "BACKLOG_AGE",
+            "OUTBOX_AGE",
+            "TERMINAL_FAILURES",
+            "RECONCILIATION_FAILURES"
+          ]
+        }
+      }
+    },
+    "required": [
+      "version",
+      "observedAt",
+      "processingReady",
+      "components",
+      "backlog",
+      "capacity",
+      "alerts"
+    ],
+    "additionalProperties": false
+  },
+  "reprocessOutput": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "operationId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "run": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "versionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "number": { "type": "integer", "exclusiveMinimum": 0, "maximum": 9007199254740991 },
+          "profile": { "type": "string", "enum": ["searchable", "structured"] },
+          "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "state": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "PARTIAL",
+              "FAILED",
+              "UNSUPPORTED",
+              "CANCELLED"
+            ]
+          },
+          "active": { "type": "boolean" },
+          "indexStatus": {
+            "type": "string",
+            "enum": ["PENDING", "READY", "PARTIAL", "NOT_INDEXED"]
+          },
+          "manifest": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": { "type": "number", "const": 1 },
+                  "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "versionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "runId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "generation": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
+                  "lifecycleGeneration": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 2147483646
+                  },
+                  "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "text/plain",
+                      "text/markdown",
+                      "text/csv",
+                      "text/tab-separated-values",
+                      "application/pdf",
+                      "image/jpeg",
+                      "image/png",
+                      "image/tiff",
+                      "image/bmp",
+                      "image/webp",
+                      "application/msword",
+                      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                      "application/vnd.ms-powerpoint",
+                      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                      "application/vnd.oasis.opendocument.text",
+                      "application/vnd.oasis.opendocument.presentation",
+                      "application/rtf",
+                      "application/vnd.ms-excel",
+                      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                      "application/vnd.ms-excel.sheet.binary.macroenabled.12",
+                      "application/vnd.oasis.opendocument.spreadsheet",
+                      "message/rfc822",
+                      "application/vnd.ms-outlook"
+                    ]
+                  },
+                  "profile": {
+                    "type": "string",
+                    "enum": ["secure-only", "searchable", "structured"]
+                  },
+                  "stage": { "type": "string", "enum": ["native", "ocr", "structure"] },
+                  "processor": {
+                    "type": "string",
+                    "enum": [
+                      "utf8",
+                      "csv",
+                      "pdfium",
+                      "calamine",
+                      "tika",
+                      "none",
+                      "tesseract",
+                      "pdfium-tesseract",
+                      "docling"
+                    ]
+                  },
+                  "processorVersion": { "type": "string", "minLength": 1, "maxLength": 120 },
+                  "configurationVersion": {
+                    "type": "string",
+                    "enum": ["native-extraction-v1", "english-ocr-v1", "docling-layout-v1"]
+                  },
+                  "ocr": {
+                    "type": "object",
+                    "properties": {
+                      "engine": { "type": "string", "const": "tesseract" },
+                      "engineVersion": { "type": "string", "const": "5.5.4" },
+                      "language": { "type": "string", "const": "eng" },
+                      "dataVersion": {
+                        "type": "string",
+                        "const": "87416418657359cb625c412a48b6e1d6d41c29bd"
+                      },
+                      "englishSha256": {
+                        "type": "string",
+                        "const": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2"
+                      },
+                      "orientationSha256": {
+                        "type": "string",
+                        "const": "9cf5d576fcc47564f11265841e5ca839001e7e6f38ff7f7aacf46d15a96b00ff"
+                      },
+                      "configurationVersion": { "type": "string", "const": "english-ocr-v1" }
+                    },
+                    "required": [
+                      "engine",
+                      "engineVersion",
+                      "language",
+                      "dataVersion",
+                      "englishSha256",
+                      "orientationSha256",
+                      "configurationVersion"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "structure": {
+                    "type": "object",
+                    "properties": {
+                      "processorVersion": { "type": "string", "const": "2.146.0" },
+                      "configurationVersion": { "type": "string", "const": "docling-layout-v1" },
+                      "layoutRevision": {
+                        "type": "string",
+                        "const": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8"
+                      },
+                      "tableRevision": {
+                        "type": "string",
+                        "const": "fc0f2d45e2218ea24bce5045f58a389aed16dc23"
+                      },
+                      "modelManifestSha256": {
+                        "type": "string",
+                        "const": "888f5b1c76339f3b680caa13b670c88fafaad97f3b66bdfc4992080977a8b090"
+                      }
+                    },
+                    "required": [
+                      "processorVersion",
+                      "configurationVersion",
+                      "layoutRevision",
+                      "tableRevision",
+                      "modelManifestSha256"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["SUCCEEDED", "PARTIAL", "FAILED", "UNSUPPORTED", "OMITTED"]
+                  },
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "OK",
+                      "SECURE_ONLY",
+                      "UNSUPPORTED_FORMAT",
+                      "INVALID_INPUT",
+                      "LIMIT_EXCEEDED",
+                      "SANDBOX_UNAVAILABLE",
+                      "PROCESSOR_FAILED"
+                    ]
+                  },
+                  "languages": {
+                    "maxItems": 4,
+                    "type": "array",
+                    "items": { "type": "string", "maxLength": 16 }
+                  },
+                  "coverage": {
+                    "type": "object",
+                    "properties": {
+                      "attempted": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+                      "completed": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+                      "omitted": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+                      "ocrNeeded": { "type": "integer", "minimum": 0, "maximum": 100 }
+                    },
+                    "required": ["attempted", "completed", "omitted", "ocrNeeded"],
+                    "additionalProperties": false
+                  },
+                  "warnings": {
+                    "maxItems": 16,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "MIXED_CONTENT",
+                        "OCR_REQUIRED",
+                        "FORMULA_NOT_RECALCULATED",
+                        "FORMULA_UNAVAILABLE",
+                        "EMBEDDED_OMITTED",
+                        "UNSUPPORTED_ELEMENT",
+                        "HTML_MARKUP_OMITTED",
+                        "OCR_TIMEOUT",
+                        "OCR_FAILED",
+                        "ORIENTATION_UNCERTAIN",
+                        "OCR_LOW_CONFIDENCE",
+                        "OCR_NO_TEXT",
+                        "DOCUMENT_TIMEOUT",
+                        "OCR_LIMIT_EXCEEDED",
+                        "STRUCTURE_APPROXIMATE",
+                        "STRUCTURE_FAILED",
+                        "STRUCTURE_TIMEOUT"
+                      ]
+                    }
+                  },
+                  "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "documentId",
+                  "versionId",
+                  "runId",
+                  "generation",
+                  "lifecycleGeneration",
+                  "sourceSha256",
+                  "contentType",
+                  "profile",
+                  "processor",
+                  "processorVersion",
+                  "configurationVersion",
+                  "status",
+                  "code",
+                  "languages",
+                  "coverage",
+                  "warnings",
+                  "completedAt"
+                ],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "completedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              { "type": "null" }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "documentId",
+          "versionId",
+          "number",
+          "profile",
+          "sourceSha256",
+          "state",
+          "active",
+          "indexStatus",
+          "manifest",
+          "createdAt",
+          "completedAt"
+        ],
+        "additionalProperties": false
+      },
+      "replayUntil": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+      }
+    },
+    "required": ["operationId", "run", "replayUntil"],
+    "additionalProperties": false
+  },
+  "documentInspectOutput": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "applicationId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "title": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 240,
+        "pattern": "^[^\\u0000-\\u001f\\u007f\\uD800-\\uDFFF]+$"
+      },
+      "tags": {
+        "maxItems": 32,
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[^\\u0000-\\u001f\\u007f\\uD800-\\uDFFF]+$"
+        }
+      },
+      "fileName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 255,
+        "pattern": "^[^/\\\\\\u0000-\\u001f\\u007f]+$"
+      },
+      "lifecycle": { "type": "string", "const": "ACTIVE" },
+      "revision": { "type": "string", "pattern": "^[1-9][0-9]{0,14}$" },
+      "currentVersionId": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          { "type": "null" }
+        ]
+      },
+      "downloadable": { "type": "boolean" },
+      "searchable": { "type": "boolean" },
+      "metadata": {
+        "type": "object",
+        "propertyNames": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,47}$" },
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "anyOf": [
+                { "type": "string", "maxLength": 2048, "pattern": "^[^\\u0000\\uD800-\\uDFFF]*$" },
+                { "type": "number" },
+                { "type": "boolean" },
+                { "type": "null" }
+              ]
+            },
+            {
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "pattern": "^[^\\u0000\\uD800-\\uDFFF]*$"
+                  },
+                  { "type": "number" },
+                  { "type": "boolean" },
+                  { "type": "null" }
+                ]
+              }
+            }
+          ]
+        },
+        "maxProperties": 64
+      },
+      "references": {
+        "maxItems": 32,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "namespace": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
+            "type": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
+            "externalId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[^\\u0000-\\u001f\\u007f\\uD800-\\uDFFF]+$"
+            },
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "applicationId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "required": ["namespace", "type", "externalId", "id", "applicationId"],
+          "additionalProperties": false
+        }
+      },
+      "createdAt": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+      }
+    },
+    "required": [
+      "id",
+      "applicationId",
+      "title",
+      "tags",
+      "fileName",
+      "lifecycle",
+      "revision",
+      "currentVersionId",
+      "downloadable",
+      "searchable",
+      "metadata",
+      "references",
+      "createdAt"
+    ],
+    "additionalProperties": false
+  },
+  "effectivePolicyOutput": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "version": { "type": "number", "const": 1 },
+      "revision": { "type": "string", "pattern": "^(?:0|[1-9][0-9]{0,14})$" },
+      "state": {
+        "type": "string",
+        "enum": ["not-configured", "not-installed", "paused", "enabled"]
+      },
+      "limits": {
+        "type": "object",
+        "properties": {
+          "maxFileBytes": { "type": "integer", "minimum": 1, "maximum": 52428800 },
+          "metadataBytes": { "type": "number", "const": 16384 },
+          "uploadControlBytes": { "type": "number", "const": 32768 },
+          "batchManifestBytes": { "type": "number", "const": 262144 },
+          "batchControlBytes": { "type": "number", "const": 266240 },
+          "activePerApplication": { "type": "integer", "minimum": 1, "maximum": 4 },
+          "activePerTenant": { "type": "integer", "minimum": 1, "maximum": 16 },
+          "queuedWork": { "type": "integer", "minimum": 1, "maximum": 100 }
+        },
+        "required": [
+          "maxFileBytes",
+          "metadataBytes",
+          "uploadControlBytes",
+          "batchManifestBytes",
+          "batchControlBytes",
+          "activePerApplication",
+          "activePerTenant",
+          "queuedWork"
+        ],
+        "additionalProperties": false
+      },
+      "formats": {
+        "maxItems": 32,
+        "type": "array",
+        "items": { "type": "string", "maxLength": 100 }
+      },
+      "profiles": {
+        "maxItems": 3,
+        "type": "array",
+        "items": { "type": "string", "enum": ["secure-only", "searchable", "structured"] }
+      }
+    },
+    "required": ["version", "revision", "state", "limits", "formats", "profiles"],
+    "additionalProperties": false
+  },
+  "uploadInspectOutput": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "documentId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "versionId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "upload": {
+        "type": "string",
+        "enum": ["INITIATED", "OBJECT_VERIFIED", "COMPLETED", "EXPIRED", "CANCELLED", "FAILED"]
+      },
+      "security": {
+        "type": "string",
+        "enum": ["PENDING", "PASSED", "REJECTED", "INCONCLUSIVE", "INVALIDATED"]
+      },
+      "availability": { "type": "string", "enum": ["CANDIDATE", "AVAILABLE", "UNAVAILABLE"] },
+      "processing": {
+        "type": "string",
+        "enum": [
+          "NOT_SCHEDULED",
+          "WAITING_FOR_SECURITY",
+          "QUEUED",
+          "RUNNING",
+          "SUCCEEDED",
+          "PARTIAL",
+          "FAILED",
+          "UNSUPPORTED",
+          "CANCELLED"
+        ]
+      },
+      "completionRequested": { "type": "boolean" },
+      "expiresAt": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+      },
+      "replayUntil": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+      },
+      "size": { "type": "integer", "exclusiveMinimum": 0, "maximum": 52428800 },
+      "contentType": { "type": "string", "maxLength": 100 },
+      "failure": {
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": [
+              "SESSION_EXPIRED",
+              "CANCELLED",
+              "SIZE_MISMATCH",
+              "CONTENT_TYPE_MISMATCH",
+              "SECURITY_ASSESSMENT_FAILED"
+            ]
+          },
+          { "type": "null" }
+        ]
+      },
+      "retryAfterSeconds": { "anyOf": [{ "type": "number", "const": 2 }, { "type": "null" }] }
+    },
+    "required": [
+      "id",
+      "documentId",
+      "versionId",
+      "upload",
+      "security",
+      "availability",
+      "processing",
+      "completionRequested",
+      "expiresAt",
+      "replayUntil",
+      "size",
+      "contentType",
+      "failure",
+      "retryAfterSeconds"
+    ],
+    "additionalProperties": false
+  },
+  "batchInspectOutput": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "state": { "type": "string", "enum": ["OPEN", "CLOSED", "CANCELLED", "EXPIRED"] },
+      "expiresAt": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+      },
+      "total": { "type": "integer", "minimum": 1, "maximum": 100 },
+      "counts": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "object",
+            "properties": {
+              "UNSTARTED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "BOUND": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "CLOSED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "CANCELLED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "EXPIRED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+            },
+            "required": ["UNSTARTED", "BOUND", "CLOSED", "CANCELLED", "EXPIRED"],
+            "additionalProperties": false
+          },
+          "upload": {
+            "type": "object",
+            "properties": {
+              "INITIATED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "OBJECT_VERIFIED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "COMPLETED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "EXPIRED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "CANCELLED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "FAILED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+            },
+            "required": [
+              "INITIATED",
+              "OBJECT_VERIFIED",
+              "COMPLETED",
+              "EXPIRED",
+              "CANCELLED",
+              "FAILED"
+            ],
+            "additionalProperties": false
+          },
+          "security": {
+            "type": "object",
+            "properties": {
+              "PENDING": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "PASSED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "REJECTED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "INCONCLUSIVE": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "INVALIDATED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+            },
+            "required": ["PENDING", "PASSED", "REJECTED", "INCONCLUSIVE", "INVALIDATED"],
+            "additionalProperties": false
+          },
+          "availability": {
+            "type": "object",
+            "properties": {
+              "CANDIDATE": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "AVAILABLE": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "UNAVAILABLE": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+            },
+            "required": ["CANDIDATE", "AVAILABLE", "UNAVAILABLE"],
+            "additionalProperties": false
+          },
+          "processing": {
+            "type": "object",
+            "properties": {
+              "NOT_SCHEDULED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "WAITING_FOR_SECURITY": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "QUEUED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "RUNNING": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "SUCCEEDED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "PARTIAL": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "FAILED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "UNSUPPORTED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "CANCELLED": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+            },
+            "required": ["NOT_SCHEDULED"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["items", "upload", "security", "availability", "processing"],
+        "additionalProperties": false
+      },
+      "items": {
+        "maxItems": 50,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "itemId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$" },
+            "operation": { "type": "string", "enum": ["create", "new-version"] },
+            "fileName": { "type": "string", "maxLength": 255 },
+            "state": {
+              "type": "string",
+              "enum": ["UNSTARTED", "BOUND", "CLOSED", "CANCELLED", "EXPIRED"]
+            },
+            "session": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "documentId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "versionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "upload": {
+                      "type": "string",
+                      "enum": [
+                        "INITIATED",
+                        "OBJECT_VERIFIED",
+                        "COMPLETED",
+                        "EXPIRED",
+                        "CANCELLED",
+                        "FAILED"
+                      ]
+                    },
+                    "security": {
+                      "type": "string",
+                      "enum": ["PENDING", "PASSED", "REJECTED", "INCONCLUSIVE", "INVALIDATED"]
+                    },
+                    "availability": {
+                      "type": "string",
+                      "enum": ["CANDIDATE", "AVAILABLE", "UNAVAILABLE"]
+                    },
+                    "processing": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_SCHEDULED",
+                        "WAITING_FOR_SECURITY",
+                        "QUEUED",
+                        "RUNNING",
+                        "SUCCEEDED",
+                        "PARTIAL",
+                        "FAILED",
+                        "UNSUPPORTED",
+                        "CANCELLED"
+                      ]
+                    },
+                    "completionRequested": { "type": "boolean" },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "replayUntil": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "size": { "type": "integer", "exclusiveMinimum": 0, "maximum": 52428800 },
+                    "contentType": { "type": "string", "maxLength": 100 },
+                    "failure": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SESSION_EXPIRED",
+                            "CANCELLED",
+                            "SIZE_MISMATCH",
+                            "CONTENT_TYPE_MISMATCH",
+                            "SECURITY_ASSESSMENT_FAILED"
+                          ]
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "retryAfterSeconds": {
+                      "anyOf": [{ "type": "number", "const": 2 }, { "type": "null" }]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "documentId",
+                    "versionId",
+                    "upload",
+                    "security",
+                    "availability",
+                    "processing",
+                    "completionRequested",
+                    "expiresAt",
+                    "replayUntil",
+                    "size",
+                    "contentType",
+                    "failure",
+                    "retryAfterSeconds"
+                  ],
+                  "additionalProperties": false
+                },
+                { "type": "null" }
+              ]
+            },
+            "admissionError": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "POLICY_DENIED",
+                    "CAPACITY_EXCEEDED",
+                    "CAPACITY_UNAVAILABLE",
+                    "OPERATION_DENIED",
+                    "REVISION_CONFLICT"
+                  ]
+                },
+                { "type": "null" }
+              ]
+            },
+            "retryAfterSeconds": { "anyOf": [{ "type": "number", "const": 2 }, { "type": "null" }] }
+          },
+          "required": [
+            "itemId",
+            "operation",
+            "fileName",
+            "state",
+            "session",
+            "admissionError",
+            "retryAfterSeconds"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "nextAfter": {
+        "anyOf": [{ "type": "integer", "minimum": 0, "maximum": 99 }, { "type": "null" }]
+      }
+    },
+    "required": ["id", "state", "expiresAt", "total", "counts", "items", "nextAfter"],
+    "additionalProperties": false
+  },
+  "documentLifecycleOutput": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "documentId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "revision": { "type": "string", "pattern": "^[1-9][0-9]{0,14}$" },
+      "lifecycle": { "type": "string", "enum": ["ACTIVE", "SOFT_DELETED", "PURGING", "PURGED"] },
+      "generation": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483646 },
+      "deletedAt": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          { "type": "null" }
+        ]
+      },
+      "restoreDeadline": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          { "type": "null" }
+        ]
+      },
+      "restoredAt": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          { "type": "null" }
+        ]
+      },
+      "currentVersionId": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          { "type": "null" }
+        ]
+      },
+      "downloadable": { "type": "boolean" },
+      "restoration": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": ["NOT_REQUESTED", "PENDING", "COMPLETE", "FAILED", "PARTIAL"]
+          },
+          "pending": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "scanning": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "completed": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "failed": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+        },
+        "required": ["state", "pending", "scanning", "completed", "failed"],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "documentId",
+      "revision",
+      "lifecycle",
+      "generation",
+      "deletedAt",
+      "restoreDeadline",
+      "restoredAt",
+      "currentVersionId",
+      "downloadable",
+      "restoration"
+    ],
+    "additionalProperties": false
+  },
+  "documentPermissionsOutput": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "grants": {
+        "maxItems": 64,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "applicationId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "rights": {
+              "minItems": 1,
+              "maxItems": 3,
+              "type": "array",
+              "items": { "type": "string", "enum": ["READ", "EDIT_METADATA", "ADD_VERSION"] }
+            }
+          },
+          "required": ["applicationId", "rights"],
+          "additionalProperties": false
+        }
+      },
+      "documentId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "revision": { "type": "string", "pattern": "^[1-9][0-9]{0,14}$" }
+    },
+    "required": ["grants", "documentId", "revision"],
+    "additionalProperties": false
   },
   "auditReadOutput": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -137,17 +2151,58 @@
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
-            "resourceType": { "type": "string", "const": "application" },
+            "resourceType": {
+              "type": "string",
+              "enum": ["application", "document", "upload-batch"]
+            },
             "resourceId": {
               "type": "string",
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
-            "action": { "type": "string", "const": "application.enrolled" },
+            "action": {
+              "type": "string",
+              "enum": [
+                "application.enrolled",
+                "document.admitted",
+                "admission.reconciled",
+                "upload.authorized",
+                "upload.completion-requested",
+                "upload.cancelled",
+                "upload.expired",
+                "upload.object-verified",
+                "upload.failed",
+                "work.queued",
+                "work.completed",
+                "work.recovered",
+                "work.cancelled",
+                "security.assessed",
+                "security.invalidated",
+                "document.published",
+                "document.download-authorized",
+                "document.version-restored",
+                "document.soft-deleted",
+                "document.logical-restored",
+                "processing.requested",
+                "processing.promoted",
+                "processing.content-authorized",
+                "document.permissions-changed",
+                "document.metadata-updated",
+                "document.reference-linked",
+                "document.reference-unlinked",
+                "disposal.requested",
+                "disposal.completed",
+                "document.purged",
+                "batch.created",
+                "batch.closed",
+                "batch.cancelled",
+                "batch.expired"
+              ]
+            },
             "actor": {
               "type": "object",
               "properties": {
-                "kind": { "type": "string", "const": "machine" },
+                "kind": { "type": "string", "enum": ["machine", "coordinator", "operator"] },
                 "id": { "type": "string", "minLength": 1, "maxLength": 200 }
               },
               "required": ["kind", "id"],

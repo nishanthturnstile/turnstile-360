@@ -11,6 +11,9 @@ FROM node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc
 WORKDIR /app
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3001
 COPY --from=build --chown=node:node /runtime/ ./
+COPY scripts/provision-auth-database.mjs ./maintenance/provision-auth-database.mjs
+ARG DMS_RELEASE=development
+LABEL org.opencontainers.image.version=$DMS_RELEASE
 COPY LICENSE ./LICENSE
 COPY THIRD_PARTY_NOTICES ./THIRD_PARTY_NOTICES
 USER node

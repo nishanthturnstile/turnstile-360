@@ -11,6 +11,8 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { applicationRegistration, dmsSchema } from '../../access/persistence/dms.schema.js';
+import { document } from '../../documents/persistence/registry.schema.js';
+import { uploadBatch } from '../../uploads/persistence/uploads.schema.js';
 
 const runtime = pgRole('thaarei_dms_runtime').existing();
 const operator = pgRole('thaarei_dms_operator').existing();
@@ -29,6 +31,9 @@ export const auditEvent = dmsSchema
       resourceType: text('resource_type').notNull(),
       action: text().notNull(),
       actorId: text('actor_id').notNull(),
+      actorKind: text('actor_kind').notNull().default('machine'),
+      documentId: uuid('document_id'),
+      batchId: uuid('batch_id'),
       assertedHuman: text('asserted_human'),
       requestId: uuid('request_id'),
       createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -41,19 +46,39 @@ export const auditEvent = dmsSchema
       }),
       check(
         'audit_application_resource',
-        sql`${t.resourceType} = 'application' AND ${t.resourceId} = ${t.applicationId} AND ${t.action} = 'application.enrolled'`,
+        sql`(${t.resourceType}='application' AND ${t.resourceId}=${t.applicationId} AND ${t.documentId} IS NULL AND ${t.batchId} IS NULL AND ${t.action}='application.enrolled' AND ${t.actorKind}='machine') OR (${t.resourceType}='document' AND ${t.documentId} IS NOT NULL AND ${t.batchId} IS NULL AND ${t.resourceId}=${t.documentId} AND ${t.action} IN ('document.admitted','admission.reconciled','upload.authorized','upload.completion-requested','upload.cancelled','upload.expired','upload.object-verified','upload.failed','work.queued','work.completed','work.recovered','work.cancelled','security.assessed','security.invalidated','document.published','document.download-authorized','document.soft-deleted','document.logical-restored','processing.requested','processing.promoted','processing.content-authorized','document.permissions-changed','document.version-restored','document.metadata-updated','document.reference-linked','document.reference-unlinked','disposal.requested','disposal.completed','document.purged') AND ${t.actorKind} IN ('machine','coordinator','operator')) OR (${t.resourceType}='upload-batch' AND ${t.batchId} IS NOT NULL AND ${t.documentId} IS NULL AND ${t.resourceId}=${t.batchId} AND ${t.action} IN ('batch.created','batch.closed','batch.cancelled','batch.expired') AND ${t.actorKind} IN ('machine','coordinator'))`,
       ),
       check(
         'audit_actor_bounds',
         sql`length(${t.actorId}) BETWEEN 1 AND 200 AND (${t.assertedHuman} IS NULL OR ${t.assertedHuman} ~ '^[A-Za-z0-9_.:@-]{1,128}$')`,
       ),
+      foreignKey({
+        columns: [t.tenantId, t.applicationId, t.documentId],
+        foreignColumns: [document.tenantId, document.applicationId, document.id],
+      }),
+      foreignKey({
+        columns: [t.tenantId, t.applicationId, t.batchId],
+        foreignColumns: [uploadBatch.tenantId, uploadBatch.applicationId, uploadBatch.id],
+      }),
+      index('audit_document_page_idx').on(
+        t.tenantId,
+        t.applicationId,
+        t.documentId,
+        t.createdAt,
+        t.id,
+      ),
+      pgPolicy('coordinator_insert', {
+        for: 'insert',
+        to: coordinator,
+        withCheck: sql`${tenant} AND actor_kind='coordinator' AND actor_id='thaarei_dms_coordinator'`,
+      }),
       index('audit_application_page_idx').on(t.tenantId, t.applicationId, t.createdAt, t.id),
       index('audit_operator_page_idx').on(t.tenantId, t.createdAt, t.id),
       pgPolicy('machine_read', { for: 'select', to: runtime, using: machine }),
       pgPolicy('machine_insert', {
         for: 'insert',
         to: runtime,
-        withCheck: sql`${machine} AND actor_id = current_setting('app.actor_id',true)`,
+        withCheck: sql`${machine} AND actor_kind='machine' AND actor_id = current_setting('app.actor_id',true)`,
       }),
       pgPolicy('operator_read', {
         for: 'select',
@@ -87,9 +112,13 @@ export const outboxIntent = dmsSchema
         columns: [t.tenantId, t.applicationId],
         foreignColumns: [applicationRegistration.tenantId, applicationRegistration.id],
       }),
-      check('outbox_kind', sql`${t.kind} = 'application.enrolled'`),
+      check(
+        'outbox_kind',
+        sql`${t.kind} IN ('application.enrolled','document.admitted','admission.reconciled','upload.authorized','upload.completion-requested','upload.cancelled','upload.expired','upload.object-verified','upload.failed','work.queued','work.completed','work.recovered','work.cancelled','security.assessed','security.invalidated','document.published','document.download-authorized','document.soft-deleted','document.logical-restored','processing.requested','processing.promoted','processing.content-authorized','document.permissions-changed','document.version-restored','document.metadata-updated','document.reference-linked','document.reference-unlinked','batch.created','batch.closed','batch.cancelled','batch.expired','disposal.requested','disposal.completed','document.purged')`,
+      ),
       index('outbox_pending_idx').on(t.tenantId, t.createdAt, t.id),
       pgPolicy('machine_insert', { for: 'insert', to: runtime, withCheck: machine }),
+      pgPolicy('coordinator_insert', { for: 'insert', to: coordinator, withCheck: tenant }),
       pgPolicy('coordinator_read', { for: 'select', to: coordinator, using: tenant }),
       pgPolicy('maintenance', { for: 'all', to: migrator, using: tenant, withCheck: tenant }),
     ],

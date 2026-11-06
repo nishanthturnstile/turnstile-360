@@ -1,0 +1,32 @@
+{
+  "parsers": [
+    {
+      "office-parser": {}
+    },
+    {
+      "ooxml-parser": {}
+    },
+    {
+      "open-document-parser": {}
+    },
+    {
+      "rtf-parser": {}
+    },
+    {
+      "rfc822-parser": {}
+    },
+    {
+      "txt-parser": {}
+    },
+    {
+      "jsoup-parser": {}
+    }
+  ],
+  "text-recognizers": [],
+  "parse-context": {
+    "timeout-limits": {
+      "totalTaskTimeoutMillis": 120000,
+      "progressTimeoutMillis": 30000
+    }
+  }
+}
