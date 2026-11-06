@@ -136,6 +136,17 @@ All changes are pushed to feat/dms-i01-standalone-foundation;
 [PR #13](https://github.com/nishanthturnstile/turnstile-360/pull/13) targets development.
 The GitHub connector returned 403, so authenticated gh created the PR; T3 linking succeeded.
 Push/PR CI is running; no review comments or reviews are present at this handoff.
+2026-11-06 CI follow-up: both checks and standalone authority lanes failed on runner
+prerequisites: Bubblewrap sandbox unavailable and pinned Playwright Chromium absent.
+Added Bubblewrap plus an explicit namespace smoke check on the disposable Ubuntu runner,
+and installed the pinned Chromium/runtime dependencies in both browser-using CI jobs.
+No parser fallback or test skip was introduced. Revalidating Python and standalone lanes
+locally before pushing; remaining CI/container readiness still gates merge.
+Local follow-up: uncached Python 32 passed/24 optional-runtime skips; Biome, workflow
+YAML assertions, namespace smoke and git diff --check pass. The first standalone fixture
+lost its PostgreSQL connection (ECONNRESET); a fresh isolated rerun passed 9 tests with
+one explicit packaged-image skip (no DMS_STANDALONE_IMAGE supplied). CI's standalone
+lane supplies the built image and must pass its packaged browser case before merge.
 Next: resolve any CI/review findings and merge after readiness checks.
 I20 exact-candidate/customer acceptance remains pending under its existing handoff.
 

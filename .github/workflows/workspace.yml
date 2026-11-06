@@ -26,6 +26,8 @@ jobs:
           version: "0.13.6"
           python-version: "3.13.18"
       - run: pnpm install --frozen-lockfile
+      - name: Install standalone browser test runtime
+        run: pnpm exec playwright install --with-deps chromium
       - run: docker build -f apps/dms-api/Dockerfile -t thaarei-dms-api:ci .
       - name: Independent DMS authority database lane
         run: pnpm test:dms:standalone
@@ -50,6 +52,15 @@ jobs:
           version: "0.13.6"
           python-version: "3.13.18"
       - run: pnpm install --frozen-lockfile
+      - name: Install Linux parser sandbox test runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes bubblewrap
+          # This disposable runner must permit the real unprivileged namespace sandbox.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          bwrap --unshare-all --ro-bind / / -- /usr/bin/true
+      - name: Install storage browser test runtime
+        run: pnpm exec playwright install --with-deps chromium
       - run: uv sync --locked --project apps/dms-processing
       - run: pnpm check
       - run: pnpm build
