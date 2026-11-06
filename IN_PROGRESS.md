@@ -114,28 +114,29 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
-TCP-PR-01 — **In progress** (owner: Codex control-plane planning thread,
-2026-11-06). Owner authorized committing the control-plane planning documentation only,
-opening a PR to development, completing its integration and creating a fresh implementation
-branch from updated development. No implementation is authorized. Scope includes the linked
-specification, delivery plan, review record, architecture proposal and documentation/progress
-references needed to keep the planning package self-contained. Fetched origin/development;
-this branch has the same ebd9fdb base, with only this thread's documentation changes.
-Local verification: 149 local references/headings across seven planning/reference documents,
-15 requirement mappings, eight delivery stages, seven review dispositions, final newlines
-and git diff --check pass. No application build/runtime tests ran for this docs-only change;
-the PR's existing full CI must complete before merge. The eight documentation paths were
-committed and pushed; [PR #12](https://github.com/nishanthturnstile/turnstile-360/pull/12)
-is open against development. The connector returned HTTP 403 on PR creation, so the
-already-authenticated GitHub CLI created it; T3 linking succeeded. CI/review readiness is
-pending. The initial d224a2f CI checks stopped at Biome formatting in five changed
-Markdown files; no application failure was reached. Applied installed Biome 2.6.4 to those
-files and confirmed the correction preserves their text apart from whitespace/table rules.
-Local full Biome CI and refreshed documentation-reference checks pass. Next: push the
-format-only correction and follow the new full CI/review checks before merging the PR.
-Handoff while CI runs: after merge, fetch updated development, then create
-feat/thaarei-control-plane-implementation from freshly fetched development and stop before
-implementation. The plan's remaining product defaults are not adopted by this docs merge.
+TCP-PR-01 — **Completed** (documentation integration and branch preparation;
+owner: Codex control-plane planning thread, 2026-11-06). Committed only the eight
+control-plane planning/reference/progress Markdown files and merged
+[PR #12](https://github.com/nishanthturnstile/turnstile-360/pull/12) into development as
+`a2ac3a815da768258b21c1a7f810232a5a27745f`. Both push and PR workflows passed all 12
+checks on `e805efc`, including workspace check/build/test/integration/smoke and all five
+container builds per workflow. The initial Markdown-formatting failure was corrected
+with installed Biome 2.6.4; local full Biome CI, document-content preservation checks,
+149 local reference checks and git diff checks passed. No target deployment occurred.
+
+Fetched updated origin/development after the merge and created
+`feat/thaarei-control-plane-implementation` from that exact merge commit. Only this
+administrative handoff changes on the new branch; no control-plane implementation,
+scaffold, schema, dependency or runtime configuration has started. Customer services,
+credentials, data and the separate DMS checkout remain untouched. The GitHub connector
+returned HTTP 403 when creating the PR; the already-authenticated GitHub CLI completed
+PR creation/merge and T3 linking succeeded.
+
+Handoff: branch preparation is complete. Wait for a new implementation instruction before
+starting TCP-I01 or later increments. The planning merge does not adopt remaining product
+defaults; seven-day approval/daily renewal stays selected and the documented read/recovery,
+staff-policy and metric/retention decisions remain proposed. Implementation must follow
+the merged specification, architecture proposal and reviewed delivery plan.
 
 TCP-REVIEW-01 — **Completed** (planning review and corrections; owner: Codex
 control-plane planning thread, 2026-11-06). Owner requested review against separate
