@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-11-05
+Last updated: 2026-11-06
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -113,6 +113,139 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+TCP-PR-01 — **In progress** (owner: Codex control-plane planning thread,
+2026-11-06). Owner authorized committing the control-plane planning documentation only,
+opening a PR to development, completing its integration and creating a fresh implementation
+branch from updated development. No implementation is authorized. Scope includes the linked
+specification, delivery plan, review record, architecture proposal and documentation/progress
+references needed to keep the planning package self-contained. Fetched origin/development;
+this branch has the same ebd9fdb base, with only this thread's documentation changes.
+Local verification: 149 local references/headings across seven planning/reference documents,
+15 requirement mappings, eight delivery stages, seven review dispositions, final newlines
+and git diff --check pass. No application build/runtime tests ran for this docs-only change;
+the PR's existing full CI must complete before merge. Next: commit/push exactly the eight
+documentation paths, open the PR to development and follow checks/review requirements.
+Handoff while CI runs: merge through that PR only after readiness, then create
+feat/thaarei-control-plane-implementation from freshly fetched development and stop before
+implementation. The plan's remaining product defaults are not adopted by this docs merge.
+
+TCP-REVIEW-01 — **Completed** (planning review and corrections; owner: Codex
+control-plane planning thread, 2026-11-06). Owner requested review against separate
+central/customer Linux hosts and an independent GPT Astra reviewer. One read-only delegate
+ran as gpt-6-astra and completed with three high and four medium planning findings. Parent
+validated and corrected all seven; no second independent recheck or runtime validation
+is claimed. The [review record](docs/thaarei/control-plane-review.md) maps each finding to
+its correction and implementing acceptance gate.
+
+Updated architecture, proposed specification, detailed delivery plan, overview and docs
+index. The two-host inventory now explicitly includes central Next.js/PostgreSQL and the
+customer Turnstile web/API, DMS/local auth, separately owned auth/DMS/Turnstile persistence,
+and selected transfer/coordinator/storage/broker/worker/scanner/parser dependencies.
+Customer combined-origin login and private identity-service audience/client/scopes/token/
+invitation/account transport are mapped to actual configuration. Standalone DMS screen
+policy alone is not Turnstile auth compatibility. Defined separate central configuration,
+explicit Compose delivery, durable protected reporter secret files, public-key trust,
+read-only-container recovery, qualified egress and startup/approval readiness separation.
+
+Corrected signed decision state/revision/sequence and durable-denial semantics, candidate
+pairing recovery after receipt expiry, generation-fenced concurrent/crashed rotation,
+prior-activation read eligibility versus never-approved/invalid-proof/clock states, and
+supported restore quarantine. Central recovery requires independent decision evidence or
+fresh approvals; cached rollback records cannot provide missing evidence. Signing-key
+compromise requires an independently authenticated trust update, including operator delivery
+for disconnected installations. Arbitrary root/VM rollback and automatic offline emergency
+revocation are explicitly outside the guarantee. Seven-day approval/daily renewal remains
+selected; read/recovery exceptions and other documented product defaults remain proposed.
+
+Verification on 2026-11-06: source/example/Compose review, including read-only inspection of
+the separate DMS checkout, covered actual auth validators, private identity transport,
+Nginx/Vite routing and the I18 distribution/network declarations without reading private
+environments. Parent final checks passed 150 local links/headings across seven documents
+and this handoff; 15 requirements map to eight increments and all seven review findings
+have correction/gate references. Document whitespace/final-newline checks and git diff
+--check pass. No pnpm check/build/test/test:integration, container or target-host checks
+ran for these documentation-only changes; no implemented/runtime security claim is made.
+
+Handoff: proceed with TCP-I01 adoption of remaining product defaults and final isolated
+runtime configuration, then the documented I02–08 sequence. No active review blocker
+remains. Implementation, target qualification and customer cutover remain future work.
+All work stays on feat/thaarei-control-plane-plan; no application code, schemas, runtime
+configuration, services, credentials or customer data changed; no commit/push/PR/deployment.
+The running standalone DMS checkout and other agents' entries remain untouched.
+
+TCP-PLAN-02 — **Completed** (detailed planning; owner: Codex control-plane planning
+thread, 2026-11-06). Owner clarified a separate central application with an integrated
+backend, approval before customer Turnstile/DMS operation, and health/usage reporting.
+The owner then selected seven-day signed approval with daily renewal; this policy is
+agreed but unimplemented. Read/recovery access after expiry/suspension, other defaults
+and staff-role choices remain proposals for review.
+
+Replaced the earlier registry-only overview and added the proposed
+[specification](docs/thaarei/control-plane-specification.md) with TCP-R01–15 and
+[detailed implementation plan](docs/thaarei/control-plane-implementation-plan.md) with
+TCP-I01–08. The architecture's explicitly proposed central-control section owns topology,
+identity/authorization matrix, pairing/credential lifecycle, signed-decision validation,
+outage/revocation policy, product-owned reporting sources and versioned machine protocol.
+Updated the documentation index and DMS plan cross-reference without adopting a new guard
+or rewriting accepted DMS requirements. The earlier TCP-PLAN-01 scope is superseded.
+
+Recommended topology is one Next.js app with its own PostgreSQL and staff identity, plus
+separate outbound Turnstile and DMS reporters using distinct product credentials. Local
+customer sessions, DMS OAuth/enrollment, resource permissions and single-tenant boundaries
+remain separate. No central per-request lookup, customer inbound polling, remote shell,
+document/user-content collection, billing or automatic deployment is introduced. Product
+approval and reporting freshness/health have distinct state; offline suspension cannot be
+instant and reported usage is not tamper-proof billing evidence. Initial setup manifests,
+activation acknowledgement, epoch/revision/retry fencing, two-customer isolation,
+backup/restore, signing recovery and existing-installation cutover have explicit gates.
+
+Verification on 2026-11-06: read-only inspection covered this branch's architecture,
+enrollment services/operator, contracts/plans, workspace standards/toolchain and the
+separate DMS checkout's current I18 handoff/enrollment design. Consulted official Next.js
+Route Handler/auth/self-hosting documentation, Better Auth v1.7.14 adapter/session sources
+and RFC 8725. Local reference/heading checks and requirement-to-increment coverage pass;
+manual scope/policy review and git diff --check pass. An inline architecture visual was
+previewed at desktop/mobile widths. No pnpm check/build/test/test:integration or container/
+target qualification ran for these documentation-only edits; no implementation behavior
+is claimed.
+
+Handoff: continue with TCP-I01 to adopt the remaining defaults, client metrics/privacy,
+connectivity and isolated fixed-port topology, then I02–04 central app/protocol. Integrate
+DMS only after coordination with its owning I18 baseline, followed by Turnstile and full
+release qualification. Existing installs need explicit registration/approval before opening
+enforcement. The branch remains feat/thaarei-control-plane-plan, with no runtime/schema/
+credential/customer-data changes, commit, push, PR or deployment. The running DMS branch
+and its uncommitted work were not changed.
+
+TCP-PLAN-01 — **Completed** (planning assessment; owner: Codex control-plane
+planning thread, 2026-11-06). Reviewed the DMS delivery plan, accepted architecture,
+workspace plan/standards, toolchain pins and documentation index. The existing DMS plan
+explicitly excludes a separate management portal. Drafted the proposed
+[Thaarei employee control-plane plan](docs/thaarei/control-plane-plan.md) with TCP-R01–10,
+TCP-I01–05, acceptance gates and open decisions; added it to docs/README.md.
+
+Work is isolated on feat/thaarei-control-plane-plan in its own worktree, based on fetched
+origin/development ebd9fdb. The first proposed usable slice is employee access and an
+audited client registry; installation inventory follows. The proposal distinguishes client
+records from DMS/OAuth registrations, preserves one customer tenant per installation and
+standalone runtime independence, and excludes remote provisioning and unspecified business
+activities. Proposed architecture remains unaccepted; architecture.md was not changed.
+Local runtime topology must be settled before service work because reserved host ports
+23600–23608 are already assigned. Later DMS implementation in the separate checkout was
+not copied into this branch or reassessed; preserve its newer handoffs when integrating.
+
+Verification: local link/heading validation passed for all 27 references in the new plan
+and documentation index; 10 unique requirement rows and five delivery increments checked.
+Manual scope/boundary review and git diff --check passed. Documentation-only work: pnpm
+check/build/test/test:integration and container/runtime qualification were not run; no
+runtime behavior or deployed acceptance is claimed. No code, schemas, credentials,
+services or customer data changed; no commit/push/PR/deployment performed.
+
+Handoff: owner reviews first-release activities, staff identity/MFA/recovery and client
+visibility, required client fields/retention, and repository/hosting/test topology. Next
+planned step is TCP-I01 scope/design adoption, followed by TCP-I02–03. Implementation has
+not started; no DMS dependency blocks drafting or the proposed registry work.
 
 DMS-I03-REVIEW — **Completed** (owner: Codex, 2026-11-05). Owner requested
 Open Code Review plugin review of I03, fixes and commit. Used the installed OCR
