@@ -29,8 +29,8 @@ No client is created at startup; real installation provisioning remains an opera
 
 AUTH-05 adds default-deny machine JWT authorization, live registration/scope checks,
 transactional enrollment and replay, local-first disablement and bounded security audit.
-`GET /v1/capabilities` advertises the implemented auth operations; document formats and
-processing capabilities remain empty. `POST /v1/application-enrollments` is the only
+`GET /v1/capabilities` advertises implemented auth operations and policy-enabled
+secure-only plain-text assessment from I08; enrichment capabilities remain empty. `POST /v1/application-enrollments` is the only
 pending-consumer exception. The private `dms:manage-application` command registers approved
 machine clients and manages enrollment keys/status/ceilings. See the
 [enrollment runbook](../../docs/runbooks/authentication.md#register-and-enroll-a-dms-machine-application),
@@ -51,3 +51,42 @@ dms:manage-operator audit-read uses fresh identity and a current DMS operator gr
 Provision the two private roles before DMS migrations 0006–0007; see the
 [audit runbook](../../docs/runbooks/dms-audit.md). Document audit extends this boundary
 when document persistence ships; no dispatcher or document endpoint is added here.
+
+DMS-I04 internal S3 primitives and restricted transfer ingress: [storage runbook](../../docs/runbooks/dms-storage.md). Admission and document capability issuance remain later increments.
+
+DMS-I05 registry reads and internal transactional admission: [admission runbook](../../docs/runbooks/dms-admission.md). Public lifecycle routes are described in the I06 runbook below.
+
+DMS-I06 adds upload/batch lifecycle control and durable completion intent: [runbook](../../docs/runbooks/dms-uploads.md). Effective formats stay closed until the owning security implementations are installed.
+
+DMS-I07 private coordinator, work grants and fenced execution: [work runbook](../../docs/runbooks/dms-work.md). Public bootstrap has no work endpoints. DMS-I08 assessment/publication: [runbook](../../docs/runbooks/dms-assessment.md).
+
+DMS-I09 implements the first usable secure document transfer increment for text/plain +
+secure-only: current-original download capabilities with live authorization, exact
+security evidence, short expiry and safe signed range responses. See the
+[secure transfer runbook](../../docs/runbooks/dms-secure-transfer.md). This does not
+claim full DMS v1, historical content selection or production acceptance.
+
+DMS-I10 adds guarded replacement uploads, current version history/status, explicit historical
+downloads and restoration as a new reassessed revision referencing protected bytes. See the
+[version runbook](../../docs/runbooks/dms-versions.md); new-version batch items share the
+normal admission/PUT path. Metadata editing, application sharing and physical purge remain
+separate increments.
+
+I11 adds revision-checked logical metadata/tags and application-namespaced references.
+See the [metadata runbook](../../docs/runbooks/dms-metadata.md).
+
+I12 adds explicit owner/operator-managed application grants. See the
+[sharing runbook](../../docs/runbooks/dms-sharing.md) for rights, scopes and revocation.
+
+I13 adds owner/operator soft deletion, lifecycle inspection and bounded logical restore.
+See the [lifecycle runbook](../../docs/runbooks/dms-lifecycle.md).
+
+I14 native/Office/tabular/email runtime and manual qualification: [extraction runbook](../../docs/runbooks/dms-extraction.md).
+
+I15 English OCR, mixed pages and qualification: [OCR runbook](../../docs/runbooks/dms-ocr.md).
+
+I16 results, reprocessing and optional offline structure: [results runbook](../../docs/runbooks/dms-results.md).
+
+Permission-aware discovery: [runbook](../../docs/runbooks/dms-discovery.md).
+
+I18 versioned standalone installation, separate API/processing readiness and private operational commands: [distribution runbook](../../docs/runbooks/dms-distribution.md).

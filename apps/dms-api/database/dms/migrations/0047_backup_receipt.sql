@@ -1,0 +1,1 @@
+ALTER TABLE "dms"."backup_catalog" ADD COLUMN "confirmed_off_host" boolean DEFAULT false NOT NULL;

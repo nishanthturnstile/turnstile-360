@@ -1,0 +1,26 @@
+# Opt-in I16 overlay, applied after the private work and assessment overlays.
+services:
+  dms-api:
+    environment:
+      DMS_STRUCTURE_ENABLED: "true"
+  coordinator:
+    environment:
+      DMS_STRUCTURE_ENABLED: "true"
+  heavy-worker:
+    image: thaarei-dms-processing-structured:local
+    build:
+      context: ..
+      dockerfile: apps/dms-processing/Dockerfile
+      target: structured
+    environment:
+      DMS_STRUCTURE_ENABLED: "true"
+    mem_limit: 4096m
+    cpus: 1
+    pids_limit: 128
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=./assessment/scanner-seccomp.json
+    tmpfs: ["/tmp:size=384m,noexec,nosuid,nodev"]
+    networks: [work, broker, storage]

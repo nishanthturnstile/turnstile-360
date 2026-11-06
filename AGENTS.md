@@ -44,6 +44,10 @@ in `IN_PROGRESS.md`. Update affected references when the architecture changes.
 - Add focused tests only for critical behavior, likely failure points, or meaningful regressions;
   use integration tests when the risk crosses component boundaries. Skip exhaustive scenarios,
   implementation-mirroring tests, and new tests for routine low-risk or documentation changes.
+- For asynchronous and integration fixes, exercise the production failure path in focused tests:
+  lost acknowledgements, retryable transport errors, replay after intervening state changes,
+  and configured ingress headers as relevant. A fixture that replaces the failing handler
+  does not verify that handler; distinguish direct-service checks from deployed-path checks.
 - Run `pnpm check`, `pnpm build`, `pnpm test`, and `pnpm test:integration` for workspace changes.
 - Report unavailable container/runtime verification separately from static checks.
 

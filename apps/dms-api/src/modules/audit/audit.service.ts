@@ -37,10 +37,11 @@ export async function appendApplicationAudit(
 }
 
 // Order on the stored timestamp so bounded pages can use the audit indexes.
-export const AUDIT_PAGE_SQL = `SELECT id,application_id,resource_id,actor_id,asserted_human,request_id,
+export const AUDIT_PAGE_SQL = `SELECT id,application_id,resource_id,resource_type,action,actor_kind,actor_id,asserted_human,request_id,
     to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS created_at
     FROM dms.audit_event WHERE ($1::uuid IS NULL OR application_id=$1)
     AND ($2::timestamptz IS NULL OR (created_at,id) < ($2::timestamptz,$3::uuid))
+    AND ($5::uuid IS NULL OR document_id=$5)
     ORDER BY audit_event.created_at DESC,audit_event.id DESC LIMIT $4`;
 
 export async function readAuditPage(
@@ -50,6 +51,7 @@ export async function readAuditPage(
     limit?: number | undefined;
     cursor?: string | undefined;
     applicationId?: string | undefined;
+    documentId?: string | undefined;
   },
 ): Promise<AuditPage> {
   const { client, context } = transaction;
@@ -59,12 +61,20 @@ export async function readAuditPage(
       tenantId: context.tenantId,
       ownerApplicationId: context.application.id,
     });
+  if (options.documentId) {
+    const { rowCount } = await client.query(
+      'SELECT id FROM dms.document WHERE id=$1 AND ($2::uuid IS NULL OR application_id=$2)',
+      [options.documentId, context.kind === 'machine' ? context.application.id : null],
+    );
+    if (!rowCount) return dmsError(404, 'DOCUMENT_NOT_FOUND');
+  }
   const binding = [
-    1,
+    2,
     context.tenantId,
     context.kind,
     context.kind === 'machine' ? context.application.id : context.subjectId,
     applicationId ?? null,
+    options.documentId ?? null,
   ];
   const mac = (payload: string) =>
     createHmac('sha256', secret).update('dms-audit-cursor:v1:').update(payload).digest();
@@ -78,13 +88,13 @@ export async function readAuditPage(
       if (
         signature.length !== expected.length ||
         !timingSafeEqual(signature, expected) ||
-        JSON.stringify(decoded.data.slice(0, 5)) !== JSON.stringify(binding) ||
-        decoded.data.length !== 7 ||
-        !/^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(decoded.data[5]) ||
-        !/^[a-f0-9-]{36}$/.test(decoded.data[6])
+        JSON.stringify(decoded.data.slice(0, 6)) !== JSON.stringify(binding) ||
+        decoded.data.length !== 8 ||
+        !/^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(decoded.data[6]) ||
+        !/^[a-f0-9-]{36}$/.test(decoded.data[7])
       )
         throw new Error('Invalid cursor');
-      after = decoded.data.slice(5);
+      after = decoded.data.slice(6);
     } catch {
       return dmsError(400, 'INVALID_REQUEST');
     }
@@ -95,11 +105,20 @@ export async function readAuditPage(
     id: string;
     application_id: string;
     resource_id: string;
+    resource_type: string;
+    action: string;
+    actor_kind: string;
     actor_id: string;
     asserted_human: string | null;
     request_id: string | null;
     created_at: string;
-  }>(AUDIT_PAGE_SQL, [applicationId ?? null, after?.[0] ?? null, after?.[1] ?? null, limit + 1]);
+  }>(AUDIT_PAGE_SQL, [
+    applicationId ?? null,
+    after?.[0] ?? null,
+    after?.[1] ?? null,
+    limit + 1,
+    options.documentId ?? null,
+  ]);
   const page = rows.slice(0, limit);
   const last = page.at(-1);
   const data = last ? [...binding, last.created_at, last.id] : null;
@@ -113,10 +132,10 @@ export async function readAuditPage(
     items: page.map((row) => ({
       id: row.id,
       applicationId: row.application_id,
-      resourceType: 'application',
+      resourceType: row.resource_type,
       resourceId: row.resource_id,
-      action: 'application.enrolled',
-      actor: { kind: 'machine', id: row.actor_id },
+      action: row.action,
+      actor: { kind: row.actor_kind, id: row.actor_id },
       assertedHuman:
         row.asserted_human === null
           ? null
@@ -133,7 +152,11 @@ export class AuditService {
   constructor(private readonly database: DmsDatabaseService) {}
   read(
     principal: MachinePrincipal,
-    options: { limit?: number | undefined; cursor?: string | undefined },
+    options: {
+      limit?: number | undefined;
+      cursor?: string | undefined;
+      documentId?: string | undefined;
+    },
   ) {
     const config = parseAuthorityEnvironment(process.env);
     return this.database.withMachine(principal, ['dms:audit:read'], (tx) =>

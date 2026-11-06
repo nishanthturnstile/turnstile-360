@@ -1,0 +1,13 @@
+# Optional overlay for the standalone foundation + secured storage profiles.
+# Supply all three Compose files explicitly. No host service ports are published.
+services:
+  dms-api:
+    env_file:
+      - { path: ../.env.dms, format: raw }
+      - { path: ../.env.dms-upload, format: raw }
+    networks:
+      - default
+      - storage
+    depends_on:
+      storage:
+        condition: service_healthy

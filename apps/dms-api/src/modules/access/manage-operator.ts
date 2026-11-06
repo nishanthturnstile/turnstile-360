@@ -5,6 +5,14 @@ import { assertInstallation } from '../../infrastructure/database/migrate.js';
 import { createPool, withTenant } from '../../infrastructure/database/postgres.js';
 import { readAuditPage } from '../audit/audit.service.js';
 import { insertSecurityEvent } from '../audit/security-event.js';
+import { inspectDocument } from '../documents/documents.service.js';
+import { documentPermissions } from '../documents/sharing.service.js';
+import { changeLifecycle, inspectLifecycle } from '../lifecycle/lifecycle.service.js';
+import { operatorOperations } from '../processing/operations.js';
+import { requestProcessing } from '../processing/results.service.js';
+import { inspectWork, operatorWork } from '../processing/work-operator.js';
+import { operatorAdmissionPolicy } from '../uploads/admission-operator.js';
+import { inspectUploadOperation } from '../uploads/upload-operator.js';
 import { withFreshOperatorIdentity, withOperatorRead } from './operator-context.js';
 
 // Private process entry only: freshly authenticate on every invocation. Possession
@@ -15,6 +23,134 @@ export async function runOperatorCommand(input: unknown, environment = process.e
     environment,
     operation,
     async ({ subjectId: actor, admin, authPool, config }) => {
+      if (
+        operation.action === 'operations-inspect' ||
+        operation.action === 'operations-backup-report' ||
+        operation.action === 'operations-prune' ||
+        operation.action === 'work-redrive'
+      )
+        return withOperatorRead(
+          environment,
+          config.INSTALLATION_TENANT_ID,
+          config.INSTALLATION_CUSTOMER_KEY,
+          actor,
+          (tx) => operatorOperations(tx, operation),
+        );
+      if (
+        operation.action === 'document-lifecycle-read' ||
+        operation.action === 'document-delete' ||
+        operation.action === 'document-restore'
+      )
+        return withOperatorRead(
+          environment,
+          config.INSTALLATION_TENANT_ID,
+          config.INSTALLATION_CUSTOMER_KEY,
+          actor,
+          async (tx) => {
+            await tx.client.query(
+              `SELECT ${operation.action === 'document-lifecycle-read' ? 'pg_advisory_xact_lock_shared' : 'pg_advisory_xact_lock'}(hashtextextended($1,0))`,
+              [`dms-sharing:${tx.context.tenantId}`],
+            );
+            if (operation.action === 'document-lifecycle-read')
+              return inspectLifecycle(tx, operation.documentId.toLowerCase());
+            return (
+              await changeLifecycle(
+                tx,
+                operation.documentId.toLowerCase(),
+                operation.action === 'document-delete' ? 'delete' : 'restore',
+                operation.expectedRevision,
+                operation.action === 'document-restore' ? operation.idempotencyKey : undefined,
+              )
+            ).lifecycle;
+          },
+        );
+      if (
+        operation.action === 'document-permissions-read' ||
+        operation.action === 'document-permissions-set'
+      )
+        return withOperatorRead(
+          environment,
+          config.INSTALLATION_TENANT_ID,
+          config.INSTALLATION_CUSTOMER_KEY,
+          actor,
+          async (tx) => {
+            await tx.client.query(
+              `SELECT ${operation.action === 'document-permissions-set' ? 'pg_advisory_xact_lock' : 'pg_advisory_xact_lock_shared'}(hashtextextended($1,0))`,
+              [`dms-sharing:${tx.context.tenantId}`],
+            );
+            return operation.action === 'document-permissions-set'
+              ? documentPermissions(
+                  tx,
+                  operation.documentId.toLowerCase(),
+                  operation.permissions,
+                  operation.expectedRevision,
+                )
+              : documentPermissions(tx, operation.documentId.toLowerCase());
+          },
+        );
+      if (operation.action === 'document-reprocess')
+        return withOperatorRead(
+          environment,
+          config.INSTALLATION_TENANT_ID,
+          config.INSTALLATION_CUSTOMER_KEY,
+          actor,
+          async (tx) => {
+            const { replay: _replay, ...response } = await requestProcessing(
+              tx,
+              operation.documentId.toLowerCase(),
+              operation.versionId.toLowerCase(),
+              { profile: operation.profile },
+              operation.idempotencyKey,
+            );
+            return response;
+          },
+        );
+      if (operation.action === 'work-inspect')
+        return withOperatorRead(
+          environment,
+          config.INSTALLATION_TENANT_ID,
+          config.INSTALLATION_CUSTOMER_KEY,
+          actor,
+          (tx) => inspectWork(tx, operation.jobId),
+        );
+      if (operation.action === 'work-authorize' || operation.action === 'work-disable')
+        return withOperatorRead(
+          environment,
+          config.INSTALLATION_TENANT_ID,
+          config.INSTALLATION_CUSTOMER_KEY,
+          actor,
+          (tx) => operatorWork(tx, authPool, config.AUTH_ISSUER_URL, operation),
+        );
+      if (
+        operation.action === 'admission-policy-read' ||
+        operation.action === 'admission-policy-set' ||
+        operation.action === 'document-inspect' ||
+        operation.action === 'upload-inspect' ||
+        operation.action === 'batch-inspect'
+      ) {
+        return withOperatorRead(
+          environment,
+          config.INSTALLATION_TENANT_ID,
+          config.INSTALLATION_CUSTOMER_KEY,
+          actor,
+          async (tx) => {
+            if (operation.action === 'upload-inspect' || operation.action === 'batch-inspect')
+              return inspectUploadOperation(tx, operation);
+            if (operation.action === 'document-inspect') {
+              const result = await inspectDocument(tx, operation.documentId);
+              await insertSecurityEvent(tx.client, tx.context.tenantId, {
+                action: 'operator.document.inspect',
+                actorKind: 'operator',
+                actorId: actor,
+                subjectId: operation.documentId,
+                outcome: 'success',
+              });
+              return result;
+            }
+            return operatorAdmissionPolicy(tx, operation);
+          },
+        );
+      }
       if (operation.action === 'audit-read') {
         return withOperatorRead(
           environment,

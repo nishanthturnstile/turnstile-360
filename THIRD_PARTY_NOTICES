@@ -15,12 +15,96 @@ Runtime additions (exact package and transitive integrity pins are in pnpm-lock.
 - @scarf/scarf is a transitive installation helper; its postinstall is explicitly disabled
   in pnpm-workspace.yaml. No install telemetry is authorized by this dependency addition.
 
-Development-only schema verification additions:
+Schema verification additions (runtime promotion noted below):
 - ajv 8.20.0 and ajv-formats 3.0.1: MIT. Packaged license texts remain in node_modules.
 - jsonschema 4.26.0: MIT; regex 2026.9.29: Apache-2.0 AND CNRI-Python.
   Their development dependency artifacts, versions and hashes are pinned in
-  apps/dms-processing/uv.lock. These are not DMS processing runtime dependencies.
+  apps/dms-processing/uv.lock. I07 promotes jsonschema to a locked runtime dependency;
+  regex remains development-only.
 
 Other existing dependencies retain their original licenses and notices. The deployment
 inventory and covered-source obligations for the complete service set remain subject to
 architecture.md's Ownership and distribution policy and the owning release qualification.
+
+DMS-I04 storage runtime additions:
+- @aws-sdk/client-s3 and @aws-sdk/s3-request-presigner 3.1162.0: Apache-2.0.
+  AWS SDK and Smithy transitive versions and integrity are pinned in pnpm-lock.yaml;
+  retain their packaged LICENSE and NOTICE files with production dependencies.
+- The storage image remains the architecture-pinned SeaweedFS OSS 4.51 distribution
+  and digest (Apache-2.0); the wrapper changes process binding, not upstream source.
+
+DMS-I07 private work runtime additions (exact wheels/hashes: apps/dms-processing/uv.lock):
+- Celery 5.6.3 and Kombu 5.7.0: BSD-3-Clause. AMQP 5.4.2, Billiard 4.3.2,
+  Vine 5.1.0 and click-plugins 1.1.1.2 retain their BSD-family license texts.
+- Click 8.5.0 and python-dateutil 4.0.0: BSD-3-Clause; prompt-toolkit 3.0.53: BSD.
+- click-didyoumean 0.3.1, click-repl 0.4.1, tzlocal 5.4.5 and wcwidth 0.9.4: MIT.
+- tzdata 2026.6: Apache-2.0. jsonschema 4.26.0, attrs 26.1.0,
+  jsonschema-specifications 2025.9.1, referencing 0.37.0 and rpds-py 2026.9.1: MIT.
+  Preserve packaged dist-info license/copyright files in the locked runtime installation.
+- RabbitMQ remains the pinned OSS 4.3.7 image/digest under MPL-2.0. This increment
+  adds private configuration/definitions without changing its upstream source. Preserve
+  upstream notices and applicable covered-source access in customer distributions.
+
+DMS-I08 native assessment runtime:
+- ClamAV 1.5.1 (Cisco/Talos and contributors), GPL-2.0, https://github.com/Cisco-Talos/clamav
+- Bubblewrap 0.8.0 (upstream and Debian security revision 0.8.0-2+deb12u1), LGPL-2.0-or-later, https://github.com/containers/bubblewrap
+- util-linux 2.38.1 (Debian 2.38.1-5+deb12u3), component licenses including GPL-2.0-or-later and LGPL-2.1-or-later, https://github.com/util-linux/util-linux
+Native package copyright/license texts remain in their container distributions under /usr/share/doc.
+
+The scanner seccomp baseline derives from Moby profiles (Apache-2.0),
+https://github.com/moby/profiles/blob/main/seccomp/default.json, retrieved 2026-11-05;
+unmodified source SHA-256 6416b47770785a41ac59073cdc77d9fe98517df2799dc83ef207e622de3053f6.
+The modified filter permits unprivileged namespace/mount setup for Bubblewrap.
+License: deploy/assessment/MOBY-PROFILES-LICENSE.
+
+DMS-I14 format extraction runtime (exact Python wheels/hashes in apps/dms-processing/uv.lock):
+- pypdfium2 5.14.0: Apache-2.0/BSD-3-Clause; bundled PDFium BSD-style notices and
+  transitive binary licenses remain in the wheel installation. Preserve all of them.
+- python-calamine 0.9.1 and its bundled Calamine 0.37.0: MIT.
+- Pillow 13.0.0: MIT-CMU/HPND and bundled codec notices retained in wheel license files.
+- defusedxml 0.7.1 and olefile 0.47: PSF/Python-family and BSD-2-Clause respectively;
+  retain the installed distribution license files.
+- Apache Tika 4.2.0: Apache-2.0 with distribution LICENSE/NOTICE for all bundled Java
+  dependencies, copied under /opt/tika. The Dockerfile records the verified SHA-512.
+- Eclipse Temurin OpenJDK 21.0.13+9: GPL-2.0 with Classpath Exception and bundled
+  third-party notices, copied with the complete runtime legal directory.
+- Representative Apache Tika test fixtures are from immutable upstream commit
+  91361891b61f6cc043a5ea81ced4867c17b93a9c. Per-file URLs/SHA-256 and upstream
+  license/notices are retained in apps/dms-processing/tests/fixtures/extraction.
+
+DMS-I15 English OCR runtime and quality fixtures:
+- Tesseract 5.5.4 (Apache-2.0), source SHA-256
+  a8dbf8b8c8ee427ff6ad1d99116502feaf59440af1adb893caf60a6576826cf4.
+  Runtime LICENSE and linked Debian codec/compiler runtime notices are bundled under
+  /opt/ocr. The native dependency inventory includes Leptonica 1.82.0 and its codecs;
+  retain all copied package copyright/license files and applicable runtime exceptions.
+- tessdata_fast eng/osd data (Apache-2.0), upstream commit
+  87416418657359cb625c412a48b6e1d6d41c29bd. Exact data SHA-256 values are in OCR_RUNTIME
+  and the Dockerfile; retain the data LICENSE alongside the installed files.
+- The OCR ground-truth font is DejaVu Sans. Preserve the complete upstream/Bitstream
+  font notices at apps/dms-processing/tests/fixtures/ocr/FONT-LICENSE. The reference
+  texts and generated test diagrams/pages are Thaarei-owned fixture data.
+
+DMS-I16 opt-in structure runtime (excluded from the default processing image):
+- Docling/docling-slim 2.146.0, docling-core 2.106.0 and docling-ibm-models 4.0.4
+  use MIT code licenses; retain wheel dist-info license/copyright files.
+- CPU-only PyTorch 2.15.0 and torchvision 0.29.2 use BSD-style licenses and retain
+  their bundled third-party notices. Exact transitive runtime packages and hashes,
+  including NumPy/SciPy/OpenCV/Transformers, are locked in apps/dms-processing/uv.lock.
+- Heron layout model revision 8f39ad3c0b4c58e9c2d2c84a38465abf757272d8
+  uses Apache-2.0; TableFormer fast model revision fc0f2d45e2218ea24bce5045f58a389aed16dc23
+  uses CDLA-Permissive-2.0. Preserve the prefetched model cards and complete agreements
+  under /opt/structure/legal. The source distribution carries them in
+  apps/dms-processing/src/turnstile_processing/legal; model file checksums are in
+  structure-models.json. Do not redistribute optional weights without these notices.
+
+DMS-I18 distribution material:
+- The scanner image retains unmodified ClamAV 1.5.1 COPYING texts and upstream README
+  under /usr/share/licenses/clamav. Source URL/archive hash and repository copies are
+  retained in deploy/assessment/legal. The storage wrapper retains the SeaweedFS 4.51
+  Apache-2.0 license, including its copyright, under /usr/share/doc/seaweedfs.
+- Versioned bundles include per-image SPDX/Syft inventories, actual installed legal
+  archives, pinned model/data records and covered-source access/offer material. Source
+  requests may use nishanth@thaarei.com, technology@thaarei.com or muthurema@thaarei.com.
+  Third-party distribution obligations remain applicable; candidate assembly does not
+  itself approve customer redistribution or replace complete release review.

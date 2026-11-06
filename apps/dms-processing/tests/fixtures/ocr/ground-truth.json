@@ -1,0 +1,14 @@
+{
+  "version": "english-print-v1",
+  "scope": "Generated clean printed English, one pinned font, 200 DPI; rotated and mixed-document coverage. Not a general handwriting/table or real-world corpus guarantee.",
+  "normalization": "lowercase ASCII letters and digits as words; punctuation ignored; Levenshtein word distance / expected word count",
+  "maximumWordErrorRate": 0.1,
+  "font": "DejaVuSans.ttf",
+  "fontSizePixels": 34,
+  "texts": [
+    "Clear records help people understand their work. Every document has an original source and a stable identity. The system keeps useful text while reporting incomplete coverage. A quiet office can review these pages without changing the original file. English words remain readable after the page is rotated. Careful checks compare the recognized text with this expected paragraph. Good records support reliable decisions and make future questions easier to answer. Each sentence uses ordinary printed words with clear spacing. The reader should see the same information on every copy. Page numbers and source references help explain where the text came from.",
+    "A small team prepared the final report on Friday morning. They checked the dates and counted the complete records before the meeting. The printed page contains ordinary English sentences and several useful numbers such as 120 and 350. Each person received a separate copy of the report. The review continued until every section was understood. No missing paragraph should be silently replaced with invented text. A clear warning identifies an uncertain result. The original record remains available even when recognition needs more work. These simple sentences provide a repeatable reference for checking the quality of printed English recognition.",
+    "Mixed images contain additional English text below the native heading. This information belongs to the same source page and should appear once in the result. The original heading remains useful and must not be replaced by a second recognized copy. Each word from the image has a measured position in the oriented page raster. The result explains which text came from the original document and which text came from recognition. Careful extraction preserves both kinds of information without claiming perfect reading order. These printed sentences make the additional content easy to verify. A partial result must describe any remaining uncertainty."
+  ],
+  "fontSha256": "ae7b7855e115a5966d8b1b3f80f254ccc117ec86f9965e202ee2940453837280"
+}

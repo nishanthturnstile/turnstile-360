@@ -44,7 +44,7 @@ def call(url: str, headers: dict[str, str], body: bytes | None = None) -> dict[s
     with urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect()).open(
         request, timeout=10
     ) as response:
-        if response.status not in (200, 201):
+        if response.status not in (200, 201, 202):
             raise ValueError("Unexpected HTTP response")
         raw = response.read(65537)
         if len(raw) > 65536:
@@ -97,6 +97,20 @@ def main() -> None:
             raise ValueError("Invalid backend credentials")
         credentials = ":".join(urllib.parse.quote(value, safe="") for value in (client, secret))
         basic = base64.b64encode(credentials.encode()).decode()
+        scopes = config.get("scopes", ["dms:capabilities:read"])
+        allowed = {
+            "dms:capabilities:read",
+            "dms:audit:read",
+            "dms:documents:read",
+            "dms:documents:write",
+        }
+        if (
+            not isinstance(scopes, list)
+            or not 1 <= len(scopes) <= 4
+            or any(not isinstance(scope, str) or scope not in allowed for scope in scopes)
+            or len(set(scopes)) != len(scopes)
+        ):
+            raise ValueError("Explicit supported machine scopes required")
         result = call(
             issuer + "/oauth2/token",
             {
@@ -107,7 +121,7 @@ def main() -> None:
                 {
                     "grant_type": "client_credentials",
                     "resource": resource,
-                    "scope": "dms:capabilities:read",
+                    "scope": " ".join(scopes),
                 }
             ).encode(),
         )

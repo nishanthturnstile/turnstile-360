@@ -1,0 +1,77 @@
+#!/bin/sh
+set -eu
+cd -- "$(dirname -- "$0")"
+image=thaarei-dms-api:0.20.0
+processing=thaarei-dms-processing:0.20.0
+profile=standard
+if [ -f .dms-profile ]; then profile=$(cat .dms-profile); fi
+case "$profile" in standard) compose_file=deploy/compose.dms-complete.yaml;; structured) compose_file=deploy/compose.dms-complete-structured.yaml;; *) exit 1;; esac
+compose() { docker compose --project-directory "$PWD/deploy" --env-file .env.dms.compose -f "$compose_file" "$@"; }
+private_run() { env_file=$1; shift; compose --profile tools run --rm --no-deps -T --user "$(id -u):$(id -g)" --env-from-file "$env_file" dms-maintenance "$@"; }
+recovery_run() {
+   recovery_action=$1
+   case "$recovery_action" in release|open) ;; *)
+   test -n "${DMS_BACKUP_KEY_FILE:-}" || { printf '%s\n' 'Set DMS_BACKUP_KEY_FILE to an independent private 32-byte key file' >&2; exit 1; }
+   test -f "$DMS_BACKUP_KEY_FILE"
+   case "$DMS_BACKUP_KEY_FILE" in /*) ;; *) printf '%s\n' 'Use an absolute independent key path' >&2; exit 1;; esac
+   DMS_BACKUP_KEY_FILE=$(readlink -f -- "$DMS_BACKUP_KEY_FILE")
+   case "$DMS_BACKUP_KEY_FILE" in "$PWD"/*) printf '%s\n' 'Keep the backup key outside the installation' >&2; exit 1;; esac
+   ;; esac
+   umask 077
+   mkdir .dms-recovery-command-lock || { printf '%s\n' 'Another recovery command is active; inspect before clearing the lock' >&2; exit 1; }
+   trap 'rm -f .dms-recovery-input.json; rmdir .dms-recovery-command-lock' EXIT HUP INT TERM
+   cat > .dms-recovery-input.json
+   recovery_container() {
+   docker run --rm -i --network "${DMS_BACKUP_NETWORK:-bridge}" --read-only --cap-drop ALL --security-opt no-new-privileges --pids-limit 64 --memory 2g --cpus 1 --tmpfs /tmp:size=128m,noexec,nosuid,nodev --user "$(id -u):$(id -g)" --group-add "$(stat -c %g /var/run/docker.sock)" --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock --mount "type=bind,src=$PWD,dst=/installation" "$@" "$image" node dist/infrastructure/recovery/controller.js "$recovery_action"
+   }
+   case "$recovery_action" in release|open) recovery_container ;; *) recovery_container --mount "type=bind,src=$DMS_BACKUP_KEY_FILE,dst=/run/recovery-key,readonly" ;; esac
+}
+case "${1:-help}" in
+ init)
+   docker run --rm -i --network none --user "$(id -u):$(id -g)" --mount "type=bind,src=$PWD,dst=/configuration" "$image" node dist/infrastructure/distribution/initialize.js
+   docker run --rm --network none --user "$(id -u):$(id -g)" --env-file .env.work-broker --mount "type=bind,src=$PWD,dst=/configuration" "$processing" turnstile-processing broker-config --output /configuration/.env.work-broker-definitions.json
+   ;;
+ verify)
+   test -f images.lock
+   while IFS="$(printf '\t')" read -r name digest; do test "$(docker image inspect --format '{{.Id}}' "$name")" = "$digest" || exit 1; done < images.lock
+   ;;
+ config) compose config --quiet ;;
+ provision)
+   compose up -d --wait postgres
+   private_run .env.provision /app/maintenance/provision-auth-database.mjs
+   ;;
+ migrate)
+   private_run .env.dms-maintenance dist/infrastructure/database/migrate.js auth
+   private_run .env.dms-maintenance dist/infrastructure/database/migrate.js dms
+   private_run .env.dms-maintenance dist/infrastructure/database/migrate.js bootstrap
+   ;;
+ storage-init)
+   compose --profile tools run --rm --no-deps storage-init
+   compose --profile tools run --rm --no-deps broker-init
+   compose --profile tools run --rm --no-deps signatures-init
+   compose up -d --wait storage
+   private_run .env.storage-admin dist/modules/storage/storage-provision.js buckets
+   ;;
+ up) test ! -f .dms-recovery-blocked || { printf '%s\n' 'Recovery is closed: verify objects and review access before recovery-open' >&2; exit 1; }; "$0" verify; compose up -d --no-build --pull never ;;
+ stop) compose stop ;;
+ status) compose ps ;;
+ recovery) private_run .env.dms-operator dist/modules/lifecycle/manage-recovery.js ;;
+ backup) recovery_run capture ;;
+ backup-upload) recovery_run upload ;;
+ backup-release) recovery_run release ;;
+ recovery-restore) recovery_run restore ;;
+ recovery-verify) recovery_run verify ;;
+ recovery-open) recovery_run open ;;
+ operator) private_run .env.dms-operator dist/modules/access/manage-operator.js ;;
+ bootstrap-operator) private_run .env.dms-maintenance dist/modules/access/manage-operator.js ;;
+ authority-keys) private_run .env.dms-operator dist/modules/platform-auth/manage-keys.js ;;
+ authority-client) private_run .env.dms-operator dist/modules/platform-auth/manage-client.js ;;
+ application) private_run .env.dms-maintenance dist/modules/enrollment/manage-application.js ;;
+ provision-user) private_run .env.dms-operator dist/modules/platform-auth/provision-user.js ;;
+ broker-metrics)
+   compose exec -T work-broker rabbitmqctl list_queues -p dms name messages --formatter json | docker run --rm -i --network none "$image" node dist/infrastructure/distribution/queue-metrics.js
+   ;;
+ signatures-import) compose --profile tools run --rm --no-deps signature-import; compose up -d --no-build --force-recreate dms-scan ;;
+ signatures-online) compose --profile signature-updates up -d --no-build signature-updater ;;
+ *) printf '%s\n' 'DMS 0.20.0: init | verify | config | provision | migrate | storage-init | provision-user | bootstrap-operator | authority-keys | authority-client | application | operator | up | stop | status | broker-metrics | signatures-import | signatures-online | recovery | backup | backup-upload | backup-release | recovery-restore | recovery-verify | recovery-open' ;;
+esac

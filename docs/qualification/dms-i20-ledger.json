@@ -1,0 +1,3383 @@
+{
+  "schemaVersion": 1,
+  "specification": "docs/dms/headless_dms_functionality_requirements_v1.md",
+  "scope": "Per-requirement traceability. Group evidence is not a claim that every sentence has a dedicated automated assertion. Manual/target/deployed states require separate recorded sign-off.",
+  "candidate": null,
+  "requirements": [
+    {
+      "id": "FR-01.01",
+      "requirement": "The product must support authorized bootstrap of the installation's one customer tenant and its operator/admin identity, without unauthenticated public sign-up. An identical repeated bootstrap must preserve that tenant; attempting to provision a second customer tenant or switch the installation to another tenant must fail.",
+      "requirementSha256": "fd40eb8e4c4e480d9313dbe7f38e2bf7dba42040ec55db1991d324bce40d550e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/standalone.database-spec.ts",
+        "docs/runbooks/dms-standalone.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-01.02",
+      "requirement": "A tenant must be able to provision multiple intended applications with stable identities, pending/active/disabled state, permitted scopes, source namespaces, and applicable policies. Provisioning alone must not activate a consumer before group 02's enrollment requirements pass.",
+      "requirementSha256": "3e31f6642c07de4fa55a2498aab1161271ccd267c8d60300fd31442773efdd4f",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/standalone.database-spec.ts",
+        "docs/runbooks/dms-standalone.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-01.03",
+      "requirement": "Each application registration must belong to the installation's configured customer tenant and map to a verified identity-provider client. Independent systems require separate registrations/credentials; Turnstile web and future mobile use their shared backend's DMS registration. Registrations from another customer installation must not authorize local DMS access.",
+      "requirementSha256": "6fe7dd0016cddf047ddf040cd77a4997ffb9ba27a4aca740f1ea6a3fd764e2fc",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/standalone.database-spec.ts",
+        "docs/runbooks/dms-standalone.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-01.04",
+      "requirement": "Operators must be able to change an application's enabled state, scopes, and policy settings through supported administration interfaces.",
+      "requirementSha256": "cb1bd40289f7ce1cf5a648e9f41511b38987be98562d82bf6fab850e5685a16e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/standalone.database-spec.ts",
+        "docs/runbooks/dms-standalone.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-01.05",
+      "requirement": "Application credentials must be issued/rotated through the configured identity provider without changing document ownership or requiring changes to consumer repositories.",
+      "requirementSha256": "9458f1e9dcc7c05bb0b3a3aefcbdd5268a255a529d1670cffe51850cfe837721",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/standalone.database-spec.ts",
+        "docs/runbooks/dms-standalone.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-01.06",
+      "requirement": "Configuration must enforce exactly one customer tenant per installation while preserving tenant identity on every tenant-owned resource. Turnstile uses this same customer context; request input must not select another tenant. Adding registered applications must not create additional tenants or implicit document grants.",
+      "requirementSha256": "da7a2c9655c224f41ce2354196b91bdd8dad790bdc191a523919cb85814c281a",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/standalone.database-spec.ts",
+        "docs/runbooks/dms-standalone.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-01.07",
+      "requirement": "The shared authority must support user sign-in/sign-out, session expiry/revocation, and controlled account recovery for consumer applications. Consumers supply their screens and retain business permissions; these users do not automatically become DMS end-user principals.",
+      "requirementSha256": "c3d2361064b558b4174677ff86f8f9af279fb712d6e940d2f0dd0a4269d705aa",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/standalone.database-spec.ts",
+        "docs/runbooks/dms-standalone.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-01.08",
+      "requirement": "Supported private operator interfaces must provision accounts/machine clients, control scopes, rotate credentials/signing keys, and recover or suspend access without requiring a full identity-management UI or public self-registration.",
+      "requirementSha256": "5eada85c8a023f7e49e6f1620ec67225119d61aa37fadbb49cd0b1a5c21143bb",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/standalone.database-spec.ts",
+        "docs/runbooks/dms-standalone.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-01.09",
+      "requirement": "Consumer applications and the DMS must be able to use the same selected identity authority without sharing service credentials or deriving trust from monorepo membership.",
+      "requirementSha256": "34a7c3ec71ecb1c7e54d5e6b958564e143c69bb1f8822c8b8f44456f4e2f0ac3",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/standalone.database-spec.ts",
+        "docs/runbooks/dms-standalone.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.01",
+      "requirement": "The product must authenticate application tokens using the configured issuer, signature/algorithm, audience, expiry, and client-identity rules.",
+      "requirementSha256": "cc5d3386e2afa56d1508aed35008c02f358c12af3918ca5b83a2fa94a7c7a8c1",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.02",
+      "requirement": "The product must derive tenant/application context from the verified registration. Caller-supplied identifiers must not establish authorization.",
+      "requirementSha256": "88852db64995737374d4bdd61666709a065d54e32e2dfe5a789d54d96afbd13f",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.03",
+      "requirement": "Disabled, expired, invalid, or wrongly scoped credentials must not authorize new control operations or new file-transfer capabilities.",
+      "requirementSha256": "6c76ad65fc64435a6c9bc9f1e9345c68b229a94cf7be2ca12451d04ff7f0be3e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.04",
+      "requirement": "Tenant resources must remain isolated across document metadata, versions, files, processing, search, audit, and administrative operations.",
+      "requirementSha256": "ea14214a36c5fcc3800c0724d6577b81b8f24140109fc1ad81e3982d703da5c3",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.05",
+      "requirement": "Applications in the same tenant must remain isolated by default; ownership or a permitted explicit grant is required for document access.",
+      "requirementSha256": "35e476365f78575dbca32991230322f7fbdd23909dd3ed9fd75a61572dcb35e5",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.06",
+      "requirement": "Ordinary applications must not exercise tenant-admin powers. API scopes must constrain, rather than replace, document-level authorization.",
+      "requirementSha256": "abb5326d905a47fd0d5d892a3cb5254afc794da6bf16b93da0431f8743e779fa",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.07",
+      "requirement": "Consumer backends must retain their own end-user permissions. Reported end-user identifiers may supply audit context but must not be treated as verified DMS principals.",
+      "requirementSha256": "f0860ce4faae1cea950657980a892ad0d7e15021f5849499fb96589b06ff0a4e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.08",
+      "requirement": "Provisioned application backends must obtain short-lived, audience-bound tokens through dedicated client-credentials clients under administrator-assigned scope ceilings. User-login clients must remain separate from DMS machine registrations; ordinary users must not self-assign machine scopes.",
+      "requirementSha256": "fe507f69142323a41ad84cf15dfd64b015e33d09cff1b3aff556d17e297ec539",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.09",
+      "requirement": "Browser session cookies or identity tokens must not substitute for DMS machine access tokens. Service credentials and enrollment keys must never be required in browser code.",
+      "requirementSha256": "639545961f0177a50d492940656aff2d4ff4599d2f847932cab10b1df192be84",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.10",
+      "requirement": "Authorized operators must be able to issue/revoke a single-use Thaarei enrollment key bound to the deployment, tenant, expected issuer/client, and expiry, retaining only its digest and nonsecret metadata.",
+      "requirementSha256": "bfd7c8a9ca907e0b59d884817dc98f5b5a8cfddabe849072cd8bcd82c9e2878c",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.11",
+      "requirement": "Initial activation must require both a valid machine token and the matching enrollment key. The enrollment route may accept the bound provisioned client before activation; normal DMS routes must deny pending registrations.",
+      "requirementSha256": "ec3b3cd19f5a633e0889f8f221fb0f07f7d6a9a2ab9443e07011e12505872fd3",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.12",
+      "requirement": "Enrollment must atomically consume the key, activate one bound application, and record a nonsecret retry receipt. An authenticated identical retry returns the same outcome; reuse for another request/client cannot create a second registration or re-enable a disabled one.",
+      "requirementSha256": "bd2139addc0ab4361f71778cfcd05b9bfeea92f1d858a38ca34090ccfd5e541f",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.13",
+      "requirement": "Expired unused or revoked enrollment keys must fail clearly. Routine DMS requests must not require an enrollment key; key/token values must be excluded from logs and audit payloads.",
+      "requirementSha256": "18eea11ad4e0322f17310351729ad3816aca622e74ef1fbcc6ec24ec6a0deed4",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.14",
+      "requirement": "Credential/signing-key rotation must preserve registered application identity and document ownership. Local application disablement must stop new DMS authority even while previously issued tokens remain cryptographically valid.",
+      "requirementSha256": "34f7709c3ccd41a14bbb803c2df96eb0e6e0075e9d65481c62cdd61bd645b4a4",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.15",
+      "requirement": "Publisher/scanner/extraction roles must have distinct internal machine identities and permissions; an extraction identity must not assert a security pass or publish content.",
+      "requirementSha256": "2b7b26fba5362ce38a260ce9becd363930fecb07b08bfa1f8f04abbca9863662",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-02.16",
+      "requirement": "An operator may select a supported external OAuth/OIDC authority instead of the default without changing the DMS machine-token/resource-authorization contract. Arbitrary simultaneous issuer federation and delegated end-user access remain outside v1.",
+      "requirementSha256": "885de8949aee0def52763423f2587cd51b7c86b5b638965e2cbf4d37f704f470",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/authentication.md"
+      ],
+      "execution": null,
+      "condition": "External issuer selection is not selected/qualified in the bundled-authority candidate; external-authority administration and recovery need separate documented acceptance."
+    },
+    {
+      "id": "FR-03.01",
+      "requirement": "Public capabilities must have versioned request/response contracts and generated API documentation that remain compatible within the declared API version.",
+      "requirementSha256": "62d2eeca52dd2b7fbdbdab7d15ca74f3f9d7d38d7ef15fbe3c67f076a62a7f79",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/api-docs.e2e-spec.ts", "docs/runbooks/dms-api-explorer.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-03.02",
+      "requirement": "Responses must use stable error codes and request/correlation identifiers, distinguishing authorization, policy, concurrency, capacity, processing, and infrastructure failures.",
+      "requirementSha256": "f794658120921e0c8f2a361367411e7e85c61325c538a015db0eb2341bd00488",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/api-docs.e2e-spec.ts", "docs/runbooks/dms-api-explorer.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-03.03",
+      "requirement": "Retrying protected enrollment, batch/session creation, completion, batch closure, restore, or reprocessing with the same idempotency key and body must preserve operation/resource identity within the disclosed window.",
+      "requirementSha256": "fffd07d1e06b3fa76038919d38d8c7527f1a4d4938cf12569e4bb9d611208639",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/api-docs.e2e-spec.ts", "docs/runbooks/dms-api-explorer.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-03.04",
+      "requirement": "Reusing that key with different request content must return a conflict. Concurrent duplicates must return the recorded result or an explicit retryable in-progress outcome.",
+      "requirementSha256": "f17c58d696e5f652d23bce40c81e526100c020e11a9f35c5bf926c229cf2cf1b",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/api-docs.e2e-spec.ts", "docs/runbooks/dms-api-explorer.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-03.05",
+      "requirement": "Mutable document operations must support an expected revision and reject stale changes rather than silently overwrite another caller's work.",
+      "requirementSha256": "d5e3d05d71520ce133acd1b0862124259dc2bd8844e4c035fda98bc5c57f84bc",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/api-docs.e2e-spec.ts", "docs/runbooks/dms-api-explorer.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-03.06",
+      "requirement": "Lists must have bounded pages, supported filters, stable ordering, and tenant/application-bound cursors. Each page must use current authorization.",
+      "requirementSha256": "3f9f3ce26bdceffe1cc4f8d4f54d4e286703c44bfb52ff1bf3df1b0e9b286e5f",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/api-docs.e2e-spec.ts", "docs/runbooks/dms-api-explorer.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-03.07",
+      "requirement": "Capability discovery must distinguish accepted storage/security policy, text extraction, structured data/layout, and preview support by format, together with languages, enabled profiles, limits, and active API capabilities. Detection alone must not advertise extraction support.",
+      "requirementSha256": "34f1fddb4f14ee1894dc5d9ca155ff494466049bd94c5f5148af33b9b6f361d6",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/api-docs.e2e-spec.ts", "docs/runbooks/dms-api-explorer.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-03.08",
+      "requirement": "Long-running operations must expose a status resource and polling guidance. Acceptance of work must be distinguishable from completion, with terminal success/failure outcomes documented.",
+      "requirementSha256": "ff55d4e173ab8047784cfa8b1939af4042d71aba56a18c9f0a78ec71b5d18cd0",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/api-docs.e2e-spec.ts", "docs/runbooks/dms-api-explorer.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-03.09",
+      "requirement": "Each implemented public capability must include usable request/response examples. Complete v1 examples must cover user/backend sessions, machine tokens, Thaarei enrollment and rotation/revocation, single-file/batch browser transfer through a backend, and independent backend integration without exposing service secrets to a browser.",
+      "requirementSha256": "9e1e682f0d96740776379008b23099d0f1d7192e864baeea3a58ce460487387d",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/api-docs.e2e-spec.ts", "docs/runbooks/dms-api-explorer.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-04.01",
+      "requirement": "Capture application/actor context, tenant, action, affected resource, outcome, time, and correlation information for security-sensitive operations and state changes.",
+      "requirementSha256": "ab1bf604fb5433b269ae7b4cdbf305de4c922fcbd7bd0c36c42be19112dba648",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-audit.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-04.02",
+      "requirement": "Record enrollment issuance/consumption/revocation, activation/disablement, credential administration, authorization/grant changes, batch/session operations, transfer authorization, publication, metadata/reference changes, deletion/restoration, reprocessing, and disposal as those operations become available.",
+      "requirementSha256": "c6cd8a646ef80dcc26a8e0322e616d248a691f744e273f6784e805a8f757e562",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-audit.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-04.03",
+      "requirement": "State-change audit must agree with the corresponding committed operation. A retry must not create a fictitious second publication or second lifecycle change.",
+      "requirementSha256": "8cc7ae8a85c709dd6d2e8a4c1090023e44236d0664725c43905add32a107b50e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-audit.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-04.04",
+      "requirement": "The owning application and authorized tenant operators must be able to retrieve paginated document audit records; unrelated applications and tenants must not see them.",
+      "requirementSha256": "5f3982fe74c9d2beafc1557c4142e3c8284ab712b642b2209f082bd55f0330e9",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-audit.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-04.05",
+      "requirement": "Audit must exclude file bytes, extracted text, credentials, bearer tokens, and signed URLs. Reported user context must be identified as application-asserted context.",
+      "requirementSha256": "9f75b32adbbc69f33673fc909dfdb49404b351fa2a663922bf222facfce3856b",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-audit.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-04.06",
+      "requirement": "Ordinary application access must not allow silent rewriting of audit history. Retention must follow configured operational policy without claiming regulated immutable storage.",
+      "requirementSha256": "a3fcb3c22a52040cbb5555bb872ce6977bbb55607dd2f45a7a4c628ddabb0636",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-audit.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-04.07",
+      "requirement": "Issuing a download capability must be recorded as authorization issuance; it must not be presented as proof that the entire file was downloaded.",
+      "requirementSha256": "5d25c44637ff0eb19f991883b84d15e636ea037142d0781eb1f797d3e3af6e84",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-audit.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-05.01",
+      "requirement": "Allocate a stable document ID, tenant, owning application, and initial candidate version identity as part of beginning a new document upload.",
+      "requirementSha256": "3ccf055702934f69656579a81de9d3af9133939a26366068c47c93084f8e8815",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-05.02",
+      "requirement": "Preserve the logical document ID across new binaries, metadata changes, reprocessing, and supported restores.",
+      "requirementSha256": "62dacaa871f2fd1eae21a379f8a2b9c811320e00f8ec444e4449f5fcc5d87497",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-05.03",
+      "requirement": "Expose document title, original display filename, ownership, lifecycle state, current-version identity when present, and revision information to authorized callers.",
+      "requirementSha256": "bc7b0bb971dd9603ca6b49b1b5bb96914b8bd4aaf5a2279fe5a38100fdfc7e2e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-05.04",
+      "requirement": "Distinguish an existing logical record from an available original. A record with no published version must not appear as a downloadable or searchable document.",
+      "requirementSha256": "f96e651477f3f2360b064c65770f5e2104abab8d54f49bee3618ee2ce1202406",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-05.05",
+      "requirement": "Provide authorized document retrieval and bounded listing; original filenames must be sanitized presentation data rather than storage locations or authority.",
+      "requirementSha256": "dbf00b045ebc8db37c8060ba70927a9a0bbd43c88b9c5cf8a03d03a4b92ac6e2",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-05.06",
+      "requirement": "Document, binary version, upload session, security assessment, processing run, and indexing statuses must remain distinguishable.",
+      "requirementSha256": "998e75196a99703559e3c7419fd6f89ea42ae574f3d5a520c40bb1a9aec7d4b6",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-06.01",
+      "requirement": "Enforce configured format, size, page/frame, image-dimension, nested-item/expanded-size, spreadsheet sheet/cell/range, batch-item, metadata, artifact-output, and processing-time limits before unsafe allocation or execution.",
+      "requirementSha256": "2bc218f3a60d93f3283e97549fbbdef694ca6cbde0ef4cabf9b111d64eed064e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-06.02",
+      "requirement": "Support operator-controlled `secure-only` and `searchable` profiles and the installed/enabled opt-in `structured` profile, with versioned settings and application permissions. Reject unsupported/disabled profile-format combinations explicitly.",
+      "requirementSha256": "f1d03481cfaa226a1cf21ff873f0e141aeb1f67e1522ee1da906fc3f0950456f",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-06.03",
+      "requirement": "Reserve the declared upload and candidate-storage capacity before granting transfer authority. Concurrent requests must not spend the same remaining capacity more than once.",
+      "requirementSha256": "e9f630e53cb0cd0266189a569035a71817fb9435df874e7671510860fb64c0cf",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-06.04",
+      "requirement": "Account separately for staging, originals, historical versions, artifacts, and retained rejected/deleted content. Release unused reservations and removed bytes once, against actual outcomes.",
+      "requirementSha256": "441c46cfa330aadc315ae20f390deef55d5fdf2bb3cd76efcb6fe8835f32a8eb",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-06.05",
+      "requirement": "Bound open batches, manifest/request size, active uploads, queued work, running work, and reprocessing. Return an explicit admission/rate/capacity outcome with retry guidance where applicable.",
+      "requirementSha256": "4a85582558609928bdbb95578ab86471f283bda70f2f1b2f4ec97b31bcc0630e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-06.06",
+      "requirement": "Limit expensive processing fairly across registered applications within the installation's one tenant, enforcing application and tenant-wide limits while preserving separate capacity for mandatory scanning.",
+      "requirementSha256": "ff0e961bf7385978e5a01785239ff9dfc0c6422d4a46462d49c3fb128869b4d7",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-06.07",
+      "requirement": "Storage/scratch pressure and unavailable mandatory dependencies must block affected unsafe work without incorrectly reporting success or permanently consuming reservations.",
+      "requirementSha256": "33cdca22a5df171839c38f7d7a2f7d4ed0e3a9368bbf3d47124d8b96be701797",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-06.08",
+      "requirement": "Effective policy values must be discoverable. Consumer applications must not select arbitrary processors, executable instructions, or file-storage destinations.",
+      "requirementSha256": "a589327db40de59b0fd3496122ceddeada5019c23e5042bc67fc1e8bbe41bea5",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-06.09",
+      "requirement": "Additional industrial/proprietary types may be admitted for storage-only use only under explicit operator policy with assessable required security checks. Unsupported extraction must remain distinct from a security pass; unassessable content must remain unavailable.",
+      "requirementSha256": "71884b7fac0c14cfc5d4f1bb899942997f95fbbc48f6107e631777352d8d9489",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-admission.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.01",
+      "requirement": "Create an upload session bound to the authorized document/candidate, declared size/type, requested profile, optional checksum, reservation, and expiry.",
+      "requirementSha256": "7e548e94952a548f8b5513a938b41930f9ada2b633083276bd65eb75b67408d5",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.02",
+      "requirement": "Return a short-lived capability restricted to a unique staging destination, the declared byte length, permitted transfer operation, and create-only behavior.",
+      "requirementSha256": "6096b4d2d80644f120a4031f2ca7d6303f57d47ec62cb05fe6f488bd4f9506fa",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.03",
+      "requirement": "Support direct single-PUT transfer from a browser or independent backend to SeaweedFS. Do not expose general storage credentials or original/artifact write access.",
+      "requirementSha256": "5e85e3278ab27c82d42272c9545f7e2ce5fce434761c92842ba4417ee68f035f",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.04",
+      "requirement": "A replayed upload must not overwrite an existing staging object or published original. The consumer must be able to inspect and complete the existing session after an ambiguous/repeated transfer.",
+      "requirementSha256": "271c64bb2b0e35b02a67fe1c7cf6c72e8455472322c3afc5305f281ccff12d08",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.05",
+      "requirement": "Completion must acknowledge receipt of the request and expose status; it must not itself imply security approval or original availability.",
+      "requirementSha256": "a901cf5e37e2fe9dcb4331c050c3b6e57dd1be1a75f853ae94a11415067f70f8",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.06",
+      "requirement": "Refresh transfer authorization only after current access and session eligibility checks, without reviving expired/cancelled sessions or exceeding their expiry.",
+      "requirementSha256": "f6c243e17849b0f74660b153b7ea59df19a0398ee80ad404a9f2d4734c1bd982",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.07",
+      "requirement": "Support cancellation/expiry with a single consistent outcome against concurrent completion. A completed publication cannot be undone by cancelling its former upload session.",
+      "requirementSha256": "237c8e9e12b53ccae3b22c89078110a300255d5d28595c37270470926feeaeed",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.08",
+      "requirement": "Reconcile uploaded bytes with the correct persisted session and candidate, including actual size and any declared checksum. Do not treat an unrelated storage object as a completed upload.",
+      "requirementSha256": "a7f9cd071be71e2e8fdc06ebfc18704628396e996c24a974c6f768675d4f0405",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.09",
+      "requirement": "Preserve private staging isolation and clean abandoned data only after issued capabilities are no longer usable and retention/cleanup conditions permit it.",
+      "requirementSha256": "fb2198265d010fead9fe4196baf2d37bb144ab143196abec61f78a49ce1dfdff",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.10",
+      "requirement": "Reject unsupported multipart/resumable requests and files outside the single-PUT limit with clear capability/size errors; do not advertise these deferred features.",
+      "requirementSha256": "3fde50e3aa1172d58b43a476112bac622e4707b04c35e957fbeea47a2d963fae",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.11",
+      "requirement": "Permit an application to create a bounded multi-file batch manifest with stable unique item IDs and file descriptors. Manifest creation alone must not create documents, reserve physical bytes, or issue transfer authority.",
+      "requirementSha256": "76e84e4d4c782bbefa21f1da1f1d75b54edb1e2f558e0d8b3d26567eb9fd853e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.12",
+      "requirement": "Start each batch item's ordinary upload session independently under current authorization/admission limits. Bind an item to at most one document/candidate operation, preserving that identity across retries.",
+      "requirementSha256": "fcfbd11fa3d3ed9a7a7e70a834276b98f5e9c61d70cb1222ba3bde55fd1440a7",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.13",
+      "requirement": "Expose authorized aggregate stage counts and paginated per-file upload/security/availability/processing outcomes, including admission delay and retry guidance. A batch must not imply every item succeeded.",
+      "requirementSha256": "6e25b357cec97ae61d574d2117b6ca6abc40bb7afa560ef350a278112aa8517f",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.14",
+      "requirement": "One item's failure or retry must not roll back successful items. Each file must remain an independent document/version with ordinary access and processing rules.",
+      "requirementSha256": "dc3e173cf42591ce0ba930e2a8f14bdf526121eb22b38f6dffeeeda5ca762144",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.15",
+      "requirement": "Support batch closure/expiry and cancellation of unstarted/eligible pending items, with consistent outcomes against concurrent session creation/completion. Never delete already-published documents as a side effect of batch cancellation.",
+      "requirementSha256": "9c2a1de1a03e2078062d4119ced0f294d47ef184d25d86b19a6c4d721d3761fa",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.16",
+      "requirement": "Restrict batch inspection/control to its creating application and authorized tenant operators. Grouping must not grant access to another document; new-version batch items require group 11's versioning rights and behavior.",
+      "requirementSha256": "ecb49b7999452bb6b198171c06d77594181d60ded627e1def0234cce890ab7ce",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-07.17",
+      "requirement": "Treat multi-file batches, archive contents, and multipart upload as separate capabilities. Batch support must not silently unpack archives or advertise deferred multipart transfer.",
+      "requirementSha256": "8358eb56dc5f20f76cda2c21982702cf636adf2eb346d7e05cf64feb0279e7ac",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-uploads.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-08.01",
+      "requirement": "Persist required work and its relationship to the document/version before reporting the operation as accepted.",
+      "requirementSha256": "2d3f3f2e5432021a319a326f0e879dc3f5a77ad0b4da1a2bbdecb7eb5372f013",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-work.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-08.02",
+      "requirement": "Expose separate upload, security, publication, processing, and indexing outcomes. Pending work must progress to a documented result or visible actionable failure.",
+      "requirementSha256": "d0b1655164b1d8720c5caf5fc94b4e148b842252b6125e20311dd0565d749e27",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-work.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-08.03",
+      "requirement": "Recover incomplete uploads and due work without depending on the client completion callback or optional storage notifications.",
+      "requirementSha256": "2f91fd847aa9ec54d3c348e7912abe0cc986b74e97c580d5a49d897e369174df",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-work.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-08.04",
+      "requirement": "Duplicate/out-of-order delivery must not create duplicate accepted results, revisions, quota charges, or state transitions.",
+      "requirementSha256": "dc136e0346477d67e19834545faa1255d21e2eff904c0f6fdea2ab30f7399ff2",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-work.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-08.05",
+      "requirement": "Recover interrupted execution with bounded attempts and elapsed-work budgets. Treat policy/content rejection as terminal rather than retrying indefinitely.",
+      "requirementSha256": "5cb65db51ed901fc0338177b8e7d40604f81f6bd4672eb49416f101ebffe63d3",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-work.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-08.06",
+      "requirement": "Late results from cancelled, expired, replaced, or invalid attempts must not affect active state or resurrect unavailable content.",
+      "requirementSha256": "de67bc913d6ab8bdb532f213304cdff2029664d78a9d1985824a9217719fad3f",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-work.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-08.07",
+      "requirement": "Authorized operators must be able to inspect failed work and request a controlled retry against current policy and lifecycle state.",
+      "requirementSha256": "13f6d0fcb40a30b25c5bfa659f1ff5326a73300edf0bced1795c0f1eac57a715",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-work.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-08.08",
+      "requirement": "Record domain changes and required outgoing work consistently. Missing delivery/routing must remain visible and recoverable, rather than marking work complete merely because transport accepted a message.",
+      "requirementSha256": "7a6ab2e2ba6e0a6dc0bf41f752beeb0b458696d3cad106aae130c5833e45a58e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-work.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-08.09",
+      "requirement": "Consumers must be able to poll authorized status without access to internal queues, workers, or administrative interfaces.",
+      "requirementSha256": "58333280ad4138e707ca02115557a87665eaeeb51b78456d1e2477d3ce78881c",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-work.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-08.10",
+      "requirement": "Persist one authoritative execution budget and retry eligibility per job. Ordinary transient retries and recovery of lost execution must not compete to create independently accepted work; transport/framework status alone must not establish business completion.",
+      "requirementSha256": "60fa38fd533de8d7288084ca5143b2c82658343c07fce325ab2135071bc0400c",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-work.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-08.11",
+      "requirement": "Long OCR/structured work must not exhaust mandatory scanning capacity or prevent ordinary text extraction from progressing. Expose queue age and processing delay by work class.",
+      "requirementSha256": "a0fbb3edd28ae5317c91ddd5a47dda04b23f893207f5606f5e390602775327be",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-work.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-09.01",
+      "requirement": "Keep every new upload/candidate unavailable through normal file retrieval until required integrity, format, structural-policy, and malware assessments pass.",
+      "requirementSha256": "b6d604772c3cdf56ce9f9d1809f392ec67bae345a8593cc5d4f5e88d53828fef",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-assessment.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-09.02",
+      "requirement": "Establish a server-controlled immutable original candidate, assess that object, and publish access to the same bytes. Reusable upload authority must not change those bytes.",
+      "requirementSha256": "fa1df061212c099e1c136eb22cc9fae766f98a1a39cd0aeaaaac45b10c2841cb",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-assessment.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-09.03",
+      "requirement": "Derive the authoritative content checksum from the file and check any declared checksum. A storage concurrency identifier must not be mistaken for an equivalent checksum.",
+      "requirementSha256": "84b2d54d4dce2f2fdac9685d63aa747bcdff63f82ba0dbfa92feb8515a8112d3",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-assessment.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-09.04",
+      "requirement": "Determine actual content type from content and enforce the supported-format policy, irrespective of filename or claimed MIME type.",
+      "requirementSha256": "1b8101d0091f5057bc45bac621a3183dcf6466738672fb4b923b7ab46c63d8ce",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-assessment.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-09.05",
+      "requirement": "Apply format-specific PDF/image, Office/spreadsheet, text, and email policies, including page/frame/dimension, sparse-range/cell, nested-item/expanded-content bounds, macro policy, and rejection/inconclusive handling for encrypted, malformed, embedded, or unassessable content.",
+      "requirementSha256": "aaec05339169f4c354e89a1d12672c19297744af80fcdef3b26221dcc7cd3d0a",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-assessment.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-09.06",
+      "requirement": "Distinguish security pass, rejection, and inconclusive assessment. Scanner errors, skipped content, exceeded coverage limits, timeouts, encryption, and stale signatures must not become a pass.",
+      "requirementSha256": "e41be8191a9bdafab32451978c533b9b17d63eedfdd08d5f1fe5f3759feed087",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-assessment.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-09.07",
+      "requirement": "Retain the assessed source identity/hash, policy/scanner/signature versions, time, coverage evidence, and outcome with the affected object/version.",
+      "requirementSha256": "9b1ed2024b93aa67469b2cb81cccd8ad742ec70b413bae6911f1eb8d3cb81cdb",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-assessment.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-09.08",
+      "requirement": "Automatically make a passed candidate available and select the first current version consistently with the document record, audit, and required work. A failed candidate must not replace an existing current original.",
+      "requirementSha256": "e9b7291422d32e7b299417241911feffa39d48f403de0e2585f3513407364370",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-assessment.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-09.09",
+      "requirement": "Make the passed original available independently of optional extraction/indexing success; expose those statuses separately.",
+      "requirementSha256": "02fcdc1cd612289b37b6da4dbc06f0806e39219766578fdc972a6c047c6d7b6b",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-assessment.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-09.10",
+      "requirement": "A later security invalidation must stop new access to affected originals and derived content, including every version referencing the same bytes. Existing short-lived issued capabilities retain only their bounded validity.",
+      "requirementSha256": "0fa086b20b84e6f35ed0646d9d5fe1cef3033fc6575f7e3de81b1ce71cc8b255",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-assessment.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-10.01",
+      "requirement": "Authorize tenant, application, ownership/grants, document lifecycle, version availability, and security state before issuing read authority.",
+      "requirementSha256": "227d7cf168c5afeaa2e0a99708b500d41f902b3684ed2c40d757a72b37747a47",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-secure-transfer.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-10.02",
+      "requirement": "Return short-lived read-only access to the selected protected object; normal original bytes must transfer outside the control API.",
+      "requirementSha256": "e3fa0d273ceb8581e0bde0c6762e474ba600a1e8283783e3845cf6c89c780a40",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-secure-transfer.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-10.03",
+      "requirement": "Default retrieval to the current available version. Pending, rejected, inconclusive, deleted, or purging content must not receive normal read authority.",
+      "requirementSha256": "806076dada60963922d09ce2b88ba167de4c35154ca9a3ff819ea2726d63d71b",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-secure-transfer.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-10.04",
+      "requirement": "Support ordinary large-response/range retrieval within the selected storage contract without granting access to other files.",
+      "requirementSha256": "ce58909bdfb94fb0fdb381ee444123c4811acee017d36136c2baa8c390c53fbd",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-secure-transfer.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-10.05",
+      "requirement": "Return safe content disposition and a sanitized display filename. Prevent accidental caching, logging, or analytics capture of signed capabilities.",
+      "requirementSha256": "98550e75fa11cdca78763cd10ef476c203ad68b8abbe7e82e15002da5ad362a9",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-secure-transfer.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-10.06",
+      "requirement": "Disabling/revoking access must prevent new capabilities immediately. Disclose that an already-issued capability can remain usable until its short expiry.",
+      "requirementSha256": "21440a51de56e67ec2c5ec3f1657b40f5a2e2b88224ef3c6b669ba587d04e316",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-secure-transfer.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-10.07",
+      "requirement": "Retrieval failure must distinguish policy/unavailability from transient infrastructure errors without leaking another application's document information.",
+      "requirementSha256": "f7378cb9e56d5a27ea6c498109a68a389c1e6cc1c5392d5343a937a0a5c7bc7a",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-secure-transfer.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-11.01",
+      "requirement": "Support new candidate uploads under the existing document ID with unique, monotonically increasing revision numbers; failed candidates may leave gaps.",
+      "requirementSha256": "f424d242922bb8dcebaee341300fd6cb49a43937fccf9f7973dbaa6867419f24",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-versions.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-11.02",
+      "requirement": "Keep the current available version accessible while a replacement is uploaded and assessed.",
+      "requirementSha256": "f4b4b3e6a3f39fe13ddd94ddf0a2cbb8594d3a690b44179df3ea11d01a6d0973",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-versions.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-11.03",
+      "requirement": "Every replacement must pass the same upload, quota, integrity, and security requirements as a first version.",
+      "requirementSha256": "fe439a08207cc41be2a82217fdc78da17ab2bc6d04719ae2ddf85b558e21566a",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-versions.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-11.04",
+      "requirement": "Expose authorized version history and explicit historical retrieval, including revision identity, availability/security status, file identity, and relevant processing status.",
+      "requirementSha256": "94426899e9c7f946e5f8d6a85a55bceb6181fba643d7e0ec7b0f5e277c3d9ddc",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-versions.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-11.05",
+      "requirement": "When candidates finish out of order, a lower revision must not replace a higher current version. Concurrent publication must have one consistent current outcome.",
+      "requirementSha256": "91a326bc698600da63f9c7da0975e355e5cb4ec10f8acd73a3d7fed84dd83513",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-versions.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-11.06",
+      "requirement": "Restore historical bytes by creating a new highest-numbered revision and applying the current security/publication policy, without rewriting the historical version.",
+      "requirementSha256": "9c4f4cc99aeab059150f0263530fa5e1d7ee8f026958353db03da3d671bc7de6",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-versions.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-11.07",
+      "requirement": "Preserve live object references when historical restores reuse protected bytes; reprocessing or metadata changes must not create a new binary version by themselves.",
+      "requirementSha256": "af47c2a1623f73eb58baa95160fc994597bdb698d0ec3a3da1adffff65eb76f3",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-versions.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-11.08",
+      "requirement": "Version-specific retrieval, content, and status must remain bound to that version rather than silently switching to a newer current original.",
+      "requirementSha256": "cfe3d8bc20fbeae9d9f7b3f78e12bedff25f4cff6f80ceca52c43aa65b6bdb87",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-versions.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-12.01",
+      "requirement": "Allow authorized changes to title, tags, and bounded JSON metadata without modifying original bytes or binary revision history.",
+      "requirementSha256": "737de315a2ebe9b52ae936b6a22a41a5c9a788c4f4bb09c1cb78f582bdce2d6e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-metadata.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-12.02",
+      "requirement": "Enforce supported metadata shapes, size/value bounds, revision checks, and audit for accepted changes.",
+      "requirementSha256": "03f7ea5b8a6655295efc470744da1df53d25202e083f3a23fa8d86f019399edb",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-metadata.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-12.03",
+      "requirement": "Support documented list filters over title/name, supported tags/fields, and external references; do not expose an unrestricted arbitrary metadata query engine.",
+      "requirementSha256": "19444190fbe310f042973a630c649be9b9abd520f44c29cd931fea003f2f5c09",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-metadata.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-12.04",
+      "requirement": "Allow authorized applications to link/unlink external source-system, entity-type, and entity-ID references within their registered source namespace.",
+      "requirementSha256": "6521e7753b8864f74891c66601a1972c35603c9919069ba17abee08debfc46c4",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-metadata.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-12.05",
+      "requirement": "Namespace references by tenant and application so identical external IDs in unrelated applications do not collide or imply shared ownership.",
+      "requirementSha256": "d7daa1408b05b70beb8fe9a166d31ac8bede1101119787e92e29aeda9277cfa3",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-metadata.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-12.06",
+      "requirement": "Require existing document access for reference operations. Creating/removing a reference must not grant/revoke document access or cause the DMS to fetch the external record.",
+      "requirementSha256": "0619d5aebb220d41c79a799f81cc33ff58e57c6d2516c8b67efc43eb7d0d8daa",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-metadata.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-12.07",
+      "requirement": "Preserve multiple authorized references to one document, retaining their source/application namespaces, and expose them only to callers authorized for the document.",
+      "requirementSha256": "9784b98a2e4236f1941dae1c9b5ec3ba0b16a53d93d80e0a42a7841f75ad0e92",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-metadata.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-13.01",
+      "requirement": "Support explicit grants to registered applications in the same tenant for `READ`, `EDIT_METADATA`, and `ADD_VERSION` as separate permitted capabilities.",
+      "requirementSha256": "446eb3e46ea798c31081848e2fea3948d8eeb41f4ce7cf693458d886d526ee98",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-sharing.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-13.02",
+      "requirement": "Only the owning application or tenant administrator may change grants. Grant changes must use revision checks and be audited.",
+      "requirementSha256": "f7a78bed4923273f6784b6e0fabe7fb8fd81f46d376a96b8a7aa518f28eb5171",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-sharing.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-13.03",
+      "requirement": "Enforce read grants consistently across original/history retrieval, extraction, status, and search as those capabilities are available.",
+      "requirementSha256": "02041964780f442b8437e5062ff371a486dc93ad89b4f61186570fb4e419e167",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-sharing.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-13.04",
+      "requirement": "Restrict delete/restore, reprocessing, and permission management to the owner/admin; an ordinary read or add-version grant must not confer these powers.",
+      "requirementSha256": "2b0a01532a9e679e30ae0b1352cbf6b1a773fc7e1f9fd7e8665062728fcec427",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-sharing.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-13.05",
+      "requirement": "Apply revocation to new control requests and new capabilities immediately, including search snippets/counts and processing results.",
+      "requirementSha256": "aaef2cb30fe2f93260eadced542d9ea59bccfc2febac57e639fdd1e9cbdc2417",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-sharing.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-13.06",
+      "requirement": "Reject cross-tenant sharing and ownership transfer. Business references and common tenant membership must not create implicit grants.",
+      "requirementSha256": "5dafc1b7583751e6b35f50a730b1ca8a3e5b7208cecd3f057545da41478b7d57",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-sharing.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-14.01",
+      "requirement": "Permit only the owner/admin to soft-delete an active document with the required revision protection and audit.",
+      "requirementSha256": "518eb6b2e187fc0a75bb9438a7b185873106fc3eaec153620b69c8ab370c0210",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-lifecycle.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-14.02",
+      "requirement": "Immediately remove a deleted document from ordinary listing, search, content, and retrieval eligibility and stop new transfer capabilities.",
+      "requirementSha256": "cfad0be72e9840c77b7dad025717d4e99cf032b6a465853b1586ff4ec4063c61",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-lifecycle.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-14.03",
+      "requirement": "Cancel/ignore affected work so late upload, processing, or indexing results cannot restore visibility.",
+      "requirementSha256": "0a4d46b67ff61eb70f030ce81f8b6a16570ec2d9a0baf13b927ecda30dfb9d76",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-lifecycle.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-14.04",
+      "requirement": "Preserve versions and object references through the configured logical restore window; do not release retained physical-byte usage prematurely.",
+      "requirementSha256": "223a1cea44cd5acb537f2212ca06a9a807a5d8b41bc008695f8c627bcd669e47",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-lifecycle.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-14.05",
+      "requirement": "Let the owner/admin inspect the lifecycle outcome and restore an eligible document before the deadline, preserving its logical identity and valid grants.",
+      "requirementSha256": "ad513e30a83d4531b0283b751cde57f145de14c6884cc7b7d5ffa20a4f03c8c9",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-lifecycle.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-14.06",
+      "requirement": "Check object availability/integrity and current security policy on restore. Invalidated content must remain unavailable until reassessed.",
+      "requirementSha256": "70a1b685d7fd5a9698cffb389a19a25fdb1f4f285e311eaeb6d352f291bda325",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-lifecycle.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-14.07",
+      "requirement": "Resume needed work under a fresh valid lifecycle context, without accepting results from the former deleted context.",
+      "requirementSha256": "264c3b18bd933904014d9275d24237939b9d8d85748eb9c892d1785ca43963fd",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-lifecycle.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-14.08",
+      "requirement": "Refuse logical restore once physical disposal has begun or the restore window has ended. Keep physical disposal as the separately controlled capability in group 20.",
+      "requirementSha256": "130ae4930002508e3a7295beecfdf623874af65ef50d23934d9a7c6b948fbeac",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-lifecycle.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-15.01",
+      "requirement": "For the `searchable` profile, extract text from security-passed native PDF pages and supported text files using bounded asynchronous work.",
+      "requirementSha256": "78774b0b627a871a2d86bd0172b2b00fdb5d1b768d3edf793e01f488fd62c758",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-processing/tests/test_extraction.py",
+        "docs/runbooks/dms-extraction.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-15.02",
+      "requirement": "Preserve source document/version identity and appropriate page, slide, paragraph, sheet/cell, line, or email-part references. Record source hash and processor/profile versions; never invent rendered pagination for a format that does not supply it.",
+      "requirementSha256": "d98b0c52038a917e6161457aa98dcc1d161906c5a7b7cdb922b20c30379da289",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-processing/tests/test_extraction.py",
+        "docs/runbooks/dms-extraction.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-15.03",
+      "requirement": "Distinguish usable text, legitimately empty pages, pages needing OCR, unsupported extraction, and failures. A small text header must not establish complete page coverage.",
+      "requirementSha256": "e0dd48e31b05dfedbe68284184650f642a91cccd0c7964fec2deeec1b346bd20",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-processing/tests/test_extraction.py",
+        "docs/runbooks/dms-extraction.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-15.04",
+      "requirement": "Record per-source-unit outcomes, warnings, attempted/completed coverage, and overall success/partial/failure without inventing missing content, including assessed embedded content omitted from extraction.",
+      "requirementSha256": "e97a821af306ff88e236afaf8bc1d3f7f143ffe5fe6b3aaa31fd79b0d50ef019",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-processing/tests/test_extraction.py",
+        "docs/runbooks/dms-extraction.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-15.05",
+      "requirement": "Enforce extraction-time, memory, image, and output bounds. A failed extraction must not make an otherwise available original inaccessible.",
+      "requirementSha256": "2ad97cfa8e6678f05e98845ec1a7181ae23acf1188e9b14d9f0962514bf996d9",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-processing/tests/test_extraction.py",
+        "docs/runbooks/dms-extraction.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-15.06",
+      "requirement": "The `secure-only` profile must omit enrichment explicitly rather than appear stuck or imply that text extraction succeeded.",
+      "requirementSha256": "8c51194652d4ebaa38ab2cc14f373bfd03f9626e1e0f669d1f91f580554f3c69",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-processing/tests/test_extraction.py",
+        "docs/runbooks/dms-extraction.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-15.07",
+      "requirement": "Extract bounded body/slide text and supported metadata from the approved Word, PowerPoint, OpenDocument, and RTF families, reporting unsupported elements and incomplete coverage.",
+      "requirementSha256": "c9924fa2d6e02bf2e5acba85e87795a6b513f5e055e2168b111ebbed70852d96",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-processing/tests/test_extraction.py",
+        "docs/runbooks/dms-extraction.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-15.08",
+      "requirement": "Read supported Excel/OpenDocument sheets and bounded cells into attributable tabular results with available value types and cached values. Distinguish formulas/cached results when available; never imply recalculation, execute macros, or fetch external workbook links.",
+      "requirementSha256": "57a76987a15837936025ca211c76545b61298fc19a8ad2339dc29a38604cc11c",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-processing/tests/test_extraction.py",
+        "docs/runbooks/dms-extraction.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-15.09",
+      "requirement": "Parse supported UTF-8 CSV/TSV under explicit delimiter and cell/row/output limits, preserving row/column references and treating formula-like content as data.",
+      "requirementSha256": "dc4095787d71316629c137c875a7195e3471b6b40ec07112f333340e3480fc66",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-processing/tests/test_extraction.py",
+        "docs/runbooks/dms-extraction.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-15.10",
+      "requirement": "Extract approved EML/MSG body/headers and a bounded attachment inventory. Security assessment of attachments must remain distinct from text extraction; do not automatically import attachments as separate documents or promise OCR of every embedded image.",
+      "requirementSha256": "afa974ec5ef7d657f61c881ac721264bb47ac84351df29c8b1e8da9552d952e2",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-processing/tests/test_extraction.py",
+        "docs/runbooks/dms-extraction.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-15.11",
+      "requirement": "Route each format/profile to its selected primary extraction path, with only the required OCR fallback. Avoid running every engine on every file; unsupported extraction must have an explicit outcome independent of original availability.",
+      "requirementSha256": "3565fa4331acd2e238e2e65c2614dbb4500d349c3268735ede010b6d88964899",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-processing/tests/test_extraction.py",
+        "docs/runbooks/dms-extraction.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-16.01",
+      "requirement": "Recognize text from scanned PDF pages and approved JPEG/PNG/TIFF/BMP/static WebP images within configured pixel/page/frame/time limits, preserving multi-page TIFF order and reporting any unprocessed pages.",
+      "requirementSha256": "640670556c58a689e83cfb07ccb7bae4d80f827dee75c89ada4c048abb59f5a5",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-processing/tests/test_ocr.py", "docs/runbooks/dms-ocr.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-16.02",
+      "requirement": "Support English OCR and identify the configured language/model version; do not claim support for unconfigured languages.",
+      "requirementSha256": "89308b2376b7ec047a564eae3a0271964c4ed6e423b5e5736b3174c820635a59",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-processing/tests/test_ocr.py", "docs/runbooks/dms-ocr.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-16.03",
+      "requirement": "Handle native, scanned, and mixed pages within one PDF without needlessly replacing usable native text or duplicating native and OCR output.",
+      "requirementSha256": "64071eaeab85a040d9080a67ffe2b1b469f151355cc922cb7c77b61c43bf9ddf",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-processing/tests/test_ocr.py", "docs/runbooks/dms-ocr.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-16.04",
+      "requirement": "Account for pages containing both native text and image text; perform bounded recognition or report incomplete coverage rather than silently omitting image content.",
+      "requirementSha256": "69a9df6c0d4e3a54ff7adf5198f2818f4bf17d4429e9e4f2fb09570ecbe9917a",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-processing/tests/test_ocr.py", "docs/runbooks/dms-ocr.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-16.05",
+      "requirement": "Apply supported orientation handling and identify failed/uncertain pages or image regions in the result.",
+      "requirementSha256": "488689ae1924ebe85380048dc5fe200733f3e20092c18b61de23a0c677c4ab2f",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-processing/tests/test_ocr.py", "docs/runbooks/dms-ocr.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-16.06",
+      "requirement": "Use engine-specific confidence only where available, with no fabricated universal confidence or guaranteed table/handwriting accuracy.",
+      "requirementSha256": "71824268dcf9696662eee6a25a38edb2dac81553dc920f08a039bd76a458395c",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-processing/tests/test_ocr.py", "docs/runbooks/dms-ocr.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-16.07",
+      "requirement": "OCR must preserve the original bytes and report explicit partial/failure outcomes when limits are reached. The accepted OCR quality target is recorded in the shared quality requirements below.",
+      "requirementSha256": "3fd12124ec4c85ab23d62d1c77f3c0c21809a68f546cb3355680bbf2cc79d653",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-processing/tests/test_ocr.py", "docs/runbooks/dms-ocr.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-17.01",
+      "requirement": "Expose processing run history, the active accepted run, independent indexing status, and the distinction between run completion and extraction completeness.",
+      "requirementSha256": "561accf444d6a21ef83b8000ea230f47a0923c3eca785136180c131ad148bbd4",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-results.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-17.02",
+      "requirement": "Provide an authorized result manifest with document/version/run IDs, source hash, artifact schema and processor/profile/model versions, language, format-appropriate source-unit coverage/warnings, and artifact references.",
+      "requirementSha256": "e6d4955e81116cad13122601759642af20cfadb044116e0c231d29353044d906",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-results.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-17.03",
+      "requirement": "Permit authorized access to accepted text/artifact results using bounded responses or short-lived capabilities, with the same current lifecycle/security/access checks as originals.",
+      "requirementSha256": "c970d180f38686171258a574c8d0109830d4a7840038269ab07992867aea4249",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-results.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-17.04",
+      "requirement": "Support explicit version/run selection without silently returning output for another version or a different run.",
+      "requirementSha256": "f055f8b6b399905538f9e10dabbc549d36cbcb87ebfdddb688db9c5a3994783b",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-results.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-17.05",
+      "requirement": "Permit the owner/admin to request a new bounded processing run under an allowed profile/configuration while preserving original bytes and binary revision history.",
+      "requirementSha256": "6661969ca8bb227ecbca26fb3205dced659eae9941d549e20f18c2ddd6673817",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-results.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-17.06",
+      "requirement": "Keep the previous accepted active extraction while a replacement is pending or fails. Promote an eligible accepted replacement consistently.",
+      "requirementSha256": "5cc77022cb6d7f33e4d353be4a8bd890758992459de867437fbff3b75e148caf",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-results.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-17.07",
+      "requirement": "Prevent stale/duplicate attempts or superseded runs from overwriting accepted artifacts or the active result; retain provenance for accepted results.",
+      "requirementSha256": "a76782300a202e4bdec30133dff5fb0705fada8155571cc1a77695529d1fd2cb",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-results.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-17.08",
+      "requirement": "Preserve page identity and documented coordinate meaning where OCR boxes exist, without promising stable element IDs across different processor versions.",
+      "requirementSha256": "06ae6b1b253acc4bbd688cbed3809f270cf4cbf8753ada653b06421cc004569b",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-results.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-17.09",
+      "requirement": "When the structured profile is installed/enabled, permit authorized opt-in PDF/image layout/table extraction and expose versioned JSON artifacts with source references, coverage, and warnings. It must not be an automatic expensive step for every document.",
+      "requirementSha256": "6871a6922a2285165b3ad1847be6ad03a57d8286a8379cc971bee9496e2c4cb3",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-results.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-17.10",
+      "requirement": "Return structured/spreadsheet artifacts through bounded authorized results or short-lived capabilities, preserving types and documented coordinates where available, without promising exact tables or automatically accepting extracted values as authoritative business fields.",
+      "requirementSha256": "a6a42126b881bb8180c6b179b0c6ab99b9f6d6de1111c8a71d26475f14553251",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-results.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-17.11",
+      "requirement": "Extracted content must remain untrusted data; it cannot change access policy, choose executable tools/processors, or trigger an undisclosed external AI service.",
+      "requirementSha256": "e877e15724aa3c7a9addafa0f5e184ce4905092b3623d4fa45e3210ada42e061",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["apps/dms-api/test/enrollment.database-spec.ts", "docs/runbooks/dms-results.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-18.01",
+      "requirement": "Search supported title/name, tags/filters, business references, and extracted text under the configured English search contract.",
+      "requirementSha256": "1943722ca81d11b0e9db69654d4332c2bd89815c9bd62dbfe7ede8b2cedf3e63",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-discovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-18.02",
+      "requirement": "Default results to active documents' current available binary versions and active accepted extraction results. Historical full-text search is outside v1.",
+      "requirementSha256": "616d1239adc1fee75866f3ac8614a394781b60e3b5bc8e32a8699b2e03167b70",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-discovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-18.03",
+      "requirement": "Enforce current tenant/application grants, lifecycle, and security before returning documents, snippets, counts, or pagination information.",
+      "requirementSha256": "ab99fd8ba8d6a45de75ab9f05ceb4177e534d87ca53981d4025deb6355de09c7",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-discovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-18.04",
+      "requirement": "Return source document/version identity and page, slide, sheet/cell, line, or email-part references where available, without leaking unauthorized extracted content through excerpts or counts.",
+      "requirementSha256": "619b172622d827550d99adefffa9f61a1a0b393622d3ce119cdbac5070f1ad11",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-discovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-18.05",
+      "requirement": "Support bounded queries, supported filters, stable pagination, and documented title/name fuzzy matching; reject unsupported arbitrary searches clearly.",
+      "requirementSha256": "df4e4be950d31837739180200b3ed72c5739f846ba55bc7215ee7167fcaa81f7",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-discovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-18.06",
+      "requirement": "Show indexing status/lag separately from original availability and allow metadata-only search for `secure-only` documents.",
+      "requirementSha256": "81ab2ca270869ad564f08ba862c658ae8e85fb95f21778df1b23696d1c3e642e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-discovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-18.07",
+      "requirement": "Keep the previous usable index active while replacing extraction/index generations. Failed replacement must not clear working search.",
+      "requirementSha256": "260d5527759700c2aece2a4d8172c8b0ca42ef1401783af7c034f7b5803186a9",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-discovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-18.08",
+      "requirement": "Remove deleted, revoked, or newly unsafe content from query eligibility immediately, even if physical index cleanup continues asynchronously.",
+      "requirementSha256": "18a5c3154d3ec1704469525625617fec8e59944f06a1951271bd5acd9e94b3e4",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "apps/dms-api/test/enrollment.database-spec.ts",
+        "docs/runbooks/dms-discovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-19.01",
+      "requirement": "Provide a versioned self-hosted installation package and configuration reference for the selected application, storage, identity, and processing services.",
+      "requirementSha256": "fa1a5bd8e6e018f3f8c9e70098902b0078efe2573ec80fdedf4196d7aaa61e95",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-19.02",
+      "requirement": "Support configuration of the selected authority, clients/scopes, signing-key and credential rotation, Thaarei enrollment, TLS, browser origins, persistent storage, approved formats/profiles, resource limits, secrets, and signature updates through documented operator interfaces.",
+      "requirementSha256": "8966061425634563614d624c3431ffa7e8756c23e9b93adba82222b1858328e7",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-19.03",
+      "requirement": "Expose liveness, API readiness, and processing readiness separately so an enrichment outage does not incorrectly hide available originals.",
+      "requirementSha256": "929e2dea0be53d7d3f05d3c8d5609d7bcec36b584b4b3289627e44372ad4c639",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-19.04",
+      "requirement": "Expose authorized operational status for upload/batch/work backlog, per-class queue age and processing delay, failures, signature freshness, CPU/memory/scratch capacity, backup lag, and repeated recovery errors.",
+      "requirementSha256": "cb9aa2504488c889e830e3b168cca2806e85d3e93fc55aeff60de50d8b136b8f",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-19.05",
+      "requirement": "Provide bounded logs/metrics and correlation for diagnosing an operation without exposing bytes, extracted text, credentials, or transfer capabilities.",
+      "requirementSha256": "066111879930e85abed7f1084b956ee8b984a2d49bd1a0208e5530546c6c141b",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-19.06",
+      "requirement": "Support orderly service restart/shutdown and controlled failed-work retry without losing accepted document state or duplicating accepted effects.",
+      "requirementSha256": "6c5845d85b9869760fddc9c2847f0151270a74c1320d942fe1027e609f251f10",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-19.07",
+      "requirement": "Package required OCR language data, parser distributions, and every approved model artifact for enabled profiles, with checksums/provenance and verified offline scanner updates. Customer processing must not trigger an undisclosed cloud fallback or runtime model download.",
+      "requirementSha256": "d95229e1aa3bc57819932cb226fec54f959dce82ac37731f67c55b685ee1ccf3",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-19.08",
+      "requirement": "Document supported upgrades, compatibility, dependency versions/attributions, and application rollback boundaries while preserving stored documents and contracts.",
+      "requirementSha256": "e94b8c3acf75ea76f3a37f02856b0111a9ca8672d608cc0c77e2bb467ec2f446",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-19.09",
+      "requirement": "Keep operational/admin interfaces private or authenticated. The default single-host deployment must not be represented as highly available.",
+      "requirementSha256": "4876d84ea5b896f3fb19de2458f80a9d75be7901dfce2569ef1a7a71d0712f89",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-19.10",
+      "requirement": "Provide a dependency/image/model inventory, license texts/notices, and applicable covered-source access/offer materials with customer distributions. Document the selected copyleft service obligations and exclude mandatory paid/noncommercial-only dependencies from required product paths.",
+      "requirementSha256": "747b5875cc09391580ec25b2f286231af0df41c50ccfece4fe715e80030b6aab",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-19.11",
+      "requirement": "Permit the declared monthly demand to be supported by configuring bounded ordinary/heavy worker resources without changing public contracts. Report operating-mix capacity and backlog honestly rather than claiming the small-host configuration suits every file mix.",
+      "requirementSha256": "5c627885f8498a972c62e51f6829d5a4579ea1a4b5a36e659e6f9ad9520ff05d",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-20.01",
+      "requirement": "Support recoverable backups of document/database and shared-auth state, original/text/data/layout artifacts, required SeaweedFS metadata/configuration, application/enrollment mappings, enabled processor/model policy, and signing/encryption-key recovery information. Configured external authorities require their own documented recovery coverage.",
+      "requirementSha256": "28cf30459b97d9d3de02dfb1532c4ca4a01c00a2d39b46dabf3772fa53babcdd",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "scripts/fixtures/dms-distribution/recovery.mjs",
+        "docs/runbooks/dms-recovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-20.02",
+      "requirement": "Keep backups outside the failure boundary of the default host. Replication and object versioning alone must not be presented as independent backup.",
+      "requirementSha256": "6fb8ec9815f861f3612d8e9a12f3e7f9ea416f45e67addc8e10cea419e8f0c45",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "scripts/fixtures/dms-distribution/recovery.mjs",
+        "docs/runbooks/dms-recovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-20.03",
+      "requirement": "Record backup coverage/recovery points and select a mutually consistent database/object state during recovery; do not expose records whose required bytes cannot be recovered.",
+      "requirementSha256": "528dd08f9f35f1169df7a70b8c34bccf06e77ef142308a6dd41d383f62bb4e55",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "scripts/fixtures/dms-distribution/recovery.mjs",
+        "docs/runbooks/dms-recovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-20.04",
+      "requirement": "Recover ownership/grants, current/history identities, security state, accepted processing results, batch/session outcomes, activation mappings, lifecycle decisions, and pending work coherently. Reestablish the intended identity/authorization policy before reopening access.",
+      "requirementSha256": "3d530bbc3c798115763703d3d3c816e094e07d6dc626ac01d05f345b0e66bbd5",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "scripts/fixtures/dms-distribution/recovery.mjs",
+        "docs/runbooks/dms-recovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-20.05",
+      "requirement": "Restore/reconcile pending work from authoritative recovered state without letting stale broker messages recreate deleted or completed work.",
+      "requirementSha256": "c1353e027d7b37abeb58ab0bc1775e0c5d03d7c37c9be1bfe88c8030241ffa7a",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "scripts/fixtures/dms-distribution/recovery.mjs",
+        "docs/runbooks/dms-recovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-20.06",
+      "requirement": "Support the documented recovery-time/data-loss objectives and recovery-history window for the operating deployment.",
+      "requirementSha256": "47c0fa7434cb3a77971b8448c20db06f7a77efd7cf5a98f81cef970bf941ef82",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "scripts/fixtures/dms-distribution/recovery.mjs",
+        "docs/runbooks/dms-recovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-20.07",
+      "requirement": "Physically remove originals/artifacts only after the logical restore window, all live references, retained database recovery history, object-backup lag, and disposal policy allow it.",
+      "requirementSha256": "b3feb84d91c93eda6c34fc589469ac46ef622d866fea902b588a03889975ceac",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "scripts/fixtures/dms-distribution/recovery.mjs",
+        "docs/runbooks/dms-recovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-20.08",
+      "requirement": "Protect objects shared by multiple historical/restored versions; deleting one logical reference must not remove another live version's bytes.",
+      "requirementSha256": "d4d1eda339eda7ebd37c96661d326590a37f7ce7a4e0648e5f24339d0d6acb63",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "scripts/fixtures/dms-distribution/recovery.mjs",
+        "docs/runbooks/dms-recovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-20.09",
+      "requirement": "Record requested and completed disposal outcomes, recover interrupted cleanup safely, and release physical-byte usage only when removal actually occurs.",
+      "requirementSha256": "6719f0b8b8aac3150897cbbffed180afe85bd3245ba3b84116bead227273c642",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "scripts/fixtures/dms-distribution/recovery.mjs",
+        "docs/runbooks/dms-recovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-20.10",
+      "requirement": "Clean expired staging, abandoned attempts, closed/expired batch history, enrollment receipts, completed operational history, and expired audit/idempotency records under distinct policies without deleting required identity mappings, provenance, or recovery evidence.",
+      "requirementSha256": "a50ab78d9b5d514048af624b1268b5a6a85e00d9b0148a4d7f53988fa50aa51c",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "scripts/fixtures/dms-distribution/recovery.mjs",
+        "docs/runbooks/dms-recovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "FR-20.11",
+      "requirement": "Expose that backup copies follow their own expiry policy; live-store deletion must not be described as immediate erasure of all retained backups.",
+      "requirementSha256": "5fa221234a0218a7c72fbf4a7a74d13e3bc8ddac306d65b53971094924af0d17",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": [
+        "scripts/fixtures/dms-distribution/recovery.mjs",
+        "docs/runbooks/dms-recovery.md"
+      ],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "NFR-01",
+      "requirement": "Deny unauthorized access across tenant/application/resource boundaries, including indirect metadata, snippets, counts, polling, artifacts, and signed transfers.",
+      "requirementSha256": "546043fc9c80db29f0dbae4f10ce097b5187833ff6402803ea0893533ccc2883",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "NFR-02",
+      "requirement": "Never issue normal read authority for unpublished, rejected, inconclusive, deleted, or otherwise unavailable content.",
+      "requirementSha256": "def5dca9c89c6fe7209da23acb28953cc22e87f299b02b4869c858fcb738d66e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "NFR-03",
+      "requirement": "Preserve immutable original bytes, stable document identity, monotonic version selection, and attributable source/result provenance.",
+      "requirementSha256": "ae06ad0bc8bcbf5055cafba0ba14294e27df048856af5749e637a2a3aa368730",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "NFR-04",
+      "requirement": "Remain consistent across retries, concurrent updates, duplicate/out-of-order delivery, interrupted processes, missed callbacks, and stale results.",
+      "requirementSha256": "2c3a556ae77c467202c27019a247dc7f2d4d1734f901f6bd9651d41b908ac82d",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "NFR-05",
+      "requirement": "Bound request sizes, decoded content, storage/work reservations, processing resources, queue growth, and operational-history retention.",
+      "requirementSha256": "0edfe065a22d2687d8643e8eca0c535cf7ff8cf50209d03363ba2ececcc1d92e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "NFR-06",
+      "requirement": "Report incomplete extraction honestly; target word error rate at most 10% for clean printed English scans, with no claim of exact tables/handwriting or invented content.",
+      "requirementSha256": "0bad9240a83ee3c3f970ca25ba84e05220ecd5a234fa79d16b42e0df460c38f3",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "NFR-07",
+      "requirement": "Target metadata p95 latency below 300 ms for the documented normal operating workload; distinguish API latency, original availability, processing duration, and search lag.",
+      "requirementSha256": "df0fa9c6b084b63b61a331c7bf567d891f6508cb38c9d87604c84d51efbd081e",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": "Only the declared synthetic local dataset is measured. No customer-volume, sustained-monthly or physical off-host claim."
+    },
+    {
+      "id": "NFR-08",
+      "requirement": "Provide versioned, language-independent integration contracts and examples without consumer-repository or frontend-framework coupling.",
+      "requirementSha256": "484a2da670f203ac2bc29e724f8a2207b192aaf51df2d3783daabe3f764d1307",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "NFR-09",
+      "requirement": "Operate on self-hosted infrastructure, including the documented offline data/update arrangements; isolate untrusted processing from credentials, external networks, and unrelated files.",
+      "requirementSha256": "8fb8f500f09a941cfea18f0089f5d28662179a3662e6de7eb538b343623fec0b",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "NFR-10",
+      "requirement": "Support RPO at most 24 hours and RTO at most 4 hours for the documented small-profile operating volume/hardware, with compatible database/object recovery.",
+      "requirementSha256": "90b7e804e8070b84463b43308925734e174dcc2bd8af847de5f90a56309b6c5c",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": "Only the declared synthetic local dataset is measured. No customer-volume, sustained-monthly or physical off-host claim."
+    },
+    {
+      "id": "NFR-11",
+      "requirement": "Preserve effective access, security, lifecycle, and quota behavior during degraded operation, recovery, and supported upgrades.",
+      "requirementSha256": "7e6e58fffc46d261a0a2d464de1aa5c5998ede061f9e125506d4234dc56c33f3",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "NFR-12",
+      "requirement": "Keep the architecture maintainable through shared contracts, explicit module ownership, pinned dependencies, and bounded processor/configuration choices.",
+      "requirementSha256": "73e64721d3f305791c8c4ce976ef841b97aca7cd77c047baf81929f3ce701f26",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": null
+    },
+    {
+      "id": "NFR-13",
+      "requirement": "Run the required commercial/self-hosted product without mandatory paid licenses or hosted subscriptions; meet applicable open-source distribution conditions for code, containers, native dependencies, fonts/codecs, signatures, language data, and models.",
+      "requirementSha256": "38857ff32bcde894311e4e291f2b9375cc4c3c275dc25819a01fbb2cbcadb328",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": "Inventory/notices are automated evidence; customer redistribution/legal sign-off remains explicit."
+    },
+    {
+      "id": "NFR-14",
+      "requirement": "Support the demand target of up to 200,000 documents/month under a declared format/page/size mix, OCR/structured share, processing window, arrival bursts, and resourced deployment; report API latency, original availability, queue age, processing delay, and search lag separately.",
+      "requirementSha256": "abe4ca8b230ccf26abb7fee86bccd0db35e047d3d915b0693d842b7d90f5c0a5",
+      "states": {
+        "implemented": "see owning source/contracts and group evidence",
+        "automatedTested": "not run for this candidate",
+        "manualTested": false,
+        "deployed": false,
+        "targetAccepted": false
+      },
+      "evidence": ["examples/dms/qualification.mjs", "docs/runbooks/dms-handover.md"],
+      "execution": null,
+      "condition": "Only the declared synthetic local dataset is measured. No customer-volume, sustained-monthly or physical off-host claim."
+    }
+  ]
+}

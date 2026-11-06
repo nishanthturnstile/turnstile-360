@@ -109,5 +109,83 @@
       "nextCursor": null,
       "token": "untrusted"
     }
+  },
+  {
+    "schema": "UploadBegin",
+    "value": {
+      "title": "Report",
+      "fileName": "report.pdf",
+      "size": 10,
+      "contentType": "application/pdf",
+      "profile": "secure-only",
+      "metadata": {}
+    },
+    "valid": true
+  },
+  {
+    "schema": "UploadBegin",
+    "value": {
+      "title": "Report",
+      "fileName": "report.pdf",
+      "size": 10,
+      "contentType": "application/pdf",
+      "profile": "secure-only",
+      "metadata": {},
+      "multipart": true
+    },
+    "valid": false
+  },
+  {
+    "schema": "UploadBegin",
+    "value": {
+      "title": "Report",
+      "fileName": "report.pdf",
+      "size": 10,
+      "contentType": "application/pdf",
+      "profile": "secure-only",
+      "metadata": {},
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "valid": true
+  },
+  {
+    "schema": "UploadBegin",
+    "value": {
+      "title": "Report",
+      "fileName": "report.pdf",
+      "size": 10,
+      "contentType": "application/pdf",
+      "profile": "secure-only",
+      "metadata": {},
+      "sha256": "invalid"
+    },
+    "valid": false
+  },
+  {
+    "schema": "BatchCreate",
+    "value": {
+      "items": [
+        {
+          "itemId": "report-1",
+          "operation": "create",
+          "descriptor": {
+            "title": "Report",
+            "fileName": "report.pdf",
+            "size": 10,
+            "contentType": "application/pdf",
+            "profile": "secure-only",
+            "metadata": {}
+          }
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "schema": "BatchCreate",
+    "value": {
+      "items": []
+    },
+    "valid": false
   }
 ]

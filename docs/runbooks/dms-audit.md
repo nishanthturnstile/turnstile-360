@@ -2,8 +2,10 @@
 
 See [architecture](../../architecture.md#standalone-dms-delivery-target) for the owning
 pool, principal/role boundaries, pagination and implemented-resource limits. This runbook
-covers application enrollment audit. Document audit becomes available with the owning
-document feature; no document route is currently advertised.
+covers application enrollment and implemented document/upload/batch resource audit.
+Document-specific GET `/v1/documents/{documentId}/audit` additionally requires
+`dms:documents:read`. See [admission](dms-admission.md) and
+[lifecycle inspection](dms-uploads.md) for their owning registry and private commands.
 
 For a fresh installation, use the existing protected provisioning environment file. Supply
 a distinct `DMS_OPERATOR_DATABASE_URL` for `thaarei_dms_operator` if private audit inspection
@@ -54,7 +56,7 @@ Input shape (place actual credentials only in the mode-0600 input file):
 }
 ```
 
-Optionally provide `applicationId` and the matching `cursor`. The private generated
+Optionally provide `applicationId`, `documentId` and the matching `cursor`. The private generated
 [command contract](../api/dms-operator.contract.json) is separate from consumer OpenAPI.
 Read output uses the same bounded audit page schema. Inspection never needs the DMS
 migration URL. Every read/page/retry freshly authenticates and checks the current explicit
