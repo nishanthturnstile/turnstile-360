@@ -132,7 +132,11 @@ Regression coverage runs the production services against PostgreSQL/SeaweedFS, w
 explicit native skips; full DB: 299 passes/six skips across 16 files. Browser/Node/Python
 transfer verification passes. Merged current origin/development planning documentation,
 preserving both progress histories. All authorized DMS implementation is committed.
-Next: push branch, open PR against development, resolve CI/review findings and merge.
+All changes are pushed to feat/dms-i01-standalone-foundation;
+[PR #13](https://github.com/nishanthturnstile/turnstile-360/pull/13) targets development.
+The GitHub connector returned 403, so authenticated gh created the PR; T3 linking succeeded.
+Push/PR CI is running; no review comments or reviews are present at this handoff.
+Next: resolve any CI/review findings and merge after readiness checks.
 I20 exact-candidate/customer acceptance remains pending under its existing handoff.
 
 
