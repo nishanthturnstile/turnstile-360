@@ -124,9 +124,12 @@ this branch has the same ebd9fdb base, with only this thread's documentation cha
 Local verification: 149 local references/headings across seven planning/reference documents,
 15 requirement mappings, eight delivery stages, seven review dispositions, final newlines
 and git diff --check pass. No application build/runtime tests ran for this docs-only change;
-the PR's existing full CI must complete before merge. Next: commit/push exactly the eight
-documentation paths, open the PR to development and follow checks/review requirements.
-Handoff while CI runs: merge through that PR only after readiness, then create
+the PR's existing full CI must complete before merge. The eight documentation paths were
+committed and pushed; [PR #12](https://github.com/nishanthturnstile/turnstile-360/pull/12)
+is open against development. The connector returned HTTP 403 on PR creation, so the
+already-authenticated GitHub CLI created it; T3 linking succeeded. CI/review readiness is
+pending. Next: follow checks/review requirements and merge through the PR only when ready.
+Handoff while CI runs: after merge, fetch updated development, then create
 feat/thaarei-control-plane-implementation from freshly fetched development and stop before
 implementation. The plan's remaining product defaults are not adopted by this docs merge.
 
