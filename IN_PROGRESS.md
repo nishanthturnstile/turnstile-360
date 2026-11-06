@@ -147,6 +147,15 @@ YAML assertions, namespace smoke and git diff --check pass. The first standalone
 lost its PostgreSQL connection (ECONNRESET); a fresh isolated rerun passed 9 tests with
 one explicit packaged-image skip (no DMS_STANDALONE_IMAGE supplied). CI's standalone
 lane supplies the built image and must pass its packaged browser case before merge.
+2026-11-06 cdab180 CI follow-up: prerequisites now work; checks reached the backup
+crypto regression and timed out at the default five-second test budget. Its 1 MiB
+round-trip assertion used recursive Buffer object equality. Replaced that comparison
+with Buffer.equals for the same exact-byte assertion without per-byte object traversal.
+Revalidating the focused test and uncached API unit suite before push; no production
+crypto, tamper/component-swap assertions or runtime limits are changed.
+Local verification: focused crypto test passes in 70 ms versus 2.24 seconds before;
+uncached API unit suite 24/24 passes across four files. Biome and git diff --check pass.
+Remaining CI on the corrected head gates merge.
 Next: resolve any CI/review findings and merge after readiness checks.
 I20 exact-candidate/customer acceptance remains pending under its existing handoff.
 

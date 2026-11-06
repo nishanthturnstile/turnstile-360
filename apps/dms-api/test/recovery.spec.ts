@@ -30,7 +30,8 @@ it('authenticates encrypted backup identity and contents before installing plain
     await repo.encrypt(source, encrypted, id, 'postgres');
     const valid = join(dir, 'valid');
     await repo.decrypt(encrypted, valid, id, 'postgres');
-    expect(await readFile(valid)).toEqual(bytes);
+    // Compare streamed binary contents directly rather than recursively walking 1 MiB of bytes.
+    expect((await readFile(valid)).equals(bytes)).toBe(true);
     const swapped = join(dir, 'swapped');
     await expect(repo.decrypt(encrypted, swapped, id, 'storage')).rejects.toThrow(
       'Backup authentication failed',
