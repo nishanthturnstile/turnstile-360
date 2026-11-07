@@ -454,10 +454,27 @@ describe('independent DMS foundation', () => {
           child.stdout.on('data', (chunk) => {
             output += chunk;
           });
-          child.stderr.resume();
+          let failure = 'unclassified';
+          child.stderr.on('data', (chunk) => {
+            for (const line of String(chunk).split('\n')) {
+              try {
+                const value = JSON.parse(line);
+                if (
+                  value.type === 'packaged-explorer-failure' &&
+                  /^[a-z-]{1,40}$/.test(value.phase) &&
+                  /^[A-Za-z]{1,40}$/.test(value.kind)
+                )
+                  failure = `${value.phase}/${value.kind}`;
+              } catch {
+                /* Ignore unstructured output, which may contain credentials. */
+              }
+            }
+          });
           child.once('error', reject);
           child.once('exit', (code) =>
-            code === 0 ? resolve(output) : reject(new Error('Packaged explorer fixture failed')),
+            code === 0
+              ? resolve(output)
+              : reject(new Error(`Packaged explorer fixture failed (${failure})`)),
           );
           child.stdin.end(typeof input === 'string' ? input : JSON.stringify(input));
         });

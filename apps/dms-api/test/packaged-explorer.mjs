@@ -1,9 +1,23 @@
 // Private disposable-image fixture. Mounted read-only into /run, never shipped as runtime code.
 
+let phase = 'input';
+process.on('uncaughtException', (error) => {
+  // Fixed phase/type only: never print credentials, URLs, database details or raw errors.
+  console.error(
+    JSON.stringify({
+      type: 'packaged-explorer-failure',
+      phase,
+      kind: error instanceof Error && /^[A-Za-z]{1,40}$/.test(error.name) ? error.name : 'Error',
+    }),
+  );
+  process.exit(1);
+});
+
 let input = '';
 for await (const chunk of process.stdin) input += chunk;
 const value = JSON.parse(input);
 if (value.action === 'http') {
+  phase = 'http';
   const response = await fetch(`http://localhost:3001${value.path}`, {
     signal: AbortSignal.timeout(10000),
     headers: value.headers,
@@ -21,6 +35,7 @@ if (value.action === 'http') {
     }),
   );
 } else {
+  phase = 'load-runtime';
   const { createPool } = await import('/app/dist/infrastructure/database/postgres.js');
   const { issueEnrollmentKey, registerApplication } = await import(
     '/app/dist/modules/enrollment/enrollment-operator.js'
@@ -33,12 +48,14 @@ if (value.action === 'http') {
   const { createRecoveryDelivery } = await import(
     '/app/dist/modules/platform-auth/recovery-delivery.js'
   );
+  phase = 'configuration';
   const config = parseAuthorityEnvironment(process.env);
   const pool = createPool(config.AUTH_DATABASE_URL, 1);
   const owner = createPool(process.env.DMS_MIGRATION_DATABASE_URL, 1);
   const auth = createAuthority(config, pool, createRecoveryDelivery(config));
   let headers;
   try {
+    phase = 'administrator-login';
     const login = await auth.api.signInEmail({
       body: { email: value.email, password: value.password },
       returnHeaders: true,
@@ -52,6 +69,7 @@ if (value.action === 'http') {
     });
     const applicationId = crypto.randomUUID();
     const clientId = 'packaged-explorer-client';
+    phase = 'machine-client';
     const issued = await manageOAuthClient(auth, config, headers, {
       action: 'issue',
       kind: 'machine',
@@ -64,12 +82,14 @@ if (value.action === 'http') {
       issuer: config.AUTH_ISSUER_URL,
       deploymentId: config.DMS_RESOURCE_URL,
     };
+    phase = 'registration';
     await registerApplication(
       owner,
       context,
       { applicationId, clientId, name: clientId, scopes: ['dms:capabilities:read'] },
       issued.record,
     );
+    phase = 'enrollment-key';
     const key = await issueEnrollmentKey(owner, context, applicationId);
     const tokenOptions = {
       method: 'POST',
@@ -90,6 +110,7 @@ if (value.action === 'http') {
     ]);
     let expired;
     try {
+      phase = 'short-token';
       const short = await fetch('http://localhost:3001/identity/oauth2/token', tokenOptions);
       if (!short.ok) throw new Error('Short-lived fixture token failed');
       expired = await short.json();
@@ -99,9 +120,11 @@ if (value.action === 'http') {
         config.DMS_RESOURCE_URL,
       ]);
     }
+    phase = 'machine-token';
     const response = await fetch('http://localhost:3001/identity/oauth2/token', tokenOptions);
     if (!response.ok) throw new Error('Packaged token issuance failed');
     const token = await response.json();
+    phase = 'enrollment';
     const enrolled = await fetch('http://localhost:3001/v1/application-enrollments', {
       method: 'POST',
       headers: {

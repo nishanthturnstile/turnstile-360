@@ -258,6 +258,14 @@ try {
   deploymentFixture = await seedDmsDeployment(env);
   if (!standalone) turnstileDeploymentFixture = await seedTurnstileDeployment(env);
   if (standalone && standaloneImage) {
+    // CI's host UID can differ from the image's default node UID. Preserve 0600
+    // trust/marker files and run this disposable fixture as their non-root owner.
+    const userId = process.getuid?.();
+    const groupId = process.getgid?.();
+    assert.ok(
+      userId !== undefined && userId > 0 && groupId !== undefined,
+      'Standalone image verification requires a non-root POSIX fixture owner',
+    );
     const databaseHost = run('docker', [
       'inspect',
       '--format',
@@ -301,6 +309,8 @@ try {
         '--detach',
         '--name',
         `${name}-dms-image`,
+        '--user',
+        `${userId}:${groupId}`,
         '--read-only',
         '--tmpfs',
         '/tmp',

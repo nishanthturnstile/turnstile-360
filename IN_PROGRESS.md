@@ -132,25 +132,36 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 ## Active work
 
 TCP-CI-001 — **In progress** (owner: Codex control-plane implementation thread,
-2026-11-07). Resolve PR #15 CI failure on the control-plane branch, reproduce the failing
-standalone lane, run required workspace checks, push the focused fix and monitor all PR
-checks. No deployment or persistent-installation change is authorized. Next: inspect the
-completed failing job log and correct the owning test/build dependency.
+2026-11-07). PR #15 CI remediation; local fixes/verification complete, latest-head remote
+checks pending. No merge, deployment or persistent-installation change is authorized.
 
-CI diagnosis/fix: the standalone launcher statically imported deployment fixtures before
-its dependency build, producing `ERR_MODULE_NOT_FOUND` on a clean CI host. Fixture imports
-now occur after the owning Turbo build. Missing compiled output reproduced the failure and
-the fixed entrypoint rebuilt it. The now-running lane exposed a second failure: Docker
-rejects `docker cp` into the read-only image even with `/tmp` tmpfs. The packaged explorer
-helper is now mounted read-only at container creation, preserving runtime restrictions.
-The actual standalone image lane passes all 10 tests, including protected explorer/browser
-and real machine reads. Current `pnpm check`, build and unit commands pass. The first local full integration
-run encountered a transient S3 unavailable response in I10 restoration; a complete quiet
-recheck is active. GitHub's original `checks` job and every container-build matrix job
-passed; only the standalone job failed. No speculative production storage change is made. Prior local qualification remains historical evidence for its
-recorded helper hashes; this test-harness-only CI change does not alter production inputs.
-Next: push only this focused CI fix, finish the local integration recheck and monitor
-all checks on PR #15.
+Fixed standalone verification's clean-checkout bootstrap: fixture modules consuming compiled
+workspace packages now load only after the owning Turbo dependency build. Missing output
+reproduced `ERR_MODULE_NOT_FOUND`; the fixed entrypoint rebuilt that output. Replaced Docker
+archive-copy delivery, which is rejected on a read-only rootfs even with `/tmp` tmpfs, with
+a read-only test-helper mount at container creation. These fixes were pushed as `aad1230`.
+
+That CI head passed bootstrap but failed inside the packaged explorer with suppressed
+stderr. Reproduced mode-0600 bind-file `EACCES` under a nonmatching container UID and readable
+files under their owner. The disposable image now runs as the non-root POSIX fixture owner,
+retaining 0600 file permissions and read-only rootfs/mounts. The image's shipped/default
+user and production configuration are unchanged. Added fixed phase/type-only failure
+classification and preserved nonzero exits; invalid-input verification confirms that raw
+input, credentials, URLs and error details are not printed.
+
+Local verification passes: `pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration`
+and the actual standalone image lane (10/10 tests, including protected explorer/browser,
+real machine reads and expired-token denial). The first integration attempt encountered an
+S3 unavailable response during I10 restoration; the full quiet recheck passed, including
+that lane, all owning PostgreSQL tests and authenticated SeaweedFS/browser/Node/Python
+transfer checks. No storage cause is assigned and no speculative production storage change
+was made. The safe diagnostic failure path and mismatched/owner file-read probes also pass.
+
+Prior control-plane qualification remains historical evidence for its recorded helper
+hashes; these CI changes affect test harnesses only. GitHub's original workspace and
+container-build checks passed; subsequent standalone success must be verified on the new
+fix head. Next: push the ownership/diagnostic fix, inspect all latest-head PR checks through
+the existing watch, fix any remaining failures and close TCP-CI-001 only when all pass.
 
 TCP-I08 — **In progress** (release/recovery qualification; owner: Codex control-plane
 implementation thread, 2026-11-07). **The selected isolated local implementation and
