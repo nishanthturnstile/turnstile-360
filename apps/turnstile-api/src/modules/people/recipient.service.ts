@@ -20,6 +20,7 @@ import { featureWritesOpen } from '../access/release-state.js';
 import type { InvitationContinuation } from '../auth/browser-auth/bff-state.js';
 import { opaque } from '../auth/browser-auth/bff-state.js';
 import { BrowserAuthService } from '../auth/browser-auth/browser-auth.service.js';
+import type { DeploymentMode } from '../deployment/access.js';
 import { type InvitationRow, InvitationService } from './invitation.service.js';
 import { hash, invitationAudit } from './invitation-policy.js';
 import { InvitationStoreService } from './invitation-store.service.js';
@@ -53,6 +54,7 @@ export class RecipientService {
       tenant: string,
       config: NonNullable<InvitationStoreService['config']>,
     ) => Promise<T>,
+    deployment: DeploymentMode = 'recovery',
   ) {
     return this.store.run(
       async (db, tenant, config) => {
@@ -62,6 +64,7 @@ export class RecipientService {
       },
       undefined,
       request.recipientDeadlineAt,
+      deployment,
     );
   }
 
@@ -388,47 +391,51 @@ export class RecipientService {
     )
       return conflict();
     const identity = await this.auth.invitationIdentity(request, flow);
-    const result = await this.run(request, async (db, tenant, config) => {
-      // Access lock, invitation transition, then encrypted session row lock. No HTTP under locks.
-      const row = await this.load(db, tenant, flow, config.recoveryEpoch);
-      await this.auth.fenceInvitation(db, request, flow, identity.sid);
-      if (row.state !== 'accepted' && identity.user.email.toLowerCase() !== row.email)
-        return fail(403, 'INVITATION_IDENTITY_MISMATCH');
-      if (
-        row.state !== 'accepted' &&
-        (this.unavailable(row, flow) || row.version !== command.expectedVersion)
-      )
-        return conflict();
-      const member = (
-        await db.query<{ id: string | null }>(
-          'SELECT turnstile.accept_invitation($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) AS id',
-          [
-            tenant,
-            row.id,
-            flow.generation,
-            command.expectedVersion,
-            identity.user.id,
-            identity.user.email.toLowerCase(),
-            config.recoveryEpoch,
-            command.permissionDigest,
-            command.scopeDigest,
-            request.id,
-          ],
+    const result = await this.run(
+      request,
+      async (db, tenant, config) => {
+        // Access lock, invitation transition, then encrypted session row lock. No HTTP under locks.
+        const row = await this.load(db, tenant, flow, config.recoveryEpoch);
+        await this.auth.fenceInvitation(db, request, flow, identity.sid);
+        if (row.state !== 'accepted' && identity.user.email.toLowerCase() !== row.email)
+          return fail(403, 'INVITATION_IDENTITY_MISMATCH');
+        if (
+          row.state !== 'accepted' &&
+          (this.unavailable(row, flow) || row.version !== command.expectedVersion)
         )
-      ).rows[0]?.id;
-      if (!member) return conflict();
-      await this.auth.markInvitationAccepted(db, request, flow);
-      const access = await readAccess(db, tenant, identity.user.id);
-      if (!access.memberId || !access.status) return conflict();
-      return {
-        invitationId: row.id,
-        memberId: member,
-        userId: identity.user.id,
-        membershipStatus: access.status,
-        accessRevision: access.context.accessRevision,
-        session: hasShell(access) ? ('login_required' as const) : ('denied' as const),
-      };
-    });
+          return conflict();
+        const member = (
+          await db.query<{ id: string | null }>(
+            'SELECT turnstile.accept_invitation($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) AS id',
+            [
+              tenant,
+              row.id,
+              flow.generation,
+              command.expectedVersion,
+              identity.user.id,
+              identity.user.email.toLowerCase(),
+              config.recoveryEpoch,
+              command.permissionDigest,
+              command.scopeDigest,
+              request.id,
+            ],
+          )
+        ).rows[0]?.id;
+        if (!member) return conflict();
+        await this.auth.markInvitationAccepted(db, request, flow);
+        const access = await readAccess(db, tenant, identity.user.id);
+        if (!access.memberId || !access.status) return conflict();
+        return {
+          invitationId: row.id,
+          memberId: member,
+          userId: identity.user.id,
+          membershipStatus: access.status,
+          accessRevision: access.context.accessRevision,
+          session: hasShell(access) ? ('login_required' as const) : ('denied' as const),
+        };
+      },
+      'full',
+    );
     if (result.session === 'login_required') {
       try {
         await this.auth.establishInvitation(request, flow);

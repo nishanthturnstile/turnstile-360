@@ -66,6 +66,7 @@ export async function productRequest<T>(
       if (domain.success && CONFIGURATION_ERROR_STATUS[domain.data.code] === response.status)
         throw new ProductError(response.status, domain.data.code, domain.data);
       const known: ProductErrorCode[] = [
+        'DEPLOYMENT_RESTRICTED',
         'IDENTITY_REQUIRED',
         'LOGIN_REQUIRED',
         'PRODUCT_ACCESS_DENIED',

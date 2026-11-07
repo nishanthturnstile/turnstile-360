@@ -1,15 +1,45 @@
-import { type BeforeApplicationShutdown, Controller, Get, HttpException } from '@nestjs/common';
+import {
+  type BeforeApplicationShutdown,
+  Controller,
+  Get,
+  Header,
+  HttpException,
+} from '@nestjs/common';
 import { PublicDmsEndpoint } from '../modules/access/access-policy.js';
+import { DmsDatabaseService } from '../modules/access/dms-database/dms-database.service.js';
+import { evaluateStored } from '../modules/deployment/access.js';
 import { AuthorityService } from '../modules/platform-auth/authority/authority.service.js';
+import { withTenant } from './database/postgres.js';
 @Controller('health')
 export class HealthController implements BeforeApplicationShutdown {
   private stopping = false;
-  constructor(private readonly authority: AuthorityService) {}
+  constructor(
+    private readonly authority: AuthorityService,
+    private readonly database: DmsDatabaseService,
+  ) {}
   beforeApplicationShutdown() {
     this.stopping = true;
   }
   @Get('live') @PublicDmsEndpoint() live() {
     return { status: 'ok' };
+  }
+  @Get('deployment')
+  @Header('Cache-Control', 'no-store')
+  @PublicDmsEndpoint()
+  async deployment() {
+    if (!this.database.pool) return { access: 'closed', state: 'unconfigured' };
+    try {
+      return await withTenant(
+        this.database.pool,
+        process.env.INSTALLATION_TENANT_ID as string,
+        async (db) =>
+          evaluateStored(
+            (await db.query('SELECT dms.deployment_read() AS snapshot')).rows[0]?.snapshot,
+          ),
+      );
+    } catch {
+      return { access: 'closed', state: 'reconciliation-required' };
+    }
   }
   @Get('ready/api') @PublicDmsEndpoint() async api() {
     if (this.stopping || !(await this.authority.ready()))

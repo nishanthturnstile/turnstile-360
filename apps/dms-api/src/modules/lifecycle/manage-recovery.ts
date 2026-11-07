@@ -137,6 +137,7 @@ export async function manageRecovery(raw: unknown, environment = process.env) {
         });
         return result;
       },
+      'recovery',
     );
   });
 }

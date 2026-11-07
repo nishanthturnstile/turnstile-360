@@ -11,6 +11,8 @@ import { IdentityModule } from './integrations/identity/identity.module.js';
 import { AccessModule } from './modules/access/access.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { UserSessionGuard } from './modules/auth/user-session/user-session.guard.js';
+import { DeploymentController } from './modules/deployment/deployment.controller.js';
+import { DeploymentService } from './modules/deployment/deployment.service.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
 import { OrganizationModule } from './modules/organization/organization.module.js';
 import { PeopleModule } from './modules/people/people.module.js';
@@ -26,9 +28,10 @@ import { PeopleModule } from './modules/people/people.module.js';
     IdentityModule,
     PeopleModule,
   ],
-  controllers: [AppController, HealthController],
+  controllers: [AppController, HealthController, DeploymentController],
   providers: [
     AppService,
+    DeploymentService,
     SecurityTelemetryService,
     UserSessionGuard,
     { provide: APP_GUARD, useClass: ApplicationAccessGuard },

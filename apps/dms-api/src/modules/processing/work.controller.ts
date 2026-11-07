@@ -2,6 +2,7 @@ import { Controller, Get, HttpCode, Post, Req } from '@nestjs/common';
 import { workSchemas } from '@thaarei/dms-contracts/private';
 import type { FastifyRequest } from 'fastify';
 import type { z } from 'zod';
+import { deploymentPreflight } from '../deployment/access.js';
 import { StorageService } from '../storage/storage.service.js';
 import { WorkService } from './work.service.js';
 import { WorkAuthService } from './work-auth.service.js';
@@ -20,6 +21,12 @@ export class WorkController {
     if (duplicates > 1 || req.headers.dpop || Object.keys(req.query as object).length)
       throw new WorkError('WORK_INVALID', 400);
     const principal = await this.auth.verify(req.headers.authorization);
+    const mode = req.url.endsWith('/presence')
+      ? 'recovery'
+      : req.url.endsWith('/dispatches/claim') || req.url.endsWith('/attempts/claim')
+        ? 'full'
+        : 'completion';
+    await deploymentPreflight(this.work.pool, process.env.INSTALLATION_TENANT_ID as string, mode);
     const parsed = schema.safeParse(req.body ?? {});
     if (!parsed.success) throw new WorkError('WORK_INVALID', 400);
     return { principal, input: parsed.data };

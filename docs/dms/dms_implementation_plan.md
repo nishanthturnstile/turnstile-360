@@ -79,11 +79,14 @@ and shared authority modules. Its future coordinator is another process composit
 from the same TypeScript image. `apps/dms-processing` supplies the Python publisher and
 workers. A separate control-plane management application is outside this plan.
 
-The separately proposed [Thaarei deployment control plane](../thaarei/control-plane-plan.md)
-adds central product approval and disclosed health/usage reporting at the owner's request.
-It is not the local enrollment mechanism below. Its adoption/integration gates must be
-agreed before changing this plan's standalone/offline operational assumptions; no central
-approval or reporting is implemented merely by this cross-reference.
+The separately adopted [Thaarei deployment control plane](../thaarei/control-plane-plan.md)
+adds central product approval and disclosed health/usage reporting. TCP-I01 records owner
+adoption on 2026-11-06, including the bounded offline approval policy; it is not the local
+enrollment mechanism below. Integration still waits for this plan's owning DMS-I18
+operational/distribution handoff through development and TCP-I05/TCP-I08 verification.
+No central approval/reporting or existing-installation cutover is implemented by this
+cross-reference. The DMS remains independent of Turnstile; indefinite offline operation
+changes only in the coordinated enforcement release.
 
 Each installation has one tenant and multiple separately registered applications.
 Applications have their own credentials, source namespaces, scope ceilings, policies and

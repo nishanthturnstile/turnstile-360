@@ -21,3 +21,4 @@ deploy/data/
 
 # Private standalone backup/recovery configuration, proofs, archives and fences.
 .dms-*
+.next/

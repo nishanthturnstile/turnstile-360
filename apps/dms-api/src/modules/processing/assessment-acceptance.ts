@@ -1,5 +1,6 @@
 import { type AssessmentEvidence, extractionTask } from '@thaarei/dms-contracts/private';
 import { appendDocumentAudit } from '../audit/document-audit.js';
+import { requireDeployment } from '../deployment/access.js';
 import { lockOriginal } from '../documents/download-policy.js';
 import { AdmissionFeatures, readAdmissionPolicy } from '../uploads/admission-policy.js';
 import { initialProcessingRun } from './results-state.js';
@@ -44,6 +45,7 @@ export async function acceptAssessment(
     started.getTime() < now.getTime() - 600000
   )
     throw new WorkError('WORK_INVALID', 400);
+  if (evidence.outcome === 'PASSED') await requireDeployment(tx.client, 'completion');
   const pass = evidence.outcome === 'PASSED';
   const policy = await readAdmissionPolicy(tx.client, true);
   if (
@@ -107,6 +109,7 @@ export async function acceptAssessment(
         ? 'document.heavy'
         : extractionTask(source.descriptor.contentType),
       runId,
+      true,
     );
   }
   await tx.client.query(

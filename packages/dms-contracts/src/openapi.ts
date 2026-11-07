@@ -537,7 +537,20 @@ function operation(route: Route) {
         : route.policy === 'enrollment'
           ? [{ MachineBearer: [], EnrollmentKey: [] }]
           : [{ MachineBearer: [] }],
-    parameters,
+    parameters:
+      route.operationId === 'getDmsCapabilities'
+        ? [
+            ...parameters,
+            {
+              in: 'header',
+              name: 'Prefer',
+              required: false,
+              schema: { type: 'string', enum: ['include-deployment-status'] },
+              description:
+                'Opt in to the safe deploymentAccess field. Omit to preserve the ordinary version-1 response shape for strict decoders. No central credentials or signed proof are returned.',
+            },
+          ]
+        : parameters,
     ...('request' in route
       ? {
           requestBody: {

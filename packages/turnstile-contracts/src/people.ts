@@ -525,6 +525,7 @@ export const invitationAcceptanceResultSchema = z
   .refine((value) => value.membershipStatus !== 'suspended' || value.session === 'denied');
 
 export const PEOPLE_ERROR_STATUS = {
+  DEPLOYMENT_RESTRICTED: 403,
   PEOPLE_INVALID: 400,
   STRUCTURE_INVALID: 400,
   INVITATION_INVALID_REQUEST: 400,
@@ -590,6 +591,7 @@ const unavailableCodes = [
   'INVITATION_UNAVAILABLE_RETRY',
 ] as const;
 const simpleCodes = [
+  'DEPLOYMENT_RESTRICTED',
   'INVALID_AUTH_REQUEST',
   'LOGIN_TRANSACTION_INVALID',
   'IDENTITY_REQUIRED',

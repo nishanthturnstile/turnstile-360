@@ -17,6 +17,7 @@ import {
   requireResourceOwner,
 } from '../access/resource-policy.js';
 import { appendDocumentAudit } from '../audit/document-audit.js';
+import { requireDeployment } from '../deployment/access.js';
 import { AVAILABLE_ORIGINAL, lockOriginal } from '../documents/download-policy.js';
 import { parseAuthorityEnvironment } from '../platform-auth/authority-configuration.js';
 import { StorageService } from '../storage/storage.service.js';
@@ -48,6 +49,7 @@ export async function requestProcessing(
   key: string,
   requestId?: string,
 ) {
+  await requireDeployment(tx.client, 'full');
   const input = reprocessSchema.safeParse(body);
   if (!input.success || !/^[A-Za-z0-9_-]{16,128}$/.test(key))
     return dmsError(400, 'INVALID_REQUEST');

@@ -90,3 +90,5 @@ I16 results, reprocessing and optional offline structure: [results runbook](../.
 Permission-aware discovery: [runbook](../../docs/runbooks/dms-discovery.md).
 
 I18 versioned standalone installation, separate API/processing readiness and private operational commands: [distribution runbook](../../docs/runbooks/dms-distribution.md).
+
+Deployment pairing, private setup/rotation, restriction and combined customer profiles: [DMS deployment control](../../docs/runbooks/dms-deployment-control.md).

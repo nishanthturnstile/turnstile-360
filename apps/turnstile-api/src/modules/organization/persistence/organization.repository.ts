@@ -23,6 +23,7 @@ import {
   readAccess,
 } from '../../access/access-evaluator.js';
 import { StructureAccessService } from '../../access/structure-access.service.js';
+import { deploymentPreflight, requireDeployment } from '../../deployment/access.js';
 
 export type { ConfigurationActor } from '../../../infrastructure/configuration-context.js';
 export interface ConfigurationRecord {
@@ -134,10 +135,16 @@ export class OrganizationRepository {
   ): Promise<T> {
     try {
       const { pool, config } = await this.connection();
+      await deploymentPreflight(
+        pool,
+        config.INSTALLATION_TENANT_ID,
+        actor.deploymentMode ?? (manage ? 'full' : 'read'),
+      );
       return await withTenant(
         pool,
         config.INSTALLATION_TENANT_ID,
         async (client) => {
+          await requireDeployment(client, actor.deploymentMode ?? (manage ? 'full' : 'read'));
           await client.query('SELECT turnstile.lock_access_context($1::uuid)', [
             config.INSTALLATION_TENANT_ID,
           ]);

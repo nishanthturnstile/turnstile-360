@@ -330,8 +330,8 @@
     },
     {
       "id": "FR-02.10",
-      "requirement": "Authorized operators must be able to issue/revoke a single-use Thaarei enrollment key bound to the deployment, tenant, expected issuer/client, and expiry, retaining only its digest and nonsecret metadata.",
-      "requirementSha256": "bfd7c8a9ca907e0b59d884817dc98f5b5a8cfddabe849072cd8bcd82c9e2878c",
+      "requirement": "Local DMS enrollment (distinct from central deployed-product approval): authorized operators must be able to issue/revoke a single-use Thaarei enrollment key bound to the deployment, tenant, expected issuer/client, and expiry, retaining only its digest and nonsecret metadata.",
+      "requirementSha256": "7eb69e1948d69c83046fbe785c28f4df74f89bb4d4d8ed6998cfbbfbdfc07c91",
       "states": {
         "implemented": "see owning source/contracts and group evidence",
         "automatedTested": "not run for this candidate",
@@ -2823,8 +2823,8 @@
     },
     {
       "id": "FR-19.02",
-      "requirement": "Support configuration of the selected authority, clients/scopes, signing-key and credential rotation, Thaarei enrollment, TLS, browser origins, persistent storage, approved formats/profiles, resource limits, secrets, and signature updates through documented operator interfaces.",
-      "requirementSha256": "8966061425634563614d624c3431ffa7e8756c23e9b93adba82222b1858328e7",
+      "requirement": "For the coordinated control-plane release, add separate central product pairing/approval/reporting and supported restore/trust recovery under [TCP-R07–15](../thaarei/control-plane-specification.md); local consumer enrollment never substitutes for central approval. Preserve staged introduction and existing installations until the owning integration/release gates pass. Support configuration of the selected authority, clients/scopes, signing-key and credential rotation, Thaarei enrollment, TLS, browser origins, persistent storage, approved formats/profiles, resource limits, secrets, and signature updates through documented operator interfaces.",
+      "requirementSha256": "f05dc4d72f581fccc1eed521bc320a50e264bfb61c6debdeef5c33a631f3de3e",
       "states": {
         "implemented": "see owning source/contracts and group evidence",
         "automatedTested": "not run for this candidate",
@@ -3291,8 +3291,8 @@
     },
     {
       "id": "NFR-09",
-      "requirement": "Operate on self-hosted infrastructure, including the documented offline data/update arrangements; isolate untrusted processing from credentials, external networks, and unrelated files.",
-      "requirementSha256": "8fb8f500f09a941cfea18f0089f5d28662179a3662e6de7eb538b343623fec0b",
+      "requirement": "Operate on self-hosted infrastructure, including offline processing/data/update arrangements and the separately adopted [bounded offline approval policy](../thaarei/control-plane-specification.md#selected-approval-policy-and-proposed-restriction-behavior); isolate untrusted processing from credentials, external networks, and unrelated files.",
+      "requirementSha256": "0035fcc990c7421d97a666a182e85e34284a9e6719bc680c247b98e58f1a842a",
       "states": {
         "implemented": "see owning source/contracts and group evidence",
         "automatedTested": "not run for this candidate",

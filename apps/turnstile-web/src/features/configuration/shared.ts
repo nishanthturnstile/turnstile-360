@@ -7,6 +7,8 @@ import { useEffect, useRef } from 'react';
 import { useNavigationEntries } from '@/components/navigation';
 import { ProductError } from '../auth/product';
 export function notice(error: unknown) {
+  if (error instanceof ProductError && error.code === 'DEPLOYMENT_RESTRICTED')
+    return 'This installation is restricted. Changes require renewed approval. Your entries are kept.';
   if (!(error instanceof ProductError))
     return 'We couldn’t load saved setup. Your entries are still here. Try again.';
   if (error.detail?.code === 'CONFIGURATION_CONFLICT' && error.detail.reason === 'duplicate_name')

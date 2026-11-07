@@ -1,4 +1,4 @@
-# Thaarei control plane plan review
+# Thaarei control plane reviews
 
 **Date:** 2026-11-06. **Scope:** Planning review against the owner's separate Thaarei
 Linux host and per-customer Linux host. Confidential and proprietary.
@@ -72,3 +72,41 @@ Seven-day approval with daily renewal remains owner-selected. Read/recovery exce
 staff role/identity defaults, metrics/retention and environment details remain explicit
 product decisions for TCP-I01. Correcting a planning gap does not accept those policies
 or authorize changing an existing installation.
+
+## TCP-I01 adoption follow-up (2026-11-06)
+
+After this planning review, the owner authorized implementation and explicitly accepted
+the remaining read/recovery, staff/MFA/roles, reporting/retention and two-host defaults.
+The adopted [specification](control-plane-specification.md) and
+[architecture](../../architecture.md#operation-classification-and-decision-types) now own
+those decisions. The operation classification/configuration and DMS scope/runbook references
+are reconciled in TCP-I01. The earlier remaining-decisions paragraph describes the review's
+original handoff, not a pending reapproval gate. Runtime qualification and integration gates
+remain with TCP-I02–08; no additional independent delegate review is claimed.
+
+## TCP-I01/I02 implementation review (TCP-REVIEW-02, 2026-11-06)
+
+At the owner's request, one native read-only review subagent applied the review-agent
+skill to the complete tracked diff and untracked central application, migrations,
+tooling, tests, deployment and affected documentation. It confirmed the two actionable
+P2 defects below and no other qualifying findings. This review is separate from the
+historical Astra planning review above. The parent validated both paths, made the fixes
+and owns runtime verification; no independent second review or reviewer-run runtime
+suite is claimed.
+
+| ID             | Severity | Confirmed defect                                                                                                                                                                                                            | Correction and regression                                                                                                                                                                                                                                                               |
+| -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TCP-IMPL-REV01 | P2       | Reset/verification SMTP availability probing occurred before Better Auth's persistent HTTP rate limiter, so exhausted budgets still opened SMTP connections and relay failures were uncounted.                              | Move the probe into the native before hook after rate limiting and before account lookup. The real HTTP fixture exhausts both budgets, removes its own relay and confirms 429 without probing it; fresh relay failures return redacted 503 and consume the native budget.               |
+| TCP-IMPL-REV02 | P2       | First-admin bootstrap committed, then a missing/unreadable auth secret caused delivery initialization to fail; cleanup invoked the same failing initializer again and hid the committed administrator's structured receipt. | Retain an optional successfully initialized delivery runtime and close only that pool. The fixture bootstraps with a missing secret, verifies the committed ID/receipt and delivery-pending output, rejects duplicate bootstrap, then resumes verification with repaired configuration. |
+
+Corrections are in the central auth options/runtime/wrapper and private operator;
+regressions use the existing owning Next HTTPS/PostgreSQL/Mailpit fixture. Dated check and
+image evidence, completion status and handoff are in [IN_PROGRESS.md](../../IN_PROGRESS.md).
+There are no additional adopted-policy changes in this review. Interactive browser use,
+production SMTP TLS, target ingress/proxy policy and full backup/restore/trust qualification
+remain separate verification limits, rather than inferred passes from source tests.
+
+The next increment is TCP-I03: client registry, installation/product records and audited,
+revision-safe policy transitions. Approval must remain closed until the pairing prerequisite
+is genuinely verified by TCP-I04; registry delivery alone cannot advertise customer
+activation or enforcement. Keep customer integration and target cutover in their owning gates.

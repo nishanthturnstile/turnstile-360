@@ -6,6 +6,11 @@ import {
   createPool,
   withTenant,
 } from '../../../infrastructure/database/postgres.js';
+import {
+  type DeploymentMode,
+  deploymentPreflight,
+  requireDeployment,
+} from '../../deployment/access.js';
 import { parseAuthorityEnvironment } from '../../platform-auth/authority-configuration.js';
 import type { ApplicationRegistration, MachinePrincipal } from '../access-policy.js';
 import { dmsError } from '../dms-errors.js';
@@ -30,7 +35,7 @@ export class DmsDatabaseService implements OnApplicationShutdown {
     try {
       await assertRuntimeRole(this.pool, 'dms');
       const policy = await this.pool.query(
-        "SELECT count(*) = 36 AND bool_and(relrowsecurity AND relforcerowsecurity) AS safe FROM pg_class WHERE oid IN ('dms.application_registration'::regclass, 'dms.enrollment_key'::regclass, 'dms.enrollment_receipt'::regclass, 'dms.security_event'::regclass, 'dms.audit_event'::regclass, 'dms.outbox_intent'::regclass,'dms.document'::regclass,'dms.document_version'::regclass,'dms.upload_admission'::regclass,'dms.admission_policy'::regclass,'dms.admission_capacity'::regclass,'dms.admission_tenant_usage'::regclass,'dms.admission_application_usage'::regclass,'dms.upload_batch'::regclass,'dms.upload_batch_item'::regclass,'dms.upload_batch_slot'::regclass,'dms.upload_session'::regclass,'dms.upload_receipt'::regclass,'dms.work_identity'::regclass,'dms.work_job'::regclass,'dms.work_dispatch'::regclass,'dms.work_attempt'::regclass,'dms.security_candidate'::regclass,'dms.binary_restore'::regclass,'dms.document_grant'::regclass,'dms.lifecycle_restore'::regclass,'dms.lifecycle_receipt'::regclass,'dms.security_assessment_history'::regclass,'dms.extraction_stage'::regclass,'dms.processing_run'::regclass,'dms.search_generation'::regclass,'dms.search_chunk'::regclass,'dms.service_observation'::regclass,'dms.recovery_state'::regclass,'dms.backup_catalog'::regclass,'dms.disposal_intent'::regclass)",
+        "SELECT count(*) = 40 AND bool_and(relrowsecurity AND relforcerowsecurity) AS safe FROM pg_class WHERE oid IN ('dms.application_registration'::regclass, 'dms.enrollment_key'::regclass, 'dms.enrollment_receipt'::regclass, 'dms.security_event'::regclass, 'dms.audit_event'::regclass, 'dms.outbox_intent'::regclass,'dms.document'::regclass,'dms.document_version'::regclass,'dms.upload_admission'::regclass,'dms.admission_policy'::regclass,'dms.admission_capacity'::regclass,'dms.admission_tenant_usage'::regclass,'dms.admission_application_usage'::regclass,'dms.upload_batch'::regclass,'dms.upload_batch_item'::regclass,'dms.upload_batch_slot'::regclass,'dms.upload_session'::regclass,'dms.upload_receipt'::regclass,'dms.work_identity'::regclass,'dms.work_job'::regclass,'dms.work_dispatch'::regclass,'dms.work_attempt'::regclass,'dms.security_candidate'::regclass,'dms.binary_restore'::regclass,'dms.document_grant'::regclass,'dms.lifecycle_restore'::regclass,'dms.lifecycle_receipt'::regclass,'dms.security_assessment_history'::regclass,'dms.extraction_stage'::regclass,'dms.processing_run'::regclass,'dms.search_generation'::regclass,'dms.search_chunk'::regclass,'dms.service_observation'::regclass,'dms.recovery_state'::regclass,'dms.backup_catalog'::regclass,'dms.disposal_intent'::regclass,'dms.deployment_control'::regclass,'dms.deployment_clock_state'::regclass,'dms.deployment_usage'::regclass,'dms.deployment_usage_event'::regclass)",
       );
       if (!policy.rows[0]?.safe) return false;
       if (
@@ -60,6 +65,15 @@ export class DmsDatabaseService implements OnApplicationShutdown {
   ): Promise<T> {
     if (!this.pool || !this.config) return dmsError(503, 'DMS_UNAVAILABLE');
     const tenantId = this.config.INSTALLATION_TENANT_ID;
+    const mode: DeploymentMode =
+      !enrollment && scopes.length === 1 && scopes[0] === 'dms:capabilities:read'
+        ? 'recovery'
+        : !enrollment &&
+            scopes.length > 0 &&
+            scopes.every((scope) => ['dms:documents:read', 'dms:audit:read'].includes(scope))
+          ? 'read'
+          : 'full';
+    await deploymentPreflight(this.pool, tenantId, mode);
     return withTenant(this.pool, tenantId, async (client) => {
       if (!(await client.query('SELECT dms.recovery_open() AS open')).rows[0]?.open)
         return dmsError(503, 'DMS_UNAVAILABLE');
@@ -91,6 +105,7 @@ export class DmsDatabaseService implements OnApplicationShutdown {
         principal,
       };
       await bindPrincipal(client, context);
+      await requireDeployment(client, mode);
       return work({ client, context });
     });
   }

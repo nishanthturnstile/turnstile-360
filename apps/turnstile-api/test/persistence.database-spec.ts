@@ -193,6 +193,9 @@ describe('owned product persistence', () => {
 
   it('enforces installation identity, tenant constraints and operator-owned user access', async () => {
     await bootstrapInstallation();
+    await expect(
+      bootstrapInstallation({ ...process.env, INSTALLATION_LOCAL_ID: randomUUID() }),
+    ).rejects.toThrow('Installation deployment identity cannot be replaced');
     for (const replacement of [
       { INSTALLATION_TENANT_ID: randomUUID() },
       { INSTALLATION_CUSTOMER_KEY: 'another-customer' },

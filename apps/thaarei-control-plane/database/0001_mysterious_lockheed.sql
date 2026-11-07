@@ -1,0 +1,1 @@
+ALTER TABLE "control_plane"."staff_audit" ADD COLUMN "details" jsonb DEFAULT '{}'::jsonb NOT NULL;

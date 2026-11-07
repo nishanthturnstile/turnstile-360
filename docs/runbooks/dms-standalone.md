@@ -5,6 +5,27 @@ It does not deliver document storage/processing or the full v1 service set. DMS-
 the optional [protected consumer explorer and manual HTTP recipes](dms-api-explorer.md).
 Design, limits and trust boundaries live in [architecture](../../architecture.md#standalone-dms-delivery-target).
 
+## Planned central approval integration
+
+TCP-I01 adopts [separate central product approval](../thaarei/control-plane-specification.md)
+for the coordinated future release. The commands below implement **local consumer enrollment**;
+they do not pair the DMS product with Thaarei or issue its signed approval. Current delivery
+remains unchanged. Do not invent activation env flags, run migrations or modify existing
+installations using this adoption record. TCP-I05 supplies the owning DMS distribution
+integration after its upstream handoff; TCP-I08 qualifies and documents exact release steps.
+
+Before an enforcement release opens business access, explicitly inventory, pair and approve
+the intended DMS product. Central settings/credential files belong to its reporter/setup
+process, not customer OAuth settings or a consumer backend. Combined Turnstile delivery
+requires its separately tested overlay and identity-service clients; this standalone
+profile is not that overlay. The complete [two-host configuration](../../architecture.md#two-linux-hosts-and-customer-configuration)
+and [restore/trust recovery contract](../../architecture.md#supported-restore-and-signing-trust-recovery)
+are authoritative: quarantine before supported restore, reconcile online before reopening,
+and deliver compromised-key trust replacement through independent protected authority.
+Encrypted backup must include protected reporter files and public trust/recovery state;
+cached grants alone cannot authorize reopening restored data. Ordinary restart differs
+from restore. These procedures require owning implementation/qualification before use.
+
 ## Fresh installation
 
 Use a **new dedicated database/volume**. Preserve existing issuers, signing secrets,

@@ -56,6 +56,7 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
   let actor:
     | {
         id: string | undefined;
+        prefer: string | string[] | undefined;
         requestId: string | undefined;
         cookie: boolean;
         tenant: boolean;
@@ -76,6 +77,7 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
       if (request.url === '/v1/capabilities') {
         dmsCalls++;
         actor = {
+          prefer: request.headers.prefer,
           id: request.headers['x-thaarei-actor-id'] as string | undefined,
           requestId: request.headers['x-thaarei-request-id'] as string | undefined,
           cookie: request.headers.cookie !== undefined,
@@ -106,6 +108,7 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
             method: request.method ?? 'GET',
             headers: {
               accept: request.headers.accept ?? '*/*',
+              ...(request.headers.prefer ? { prefer: request.headers.prefer } : {}),
               'sec-fetch-mode': (request.headers['sec-fetch-mode'] as string) ?? 'cors',
               ...(request.headers['content-type']
                 ? { 'content-type': request.headers['content-type'] }
@@ -973,11 +976,17 @@ describe('Turnstile BFF with real authority HTTP and persisted sessions', () => 
       ),
     );
     expect(responses.every((response) => response.statusCode === 200)).toBe(true);
-    expect(responses[0]?.json()).toEqual({ formats: [], profiles: [], languages: [] });
+    expect(responses[0]?.json()).toEqual({
+      deploymentAccess: 'full',
+      formats: [],
+      profiles: [],
+      languages: [],
+    });
     expect(responses[0]?.headers['cache-control']).toBe('private, no-store');
     expect(machineCalls - before.tokens).toBe(1);
     expect(dmsCalls - before.requests).toBe(3);
     expect(actor).toMatchObject({
+      prefer: 'include-deployment-status',
       id: fixture.users.member.id,
       cookie: false,
       tenant: false,

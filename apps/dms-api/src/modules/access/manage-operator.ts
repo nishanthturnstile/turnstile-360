@@ -13,12 +13,40 @@ import { requestProcessing } from '../processing/results.service.js';
 import { inspectWork, operatorWork } from '../processing/work-operator.js';
 import { operatorAdmissionPolicy } from '../uploads/admission-operator.js';
 import { inspectUploadOperation } from '../uploads/upload-operator.js';
-import { withFreshOperatorIdentity, withOperatorRead } from './operator-context.js';
+import {
+  withOperatorRead as owningOperatorRead,
+  withFreshOperatorIdentity,
+} from './operator-context.js';
 
 // Private process entry only: freshly authenticate on every invocation. Possession
 // of an authority cookie or consumer token cannot invoke this maintenance interface.
 export async function runOperatorCommand(input: unknown, environment = process.env) {
   const operation = dmsOperatorCommandSchema.parse(input);
+  const recovery = [
+    'operations-inspect',
+    'operations-backup-report',
+    'operations-prune',
+    'work-authorize',
+    'work-disable',
+  ];
+  const reads = [
+    'document-lifecycle-read',
+    'document-permissions-read',
+    'document-inspect',
+    'upload-inspect',
+    'batch-inspect',
+    'audit-read',
+    'admission-policy-read',
+    'work-inspect',
+  ];
+  const mode = recovery.includes(operation.action)
+    ? 'recovery'
+    : reads.includes(operation.action)
+      ? 'read'
+      : 'full';
+  const withOperatorRead: typeof owningOperatorRead = (...args) =>
+    owningOperatorRead(args[0], args[1], args[2], args[3], args[4], mode);
+
   return withFreshOperatorIdentity(
     environment,
     operation,

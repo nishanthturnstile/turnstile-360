@@ -1,0 +1,75 @@
+x-turnstile-public: &public
+  TURNSTILE_CONTROL_PLANE_ORIGIN: ${TURNSTILE_CONTROL_PLANE_ORIGIN:?Canonical central HTTPS origin required}
+  TURNSTILE_CONTROL_PLANE_VERIFICATION_KEYS_FILE: /run/turnstile-trust.json
+  TURNSTILE_CONTROL_PLANE_RECOVERY_MARKER_FILE: /run/turnstile-marker
+  TURNSTILE_CONTROL_PLANE_INSTALLATION_ID: ${TURNSTILE_CONTROL_PLANE_INSTALLATION_ID:-}
+  TURNSTILE_CONTROL_PLANE_PRODUCT_ID: ${TURNSTILE_CONTROL_PLANE_PRODUCT_ID:-}
+x-turnstile-files: &files
+  - ${TURNSTILE_CONTROL_PLANE_TRUST_HOST_FILE:?Public trust required}:/run/turnstile-trust.json:ro
+  - ${TURNSTILE_CONTROL_PLANE_RECOVERY_HOST_FILE:?Independent marker required}:/run/turnstile-marker:ro
+  - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+services:
+  turnstile-api:
+    image: thaarei-turnstile-api:tcp-i06
+    build:
+      context: ..
+      dockerfile: apps/turnstile-api/Dockerfile
+      args: { TURNSTILE_RELEASE: 0.0.0-tcp-i06 }
+    environment: *public
+    volumes: *files
+  turnstile-reporter:
+    build:
+      context: ..
+      dockerfile: apps/turnstile-api/Dockerfile
+      args: { TURNSTILE_RELEASE: 0.0.0-tcp-i06 }
+    image: thaarei-turnstile-api:tcp-i06
+    command: [node, dist/main.reporter.js]
+    env_file:
+      - path: ../.env.turnstile.reporter
+        format: raw
+    environment:
+      <<: *public
+      TURNSTILE_CONTROL_PLANE_MACHINE_SECRET_FILE: /run/turnstile-private/product.json
+      NODE_EXTRA_CA_CERTS: /run/customer-ca.pem
+    volumes:
+      - ${TURNSTILE_CONTROL_PLANE_PRIVATE_HOST_DIRECTORY:?Private credential directory required}:/run/turnstile-private:ro
+      - ${TURNSTILE_CONTROL_PLANE_TRUST_HOST_FILE:?Public trust required}:/run/turnstile-trust.json:ro
+      - ${TURNSTILE_CONTROL_PLANE_RECOVERY_HOST_FILE:?Independent marker required}:/run/turnstile-marker:ro
+      - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [default, ingress]
+    restart: unless-stopped
+    stop_grace_period: 45s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: "3" }
+  turnstile-deployment:
+    image: thaarei-turnstile-api:tcp-i06
+    profiles: [tools]
+    entrypoint: [node]
+    command: [dist/modules/deployment/operator.js]
+    env_file:
+      - path: ../.env.turnstile.reporter
+        format: raw
+    environment:
+      <<: *public
+      TURNSTILE_CONTROL_PLANE_MACHINE_SECRET_FILE: /run/turnstile-private/product.json
+      NODE_EXTRA_CA_CERTS: /run/customer-ca.pem
+    volumes:
+      - ${TURNSTILE_CONTROL_PLANE_PRIVATE_HOST_DIRECTORY:?Private credential directory required}:/run/turnstile-private
+      - ${TURNSTILE_CONTROL_PLANE_TRUST_HOST_FILE:?Public trust required}:/run/turnstile-trust.json:ro
+      - ${TURNSTILE_CONTROL_PLANE_RECOVERY_HOST_FILE:?Independent marker required}:/run/turnstile-marker:ro
+      - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [default, ingress]

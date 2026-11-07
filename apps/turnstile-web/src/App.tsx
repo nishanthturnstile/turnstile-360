@@ -1,6 +1,11 @@
 import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import type { UserSessionDto, WorkspaceStatusDto } from '@thaarei/turnstile-contracts';
+import {
+  type DeploymentStatusDto,
+  deploymentStatusSchema,
+  type UserSessionDto,
+  type WorkspaceStatusDto,
+} from '@thaarei/turnstile-contracts';
 import { lazy, type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
@@ -25,7 +30,13 @@ import { cn } from '@/lib/utils';
 import { ForgotPassword, ResetPassword, SignIn } from './features/auth/AuthForms';
 import { beginSignIn, captureResetToken, identity } from './features/auth/client';
 import { InvitationEntry } from './features/auth/InvitationEntry';
-import { endSession, loadCapabilities, loadSession, ProductError } from './features/auth/product';
+import {
+  endSession,
+  loadCapabilities,
+  loadSession,
+  ProductError,
+  productRequest,
+} from './features/auth/product';
 import { loadWorkspaceStatus } from './features/configuration/api';
 import { settingsPaths, setupPaths } from './features/configuration/routes';
 import { OnboardingJourney } from './features/onboarding/OnboardingJourney';
@@ -157,6 +168,7 @@ export function Workspace() {
   const identityId = useRef<string | undefined>(undefined);
   const [checking, setChecking] = useState(false);
   const [session, setSession] = useState<UserSessionDto>();
+  const [deployment, setDeployment] = useState<DeploymentStatusDto>();
   const [workspace, setWorkspace] = useState<WorkspaceStatusDto>();
   const { pathname: routePath } = useLocation();
   const [path, setPath] = useState(routePath);
@@ -174,7 +186,14 @@ export function Workspace() {
     setupPaths.some((value) => value === path) ||
     settingsPaths.some((value) => value === path);
   const [state, setState] = useState<
-    'loading' | 'ready' | 'expired' | 'denied' | 'unavailable' | 'setup-unavailable' | 'signed-out'
+    | 'activation'
+    | 'loading'
+    | 'ready'
+    | 'expired'
+    | 'denied'
+    | 'unavailable'
+    | 'setup-unavailable'
+    | 'signed-out'
   >('loading');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -201,6 +220,16 @@ export function Workspace() {
           }
           identityId.current = value.user.id;
           if (!fresh || subjectChanged) setSession(value);
+          const activation = await productRequest('/api/deployment/status', {
+            schema: deploymentStatusSchema,
+          });
+          if (current !== generation.current || checkId !== checks.current) return false;
+          setDeployment(activation);
+          if (activation.access === 'closed') {
+            setSession(value);
+            setState('activation');
+            return false;
+          }
           const status = await loadWorkspaceStatus(value.user.id);
           if (current !== generation.current || checkId !== checks.current) return false;
           setSession(value);
@@ -321,9 +350,13 @@ export function Workspace() {
     setBusyAction('connection');
     setConnection('');
     try {
-      await loadCapabilities();
+      const capabilities = await loadCapabilities();
       if (current !== generation.current) return;
-      setConnection('Connected. Document features will appear here when available.');
+      setConnection(
+        capabilities.deploymentAccess && capabilities.deploymentAccess !== 'full'
+          ? 'The document service is restricted. Its administrator must restore DMS approval independently.'
+          : 'Connected. Document features will appear here when available.',
+      );
     } catch (error) {
       if (current !== generation.current) return;
       if (error instanceof ProductError && error.status === 401) {
@@ -423,7 +456,11 @@ export function Workspace() {
       <AuthLayout>
         <AccountState
           kind={
-            state === 'ready' ? 'expired' : state === 'setup-unavailable' ? 'unavailable' : state
+            state === 'ready'
+              ? 'expired'
+              : state === 'setup-unavailable' || state === 'activation'
+                ? 'unavailable'
+                : state
           }
           retry={() => void check()}
           pending={checking}
@@ -449,6 +486,24 @@ export function Workspace() {
       </div>
     </header>
   );
+  if (state === 'activation')
+    return (
+      <EntryLayout header={header}>
+        <EntryContent>
+          <h1 className="page-title">Installation activation required</h1>
+          <p className="intro">
+            This installation is{' '}
+            {deployment?.state === 'unavailable'
+              ? 'temporarily unavailable'
+              : 'waiting for approval or recovery'}
+            . Contact your installation administrator. Signing in does not approve the installation.
+          </p>
+          <Button disabled={checking} onClick={() => void check()}>
+            {checking ? 'Checking…' : 'Check activation'}
+          </Button>
+        </EntryContent>
+      </EntryLayout>
+    );
   const unavailable =
     state === 'expired' || state === 'denied' ? (
       <div className="flex flex-col gap-5">
@@ -544,6 +599,9 @@ export function Workspace() {
         settingsPaths.some((value) => value === path)
       }
     >
+      {deployment?.access === 'existing-reads' && (
+        <Notice message="Installation restricted: existing authorized reads remain available. Changes require renewed approval." />
+      )}
       {unavailable}
       <div className="workspace-view" hidden={state !== 'ready'} inert={state !== 'ready'}>
         {!knownPath ? (

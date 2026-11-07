@@ -126,6 +126,8 @@ export function canReadUnits(session: UserSessionDto) {
   );
 }
 export function message(error: unknown) {
+  if (error instanceof PeopleError && error.code === 'DEPLOYMENT_RESTRICTED')
+    return 'This installation is restricted. Existing authorized reads remain available; changes require renewed approval. Your draft is kept.';
   if (!(error instanceof PeopleError)) return 'Check your entries and review this change again.';
   if (error.status === 401)
     return 'Your session ended. Sign in again to continue. Your draft is kept on this page.';

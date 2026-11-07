@@ -17,6 +17,11 @@ for (const file of [
   'deploy/compose.dms-assessment.yaml',
   'deploy/compose.dms-results.yaml',
   'deploy/compose.dms-structure.yaml',
+  'deploy/compose.control-plane.yaml',
+  'deploy/compose.dms-control-plane.yaml',
+  'deploy/compose.customer-complete.yaml',
+  'deploy/compose.dms-activated.yaml',
+  'deploy/distribution/compose.turnstile.yaml',
   'deploy/compose.local.yaml',
   'deploy/compose.dev.yaml',
   'deploy/compose.dokploy.yaml',
@@ -270,4 +275,71 @@ assert.ok(completeStructure.services['heavy-worker'].networks.includes('authorit
 assert.equal(complete.networks.ingress.external, true);
 console.log(
   'Complete standalone entry points have versioned images, nonroot services, bounded logs/resources and explicit private bootstrap',
+);
+
+const central = configurations.get('deploy/compose.control-plane.yaml');
+assert.deepEqual(Object.keys(central.services).sort(), ['control-plane', 'postgres']);
+for (const service of Object.values(central.services))
+  assert.ok(!service.ports, 'Central production has private ports only');
+assert.equal(central.services['control-plane'].build.context, '..');
+assert.equal(central.services['control-plane'].read_only, true);
+assert.ok(!central.services['control-plane'].environment.CONTROL_PLANE_MIGRATION_DATABASE_URL);
+assert.ok(!central.services['control-plane'].environment.CONTROL_PLANE_PUBLIC_KEYS_OUTPUT_FILE);
+assert.equal(
+  central.services['control-plane'].environment.CONTROL_PLANE_SIGNING_KEY_FILE,
+  '/run/secrets/control-plane-signing',
+);
+assert.equal(
+  central.services['control-plane'].environment.CONTROL_PLANE_RECOVERY_MARKER_FILE,
+  '/run/secrets/control-plane-recovery',
+);
+console.log(
+  'Central app has isolated persistence, protected secret delivery and no migration runtime credential',
+);
+
+const activation = configurations.get('deploy/compose.dms-control-plane.yaml');
+assert.ok(!activation.services['dms-api'].environment.CONTROL_PLANE_MACHINE_SECRET_FILE);
+assert.ok(
+  activation.services.coordinator.volumes.some((v) => v.endsWith(':/run/deployment-private:ro')),
+);
+assert.ok(
+  activation.services['dms-maintenance'].volumes.some((v) =>
+    v.endsWith(':/run/deployment-private'),
+  ),
+);
+const combined = configurations.get('deploy/distribution/compose.turnstile.yaml');
+assert.equal(combined.services['dms-api'].environment.AUTH_MODE, 'combined');
+assert.ok(combined.services['turnstile-api'].environment.IDENTITY_SERVICE_API_URL);
+assert.ok(combined.services['turnstile-api'].environment.IDENTITY_SERVICE_RESOURCE_URL);
+for (const service of Object.values(combined.services))
+  assert.ok(!service.ports, 'Customer ingress belongs to Dokploy');
+console.log(
+  'Complete combined customer profile preserves DMS authority/private identity and isolates central machine credentials',
+);
+
+const turnstileControl = parseDocument(
+  readFileSync('deploy/compose.turnstile-control-plane.yaml', 'utf8'),
+).toJS();
+assert.ok(
+  !turnstileControl.services['turnstile-api'].environment
+    .TURNSTILE_CONTROL_PLANE_MACHINE_SECRET_FILE,
+);
+assert.ok(
+  turnstileControl.services['turnstile-api'].volumes.every(
+    (v) => !v.includes('/run/turnstile-private'),
+  ),
+);
+const reporter = turnstileControl.services['turnstile-reporter'];
+assert.ok(reporter.volumes.some((v) => v.endsWith(':/run/turnstile-private:ro')));
+assert.deepEqual(reporter.command, ['node', 'dist/main.reporter.js']);
+assert.equal(reporter.read_only, true);
+assert.ok(reporter.env_file.every((v) => v.path === '../.env.turnstile.reporter'));
+assert.ok(
+  turnstileControl.services['turnstile-deployment'].volumes.some((v) =>
+    v.endsWith(':/run/turnstile-private'),
+  ),
+);
+for (const service of Object.values(turnstileControl.services)) assert.ok(!service.ports);
+console.log(
+  'Turnstile activation has a separate private reporter, public-only API trust and protected setup mounts',
 );

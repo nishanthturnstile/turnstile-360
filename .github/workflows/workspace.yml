@@ -10,6 +10,7 @@ permissions:
 
 env:
   TURBO_TELEMETRY_DISABLED: "1"
+  NEXT_TELEMETRY_DISABLED: "1"
 
 jobs:
   dms-standalone:
@@ -78,6 +79,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - image: thaarei-control-plane
+            dockerfile: apps/thaarei-control-plane/Dockerfile
           - image: dms-api
             dockerfile: apps/dms-api/Dockerfile
           - image: turnstile-api

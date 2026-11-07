@@ -7967,7 +7967,15 @@
         "x-browser-execution": true,
         "description": "Current registration, scope and owner policy are checked on every call and retry. Cookies and explorer credentials grant no machine access. Signed capabilities are never persisted in receipts.",
         "security": [{ "MachineBearer": [] }],
-        "parameters": [],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Prefer",
+            "required": false,
+            "schema": { "type": "string", "enum": ["include-deployment-status"] },
+            "description": "Opt in to the safe deploymentAccess field. Omit to preserve the ordinary version-1 response shape for strict decoders. No central credentials or signed proof are returned."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Installed capabilities and verified application context.",
@@ -11690,6 +11698,11 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
+          "deploymentAccess": {
+            "description": "Included only for Prefer: include-deployment-status; ordinary version-1 capability responses retain their original shape.",
+            "type": "string",
+            "enum": ["full", "existing-reads", "closed"]
+          },
           "contractVersion": { "type": "number", "const": 1 },
           "applicationId": {
             "type": "string",
@@ -11832,6 +11845,7 @@
               "APPLICATION_DENIED",
               "SCOPE_DENIED",
               "OPERATION_DENIED",
+              "DEPLOYMENT_RESTRICTED",
               "TENANT_INPUT_REJECTED",
               "ENROLLMENT_KEY_INVALID",
               "ENROLLMENT_KEY_EXPIRED",

@@ -5,6 +5,11 @@ import {
   createPool,
   withTenant,
 } from '../../infrastructure/database/postgres.js';
+import {
+  type DeploymentMode,
+  deploymentPreflight,
+  requireDeployment,
+} from '../deployment/access.js';
 import { parseAuthorityEnvironment } from '../platform-auth/authority-configuration.js';
 import { createAuthority } from '../platform-auth/authority-instance.js';
 import { createRecoveryDelivery } from '../platform-auth/recovery-delivery.js';
@@ -67,12 +72,19 @@ export async function withOperatorRead<T>(
   customerKey: string,
   subjectId: string,
   work: (transaction: DmsTransaction<OperatorContext>) => Promise<T>,
+  deployment: DeploymentMode = 'read',
 ) {
   const url = environment.DMS_OPERATOR_DATABASE_URL;
   if (!url) throw new Error('Private operator database authority required');
   const pool = createPool(url, 1);
   try {
     await assertDatabaseRole(pool, 'thaarei_dms_operator', 'dms');
+    const installation = (
+      await pool.query('SELECT tenant_id,customer_key FROM dms.installation WHERE singleton=1')
+    ).rows[0];
+    if (installation?.tenant_id !== tenantId || installation.customer_key !== customerKey)
+      throw new Error('Installation mismatch');
+    await deploymentPreflight(pool, tenantId, deployment);
     return await withTenant(pool, tenantId, async (client) => {
       // Shared command fence serializes inspection with supported grant/revoke commands.
       await client.query('SELECT pg_advisory_xact_lock_shared(hashtextextended($1,0))', [
@@ -86,6 +98,7 @@ export async function withOperatorRead<T>(
       const context: OperatorContext = { kind: 'operator', tenantId, subjectId };
       await bindPrincipal(client, context);
       await requireOperatorGrant(client, subjectId);
+      await requireDeployment(client, deployment);
       return work({ client, context });
     });
   } finally {

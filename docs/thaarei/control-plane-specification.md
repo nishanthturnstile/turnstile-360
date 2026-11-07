@@ -2,14 +2,16 @@
 
 **Date:** 2026-11-06. **Owner:** Thaarei. Confidential and proprietary.
 
-**Status:** Proposed requirements for owner review. The owner has requested a separate
-central app, preferably Next.js with an integrated backend, approval before customer
-Turnstile/DMS use, and health/usage visibility. The owner selected seven-day renewable
-approval with daily renewal on 2026-11-06. Other timing, restriction exceptions and
-staff-role policies remain recommendations. No implementation or rollout is authorized
-by a planned requirement. [Architecture](../../architecture.md#thaarei-central-control-plane-proposal)
-owns technical design; the [implementation plan](control-plane-implementation-plan.md)
-owns delivery; [progress](../../IN_PROGRESS.md) owns actual completion.
+**Status:** Owner-adopted implementation baseline (TCP-I01, 2026-11-06). The owner
+selected seven-day approval/daily renewal and explicitly accepted existing authorized
+reads/downloads after expiry or suspension only for previously activated installations,
+local staff email/password with mandatory MFA and Admin/Operator/Viewer roles,
+fifteen-minute reporting, ninety-day reports/one-year audit retention and separate Linux
+hosting with outbound HTTPS. Implementation is authorized in delivery order; adoption
+alone does not change running software or authorize a target rollout.
+[Architecture](../../architecture.md#thaarei-central-control-plane-proposal) owns technical
+design; the [implementation plan](control-plane-implementation-plan.md) owns delivery;
+[progress](../../IN_PROGRESS.md) owns actual completion.
 
 ## Product outcome and vocabulary
 
@@ -42,7 +44,7 @@ owns exact routing, private identity integration, secret delivery and host bound
 
 ## Requirements and acceptance
 
-| ID      | Proposed requirement                    | Acceptance                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ID      | Adopted requirement                     | Acceptance                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | TCP-R01 | Separate staff access                   | Staff uses the central app's own identity/session store. Explicit admission, verification, login, logout, MFA and recovery work without customer identities. No public signup or customer access.                                                                                                                                                                                                                                     |
 | TCP-R02 | Simple current authorization            | Fixed Admin, Operator and Viewer roles, with server checks at every entry. Admin controls staff/recovery/suspension, Operator maintains/approves deployments, Viewer reads. Staff disablement/role removal affects existing sessions; no custom roles or assigned-client hierarchy in v1.                                                                                                                                             |
@@ -70,7 +72,8 @@ approval are now included. None of the earlier draft was adopted or implemented.
 days and daily renewal. Ordinary requests continue during short central outages while
 the approval is valid.
 
-**Proposed additional behavior:** send a small report every 15 minutes. After expiry or a
+**Additional behavior adopted on 2026-11-06:** send a small report every 15 minutes.
+After expiry or a
 received signed suspension, restrict new writes, uploads and new processing/workflows.
 Retain existing authorized business reads/downloads only when verified prior activation
 belongs to the current binding. Pending/rejected/never-approved products and restore or
@@ -124,25 +127,31 @@ Approval, Status and Usage; Activity; Staff for administrators. Default status c
 “awaiting approval,” “suspended,” “not recently seen” and “version needs review.” No external
 alerting service or configurable workflow engine is needed initially.
 
-## Scope decisions still needed
+## Adopted scope and deployment inputs
 
-1. Confirm the proposed read/recovery exception after restriction. Seven-day approval and
-   daily renewal are already selected; do not ask for that decision again.
-2. Confirm whether customer networks permit outbound HTTPS; identify any air-gapped need.
-3. Confirm proposed local staff email/password plus MFA and three roles, or name an existing
-   corporate identity provider to use instead. Assigned-client staff visibility is deferred.
-4. Confirm required usage aggregates/retention and whether test environments need different
-   approval terms. Billing, price plans, automatic upgrades, SMS/email alerting and remote
-   support access remain separate future scope.
+The owner accepted the remaining defaults on 2026-11-06. Use the same approval terms for
+production and test environments with independent bindings. All three staff roles see
+all clients; no assigned-client hierarchy or corporate identity provider in v1. Report
+only the disclosed source-owned aggregates; unimplemented metrics stay unavailable.
+The selected operation matrix, staff policy, limits, configuration and recovery contract
+live in [architecture](../../architecture.md#operation-classification-and-decision-types).
+
+Actual central/customer hostnames, TLS/SMTP credentials, backup destinations and any
+corporate proxy/CA are private deployment inputs, not unanswered product-policy choices.
+They must be qualified before rollout; outbound HTTPS is a supported v1 requirement,
+not a claim that a particular customer network has already been tested. Air-gapped/manual
+activation, billing, price plans, automatic upgrades, SMS/email alerting and remote support
+access remain separate future scope.
 
 ## Relationship to accepted DMS scope
 
 The existing [DMS requirements](../dms/headless_dms_functionality_requirements_v1.md)
 FR-02.10–14 implement local one-time enrollment and disablement. They do not establish
-this central authority or its recurring reporting. The new requirement changes the prior
-self-hosted/no-central-runtime-dependency expectation and needs a coordinated adoption
-with FR-19, NFR-09 and DMS packaging/recovery. The DMS remains headless and independent of
+this central authority or its recurring reporting. The adopted requirement changes the prior
+self-hosted/no-central-runtime-dependency expectation. FR-19, NFR-09, the product blueprint
+and standalone runbook now reference this coordinated delivery scope. The DMS remains
+headless and independent of
 Turnstile; full offline independence from Thaarei changes under renewable approvals.
 
-This proposal does not retrospectively declare the running standalone DMS work incomplete
+This adoption does not retrospectively declare the running standalone DMS work incomplete
 against its original scope, or authorize changes to that branch or customer installations.
