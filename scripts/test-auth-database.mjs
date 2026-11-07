@@ -8,8 +8,6 @@ import { join } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import pg from 'pg';
 import { parse } from 'yaml';
-import { seedDmsDeployment } from './fixtures/dms-deployment.mjs';
-import { seedTurnstileDeployment } from './fixtures/turnstile-deployment.mjs';
 import { provisionDatabase } from './provision-auth-database.mjs';
 
 function run(command, args, env = process.env, input) {
@@ -61,6 +59,12 @@ try {
     '--filter=@thaarei/dms-api',
     ...(standalone ? [] : ['--filter=@thaarei/turnstile-api']),
     ...(browser ? ['--filter=@thaarei/turnstile-web'] : []),
+  ]);
+  // Fixture modules consume compiled workspace packages. Load them only after the
+  // dependency build so direct invocations also work on a clean CI checkout.
+  const [{ seedDmsDeployment }, { seedTurnstileDeployment }] = await Promise.all([
+    import('./fixtures/dms-deployment.mjs'),
+    import('./fixtures/turnstile-deployment.mjs'),
   ]);
   // Test credentials stay in environment/memory, never shell command text or recorded output.
   run(
@@ -300,6 +304,8 @@ try {
         '--read-only',
         '--tmpfs',
         '/tmp',
+        '--mount',
+        `type=bind,source=${join(process.cwd(), 'apps/dms-api/test/packaged-explorer.mjs')},target=/run/packaged-explorer.mjs,readonly`,
         '--mount',
         `type=bind,source=${env.CONTROL_PLANE_VERIFICATION_KEYS_FILE},target=/run/deployment-trust,readonly`,
         '--mount',

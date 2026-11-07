@@ -1,4 +1,4 @@
-// Private disposable-image fixture. Copied into /tmp, never shipped as runtime code.
+// Private disposable-image fixture. Mounted read-only into /run, never shipped as runtime code.
 
 let input = '';
 for await (const chunk of process.stdin) input += chunk;

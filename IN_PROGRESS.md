@@ -131,6 +131,27 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
+TCP-CI-001 — **In progress** (owner: Codex control-plane implementation thread,
+2026-11-07). Resolve PR #15 CI failure on the control-plane branch, reproduce the failing
+standalone lane, run required workspace checks, push the focused fix and monitor all PR
+checks. No deployment or persistent-installation change is authorized. Next: inspect the
+completed failing job log and correct the owning test/build dependency.
+
+CI diagnosis/fix: the standalone launcher statically imported deployment fixtures before
+its dependency build, producing `ERR_MODULE_NOT_FOUND` on a clean CI host. Fixture imports
+now occur after the owning Turbo build. Missing compiled output reproduced the failure and
+the fixed entrypoint rebuilt it. The now-running lane exposed a second failure: Docker
+rejects `docker cp` into the read-only image even with `/tmp` tmpfs. The packaged explorer
+helper is now mounted read-only at container creation, preserving runtime restrictions.
+The actual standalone image lane passes all 10 tests, including protected explorer/browser
+and real machine reads. Current `pnpm check`, build and unit commands pass. The first local full integration
+run encountered a transient S3 unavailable response in I10 restoration; a complete quiet
+recheck is active. GitHub's original `checks` job and every container-build matrix job
+passed; only the standalone job failed. No speculative production storage change is made. Prior local qualification remains historical evidence for its
+recorded helper hashes; this test-harness-only CI change does not alter production inputs.
+Next: push only this focused CI fix, finish the local integration recheck and monitor
+all checks on PR #15.
+
 TCP-I08 — **In progress** (release/recovery qualification; owner: Codex control-plane
 implementation thread, 2026-11-07). **The selected isolated local implementation and
 qualification gate is Completed. Target release/acceptance is Deferred** under the owner's
