@@ -108,6 +108,13 @@ async function installationOperation(environment: NodeJS.ProcessEnv, bootstrap: 
       const row = rows[0];
       if (row?.tenant_id !== tenantId || row.customer_key !== customerKey)
         throw new Error('Installation identity cannot be replaced');
+      if (bootstrap) {
+        await client.query("SELECT set_config('app.tenant_id',$1,true)", [tenantId]);
+        await client.query(
+          'INSERT INTO dms.deployment_control(tenant_id) VALUES($1) ON CONFLICT DO NOTHING',
+          [tenantId],
+        );
+      }
       if (inserted?.rowCount) {
         await client.query("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
         await insertSecurityEvent(client, tenantId, {

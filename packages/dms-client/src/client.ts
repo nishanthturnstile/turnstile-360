@@ -36,8 +36,12 @@ export class DmsClient {
     this.timeoutMs = timeout(options.timeoutMs);
   }
 
-  async capabilities(actor?: DmsActorContext): Promise<CapabilitiesResponse> {
+  async capabilities(
+    actor?: DmsActorContext,
+    options: { deploymentStatus?: boolean } = {},
+  ): Promise<CapabilitiesResponse> {
     const headers: Record<string, string> = { accept: 'application/json' };
+    if (options.deploymentStatus) headers.prefer = 'include-deployment-status';
     if (actor) {
       if (
         !/^[A-Za-z0-9_-]{1,200}$/.test(actor.userId) ||

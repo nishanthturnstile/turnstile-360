@@ -1,10 +1,15 @@
 """Fixture-only handlers for real Celery retry/loss tests; never loaded by production CLI."""
 
+import json
 import os
+import sys
 import time
 from typing import Any
 
-from turnstile_processing.broker import make_app
+from celery import signals  # type: ignore[import-untyped]
+from celery.exceptions import Reject  # type: ignore[import-untyped]
+
+from turnstile_processing.broker import Unroutable, make_app
 from turnstile_processing.tasks import FixedTask, TransientFailure, register_tasks
 
 counts: dict[str, int] = {}
@@ -24,6 +29,25 @@ def execute(self: FixedTask, lease: dict[str, Any]) -> tuple[str, str]:
         return "SUCCEEDED", "OK"
     return "UNSUPPORTED", "HANDLER_NOT_INSTALLED"
 
+
+def observe_task_outcome(state: str | None = None, retval: Any = None, **_kwargs: Any) -> None:
+    """Observe the real retry handler; never replace its confirmed publisher or print payloads."""
+    if mode != "retry_once" or state not in {"RETRY", "REJECTED", "SUCCESS", "FAILURE"}:
+        return
+    reason = (
+        "unroutable"
+        if isinstance(retval, Reject) and isinstance(retval.reason, Unroutable)
+        else "other"
+    )
+    stream = sys.__stdout__
+    if stream is not None:
+        stream.write(
+            json.dumps({"type": "fixture-task-outcome", "state": state, "reason": reason}) + "\n"
+        )
+        stream.flush()
+
+
+signals.task_postrun.connect(observe_task_outcome, weak=False)
 
 FixedTask.execute = execute  # type: ignore[method-assign]
 app = make_app()

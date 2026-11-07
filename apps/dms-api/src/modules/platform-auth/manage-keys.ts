@@ -133,6 +133,7 @@ export async function manageSigningKeys(raw: unknown, environment = process.env)
             client.release();
           }
         },
+        'recovery',
       );
     },
   );

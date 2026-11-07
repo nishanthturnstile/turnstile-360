@@ -16,7 +16,9 @@
       "!!pnpm-lock.yaml",
       "!!skills-lock.json",
       "!!docs/headless_dms_*",
-      "!!deploy/assessment/legal/README.md"
+      "!!deploy/assessment/legal/README.md",
+      "!!**/.next",
+      "!!apps/thaarei-control-plane/database/meta"
     ]
   },
   "formatter": {
@@ -48,12 +50,18 @@
   "overrides": [
     {
       "includes": ["apps/turnstile-web/**/*.css"],
-      "css": { "parser": { "tailwindDirectives": true } }
+      "css": {
+        "parser": {
+          "tailwindDirectives": true
+        }
+      }
     },
     {
       "includes": ["apps/dms-api/**/*.ts", "apps/turnstile-api/**/*.ts"],
       "javascript": {
-        "parser": { "unsafeParameterDecoratorsEnabled": true }
+        "parser": {
+          "unsafeParameterDecoratorsEnabled": true
+        }
       },
       "linter": {
         "rules": {

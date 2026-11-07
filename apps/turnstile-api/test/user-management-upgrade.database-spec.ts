@@ -13,6 +13,7 @@ import { readAccess } from '../src/modules/access/access-evaluator.js';
 import { accessOperator } from '../src/modules/access/access-operator.js';
 import { canonicalAccessReady } from '../src/modules/access/access-safety.js';
 import { closeFixturePool } from './access-fixture.js';
+import { historicalInstallation } from './deployment-fixture.js';
 
 describe('user-management archive upgrade and retired-reader fence', () => {
   const database = `um_upgrade_${randomUUID().replaceAll('-', '')}`;
@@ -103,7 +104,7 @@ describe('user-management archive upgrade and retired-reader fence', () => {
       migrationsFolder: legacyFolder,
       migrationsSchema: 'turnstile_migrations',
     });
-    await bootstrapInstallation(environment);
+    await historicalInstallation(owner, environment);
     await owned(async (db) => {
       for (const grant of grants)
         await db.query(
@@ -251,6 +252,7 @@ describe('user-management archive upgrade and retired-reader fence', () => {
         ).toBe(5);
         await migrateDatabase('turnstile', environment);
         await migrateDatabase('turnstile', environment);
+        await bootstrapInstallation(environment);
         await expect(
           old.query({
             name: 'legacy-read',

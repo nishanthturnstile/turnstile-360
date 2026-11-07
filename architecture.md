@@ -23,7 +23,7 @@ feature implementation.
 | [DMS product blueprint](docs/dms/headless_dms_product_blueprint_v1.md)                           | Product promise, included/deferred scope, product correctness, deployment inputs, and product decision history                                                                           |
 | [DMS functionality requirements](docs/dms/headless_dms_functionality_requirements_v1.md)         | Stable FR/NFR IDs and capability dependency order                                                                                                                                        |
 | [Standalone DMS implementation plan](docs/dms/dms_implementation_plan.md)                        | Requirement-mapped delivery, independent installation/integration, API explorer and standalone verification gates; planned work is not implementation                                    |
-| [Thaarei control-plane specification](docs/thaarei/control-plane-specification.md)               | Proposed central client/product approval and reporting requirements; architecture proposal below and linked delivery plan remain unimplemented                                           |
+| [Thaarei control-plane specification](docs/thaarei/control-plane-specification.md)               | Owner-adopted central approval/reporting scope; runtime delivery remains pending                                                                                                         |
 | [Onboarding specification](docs/turnstile/onboarding/onboarding_specification.md)                | Accepted ONB-R01–13 product scope and acceptance; delivery packages remain in the linked implementation plans                                                                            |
 | [User-management specification](docs/turnstile/user-management/user_management_specification.md) | Accepted UM-R01–22 product requirements and D01–03 decisions; the proposal preserves discovery and the linked plan sequences delivery                                                    |
 | [Workspace standards](docs/standards/workspace.md)                                               | Coding, formatting, configuration, and verification conventions                                                                                                                          |
@@ -1763,7 +1763,7 @@ credential in transient memory only. Reload after losing the exchange reopens cu
 acceptance still requires explicit review. Members/Invitations/Roles and Structure have
 independent workspace routes/loaders; company configuration remains in Settings.
 
-Existing `/api/auth/login`, `/callback`, `/session`, `/logout`, `/api/workspace/status`,
+Existing `/api/auth/{login,callback,session,logout}`, `/api/workspace/status`,
 `/api/setup`, `/api/setup/complete`, `/api/organization` and `/api/organization/units`
 routes keep their established policy. Extend auth login/callback only with server-held
 purpose discrimination; existing exact registered callback is unchanged. Fixed `/sign-in`
@@ -2636,18 +2636,18 @@ The monorepo uses pnpm/Turborepo, Biome, and uv. Turnstile 360 is the consumer p
 
 ## Thaarei central control plane proposal
 
-**Planning status, 2026-11-06:** The owner requests centrally approved customer deployments
-and health/usage visibility from a separately hosted Thaarei application, preferably with
-an integrated Next.js backend. This section proposes the technical design for that request;
-it is not implemented or an amendment already applied to deployed DMS behavior. The
+**Adopted design, 2026-11-06 (TCP-I01):** The owner authorized implementation and explicitly
+accepted the remaining restriction, staff-access, reporting/retention and two-host defaults.
+Use the technical design below for sequenced delivery. Adoption changes the product
+baseline; it does not claim runtime implementation or change deployed DMS behavior. The
 [specification](docs/thaarei/control-plane-specification.md) owns TCP requirement IDs and
 policy decisions; the [delivery plan](docs/thaarei/control-plane-implementation-plan.md)
-owns execution and acceptance gates. TCP-I01 adopts the final technical and product policy.
+owns execution and acceptance gates. Actual implementation and verification live in IN_PROGRESS.md.
 The earlier registry-only draft is superseded by this proposal.
 
 ### Components and deployment boundaries
 
-Use one proposed `apps/thaarei-control-plane` Next.js App Router application: staff UI,
+Use one `apps/thaarei-control-plane` Next.js App Router application: staff UI,
 server-only domain services, Better Auth staff sessions and HTTP Route Handlers in one
 Node container. It has its own PostgreSQL database, owning migrations/runtime roles,
 SMTP configuration and protected entitlement signing key. No separate Nest API, Redis,
@@ -2655,15 +2655,27 @@ broker, telemetry platform, remote agent or customer inbound network access is n
 for v1. The existing DMS and Turnstile backends remain NestJS/Fastify.
 
 Use the monorepo for code ownership but deploy the central app independently in Thaarei
-infrastructure, behind Dokploy TLS. Keep build context at the repository root. Next.js is
-not currently installed: select and pin a compatible maintained release and its CLI in
-TCP-I01 without upgrading other applications incidentally. Retain Node/pnpm pins and
+infrastructure, behind Dokploy TLS. Keep build context at the repository root.
+Select Next.js and create-next-app **16.4.5** together for TCP-I02; registry metadata
+checked on 2026-11-06 requires Node >=20.9 and accepts React 19. Retain existing React/DOM
+19.3.1 and TypeScript 6.0.3. TCP-I02 installs these exact versions for the central application.
+Use Better Auth, its Drizzle adapter and `auth` CLI **1.7.14**, preserving the workspace
+patch, Drizzle ORM 0.45.4, drizzle-kit 0.31.11 and pg 8.23.1. Use the built-in two-factor
+plugin and Next handler integration; the central app does not install an OAuth provider.
+TCP-I02 generates scaffolding and staff auth/MFA schema with those installed CLIs;
+real build and HTTP verification is recorded in IN_PROGRESS.md.
+Do not upgrade other applications incidentally. Retain Node/pnpm pins and
 Biome. Development uses an isolated machine/environment with the reserved port bindings;
-all 23600–23608 assignments in the current local stack remain intact. Define that central
-environment's fixed mapping before starting it; do not share or silently replace the active
-customer-stack bindings.
+all 23600–23608 assignments in the current local stack remain intact. On the separate
+central development machine/environment, reserve loopback 23600 for
+Next (container 3000), 23603 for PostgreSQL (5432), and 23604/23605 for fixture SMTP/inbox
+(1025/8025). Start no central stack on this active customer development machine. Production
+publishes only Dokploy HTTPS; PostgreSQL/SMTP stay private. Reusing fixed port numbers on
+an isolated machine does not authorize concurrent bindings here, fallback ports or changes
+to deploy/development-ports.json. A central local runtime here needs a separately isolated
+environment first; TCP-I02 build/tests may use disposable fixtures under the existing test rule.
 
-Proposed public packages are `@thaarei/control-plane-contracts` for platform-independent
+Selected public packages are `@thaarei/control-plane-contracts` for platform-independent
 schemas/DTOs and `@thaarei/deployment-control` for the server-only HTTP client, signed
 approval verifier and bounded sync logic. The latter contains no application repositories,
 Nest wiring or credentials and cannot be imported by browser code. Each product supplies
@@ -2770,14 +2782,14 @@ client provisioning. Merely adding a JSON screen policy creates no OAuth client.
 both login and full invitation/account workflows in the combined customer overlay. No
 user auth setting is repurposed as a central activation or staff login setting.
 
-New product-owned central settings are a separate proposed namespace, not existing env vars:
+New product-owned central settings use this selected namespace; they are not implemented env vars yet:
 `CONTROL_PLANE_ORIGIN` (fixed canonical HTTPS Thaarei origin), `CONTROL_PLANE_INSTALLATION_ID`,
 `CONTROL_PLANE_PRODUCT_ID`, `CONTROL_PLANE_MACHINE_SECRET_FILE` and
 `CONTROL_PLANE_VERIFICATION_KEYS_FILE`. Expected product type and local tenant/application
 binding come from validated owning installation state. Pin approval issuer/audience/type
 independently of customer OAuth. Central settings include its own public origin, database,
 staff auth secret/SMTP and `CONTROL_PLANE_SIGNING_KEY_FILE`; no customer database or OAuth
-secret appears there. TCP-I01 freezes names and schemas; TCP-I05/I06 wire validation,
+secret appears there. The configuration contract below freezes their meaning; TCP-I05/I06 wire validation,
 private environment examples, explicit Compose mappings, package/runtime entrypoints and
 operator commands. An env variable absent from a Compose mapping is not delivered merely
 because it appears in an example file.
@@ -2829,22 +2841,12 @@ be labelled as configured/reported, not an independently observed browser uptime
 | Turnstile or another backend calling DMS | Existing local OAuth machine token and active DMS registration                | Existing scopes, ownership/grants and tenant checks, plus DMS installation approval    |
 | Workers, publisher, storage              | Existing private local identities                                             | No central staff or product credential; local work policy still applies                |
 
-Start staff access with explicit administrator-created accounts, verified email/password,
-MFA for administrators and approvers, controlled recovery and three fixed roles: Admin,
-Operator and Viewer. Admin manages staff, signing/credential recovery and suspension;
-Operator maintains registry/pairing and approves deployments; Viewer reads registry and
-reported status/usage. All admitted roles see the registry in v1. All may read safe audit;
-credential delivery/recovery material is excluded from ordinary audit DTOs. No customer
-accounts, self-signup, custom role designer or employee-directory integration is required.
-SSO can replace staff login later without replacing machine identities.
-
-Live staff disablement and role checks apply to Server Components, Route Handlers and any
-Server Actions; a page redirect or cookie-presence check is not authorization. Keep origin/
-CSRF checks and database-backed rate limiting; require recent MFA for approval, suspension,
-credential replacement and staff grants. The native auth and domain mutation boundaries
-both need protection. Use the repository's Better Auth 1.7.14 line and patch as the baseline;
-qualify its Next adapter and MFA behavior before adoption, rather than importing customer
-authority code. No shared cookies, auth tables or signing keys with customer deployments.
+Staff identity, fixed roles, MFA/session limits and mutation authorization follow the
+[selected central staff access policy](#central-staff-access-policy). Live authorization
+applies to Server Components, Route Handlers and Server Actions; a redirect or cookie
+presence is insufficient. Use the pinned Better Auth Next adapter and two-factor plugin
+without importing customer authority code. No shared cookies, auth tables or signing keys
+with customer deployments. Qualify actual plugin/adapter behavior in TCP-I02.
 
 Machine endpoints reject staff cookies as credentials. Resolve scope from the authenticated
 product record, not IDs in a payload. A machine cannot change approval, client identity,
@@ -2919,10 +2921,11 @@ usage. It can return a newer current decision, never resurrect a recorded older 
 ### Proposed timing and restriction policy
 
 The owner selected seven-day renewable approval with daily renewal on 2026-11-06.
-That policy is agreed but unimplemented. Other values and the restriction exceptions below
-remain proposed defaults; none are existing configured limits.
+On the same date the owner explicitly adopted the remaining defaults and restriction
+exceptions below. The historical heading is retained for links. Staff session limits are configured by TCP-I02. Product sync/approval/report/retention
+limits remain selected delivery policy for their owning increments.
 
-| Setting                  | Proposed value and meaning                                                                                                                                                                                   |
+| Setting                  | Selected value and meaning                                                                                                                                                                                   |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Outbound product sync    | Every 15 minutes with jitter; one elected reporter per product installation                                                                                                                                  |
 | Approval renewal         | Renew when less than 6 days remain, normally once daily                                                                                                                                                      |
@@ -2930,16 +2933,15 @@ remain proposed defaults; none are existing configured limits.
 | Reporting freshness      | Fresh within 45 minutes; afterwards report “not recently seen,” not “down”                                                                                                                                   |
 | Transport                | 5-second timeout; bounded backoff with jitter up to 15 minutes; respect Retry-After                                                                                                                          |
 | Report size              | 32 KiB maximum, strict schema; numeric aggregates, no document/user payloads                                                                                                                                 |
-| History                  | 90 days of report snapshots; one year of staff/security audit; review retention at TCP-I01                                                                                                                   |
+| History                  | 90 days of report snapshots; one year of staff/security audit; preserve durable decision/recovery evidence independently                                                                                     |
 | Staff session            | At most 8 hours absolute, 30 minutes idle; recent MFA within 10 minutes for sensitive changes                                                                                                                |
 | Central machine rotation | Product-owned lock plus generation compare-and-swap; durable candidate/operation journal; recover by candidate-authenticated sync before atomic local promotion; old secret denied after central replacement |
 
 Missing approval blocks initial business use. During a central outage, previously approved
 products keep normal operation until their signed grant expires, including ordinary
-restarts. An outage is not a signed suspension. The following read/recovery exception is
-proposed for owner review; seven-day approval and daily renewal are already selected.
+restarts. An outage is not a signed suspension. The following read/recovery exception is owner-adopted for implementation.
 
-| Local state                                                                                                       | Business access under the proposed restriction policy                                                                                            |
+| Local state                                                                                                       | Business access under the selected restriction policy                                                                                            |
 | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Current verified approval                                                                                         | Normal operations, subject to existing user/resource rights                                                                                      |
 | Naturally expired approval, or verified signed suspension, with verified prior activation for the current binding | No new business writes/uploads/processing admission; retain only already-authorized existing reads/downloads and specified recovery/safety paths |
@@ -2955,7 +2957,8 @@ operator-controlled backup/recovery and safety cleanup remain available without 
 business data access. Rejection is a pending-product decision; an approved product is
 suspended, not silently reset to pending. Reapproval is an explicit higher revision.
 
-Previously admitted work completes under existing generation/lease and security rules;
+Subject to the completion/quarantine classification below, previously admitted work
+completes under existing generation/lease and security rules;
 periodic dispatch admits no new work after restriction except safety/cleanup and completion
 of already admitted work. Issued transfer capabilities retain their bounded lifetime.
 Restriction never rewrites security outcomes, discards data or retroactively cancels commits.
@@ -2970,6 +2973,400 @@ applied. Neither operation is an instantaneous remote kill switch. Ordinary regi
 and staff disablement cannot alter product entitlement. Persist revision/sequence fences,
 last trusted time and backward-clock detection across ordinary restarts; a restart or
 missing cached approval never creates a fresh approval window.
+
+### Operation classification and decision types
+
+TCP-I04 contracts use signed policy states `pending`, `approved`, `rejected`, `suspended`
+with exact binding/epoch, revision and decision sequence. Local evaluation additionally
+represents `unpaired`, `expired`, `invalid-proof`, `clock-error` and `restore-quarantine`;
+these are derived states, never unsigned substitutes for signed policy. Invalid incoming
+candidates are rejected while usable retained proof remains authoritative. Rejected is
+only a pre-activation state; use suspension after approval. Preserve denial high-water
+marks even after the denial envelope expires. A current approval is required for admission;
+prior activation plus expired approval/suspension permits only the read exception above.
+No approval or prior activation crosses a binding epoch. TCP-I04 delivers strict executable
+schemas and TCP-I05/I06 bind classification to actual routes/services; this table changes
+no current handler.
+
+Classify operations by effects, not HTTP method or an existing `PublicEndpoint` annotation.
+`full` means current verified approval; `read` means full or the qualified prior-activation
+read exception; `recovery` means available in every state under existing local permissions,
+without business data; `completion` means only previously admitted bounded work plus
+security/cleanup, with no new business admission. Business completion/publication is allowed
+under current approval or qualified expiry/suspension restriction. Unpaired/pending/rejected,
+invalid stored proof, clock error and restore quarantine permit only safety containment/
+cleanup that does not publish or open business access; reconcile before resuming publication.
+Unknown operations default to `full`.
+
+| Owning surface                                                                                                                                                      | Class and boundary                                                                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Turnstile root `/api`, `/health/live`, `/health/ready/auth`                                                                                                         | recovery; dependency readiness is independent of product business readiness                                                                                                   |
+| `/api/auth/{login,callback,session,logout}`                                                                                                                         | recovery; safe identity/session/activation status only, no new product grant                                                                                                  |
+| `/api/workspace/status`                                                                                                                                             | recovery; safe readiness/activation summary without organization/business records                                                                                             |
+| GET `/api/setup`, `/api/organization`, `/api/organization/units`, `/api/structure/units[/:id]`, People catalog/member/role/invitation reads and command receipts    | read; existing scoped local authorization still applies; suppress invitation tokens and mutation capabilities                                                                 |
+| POST `/api/setup/complete`, all organization/unit/structure mutations, structure move impact, People impact and all role/member/invitation administration mutations | full, including apparently read-only impact POSTs; no new grants or workflow admission in restricted mode                                                                     |
+| GET `/api/dms/capabilities`                                                                                                                                         | full; invokes a separate DMS business integration and is not a diagnostic exception                                                                                           |
+| `/api/invitations/{exchange,context,start,setup}` and customer identity invitation-setup exchange/context/complete                                                  | recovery only for bounded credential/identity setup and continuation; never acceptance or product membership; context returns only the recipient's safe identity/continuation |
+| `/api/invitations/accept` and private identity invitation preparation                                                                                               | full; accepting/issuing an invitation grants new product access; existing captured mail delivery pauses while restricted                                                      |
+| `/api/invitations/{decline,cancel,switch-account,logout}`; identity setup cancel                                                                                    | recovery for self cancellation, credential/continuation retirement and sign-out; cannot create or extend a business grant                                                     |
+| Local identity verification/password recovery/reset, discovery/JWKS/token/session/logout and private subject projection                                             | recovery under existing scopes/client policy; safe identity projection cannot reveal product business data or bypass product approval                                         |
+| DMS `/v1`, `/v1/capabilities`, liveness/dependency readiness and private diagnostic/backup operations                                                               | recovery; safe capability/status metadata only, never documents or transfer capabilities                                                                                      |
+| DMS `/v1/audit`                                                                                                                                                     | read under existing audit authorization; operational diagnostics use a separate redacted recovery projection                                                                  |
+| DMS `/v1/application-enrollments`                                                                                                                                   | full; independent local consumer activation does not substitute for central approval; private registration/central setup may precede approval                                 |
+| DMS existing document/version/metadata/search/artifact retrieval and fresh existing-file download capabilities                                                      | read; exact authorized existing resources only, security/lifecycle/access checks remain live, with bounded capability expiry                                                  |
+| DMS upload/new-version admission, upload capabilities, metadata/sharing/lifecycle mutations, restore/reprocess/retry/new jobs                                       | full, even when an API uses GET to issue a capability; no new user processing while restricted                                                                                |
+| DMS private job result/lease/outbox/publication/security/cleanup paths                                                                                              | completion only for durable work admitted before restriction; no scheduler admission of new business work; rescanning/security containment may continue as safety work        |
+| Central pairing/sync/credential repair/trust and supported restore reconciliation                                                                                   | recovery, authenticated with their own authorities; never staff/customer session interchange or an unsigned business bypass                                                   |
+
+TCP-I05/I06 must enumerate every then-current handler and private command against this
+matrix, including upstream DMS additions; verify route coverage and enforcement at owning
+transaction/admission points. A method-wide read allowlist is insufficient. Completing
+admitted work does not allow unrestricted private dispatch, and already issued capabilities
+retain only their original bounded lifetime. Initial pairing/reporting, identity and
+recovery must start when central HTTPS is unavailable; business readiness can remain closed
+without causing ingress or reporter startup to deadlock.
+
+### Central staff access policy
+
+Use explicitly admitted verified email/password staff accounts with mandatory TOTP MFA and
+single-use recovery codes through Better Auth's pinned two-factor plugin. Enrollment/reset
+sessions can reach only identity/MFA setup; staff data requires completed MFA. Do not enable
+trusted-device MFA bypass. All three roles see the complete client fleet; no assigned-client
+hierarchy in v1. Viewer reads safe registry/report/activity data; Operator additionally
+maintains registry, issues initial pairing and approves/rejects/reapproves deployments;
+Admin additionally suspends and manages staff, recovery, credential replacement/revocation
+and trust operations. Only authorized operators/admins receive a newly issued pairing secret,
+once through protected delivery; Viewer and ordinary read responses never receive secrets.
+
+Require MFA verified within ten minutes for approval/rejection/reapproval, suspension,
+pairing issuance/replacement and staff/credential administration. Reauthentication updates
+server-side session evidence; do not infer recent MFA from account enrollment or a cookie.
+Enforce eight-hour absolute and thirty-minute idle sessions, no cached-role authorization,
+and live active-staff/role checks on every render, action and handler. Last-active-admin
+protection and staff mutation/audit are transactional. Public signup is disabled; private
+bootstrap/recovery uses separate maintenance authority and cannot be a public action.
+MFA reset revokes sessions, requires explicit recovery proof and returns to MFA enrollment;
+password reset alone does not bypass MFA or restore a removed staff role. Persistent rate
+limits, exact configured origin/CSRF checks, secure host-only HttpOnly cookies and trusted
+proxy handling apply at the auth/Next boundary. Customer identity is never admitted staff.
+
+### Central foundation implementation (TCP-I02)
+
+The central app uses Next Route Handlers and server-rendered protected pages, with no
+Server Actions or separate API service. `src/server` is marked server-only; browser
+components use relative authenticated HTTP and never import database/auth runtime code.
+The owning `control_plane` schema contains only implemented auth/MFA, staff membership,
+per-session MFA/idle evidence and append-only staff audit. Generated Better Auth/Drizzle
+migrations and a reviewed privilege migration are checked in with checksum-checked private
+migration tooling. `control_plane_migrator` owns schema; `control_plane_runtime` has only
+needed DML and cannot own schema or rewrite/delete audit. Each process uses a five-connection
+pool and bounded query/connect deadlines. Staff is bounded to 200 records, including disabled
+accounts; lists are bounded to that same capacity.
+
+Recovery SMTP availability checks run in the native auth before hook after persistent
+HTTP rate limiting and before account lookup; rejected floods never probe the relay and
+relay failures still consume the budget. Private bootstrap preserves its committed safe
+receipt even when delivery runtime initialization fails; cleanup closes only a successfully
+initialized runtime.
+
+Auth has an explicit HTTP allowlist for verified password login/logout, email verification,
+password reset and TOTP/backup enrollment/verification. Native get-session/token-bearing
+responses and public signup/MFA-disable are unavailable. `/api/session` exposes only a safe
+staff DTO after live membership, verified email, completed MFA and session-time checks.
+Successful factor verification records server-side proof for the actual native session;
+account enrollment or an existing cookie never implies verified MFA. All role/access changes
+serialize under the owning transaction lock, recheck the acting staff session/role/recent
+MFA, enforce another verified MFA administrator before last-admin removal, revoke target
+sessions and append audit with reason, revision and before/after access metadata atomically.
+Private first-admin bootstrap and proof-bound maintenance recovery use separate owning
+maintenance authority and bounded JSON stdin. No signing/pairing/report/business tables
+are created by this foundation.
+
+The independent `deploy/compose.control-plane.yaml` supplies the Node Next image and its
+own PostgreSQL volume, read-only application filesystem, protected host-file staff secret,
+private service ports and explicit central-only environment. Runtime never receives the
+migration/provisioning URL. Host secret ownership must permit the image node UID to read
+a mode-0600/0400 file. The image packages production Next configuration and reconstructs Next 16.4 hashed
+external-module aliases against version-matched deployed dependencies after `pnpm deploy`,
+which omits nested node_modules. It also packages private source/migration entrypoints for
+explicit one-off use; they are not HTTP routes or startup hooks. Next telemetry is disabled
+in build/CI/production images. Ingress must strip sensitive query/body/cookie logging and
+own TLS. Proxy-derived client IP is used only with explicit trusted ingress that overwrites
+a single address; otherwise rate limits use a shared bucket. Canonical origin and secure
+cookies never depend on forwarded host/proto. Central deployment steps and qualified limits
+are in the [staff operator runbook](docs/runbooks/control-plane.md); actual source/container/
+target evidence remains in IN_PROGRESS.md.
+
+### Central registry and policy records (TCP-I03)
+
+The same Next application owns registry contracts under `src/contracts/registry.ts`,
+server-only registry commands/reads, staff HTTP handlers and Clients pages. This is an
+app-owned, platform-independent Zod contract; it is not the machine protocol or a client
+SDK. Viewer reads the fleet; Operator/Admin maintain clients/installations/products and
+approve/reject/reapprove policy. Only Admin suspends. Policy mutations require recent MFA;
+ordinary registry edits require an active verified MFA session. Backend checks apply at
+every entry and again within the owning mutation transaction.
+
+`control_plane.registry_client` owns permanent normalized client code, bounded name/
+optional contact, archive state and revision. `registry_installation` owns client-bound
+immutable environment/local-installation/tenant UUID identities. `registry_product` owns
+immutable installation/product/application binding, pending/approved/rejected/suspended
+policy, revision, reason/actor and distinct registration/first/latest approval dates.
+A composite installation/client foreign key prevents cross-record bindings; each installation
+has at most one DMS and one Turnstile product. Turnstile requires an application UUID;
+DMS product identity is not a local consumer registration. Environment codes are lowercase
+slugs, including production/test, with identical approval terms. No customer tenant selection
+or customer SQL access is added to the central registry.
+
+`registry_receipt` stores actor-bound request UUID, canonical-input digest and immutable safe
+receipt; `registry_audit` stores safe attributed before/after data, reason and event time.
+All mutations serialize against live staff changes using the existing owning advisory lock,
+then use owning row/revision checks, write domain/audit/receipt and commit together. No
+remote call or password hashing is held inside that transaction. Policy row locks also fence
+future pairing/issuance writers. Duplicate request/inputs return the same historical receipt;
+changed inputs/actor conflict. Readback is a fresh consistent snapshot, never a historical
+receipt interpreted as current policy or permission. Repeated policy state fails without a
+new mutation; reapproval is explicit and advances revision. Rejection is pending-only;
+archive has no implicit policy effect. Archived clients reject new deployment registration
+but existing products retain independent policy commands.
+
+Verified pairing time is owning metadata for the approval prerequisite, tied to immutable
+binding. A database check prevents approval without it. TCP-I03 runtime column grants cannot
+insert/update that metadata or initial approved state; no public field/command bypass exists.
+TCP-I04 adds the owning pairing update grant and actual protocol; the registry fixture now
+uses that HTTP protocol. First issued approval, first/current-epoch application acknowledgement
+and authenticated contact come from its owning machine records. Activity, version and health
+remain unavailable until reporting is implemented. No customer enforcement is implied.
+
+Configured staff registry limits: code/environment 32 characters; client name 160;
+contact/installation label 100; contact email 254; mutation reason 300. List pages contain
+50 clients using immutable code keyset pagination and literal substring search. Each client
+has at most 100 immutable installation records and each installation at most two products.
+Detail readback includes those bounded records and the latest 50 audit events; stored audit
+history is not deleted by that display bound. Dates are rendered explicitly in UTC. Update
+inputs require a saved revision and explicit nullable contacts, preventing accidental clears.
+
+The existing central migrator applies additive registry schema/privilege migrations with
+its checksum ledger; prior staff SQL is unchanged. Runtime can read/insert the needed rows
+and update editable client/policy columns, but cannot change codes/bindings,
+hard-delete identities, rewrite receipts or rewrite/delete audit. Readiness checks registry
+persistence too. Existing custom privilege migrations are tracked in the Drizzle journal
+without changing their SQL, preserving CLI sequence ordering. The operator workflow is in
+the [central runbook](docs/runbooks/control-plane.md#client-and-deployment-registry); actual
+implementation/verification and any unavailable runtime checks stay in IN_PROGRESS.md.
+
+### Machine protocol implementation (TCP-I04)
+
+`@thaarei/control-plane-contracts` owns strict version-1 local/expected setup manifests,
+pairing-file, activation/sync/rotation requests, safe receipts and discriminated signed
+decisions. Zod generates the committed [machine OpenAPI](docs/api/control-plane.openapi.json);
+`check:contracts` checks regeneration. Contracts import no server, database or framework.
+The local manifest exports product-owned durable installation/tenant/application identity,
+environment and safe build version before registration. The expected central manifest adds
+central client/installation/product IDs and canonical origin after staff registration.
+Neither manifest contains machine credentials. Product-specific bootstrap identity exporters,
+database adapters and route enforcement belong to the TCP-I05/I06 owning integrations.
+
+Central Route Handlers are `/api/machine/v1/activate`, `/sync`, `/rotate`. JSON is streamed
+with a 32-KiB bound, strict schemas and no-store responses; errors use a safe versioned code.
+Only exact `Bearer <256-bit base64url secret>` authenticates sync/rotation. A unique digest
+index prevents cross-product credential reuse. Resolve the product
+from its digest-verified registration and require the complete submitted immutable binding;
+staff cookies, customer JWTs and unsigned response fields provide no machine authority.
+Sync carries report UUID, binding/epoch, optional strict product aggregate snapshots and an
+optional exact applied-decision acknowledgement, including valid application time. Central
+aggregate/history projections remain TCP-I07.
+
+The owning additive migrations create `machine_authority`, `machine`, `pairing`, immutable
+`machine_receipt` and `machine_decision` evidence. Pairing and machine secrets are SHA-256
+digests centrally; plaintext exists only transiently in the HTTPS request/private delivery.
+Staff generates random pairing codes transiently in browser memory, with actor/input-bound
+retry receipts containing safe metadata only. Admin/Operator with recent MFA can issue/revoke
+unused codes. Admin alone replaces/revokes machines, retaining preexisting denial or suspending
+an approval with a new revision; replacement requires new pairing and explicit approval.
+Pairing consumption, candidate digest, fresh binding epoch/generation and receipt commit
+atomically under product-row locking. Exact retries check current credential and a 24-hour
+receipt window. After it expires, candidate-authenticated sync confirms the current operation,
+epoch and generation; it never replays an expired code or grants an old approval.
+
+Decision signing uses pinned `jose` 6.2.14, RS256, exact `thaarei-deployment+jwt` header type
+and provisioned key ID. Audience is `urn:thaarei:deployment:<productId>`; issuer is the canonical
+central HTTPS origin. Signing reserves a monotonic sequence under the product lock, releases
+the transaction for cryptography, then fences revision/state/epoch/generation/sequence and
+current signing-key ID before storing/returning the decision. Renew when less than six days
+remain; key changes force fresh signing. Denial envelopes use the same bounded validity as
+approval. Immutable issued evidence lets central distinguish issuance from product-reported
+valid application; this is not measured uptime or first business activity. Report retries
+retain receipt identity/input digest while obtaining the current decision.
+
+`@thaarei/deployment-control` supplies the Node-only maintained JOSE verifier, durable decision
+application/evaluation, five-second HTTPS transport, bounded response parsing and retry delays.
+The verifier pins the entire binding/epoch, issuer/audience/type/algorithm/key/time/entitlement,
+orders revision then sequence, checks renewal state consistency and retains applied denial
+beyond expiry. A valid-at-application signed approval is required for the qualified read
+exception. Corrupt stored evidence, trust revocation/downgrade, backward clock or recovery
+quarantine close all business access. Invalid incoming candidates cannot replace usable
+retained proof. Trust revision survives rebind; only the protected operator flow adopts a new
+epoch and resets prior activation. Public-key trust is a protected independently delivered
+bundle, never token-selected URLs or key-signed trust replacement.
+
+Private setup saves exact request/binding/candidate secret before HTTPS. Rotation journals
+operation/current/candidate, centrally compares expected generation, then confirms the
+candidate via authenticated sync before one atomic local promotion/decision commit and
+journal clearing. Every setup/operator/reporter write shares a product lock. The supplied
+Linux private-file adapter uses kernel `flock` (30-second acquisition bound; release on process
+death), owner-only state, fsynced temporary files/atomic rename and directory fsync. It is a
+private reporter/setup adapter, never an API credential mount. Product DB adapters must
+provide equivalent locking/durability without holding a database transaction over HTTP.
+
+Central signing JSON is `{kid, privateKey}` (PKCS8); public trust is version 1 with revision,
+issuer and explicit `{kid,pem,status,lastIssuedAt}` keys. Retired keys accept only issuance
+at/before the cutoff; revoked keys cannot verify even cached proof. Generate/distribute new
+public keys first, then switch the protected signer, retain old public keys for outstanding
+seven-day proofs, and retire using a cutoff. Emergency compromise needs independently
+authenticated replacement trust for all verifiers, including disconnected installations;
+short grant lifetimes alone do not constrain an attacker holding a trusted signing key.
+
+`machine:operator` initializes the separate signing material and authority marker or performs
+protected central restore reconciliation using the migrator only. The host marker lives
+outside the DB restore set; missing/mismatched marker quarantines issuance and approval.
+Reconciliation revokes old credentials/pairing codes and suspends saved approvals, requiring
+fresh epochs and staff approval. The customer file adapter similarly checks a separate
+host marker and persisted quarantine before cached business evaluation. Rotate markers and
+stop issuance/customer business before supported restore; arbitrary rollback of root-owned
+files/VM snapshots together remains outside this guarantee. Exact recovery/release rehearsal
+is TCP-I08; local checks never constitute target qualification.
+
+### DMS deployment control integration (TCP-I05)
+
+The DMS integrates the shared protocol using its own coordinator/runtime roles and schemas.
+Bootstrap persists `dms.deployment_control.local_installation_id` once, alongside the fixed
+single installation tenant/customer key. CLI-generated migrations 0054/0056 and reviewed
+0055/0057 privileges add public binding/verified decision and safe credential/report metadata,
+plus a separate durable clock/quarantine row. No plaintext machine secret is stored in SQL.
+API roles can read only and invoke narrow tenant-bound security-definer clock/quarantine/read
+functions; they cannot rewrite bindings, decisions, credentials or clock high-water values.
+The clock fence commits before rejected business requests and does not contend with the
+shared decision row held through ordinary business transactions. Both tables force RLS.
+
+`DmsDeploymentStore` composes the server-only client with the owning DMS store and protected
+private-file journal. Every private/reporting operation shares the same PostgreSQL session
+advisory lock, with no SQL transaction held across HTTPS. Private file writers additionally
+share the kernel file lock. Candidate/request/binding are durable before transmission; only
+candidate-authenticated confirmation permits promotion. DB decision publication precedes
+file promotion and cannot regress the DB policy high water. Lost promotion resumes the
+candidate, not the old key. A persisted reviewed setup intent authorizes continuation of an
+explicit rebind; merely preparing that journal cannot clear old quarantine. A fresh verified
+online epoch is required, and trust revision survives. Marker mismatch/clock/trust failures
+stay closed until protected reconciliation. The read-only reporter updates safe SQL report
+receipts/decisions and reloads owner-promoted credentials without writing its credential mount.
+
+`main.coordinator.ts` starts the reporter after its private listener and includes it in bounded
+shutdown. A durable per-product schedule plus shared operation lock elect one due reporter
+across replicas. Attempts use the shared five-second HTTPS transport/backoff policy; no
+central call occurs in API requests, identity startup or health. Outbound summaries filter
+`dms.operations_snapshot()` through strict version-1 machine contracts: build/observation,
+processing readiness, aggregate pending/failed/outbox gauges and fresh capacity only. Stale
+capacity is null and per-application details/content are excluded. Report UUID/payload survives
+retry; central snapshot retention/dashboard interpretation follows the Reporting and central storage section below.
+
+API transaction boundaries require current approval for enrollment/admission/mutations, and
+qualified prior activation for restricted reads. All local consumer/resource checks remain.
+Private operator commands explicitly distinguish business reads/full changes from authorized
+identity/key/backup/diagnostic recovery. Dispatch/new attempts require full approval. Already
+admitted leases may complete under generation/security/lifecycle fences; later stages are
+held durably without new dispatch while restricted and resume without consuming an execution
+attempt after reapproval. Never-approved/invalid-proof/clock/restore states cannot publish
+business results; safety containment and cleanup remain available. Business errors expose
+`DEPLOYMENT_RESTRICTED`; no-store `/health/deployment` exposes only derived access/state.
+
+`deploy/compose.dms-activated.yaml` composes complete DMS-only activation.
+`deploy/compose.customer-complete.yaml` adds the complete Turnstile/customer-local authority
+and private identity transport overlay. Both retain I18 broker/storage/parser isolation and
+Dokploy ingress. The TCP overlay uses candidate `thaarei-dms-api:tcp-i05`, gives API processes
+public trust/marker only and mounts the private credential directory read-only into the
+coordinator, writable only in private tools. Combined worker issuer and Node/Python CA
+settings match customer TLS; deployment URLs are never customer OAuth values or browser
+configuration. Actual target/release/restore qualification remains TCP-I08. Use the
+[DMS deployment runbook](docs/runbooks/dms-deployment-control.md); actual acceptance is tracked
+in IN_PROGRESS.md, not inferred from configuration or historical I18 image results.
+
+### Turnstile deployment control integration (TCP-I06)
+
+Turnstile owns additive migrations 0028–0029, its durable local installation binding,
+verified decisions, clock/quarantine fence and safe credential/report journal. The private
+bootstrap requires `INSTALLATION_LOCAL_ID` from the nonsecret DMS installation manifest,
+with the same tenant/customer identity. Both products therefore register under one central
+installation while retaining independent product IDs, credentials and owned SQL state.
+Bootstrap rejects later identity replacement; runtime/reporters cannot insert or rewrite it. The independent
+reporter role can update only deployment state and invoke a bounded security-definer active
+member aggregate. API runtime cannot rewrite approval or read machine credentials. Both
+new tables force tenant RLS; reporting reads no DMS database or application source.
+
+A separate `main.reporter.ts` process uses the shared server-only protocol with a distinct
+Turnstile credential. Its PostgreSQL product operation lock, durable cadence, protected
+file journal, generation recovery and reviewed rebind follow the same protocol as DMS.
+No SQL transaction spans HTTPS. Public verifier configuration is prefixed
+`TURNSTILE_CONTROL_PLANE_*`, independently of DMS settings. Reports contain only version,
+observation time and active-member count from canonical owning membership status; customer
+names, subjects, sessions, emails and per-user activity are excluded. Unimplemented metrics
+are unavailable. Central history/projections follow the Reporting and central storage section below.
+
+Local sessions, CSRF, current permissions and readiness remain authoritative. Business
+HTTP checks and owning transactions require current approval for changes and verified prior
+activation for qualified reads. Identity/session and safe deployment-status endpoints are
+explicit exemptions, independent of workspace-readiness exemptions. Invitation identity
+setup/recovery is independent of full-approval membership acceptance and new mail dispatch.
+Signed-in customers see activation/recovery guidance or a restricted-read notice, plus
+separate DMS restriction from its authenticated local capabilities response. The client
+explicitly opts into `Prefer: include-deployment-status`; ordinary version-1 capability
+responses retain their original shape for existing strict consumer decoders. Safe responses
+contain no central token or registry binding; browser code imports no server package.
+
+`compose.turnstile-control-plane.yaml` extends the complete combined customer entry with
+public-only API mounts, a read-only credential mount for a separate reporter, and a writable
+private tools mount. The owning `.env.turnstile.reporter` contains its dedicated SQL role
+and fixed installation/application identities only; neither DMS machine credentials nor
+customer OAuth credentials belong there. The reporter pool has three connections; its
+Compose limits are 0.5 CPU, 256 MiB and a 45-second stop grace. Linux UID 1000, shared bounded
+HTTPS/backoff and customer CA delivery apply. Dokploy retains ingress/TLS; reporter egress never needs browser
+CORS/CSP access. Exact operations are in the
+[Turnstile deployment runbook](docs/runbooks/turnstile-deployment-control.md); actual
+qualification and remaining work are recorded in IN_PROGRESS.md.
+
+### Control-plane configuration contract
+
+TCP-I02 implements staff origin/runtime database/auth-secret/SMTP/proxy validation; TCP-I04
+implements central signing/authority-marker delivery and public key/manifest/decision schemas.
+Customer settings are consumed by their TCP-I05/I06 integration, and reporting by TCP-I07.
+Never derive a canonical origin or trust authority from forwarded request headers.
+
+| Setting                                                     | Validation and owning delivery                                                                                                                                                                               |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CONTROL_PLANE_ORIGIN`                                      | Canonical absolute HTTPS origin only: no path except `/`, credentials, query or fragment; pinned central issuer/base URL; local HTTP only in explicit isolated development/test profile                      |
+| `CONTROL_PLANE_INSTALLATION_ID`, `CONTROL_PLANE_PRODUCT_ID` | UUIDs fixed by paired setup manifest; validate against local tenant/application/product binding; reporter and local verifier use the same binding                                                            |
+| `CONTROL_PLANE_MACHINE_SECRET_FILE`                         | Absolute protected file path; secret delivered only to owning reporter/setup process; candidate/journal and atomic promotion under product operation lock                                                    |
+| `CONTROL_PLANE_VERIFICATION_KEYS_FILE`                      | Absolute read-only public trust bundle path; every product verifier; explicit key IDs, issuer/audience/type, key status and trust version; replacement uses independent protected operator/release authority |
+| `CONTROL_PLANE_PUBLIC_ORIGIN`                               | Central-only canonical HTTPS staff/API origin, same strict origin rules; local development origin fixed to `http://localhost:23600` on the separate central environment                                      |
+| `CONTROL_PLANE_DATABASE_URL`                                | Central runtime PostgreSQL URL; least-privilege role, bounded pool, owning central database only; never customer SQL                                                                                         |
+| `CONTROL_PLANE_MIGRATION_DATABASE_URL`                      | Central private provisioning/migration commands only, absent from app runtime and reporter environments                                                                                                      |
+| `CONTROL_PLANE_AUTH_SECRET_FILE`                            | Central-only absolute protected file with independent high-entropy staff session/MFA encryption secret, at least 32 random bytes; separate from entitlement signing and customer auth secrets                |
+| `CONTROL_PLANE_PUBLIC_KEYS_OUTPUT_FILE`                     | Private central operator output path for public trust only; never required by runtime or supplied to the browser                                                                                             |
+| `CONTROL_PLANE_SIGNING_KEY_FILE`                            | Central-only absolute protected private signing-key path, separate from staff secret; key generation/delivery is private, never a database report field                                                      |
+| `CONTROL_PLANE_SMTP_URL`, `CONTROL_PLANE_SMTP_FROM`         | Central-only authenticated TLS SMTP transport and validated sender; private configuration, no credential logging; local capture transport only in explicit dev/test profile                                  |
+| `CONTROL_PLANE_PROFILE`, `CONTROL_PLANE_TRUST_PROXY`        | Central runtime defaults to production and untrusted forwarding; dev/test permits explicit local HTTP/plain SMTP; trusted ingress must overwrite a single validated client address                           |
+| `CONTROL_PLANE_RECOVERY_MARKER_FILE`                        | Central issuance or customer business quarantine marker outside database restore set; missing recovery handover never opens a replacement/restored host                                                      |
+
+Thaarei's central operator owns DNS/TLS, SMTP, central role provisioning, encrypted database/
+auth/signing backup and independent decision-evidence retention. Customer operators own
+customer data, protected reporter files and public trust bundle/recovery delivery. Configure
+actual production hostname, relay and backup destinations privately at deployment; choosing
+placeholder domains is not target qualification. Production/test installations use the same
+approval terms with distinct binding/credentials. Linux container deployment is the supported
+runtime; air-gapped/manual activation remains outside v1. Report only the bounded fields in
+Reporting and central storage below; absent source metrics remain unavailable. Retention
+pruning never removes durable policy/activation/denial fences or evidence needed to recover
+current decisions. TCP-I08 qualifies the external evidence and trust recovery procedures.
 
 ### Supported restore and signing trust recovery
 
@@ -3019,6 +3416,34 @@ offline emergency revocation or use a new entitlement signed solely by the compr
 as authority to replace trust. Qualify read-only-container key reload/restart and encrypted
 key/credential-file recovery in the owning-host release procedures.
 
+### Isolated release qualification tooling
+
+`scripts/qualify-control-plane.mjs` runs workspace gates, inventories immutable central/DMS/
+Turnstile API/web images and fingerprints production inputs, packaging and verification
+helpers. Container qualification runs central HTTPS ingress with production profile and
+verified STARTTLS, and separately networked customer clusters/private files. Only central
+ingress joins customer networks; the central runtime/database do not. Shipped coordinator/
+reporter entrypoints perform actual outbound container DNS/TLS and owning SQL; health alone
+is not report acknowledgement or browser availability. Disposable ports stay outside the
+persistent development-port contract.
+
+Full-image auth and People journeys use the DMS/Turnstile/Nginx candidates with separate
+fixture provisioning processes. Public browser ingress blocks private identity/work paths;
+backend identity uses private canonical transport. Candidate private release commands run
+in dedicated maintenance containers, without delivering migration credentials or machine
+journals to API containers. Real central signer rollover, offline compromised-key revocation
+and rebind/reapproval are tested through DMS image HTTP. Turnstile separately exercises
+owning database/journal restore and production preflight/rebind, plus image HTTP trust
+rollover/revocation in the browser fixture. Network-disabled packaged-verifier checks use
+controlled clocks for grant expiry. Each coverage boundary remains explicit in the evidence.
+
+Local Docker networks model separate hosts; actual Dokploy ingress, external DNS/TLS/SMTP/
+time, independent off-host recovery and target acceptance remain deployment work. No prior
+published enforcing image exists for historical image downgrade qualification; local rollback
+coverage is owning upgrade tests, candidate restart and quarantined database/journal restore.
+The [qualification handover](docs/runbooks/control-plane-qualification.md) records operator
+compatibility/recovery boundaries. Actual checks and remaining work belong in IN_PROGRESS.md.
+
 ### Reporting and central storage
 
 DMS coordinator reports DMS state only; the Turnstile backend reports Turnstile state only.
@@ -3044,6 +3469,50 @@ null/unavailable, never fabricated zero. Store latest product status and bounded
 snapshots; calculate stale/reporting/version alerts on reads initially, with no alert worker.
 The configured product version/support policy is explicit, not a guessed security verdict.
 No document names, contents, OCR text, contact/user lists, tokens or arbitrary logs are sent.
+
+TCP-I07 persists `report_snapshot` and `report_latest` in the authenticated sync receipt
+transaction under the existing product lock. The owner allocates a safe-integer sequence
+from durable product metadata for each machine binding epoch. The exact report ID/body is
+journaled before HTTPS; retries retain it across process restart and intervening policy
+changes. Later receipt time does not let a lower sequence replace latest data. Legacy
+unsequenced snapshots remain readable but cannot overwrite an ordered projection. Sequence
+exhaustion fails reporting closed and requires a reviewed new binding epoch; it never wraps.
+Unavailable/invalid source metrics are omitted without preventing policy contact or a newer
+denial from being applied. Historical payloads remain stale; missing data never becomes zero.
+Backoff delays are bounded integer milliseconds so both owning PostgreSQL schedules persist
+failure/retry cadence correctly.
+The digest receipt retains its sequence fence beyond historical payload retention. Rebinding
+makes the new epoch's projection unknown until that product reports again.
+
+DMS owns an RLS-protected usage stream and local deduplication ledger. The first successful
+AVAILABLE transition counts each version and logical document once; a restored revision
+may count as a version, never another logical document. Each non-scan job counts once on
+committed SUCCEEDED, independently of attempts/transport. Trigger updates share the business
+transaction and roll back with it. Existing published/completed records establish a ledger
+baseline without fabricating historical totals. Reviewed binding epoch changes reset the
+named counter stream and baseline; retained ledger entries prevent old work from becoming
+new activity. Overflow makes cumulative values unknown until an explicit epoch reset.
+Active documents and original-byte accounting remain independent gauges. Turnstile reports
+only its canonical active-member gauge; unimplemented health/activity is unknown. No tenant,
+application, document or member identities leave these usage providers.
+
+Staff `/reports` and `/api/reports` use live MFA/role fencing and central projections only.
+Lists have client/environment/product filters and 50-row UUID pagination; per-product history
+has 96-row receipt-time/UUID pagination over 90 days. Policy, server receipt freshness
+(overdue after 45 minutes), local observation time, reported local policy, self-reported
+health and version review are independent. Gauges are charted with gaps at missing intervals
+or epoch changes; cumulative totals are labeled by baseline/epoch and never summed. Optional
+`CONTROL_PLANE_DMS_SUPPORTED_VERSIONS` and `CONTROL_PLANE_TURNSTILE_SUPPORTED_VERSIONS`
+are exact version allowlists (JSON arrays of at most 20). Empty means unconfigured, with no
+guessed support/security verdict. All notices are computed on reads and never alter approval.
+
+Private `reports:prune` (`src/server/report-maintenance.ts`) uses only the owning migrator,
+removing at most 1,000 snapshots older than 90 days and 1,000 events from each central audit
+stream older than 365 days per invocation. It also clears expired latest metric payloads,
+while retaining minimal sequence/counter high-water fences, binding/approval/activation,
+immutable receipts/decisions and unfinished operations. Staff reads hide metric payloads past
+90 days even before pruning. Runtime has no pruning execute/delete privilege. Schedule this
+bounded host maintenance externally; it introduces no alert worker or customer polling.
 
 Central conceptual records are staff/auth sessions, clients, installations, product bindings,
 pairing/credential digests, approval revisions/grant metadata, sync receipts, report snapshots
@@ -3092,11 +3561,17 @@ Turnstile permissions, and central approval cannot re-enable a locally disabled 
 This introduces central activation and recurring approval availability into the supported
 customer distribution. It changes the earlier no-required-cloud-control expectation while
 preserving headless DMS independence from Turnstile, local customer identity and tenant
-isolation. Before rollout, TCP-I01 must reconcile this proposal with FR-02.10–14, FR-19,
-NFR-09, standalone installation/recovery documentation and DMS-I18's distribution contract.
+isolation. TCP-I01 reconciles this scope in FR-02.10–14, FR-19, NFR-09, the product blueprint
+and standalone installation/recovery documentation. TCP-I05 must still integrate the
+DMS-I18 distribution contract through development after its owning handoff is ready.
 Existing installations require explicit coordinated registration/recovery and a staged
 release; adding the new guard without that handover would lock out an operating customer.
 No silent feature flag defaults or automatic changes to the current DMS branch are implied.
+
+Version selection sources (checked 2026-11-06): [Next.js installation and Node minimum](https://nextjs.org/docs/app/getting-started/installation),
+[Next.js 16.4.5 manifest](https://github.com/vercel/next.js/blob/v16.4.5/packages/next/package.json),
+[Better Auth two-factor plugin at v1.7.14](https://github.com/better-auth/better-auth/blob/v1.7.14/docs/content/docs/plugins/2fa.mdx).
+Registry metadata for next/create-next-app 16.4.5 was also inspected without installing them.
 
 Technical support: [Next.js Route Handlers and backend pattern](https://nextjs.org/docs/app/guides/backend-for-frontend),
 [Next.js server authorization](https://nextjs.org/docs/app/guides/authentication),
@@ -3105,7 +3580,8 @@ Technical support: [Next.js Route Handlers and backend pattern](https://nextjs.o
 [Better Auth sessions at v1.7.14](https://github.com/better-auth/better-auth/blob/v1.7.14/docs/content/docs/concepts/session-management.mdx)
 and [JWT validation guidance RFC 8725](https://www.rfc-editor.org/rfc/rfc8725.html).
 These support framework/security mechanisms; the approval/telemetry policy above is a
-project proposal, not a framework guarantee. Exact CLI/configuration is verified at adoption.
+selected project policy, not a framework guarantee. Exact CLI generation and runtime
+configuration compatibility are verified in TCP-I02 and the owning integration increments.
 
 ## Module and contract boundaries
 

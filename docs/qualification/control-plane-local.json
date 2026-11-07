@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "scope": "isolated-local",
+  "startedAt": "2026-11-07T04:12:40.605Z",
+  "source": {
+    "sha256": "dd7daf4a2b3916eea836b846fb87266be176aef888ca9f4e02c3d255437644cd",
+    "files": 817,
+    "head": "95715761355774621394bbee1b8f533cc6321dd8",
+    "dirty": true,
+    "scope": "production directories and workspace configuration; packaging helpers recorded separately"
+  },
+  "images": {
+    "central": {
+      "id": "sha256:7ffefb18255d4d0f380555a22a7445a796705f51c433865ee697e06c96e2b959",
+      "tag": "thaarei-tcp-i08-central:local",
+      "source": "dd7daf4a2b3916eea836b846fb87266be176aef888ca9f4e02c3d255437644cd",
+      "os": "linux",
+      "architecture": "amd64",
+      "user": "node"
+    },
+    "dms": {
+      "id": "sha256:b4b684e0f9fc86c21def25d45cdfb8596198d9fb400d068f999d9fc55eadf7dd",
+      "tag": "thaarei-tcp-i08-dms:local",
+      "source": "dd7daf4a2b3916eea836b846fb87266be176aef888ca9f4e02c3d255437644cd",
+      "os": "linux",
+      "architecture": "amd64",
+      "user": "node"
+    },
+    "turnstile": {
+      "id": "sha256:cc73d4e52b52ca5343ab0e32d2b2bd523178941ae0b8a620635db63602ac64e5",
+      "tag": "thaarei-tcp-i08-turnstile:local",
+      "source": "dd7daf4a2b3916eea836b846fb87266be176aef888ca9f4e02c3d255437644cd",
+      "os": "linux",
+      "architecture": "amd64",
+      "user": "node"
+    },
+    "web": {
+      "id": "sha256:443275565f6b09e91ca6a0ef755d725f581952936d1c15934a3093d1604267cd",
+      "tag": "thaarei-tcp-i08-web:local",
+      "source": "dd7daf4a2b3916eea836b846fb87266be176aef888ca9f4e02c3d255437644cd",
+      "os": "linux",
+      "architecture": "amd64",
+      "user": "nginx"
+    }
+  },
+  "checks": [
+    {
+      "name": "workspace:check",
+      "status": "passed",
+      "seconds": 26
+    },
+    {
+      "name": "workspace:build",
+      "status": "passed",
+      "seconds": 0
+    },
+    {
+      "name": "workspace:test",
+      "status": "passed",
+      "seconds": 1
+    },
+    {
+      "name": "workspace:test:integration",
+      "status": "passed",
+      "seconds": 673
+    },
+    {
+      "name": "image:central:build",
+      "status": "passed",
+      "seconds": 265
+    },
+    {
+      "name": "image:dms:build",
+      "status": "passed",
+      "seconds": 177
+    },
+    {
+      "name": "image:turnstile:build",
+      "status": "passed",
+      "seconds": 83
+    },
+    {
+      "name": "image:web:build",
+      "status": "passed",
+      "seconds": 26
+    },
+    {
+      "name": "central-image:HTTPS-and-restored-authority",
+      "status": "passed",
+      "seconds": 80
+    },
+    {
+      "name": "source-browser:People-and-deployment-boundaries",
+      "status": "passed",
+      "seconds": 101
+    },
+    {
+      "name": "extended-image:two-customer-restores-and-offline-trust",
+      "status": "passed",
+      "completedAt": "2026-11-07T04:43:54.509Z"
+    }
+  ],
+  "targetAcceptance": "pending",
+  "remaining": [
+    "Separated two-host/container ingress and customer canonical issuer DNS/TLS/SMTP qualification",
+    "Both full container reporter processes and end-to-end image browser journeys",
+    "Whole-product image HTTP compromise/key-rotation recovery and coordinated upgrade/rollback acceptance",
+    "External target DNS/TLS/SMTP/time, existing-installation cutover and operator acceptance (outside current local scope)"
+  ],
+  "finishedAt": "2026-11-07T04:43:54.510Z",
+  "localChecksResult": "passed",
+  "releaseQualified": false,
+  "packagingHelpers": [
+    {
+      "path": "scripts/package-control-plane.mjs",
+      "sha256": "5a2b14bd05c123e5965a96a1a7443a6cbb02a07eb86741c4c6b261a5ad7250ef"
+    },
+    {
+      "path": "scripts/provision-auth-database.mjs",
+      "sha256": "eaf3a257d89d43982a563d1d6c555acc8f037d3b4100148de4e8c7d59760db8b"
+    }
+  ],
+  "coverage": {
+    "central": "production-image HTTPS with real schema restore",
+    "dms": "production-image API with real owning database/private-journal restore",
+    "turnstileRecovery": "direct production preflight with owning PostgreSQL and private-journal restore",
+    "reporters": "production compiled modules on host over HTTPS",
+    "offlineTrust": "packaged verifier in network-disabled DMS image with protected operator trust-file replacement",
+    "browser": "source production-build People/deployment journey"
+  }
+}

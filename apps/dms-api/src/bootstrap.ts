@@ -59,7 +59,13 @@ export async function createApplication(
     });
   if (observeRoute) app.getHttpAdapter().getInstance().addHook('onRoute', observeRoute);
   app.setGlobalPrefix('v1', {
-    exclude: ['health/live', 'health/ready/auth', 'health/ready/api', 'health/ready/processing'],
+    exclude: [
+      'health/deployment',
+      'health/live',
+      'health/ready/auth',
+      'health/ready/api',
+      'health/ready/processing',
+    ],
   });
   await mountApiDocs(app.getHttpAdapter().getInstance());
   const telemetry = app.get(SecurityTelemetryService);

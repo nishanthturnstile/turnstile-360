@@ -3,6 +3,7 @@ import { WORK_TASK_ROLE, type WorkTask } from '@thaarei/dms-contracts/private';
 import type { PoolClient } from 'pg';
 import type { CoordinatorContext, DmsTransaction } from '../access/resource-policy.js';
 import { appendDocumentAudit } from '../audit/document-audit.js';
+import { allowed, deploymentStatus, requireDeployment } from '../deployment/access.js';
 import { WorkError } from './work-configuration.js';
 export type CoordinatorTx = DmsTransaction<CoordinatorContext>;
 export type JobRow = {
@@ -101,7 +102,13 @@ export async function jobAudit(
 export async function createDispatch(
   tx: CoordinatorTx,
   job: Pick<JobRow, 'id' | 'generation' | 'task'>,
+  deferWhenRestricted = false,
 ) {
+  if (deferWhenRestricted) {
+    const status = await deploymentStatus(tx.client);
+    if (!allowed(status.access, 'completion')) throw new WorkError('WORK_DENIED', 403);
+    if (status.access !== 'full') return null;
+  } else await requireDeployment(tx.client, 'full');
   if (!WORK_TASK_ROLE[job.task]) throw new WorkError('WORK_INVALID', 400);
   const id = randomUUID();
   await tx.client.query(
@@ -117,7 +124,9 @@ export async function enqueueWork(
   uploadId: string,
   task: WorkTask,
   processingRunId: string | null = null,
+  admittedContinuation = false,
 ) {
+  await requireDeployment(tx.client, admittedContinuation ? 'completion' : 'full');
   const source = await lockWorkSource(tx, uploadId),
     now = await wall(tx.client);
   if (!sourceActive(source, now, task)) throw new WorkError('WORK_STALE');
@@ -136,7 +145,10 @@ export async function enqueueWork(
         )
       ).rows[0];
       if (!updated) throw new WorkError('WORK_UNAVAILABLE', 503);
-      await createDispatch(tx, updated);
+      if (!(await createDispatch(tx, updated, admittedContinuation)))
+        await tx.client.query('UPDATE dms.work_job SET recover_at=clock_timestamp() WHERE id=$1', [
+          updated.id,
+        ]);
       await jobAudit(tx, updated, 'work.queued');
       return updated;
     }
@@ -157,7 +169,10 @@ export async function enqueueWork(
     )
   ).rows[0];
   if (!job) throw new WorkError('WORK_UNAVAILABLE', 503);
-  await createDispatch(tx, job);
+  if (!(await createDispatch(tx, job, admittedContinuation)))
+    await tx.client.query('UPDATE dms.work_job SET recover_at=clock_timestamp() WHERE id=$1', [
+      job.id,
+    ]);
   await jobAudit(tx, job, 'work.queued');
   return job;
 }

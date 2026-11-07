@@ -1,0 +1,10 @@
+{
+  "extends": "../../tooling/typescript/library.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "lib": ["ES2023"],
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"]
+}

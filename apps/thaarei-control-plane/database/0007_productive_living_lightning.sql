@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "machine_secret_digest_idx" ON "control_plane"."machine" USING btree ("secret_digest");

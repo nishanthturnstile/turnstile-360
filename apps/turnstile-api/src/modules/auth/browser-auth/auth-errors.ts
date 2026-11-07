@@ -25,6 +25,18 @@ export class AuthExceptionFilter implements ExceptionFilter {
         ? inputStatus
         : 503;
     const response = known ? error.getResponse() : undefined;
+    if (
+      response &&
+      typeof response === 'object' &&
+      'code' in response &&
+      response.code === 'DEPLOYMENT_RESTRICTED'
+    ) {
+      reply
+        .code(403)
+        .header('cache-control', 'private, no-store')
+        .send({ code: 'DEPLOYMENT_RESTRICTED', requestId: request.id });
+      return;
+    }
     if (request.routeOptions?.config?.peopleEndpoint) {
       const failure = peopleHttpFailure(response, status, request.id);
       if ('retryAfterSeconds' in failure)

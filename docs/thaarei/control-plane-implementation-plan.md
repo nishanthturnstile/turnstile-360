@@ -2,9 +2,10 @@
 
 **Date:** 2026-11-06. **Owner:** Thaarei. Confidential and proprietary.
 
-**Status:** Detailed delivery proposal, not implemented. Follow the
+**Status:** Owner-authorized delivery baseline; TCP-I01 adopts policy/architecture on
+2026-11-06. Runtime delivery follows the sequence below; actual completion is tracked in IN_PROGRESS.md. Follow the
 [specification](control-plane-specification.md) for TCP-R01–15 and
-[architecture proposal](../../architecture.md#thaarei-central-control-plane-proposal)
+[adopted architecture](../../architecture.md#thaarei-central-control-plane-proposal)
 for technical choices, protocol, timing and limits. Actual work and dated verification
 belong in [IN_PROGRESS.md](../../IN_PROGRESS.md). The earlier five-increment registry-only
 draft is superseded by the sequence below; its increments were never implemented.
@@ -32,6 +33,12 @@ or treating older status tables as a complete current implementation inventory.
 ## TCP I01 scope and architecture adoption
 
 **Requirements:** all TCP requirements; resolves cross-product policy before code.
+
+**Adoption record, 2026-11-06:** The owner explicitly accepted the remaining defaults.
+The selected version/configuration contract, staff policy, decision states and operation
+classification are maintained in [architecture](../../architecture.md#operation-classification-and-decision-types).
+DMS requirements, blueprint and standalone runbook reference the staged scope. This
+record adopts design only; actual completion/verification is maintained in IN_PROGRESS.md.
 
 - Preserve the owner-selected seven-day approval/daily-renewal policy. Settle the proposed
   read/recovery exception after restriction. Confirm staff identity, MFA, role

@@ -108,3 +108,19 @@ DMS-I18 distribution material:
   requests may use nishanth@thaarei.com, technology@thaarei.com or muthurema@thaarei.com.
   Third-party distribution obligations remain applicable; candidate assembly does not
   itself approve customer redistribution or replace complete release review.
+TCP-I02 central application additions (2026-11-06):
+- next 16.4.5 and create-next-app 16.4.5: MIT, Vercel, Inc. Keep packaged LICENSE files;
+  create-next-app is a development-only scaffolding tool. Next telemetry is disabled in
+  build, CI and production containers. Next's bundled/transitive dependencies retain
+  their own notices; exact integrity pins remain in pnpm-lock.yaml.
+- server-only 0.0.1: MIT, Meta Platforms, Inc. and affiliates. Keep its packaged LICENSE.
+- React/React DOM 19.3.1, Better Auth/Drizzle adapter 1.7.14, Drizzle ORM 0.45.4,
+  pg 8.23.1 and Nodemailer 10.3.1 reuse existing repository pins and packaged licenses.
+  The existing Better Auth workspace patch is retained. No customer OAuth provider is
+  added to the central application. This incremental inventory is not a complete SBOM.
+
+TCP-I04 deployment protocol reuse (2026-11-06):
+- jose 6.2.14: MIT, Filip Skokan. Maintained JOSE signing/verification uses the existing
+  workspace pin; retain its packaged LICENSE.md. Zod 4.6.7 reuses the existing MIT pin.
+- The Linux private-file adapter invokes the host's util-linux flock executable. Runtime
+  hosts must provide it and preserve their packaged notices; no util-linux source is vendored.

@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import { fork, spawn, spawnSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { writeFileSync } from 'node:fs';
+import { lstat, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { request as httpRequest, createServer as httpServer } from 'node:http';
 import { createServer } from 'node:https';
 import { tmpdir } from 'node:os';
@@ -23,6 +24,16 @@ const mailpit = `thaarei-mail-${randomBytes(6).toString('hex')}`;
 const web = `thaarei-web-${randomBytes(6).toString('hex')}`;
 let mailCreated = false;
 let webCreated = false;
+const runtimeContainers = [];
+let productMaintenanceArgs;
+const fullImages = process.env.AUTH_BROWSER_FULL_IMAGES === 'true';
+assert.ok(
+  !fullImages ||
+    (process.env.AUTH_BROWSER_API_IMAGE &&
+      process.env.AUTH_BROWSER_DMS_IMAGE &&
+      process.env.AUTH_BROWSER_WEB_IMAGE),
+  'Full image acceptance needs all three candidate images',
+);
 let browser;
 let page;
 let callbackStatus;
@@ -35,6 +46,14 @@ let authorityPort = 0;
 let productPort = 0;
 let webPort = 0;
 let fault = 'none';
+const browserNetwork = `${web}-network`;
+let networkCreated = false;
+const faultFile = join(temporary, 'browser-fault');
+writeFileSync(faultFile, fault, { mode: 0o600 });
+const setFault = (value) => {
+  fault = value;
+  writeFileSync(faultFile, value, { mode: 0o600 });
+};
 let stage = 'fixture setup';
 let productLogs = '';
 let authorityLogs = '';
@@ -44,6 +63,10 @@ const nginx = await readFile('deploy/nginx/nginx.conf', 'utf8');
 const csp = /add_header Content-Security-Policy "([^"]+)"/.exec(nginx)?.[1];
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: 'utf8', timeout: 30000, ...options });
+  if (result.status !== 0 && command === 'docker')
+    console.error(
+      `Docker fixture operation failed: ${result.stderr.replace(/postgres(?:ql)?:\/\/[^\s]+/g, '[redacted]')}`,
+    );
   assert.equal(
     result.status,
     0,
@@ -65,6 +88,13 @@ async function waitFor(check) {
 const gateway = createServer({}, async (request, response) => {
   try {
     const path = (request.url ?? '/').split('?')[0];
+    if (
+      fullImages &&
+      (path.startsWith('/internal/identity/') || path.startsWith('/internal/work/'))
+    ) {
+      response.writeHead(404).end();
+      return;
+    }
     const identity =
       path.startsWith('/identity/') ||
       path.startsWith('/internal/identity/') ||
@@ -105,7 +135,7 @@ const gateway = createServer({}, async (request, response) => {
             path === '/api/people/roles' &&
             request.method === 'POST'
           ) {
-            fault = 'none';
+            setFault('none');
             incoming.resume();
             incoming.once('end', () => response.destroy());
             return;
@@ -160,13 +190,13 @@ try {
     '-subj',
     '/CN=auth.fixture.test',
     '-addext',
-    'subjectAltName=IP:127.0.0.1,DNS:auth.fixture.test',
+    `subjectAltName=IP:127.0.0.1,DNS:auth.fixture.test,DNS:mailpit,DNS:${mailpit}`,
   ]);
   gateway.setSecureContext({
     key: await readFile(join(temporary, 'key.pem')),
     cert: await readFile(join(temporary, 'cert.pem')),
   });
-  await new Promise((done) => gateway.listen(0, '127.0.0.1', done));
+  await new Promise((done) => gateway.listen(0, fullImages ? '0.0.0.0' : '127.0.0.1', done));
   const origin = `https://auth.fixture.test:${gateway.address().port}`;
   const dnsFile = join(temporary, 'fixture-dns.cjs');
   await writeFile(
@@ -179,6 +209,11 @@ dns.lookup = function(host, options, callback) {
 };\n`,
   );
   const image = parse(await readFile('deploy/compose.local.yaml', 'utf8')).services.mailpit.image;
+  if (fullImages) {
+    run('docker', ['network', 'create', browserNetwork]);
+    networkCreated = true;
+    run('docker', ['network', 'connect', browserNetwork, process.env.ONBOARDING_ARCHIVE_CONTAINER]);
+  }
   stage = 'Mailpit container';
   run('docker', [
     'run',
@@ -186,6 +221,7 @@ dns.lookup = function(host, options, callback) {
     '--rm',
     '--name',
     mailpit,
+    ...(fullImages ? ['--network', browserNetwork, '--network-alias', 'mailpit'] : []),
     '-p',
     '127.0.0.1::1025',
     '-p',
@@ -349,15 +385,206 @@ dns.lookup = function(host, options, callback) {
       ].includes(name)
     )
       delete productEnvironment[name];
-  product = spawn(process.execPath, ['apps/turnstile-api/dist/main.js'], {
-    env: productEnvironment,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  for (const stream of [product.stdout, product.stderr])
-    stream.on('data', (chunk) => {
-      productLogs = `${productLogs}${chunk}`.slice(-131072);
+  async function imageRuntime(kind, image, configuration, port) {
+    const runtime = {};
+    const mounts = new Set();
+    for (const [key, raw] of Object.entries(configuration)) {
+      if (
+        !/^(AUTH_|DMS_|IDENTITY_|TURNSTILE_|INSTALLATION_|CONTROL_PLANE_|NODE_ENV$|NODE_EXTRA_CA_CERTS$)/.test(
+          key,
+        ) ||
+        key.includes('MIGRATION_') ||
+        key.includes('FIXTURE') ||
+        key.includes('BROWSER') ||
+        key.includes('PROVISION') ||
+        key === 'DMS_COORDINATOR_DATABASE_URL' ||
+        key === 'DMS_OPERATOR_DATABASE_URL' ||
+        key.endsWith('MACHINE_SECRET_FILE')
+      )
+        continue;
+      if (
+        kind === 'product' &&
+        ['AUTH_DATABASE_URL', 'DMS_DATABASE_URL', 'AUTH_SECRET'].includes(key)
+      )
+        continue;
+      if (
+        kind === 'authority' &&
+        (key.startsWith('TURNSTILE_') ||
+          (key.startsWith('IDENTITY_') &&
+            !['IDENTITY_SERVICE_CLIENT_ID', 'IDENTITY_SERVICE_RESOURCE_URL'].includes(key)))
+      )
+        continue;
+      let value = raw;
+      if (key.endsWith('DATABASE_URL')) {
+        const url = new URL(value);
+        url.hostname = process.env.ONBOARDING_ARCHIVE_CONTAINER;
+        url.port = '5432';
+        value = url.href;
+      }
+      if (key.endsWith('SMTP_HOST')) value = key === 'TURNSTILE_SMTP_HOST' ? 'mailpit' : mailpit;
+      if (key.endsWith('SMTP_PORT')) value = '1025';
+      if (key.endsWith('_FILE') || key === 'NODE_EXTRA_CA_CERTS') mounts.add(value);
+      runtime[key] = value;
+    }
+    for (const path of mounts)
+      assert.ok(
+        (await lstat(path)).isFile(),
+        'Runtime delivery must mount exact public files, not fixture directories',
+      );
+    runtime.HOST = '0.0.0.0';
+    runtime.PORT = String(port);
+    const file = join(temporary, `${kind}-runtime.env`);
+    await writeFile(
+      file,
+      Object.entries(runtime)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('\n'),
+      { mode: 0o600 },
+    );
+    const mountArgs = [...mounts].flatMap((path) => [
+      '--mount',
+      `type=bind,source=${path},target=${path},readonly`,
+    ]);
+    if (kind === 'product') {
+      const migrationUrl = new URL(environment.TURNSTILE_MIGRATION_DATABASE_URL);
+      migrationUrl.hostname = process.env.ONBOARDING_ARCHIVE_CONTAINER;
+      migrationUrl.port = '5432';
+      const maintenanceFile = join(temporary, 'product-maintenance.env');
+      await writeFile(
+        maintenanceFile,
+        Object.entries({ ...runtime, TURNSTILE_MIGRATION_DATABASE_URL: migrationUrl.href })
+          .map(([key, value]) => `${key}=${value}`)
+          .join('\n'),
+        { mode: 0o600 },
+      );
+      productMaintenanceArgs = [
+        'run',
+        '--rm',
+        '-i',
+        '--network',
+        browserNetwork,
+        '--read-only',
+        '--tmpfs',
+        '/tmp',
+        '--cap-drop',
+        'ALL',
+        '--security-opt',
+        'no-new-privileges:true',
+        '--env-file',
+        maintenanceFile,
+        ...mountArgs,
+        image,
+        'node',
+        'dist/modules/access/release-operator.js',
+      ];
+    }
+    const name = `${web}-${kind}`;
+    run('docker', [
+      'run',
+      '--detach',
+      '--rm',
+      '--name',
+      name,
+      '--network',
+      browserNetwork,
+      '-p',
+      `127.0.0.1::${port}`,
+      '--read-only',
+      '--tmpfs',
+      '/tmp',
+      '--cap-drop',
+      'ALL',
+      '--security-opt',
+      'no-new-privileges:true',
+      '--env-file',
+      file,
+      ...[...mounts].flatMap((path) => [
+        '--mount',
+        `type=bind,source=${path},target=${path},readonly`,
+      ]),
+      image,
+    ]);
+    runtimeContainers.push(name);
+    const exposed = Number(
+      run('docker', [
+        'inspect',
+        '--format',
+        `{{(index (index .NetworkSettings.Ports "${port}/tcp") 0).HostPort}}`,
+        name,
+      ]),
+    );
+    await waitFor(async () => (await fetch(`http://127.0.0.1:${exposed}/health/live`)).ok);
+    return exposed;
+  }
+  if (fullImages) {
+    authorityPort = await imageRuntime(
+      'authority',
+      process.env.AUTH_BROWSER_DMS_IMAGE,
+      environment,
+      3001,
+    );
+    productPort = await imageRuntime(
+      'product',
+      process.env.AUTH_BROWSER_API_IMAGE,
+      productEnvironment,
+      3002,
+    );
+    const ingress = `${web}-canonical`;
+    run('docker', [
+      'run',
+      '--detach',
+      '--rm',
+      '--name',
+      ingress,
+      '--network',
+      browserNetwork,
+      '--network-alias',
+      'auth.fixture.test',
+      '--read-only',
+      '--cap-drop',
+      'ALL',
+      '--security-opt',
+      'no-new-privileges:true',
+      '-e',
+      `QUALIFICATION_AUTHORITY=${web}-authority`,
+      '-e',
+      `QUALIFICATION_PRODUCT=${web}-product`,
+      '-e',
+      `QUALIFICATION_PORT=${new URL(origin).port}`,
+      '--mount',
+      `type=bind,source=${join(temporary, 'cert.pem')},target=/qualification/cert.pem,readonly`,
+      '--mount',
+      `type=bind,source=${join(temporary, 'key.pem')},target=/qualification/key.pem,readonly`,
+      '--mount',
+      `type=bind,source=${faultFile},target=/qualification/browser-fault,readonly`,
+      '--mount',
+      `type=bind,source=${resolve('scripts/fixtures/customer-browser-ingress.mjs')},target=/ingress.mjs,readonly`,
+      process.env.AUTH_BROWSER_API_IMAGE,
+      'node',
+      '/ingress.mjs',
+    ]);
+    runtimeContainers.push(ingress);
+    await waitFor(async () => {
+      const probe = run('docker', [
+        'exec',
+        `${web}-product`,
+        'node',
+        '-e',
+        `fetch('${origin}/identity/.well-known/openid-configuration',{redirect:'error',signal:AbortSignal.timeout(5000)}).then(async r=>{const m=await r.json();if(!r.ok||m.issuer!=='${origin}/identity'||m.jwks_uri!=='${origin}/identity/jwks'){console.error(JSON.stringify({status:r.status,issuer:m.issuer,jwks:m.jwks_uri}));process.exit(1);}console.log('passed')}).catch(e=>{console.error(e.cause?.code??e.name);process.exit(1)})`,
+      ]);
+      return probe === 'passed';
     });
-  await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
+  } else {
+    product = spawn(process.execPath, ['apps/turnstile-api/dist/main.js'], {
+      env: productEnvironment,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    for (const stream of [product.stdout, product.stderr])
+      stream.on('data', (chunk) => {
+        productLogs = `${productLogs}${chunk}`.slice(-131072);
+      });
+    await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
+  }
   if (process.env.AUTH_BROWSER_WEB_IMAGE) {
     run('docker', [
       'run',
@@ -373,33 +600,38 @@ dns.lookup = function(host, options, callback) {
     webPort = Number(port(web, 8080));
     await waitFor(async () => (await fetch(`http://127.0.0.1:${webPort}/health/live`)).ok);
     // Confirm canonical TLS/discovery reachability from an application container without disabling TLS checks.
-    const probe = spawn(
-      'docker',
-      [
-        'run',
-        '--rm',
-        '--network',
-        'host',
-        '--add-host',
-        'auth.fixture.test:127.0.0.1',
-        '-v',
-        `${join(temporary, 'cert.pem')}:/tmp/auth07-ca.crt:ro`,
-        '-e',
-        'NODE_EXTRA_CA_CERTS=/tmp/auth07-ca.crt',
-        process.env.AUTH_BROWSER_API_IMAGE ?? 'thaarei-auth07-api',
-        'node',
-        '-e',
-        `fetch('${origin}/identity/.well-known/openid-configuration',{redirect:'error',signal:AbortSignal.timeout(5000)}).then(async r=>{const m=await r.json();process.exit(r.ok&&m.issuer==='${origin}/identity'&&m.jwks_uri==='${origin}/identity/jwks'?0:1)}).catch(e=>process.exit(['ECONNREFUSED','ENETUNREACH','ETIMEDOUT','EHOSTUNREACH','UND_ERR_CONNECT_TIMEOUT'].includes(e.cause?.code)||e.name==='TimeoutError'?2:1))`,
-      ],
-      { stdio: 'ignore', timeout: 10000 },
-    );
-    const probeResult = (await once(probe, 'exit'))[0];
-    assert.ok([0, 2].includes(probeResult), 'Canonical container discovery/TLS validation failed');
-    console.log(
-      probeResult === 0
-        ? 'Canonical HTTPS discovery from application container passed.'
-        : 'UNAVAILABLE: application container cannot reach the local HTTPS fixture (host-network routing). Actual deployment DNS/TLS reachability remains unverified.',
-    );
+    if (!fullImages) {
+      const probe = spawn(
+        'docker',
+        [
+          'run',
+          '--rm',
+          '--network',
+          'host',
+          '--add-host',
+          'auth.fixture.test:127.0.0.1',
+          '-v',
+          `${join(temporary, 'cert.pem')}:/tmp/auth07-ca.crt:ro`,
+          '-e',
+          'NODE_EXTRA_CA_CERTS=/tmp/auth07-ca.crt',
+          process.env.AUTH_BROWSER_API_IMAGE ?? 'thaarei-auth07-api',
+          'node',
+          '-e',
+          `fetch('${origin}/identity/.well-known/openid-configuration',{redirect:'error',signal:AbortSignal.timeout(5000)}).then(async r=>{const m=await r.json();process.exit(r.ok&&m.issuer==='${origin}/identity'&&m.jwks_uri==='${origin}/identity/jwks'?0:1)}).catch(e=>process.exit(['ECONNREFUSED','ENETUNREACH','ETIMEDOUT','EHOSTUNREACH','UND_ERR_CONNECT_TIMEOUT'].includes(e.cause?.code)||e.name==='TimeoutError'?2:1))`,
+        ],
+        { stdio: 'ignore', timeout: 10000 },
+      );
+      const probeResult = (await once(probe, 'exit'))[0];
+      assert.ok(
+        [0, 2].includes(probeResult),
+        'Canonical container discovery/TLS validation failed',
+      );
+      console.log(
+        probeResult === 0
+          ? 'Canonical HTTPS discovery from application container passed.'
+          : 'UNAVAILABLE: application container cannot reach the local HTTPS fixture (host-network routing). Actual deployment DNS/TLS reachability remains unverified.',
+      );
+    }
   }
   browser = await chromium.launch({
     headless: true,
@@ -463,6 +695,19 @@ dns.lookup = function(host, options, callback) {
   }
 
   async function restartProduct() {
+    if (fullImages) {
+      run('docker', ['restart', `${web}-product`]);
+      productPort = Number(
+        run('docker', [
+          'inspect',
+          '--format',
+          '{{(index (index .NetworkSettings.Ports "3002/tcp") 0).HostPort}}',
+          `${web}-product`,
+        ]),
+      );
+      await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
+      return;
+    }
     product.kill('SIGTERM');
     await once(product, 'exit');
     product = spawn(process.execPath, ['apps/turnstile-api/dist/main.js'], {
@@ -495,8 +740,10 @@ dns.lookup = function(host, options, callback) {
         const invokeRelease = async (operation, input) => {
           await new Promise((resolve, reject) => {
             const child = spawn(
-              process.execPath,
-              ['apps/turnstile-api/dist/modules/access/release-operator.js', operation],
+              fullImages ? 'docker' : process.execPath,
+              fullImages
+                ? [...productMaintenanceArgs, operation]
+                : ['apps/turnstile-api/dist/modules/access/release-operator.js', operation],
               {
                 env: environment,
                 stdio: ['pipe', 'pipe', 'pipe'],
@@ -550,7 +797,7 @@ dns.lookup = function(host, options, callback) {
         console.log('Real private administrator handover and versioned release opening passed.');
       },
       setFault: (value) => {
-        fault = value;
+        setFault(value);
       },
     });
     assert.ok(
@@ -579,7 +826,7 @@ dns.lookup = function(host, options, callback) {
       restartProduct,
       clearRateLimits: () => command('clear-rate-limits'),
       setFault: (value) => {
-        fault = value;
+        setFault(value);
       },
     });
   } else {
@@ -783,7 +1030,7 @@ dns.lookup = function(host, options, callback) {
     stage = 'permission-gated document connection';
     await page.getByRole('button', { name: 'Check connection' }).click();
     await page.getByText('Connected. Document features will appear here when available.').waitFor();
-    fault = 'dms';
+    setFault('dms');
     await page.getByRole('button', { name: 'Check connection' }).click();
     await page
       .getByText(
@@ -791,36 +1038,36 @@ dns.lookup = function(host, options, callback) {
       )
       .waitFor();
     stage = 'authority outage navigation and session recovery';
-    fault = 'authority';
+    setFault('authority');
     await page.reload();
     await heading('We can’t connect right now');
     await page.getByRole('link', { name: 'Sign in', exact: true }).waitFor();
-    fault = 'none';
+    setFault('none');
     await page.evaluate(() => window.dispatchEvent(new Event('focus')));
     await heading('Welcome, member.');
-    fault = 'authority';
+    setFault('authority');
     await page.reload();
     await heading('We can’t connect right now');
-    fault = 'none';
+    setFault('none');
     // The single delayed retry also recovers without a focus event or manual click.
     await heading('Welcome, member.');
-    fault = 'authority';
+    setFault('authority');
     await page.reload();
     await heading('We can’t connect right now');
-    fault = 'none';
+    setFault('none');
     await page.getByRole('button', { name: 'Try again' }).click();
     await heading('Welcome, member.');
     await page.goto(`${origin}/auth-unavailable`);
     await heading('Welcome, member.');
     assert.equal(new URL(page.url()).pathname, '/');
-    fault = 'logout';
+    setFault('logout');
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();
     await page.getByRole('button', { name: 'Retry sign-out' }).waitFor();
     assert.equal(
       await page.evaluate(async () => (await fetch('/api/dms/capabilities')).status),
       401,
     );
-    fault = 'none';
+    setFault('none');
     await page.getByRole('button', { name: 'Retry sign-out' }).click();
     await heading('You’re signed out');
     assert.equal(
@@ -907,14 +1154,28 @@ dns.lookup = function(host, options, callback) {
     await page.goto(`${origin}/forgot-password`);
     await heading('Forgot your password?');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
-    const metrics = (await command('security-metrics')).metrics;
+    let metrics;
+    if (fullImages) {
+      // Read the runtimes that actually served the requests, not the provisioning fixture.
+      authorityLogs = run('docker', ['logs', `${web}-authority`]);
+      productLogs = run('docker', ['logs', `${web}-product`]);
+      metrics = {};
+      for (const line of authorityLogs
+        .split('\n')
+        .filter((line) => line.startsWith('{"type":"security"'))) {
+        const event = JSON.parse(line),
+          key = `${event.event}.${event.outcome}`;
+        metrics[key] = Math.max(metrics[key] ?? 0, event.count);
+      }
+    } else metrics = (await command('security-metrics')).metrics;
     assert.ok(
       metrics['identity.login.success'] > 0 &&
         metrics['identity.recovery.success'] > 0 &&
         metrics['identity.token.success'] > 0 &&
         metrics['machine.access.success'] > 0,
     );
-    assert.ok(Object.keys(metrics).length <= 24);
+    assert.ok(Object.keys(metrics).filter((key) => !key.includes('.latency_le_')).length <= 24);
+    assert.ok(Object.keys(metrics).length <= 60);
     const sensitive = [
       ...continuationSecrets,
       fixture.password,
@@ -940,9 +1201,28 @@ dns.lookup = function(host, options, callback) {
       events.length > 0 &&
         events.every((event) =>
           Object.keys(event).every((key) =>
-            ['type', 'event', 'outcome', 'status', 'count', 'requestId'].includes(key),
+            [
+              'type',
+              'event',
+              'outcome',
+              'status',
+              'count',
+              'requestId',
+              'durationMs',
+              'bucket',
+            ].includes(key),
           ),
         ),
+    );
+    assert.ok(
+      events.every(
+        (event) =>
+          event.durationMs === undefined ||
+          (Number.isFinite(event.durationMs) &&
+            event.durationMs >= 0 &&
+            event.durationMs <= 30000 &&
+            [50, 100, 300, 1000, 5000, 30000].includes(event.bucket)),
+      ),
     );
     console.log(
       'Browser journey 3 passed: unauthorized/expired states, signed-context tamper denial, mobile layout and bounded/redacted events.',
@@ -1032,6 +1312,8 @@ dns.lookup = function(host, options, callback) {
   process.exitCode = 1;
 } finally {
   await browser?.close();
+  for (const name of runtimeContainers.reverse())
+    spawnSync('docker', ['rm', '--force', name], { stdio: 'ignore' });
   for (const child of [product, authority])
     if (child && child.exitCode === null) {
       child.kill('SIGTERM');
@@ -1042,6 +1324,15 @@ dns.lookup = function(host, options, callback) {
         }),
       ]);
     }
+  if (networkCreated) {
+    spawnSync(
+      'docker',
+      ['network', 'disconnect', browserNetwork, process.env.ONBOARDING_ARCHIVE_CONTAINER],
+      { stdio: 'ignore' },
+    );
+    spawnSync('docker', ['network', 'disconnect', browserNetwork, mailpit], { stdio: 'ignore' });
+    spawnSync('docker', ['network', 'rm', browserNetwork], { stdio: 'ignore' });
+  }
   gateway.closeAllConnections();
   await new Promise((done) => gateway.close(() => done()));
   for (const [created, name] of [

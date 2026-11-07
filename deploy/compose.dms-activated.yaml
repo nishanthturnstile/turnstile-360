@@ -1,0 +1,12 @@
+name: thaarei-dms-activated
+include:
+  - path:
+      - compose.dms.yaml
+      - compose.storage.yaml
+      - compose.dms-uploads.yaml
+      - compose.dms-downloads.yaml
+      - compose.dms-work.yaml
+      - compose.dms-assessment.yaml
+      - compose.dms-results.yaml
+      - distribution/compose.runtime.yaml
+      - compose.dms-control-plane.yaml

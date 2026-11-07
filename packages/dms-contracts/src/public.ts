@@ -84,6 +84,12 @@ export type EnrollmentRequest = z.infer<typeof enrollmentRequestSchema>;
 export type EnrollmentResponse = z.infer<typeof enrollmentResponseSchema>;
 export const capabilitiesResponseSchema = z
   .object({
+    deploymentAccess: z
+      .enum(['full', 'existing-reads', 'closed'])
+      .optional()
+      .describe(
+        'Included only for Prefer: include-deployment-status; ordinary version-1 capability responses retain their original shape.',
+      ),
     contractVersion: z.literal(1),
     applicationId: z.uuid(),
     tenantId: z.uuid(),
@@ -145,6 +151,7 @@ export const dmsErrorSchema = z
       'APPLICATION_DENIED',
       'SCOPE_DENIED',
       'OPERATION_DENIED',
+      'DEPLOYMENT_RESTRICTED',
       'TENANT_INPUT_REJECTED',
       'ENROLLMENT_KEY_INVALID',
       'ENROLLMENT_KEY_EXPIRED',
@@ -299,6 +306,7 @@ export const DMS_ERROR_STATUS = {
   APPLICATION_DENIED: [403],
   SCOPE_DENIED: [403],
   OPERATION_DENIED: [403],
+  DEPLOYMENT_RESTRICTED: [403],
   TENANT_INPUT_REJECTED: [400],
   ENROLLMENT_KEY_INVALID: [403],
   ENROLLMENT_KEY_EXPIRED: [410],

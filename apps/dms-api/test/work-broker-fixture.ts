@@ -2,6 +2,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { createInterface } from 'node:readline';
 import { parse } from 'yaml';
 
 export async function workBrokerFixture() {
@@ -68,15 +69,13 @@ export async function workBrokerFixture() {
     return raw ? JSON.parse(raw) : null;
   };
   let ready = false;
-  const workers = new Set<ReturnType<typeof spawn>>();
+  const workers = new Set<{ stop: () => Promise<void> }>();
   const close = async () => {
-    for (const child of workers)
-      if (child.pid) {
-        try {
-          process.kill(-child.pid, 'SIGKILL');
-        } catch {}
-      }
-    run(['rm', '--force', name]);
+    try {
+      await Promise.all([...workers].map((worker) => worker.stop()));
+    } finally {
+      run(['rm', '--force', name]);
+    }
   };
   try {
     for (let i = 0; i < 100; i++) {
@@ -171,19 +170,54 @@ export async function workBrokerFixture() {
           stream?.on('data', (chunk) => {
             output = (output + String(chunk)).slice(-10000);
           });
-        workers.add(child);
-        return {
+        const closed = new Promise<void>((done) => child.once('close', () => done()));
+        const outcomes: Array<{ state: string; reason: string }> = [];
+        createInterface({ input: child.stdout }).on('line', (line) => {
+          try {
+            const value = JSON.parse(line);
+            if (
+              value.type === 'fixture-task-outcome' &&
+              ['RETRY', 'REJECTED', 'SUCCESS', 'FAILURE'].includes(value.state) &&
+              ['unroutable', 'other'].includes(value.reason)
+            ) {
+              outcomes.push({ state: value.state, reason: value.reason });
+              if (outcomes.length > 32) outcomes.shift();
+            }
+          } catch {
+            /* Worker logs are not fixture events and may contain private transport details. */
+          }
+        });
+        let stopped: Promise<void> | undefined;
+        const handle = {
           child,
           output: () => output.replaceAll(password, '[redacted]'),
-          stop: () => {
-            if (child.pid) {
+          outcomes: () => [...outcomes],
+          stop: () =>
+            (stopped ??= (async () => {
+              if (child.pid) {
+                try {
+                  process.kill(-child.pid, 'SIGKILL');
+                } catch {}
+              }
+              let timeout: ReturnType<typeof setTimeout> | undefined;
               try {
-                process.kill(-child.pid, 'SIGKILL');
-              } catch {}
-            }
-            workers.delete(child);
-          },
+                await Promise.race([
+                  closed,
+                  new Promise<never>((_, reject) => {
+                    timeout = setTimeout(
+                      () => reject(new Error('Private worker process group did not exit')),
+                      5000,
+                    );
+                  }),
+                ]);
+              } finally {
+                clearTimeout(timeout);
+                workers.delete(handle);
+              }
+            })()),
         };
+        workers.add(handle);
+        return handle;
       },
       async reset() {
         for (const task of ['document.scan', 'document.extract', 'document.heavy']) {

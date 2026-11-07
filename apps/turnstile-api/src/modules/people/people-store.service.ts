@@ -5,6 +5,7 @@ import type { ConfigurationActor } from '../../infrastructure/configuration-cont
 import { withTenant } from '../../infrastructure/database/postgres.js';
 import { ProductPersistenceService } from '../../infrastructure/database/product-persistence.service.js';
 import { covers, type EffectiveAccess, readAccess } from '../access/access-evaluator.js';
+import { deploymentPreflight, requireDeployment } from '../deployment/access.js';
 
 export type PeoplePolicy = 'people' | 'roles' | 'either';
 export interface PeopleTransaction {
@@ -29,10 +30,16 @@ export class PeopleStoreService {
     if (!pool || !config || !(await this.persistence.ready()))
       return peopleFailure(503, 'PEOPLE_UNAVAILABLE', { reason: 'readiness' });
     try {
+      await deploymentPreflight(
+        pool,
+        config.INSTALLATION_TENANT_ID,
+        actor.deploymentMode ?? 'full',
+      );
       return await withTenant(
         pool,
         config.INSTALLATION_TENANT_ID,
         async (db) => {
+          await requireDeployment(db, actor.deploymentMode ?? 'full');
           await db.query('SELECT turnstile.lock_access_context($1::uuid)', [
             config.INSTALLATION_TENANT_ID,
           ]);

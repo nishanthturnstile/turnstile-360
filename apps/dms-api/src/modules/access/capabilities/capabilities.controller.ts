@@ -1,7 +1,8 @@
-import { Controller, Get, Req } from '@nestjs/common';
+import { Controller, Get, Header, Req } from '@nestjs/common';
 import { OCR_FORMATS } from '@thaarei/dms-contracts/private';
 import { capabilitiesResponseSchema } from '@thaarei/dms-contracts/public';
 import type { FastifyRequest } from 'fastify';
+import { deploymentStatus } from '../../deployment/access.js';
 import {
   AdmissionFeatures,
   policyProjection,
@@ -18,6 +19,7 @@ export class CapabilitiesController {
     private readonly features: AdmissionFeatures,
   ) {}
   @Get()
+  @Header('Vary', 'Prefer')
   @DmsOperation('getDmsCapabilities')
   capabilities(@Req() request: FastifyRequest) {
     if (!request.machine) return dmsError(401, 'MACHINE_TOKEN_REQUIRED');
@@ -28,6 +30,9 @@ export class CapabilitiesController {
         const policy = policyProjection(await readAdmissionPolicy(client), this.features);
         return capabilitiesResponseSchema.parse({
           contractVersion: 1,
+          ...(request.headers.prefer === 'include-deployment-status'
+            ? { deploymentAccess: (await deploymentStatus(client)).access }
+            : {}),
           applicationId: context.application.id,
           tenantId: context.tenantId,
           operations: [

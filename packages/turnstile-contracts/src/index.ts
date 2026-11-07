@@ -35,6 +35,7 @@ export interface LogoutDto {
 }
 
 export type AuthErrorCode =
+  | 'DEPLOYMENT_RESTRICTED'
   | 'INVALID_AUTH_REQUEST'
   | 'LOGIN_TRANSACTION_INVALID'
   | 'IDENTITY_REQUIRED'
@@ -52,6 +53,7 @@ export interface AuthErrorDto {
 
 // Product-facing capabilities omit DMS installation/client identity and operator limits.
 export interface DmsCapabilitiesDto {
+  deploymentAccess?: 'full' | 'existing-reads' | 'closed';
   formats: string[];
   profiles: string[];
   languages: string[];
@@ -66,3 +68,11 @@ export * from './people.js';
 export * from './people-common.js';
 export * from './people-routes.js';
 export { SUPPORTED_TIME_ZONES, TIME_ZONE_PROVENANCE } from './time-zones.js';
+
+export const deploymentStatusSchema = z
+  .object({
+    access: z.enum(['full', 'existing-reads', 'closed']),
+    state: z.string().min(1).max(64),
+  })
+  .strict();
+export type DeploymentStatusDto = z.infer<typeof deploymentStatusSchema>;

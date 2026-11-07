@@ -7,8 +7,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
+import {
+  applyDecision,
+  type DecisionState,
+  initialDecisionState,
+} from '@thaarei/deployment-control';
 import { DMS_MACHINE_SCOPES, enrollmentResponseSchema } from '@thaarei/dms-contracts';
 import { WORK_ROLE_SCOPE, type WorkRole } from '@thaarei/dms-contracts/private';
+import type { FastifyInstance } from 'fastify';
+import { importPKCS8, SignJWT } from 'jose';
 import { Pool } from 'pg';
 import { createApplication } from '../src/bootstrap.js';
 import {
@@ -324,6 +331,10 @@ describe('machine registration and transactional enrollment', () => {
     expect((await capability(consumer, {}, `?tenantId=${randomUUID()}`)).statusCode).toBe(400);
     expect((await enroll(consumer)).statusCode).toBe(201);
     const allowed = await capability(consumer);
+    expect(allowed.json()).not.toHaveProperty('deploymentAccess');
+    expect(
+      (await capability(consumer, { prefer: 'include-deployment-status' })).json().deploymentAccess,
+    ).toBe('full');
     expect(allowed.statusCode).toBe(200);
     expect(allowed.json()).toMatchObject({
       applicationId: consumer.applicationId,
@@ -967,6 +978,21 @@ describe('machine registration and transactional enrollment', () => {
         coordinator,
         { tenantId, customerKey: process.env.INSTALLATION_CUSTOMER_KEY as string },
         work,
+      );
+    const reportUsage = () =>
+      coordinated(
+        async (tx) =>
+          (await tx.client.query('SELECT dms.deployment_usage_snapshot() AS value')).rows[0]
+            .value as {
+            activeDocuments: number;
+            retainedOriginalBytes: number | null;
+            counters: {
+              epoch: string;
+              publishedDocuments: number;
+              publishedVersions: number;
+              completedProcessingJobs: number;
+            };
+          },
       );
     const principal = (consumer: Consumer) =>
       app.get(MachineVerifierService).verify(consumer.accessToken);
@@ -1936,6 +1962,7 @@ describe('machine registration and transactional enrollment', () => {
           origin: string;
         const workers: Array<ReturnType<Awaited<ReturnType<typeof workBrokerFixture>>['worker']>> =
           [];
+        const activeWorkRequests = new Set<string>();
         const identities = new Map<WorkRole, { clientId: string; secret: string; token: string }>();
         const work = () => privateApp.get(WorkService);
         const tokenRefreshes = new Map<WorkRole, Promise<void>>();
@@ -2035,6 +2062,15 @@ describe('machine registration and transactional enrollment', () => {
           vi.stubEnv('DMS_WORK_ISSUER_URL', config.AUTH_ISSUER_URL);
           vi.stubEnv('DMS_WORK_ALLOW_HTTP', 'true');
           privateApp = await createWorkApplication();
+          // Observe the real handler lifetime, including requests whose worker disconnects.
+          const server: FastifyInstance = privateApp.getHttpAdapter().getInstance();
+          server.addHook('onRequest', async (request) => {
+            activeWorkRequests.add(request.id);
+          });
+          server.addHook('onSend', async (request, _reply, payload) => {
+            activeWorkRequests.delete(request.id);
+            return payload;
+          });
           await privateApp.listen(0, '127.0.0.1');
           origin = await privateApp.getUrl();
           mq = await workBrokerFixture();
@@ -2062,8 +2098,16 @@ describe('machine registration and transactional enrollment', () => {
               );
           });
         });
-        afterEach(() => {
-          for (const worker of workers.splice(0)) worker.stop();
+        afterEach(async () => {
+          await Promise.all(workers.splice(0).map((worker) => worker.stop()));
+          await new Promise<void>((resolve) => setImmediate(resolve));
+          // Parent beforeEach deletes shared rows. A killed worker's already accepted
+          // HTTP request must release its transaction before that cleanup can begin.
+          await waitFor(
+            async () => activeWorkRequests.size,
+            (count) => count === 0,
+            5000,
+          );
         });
         afterAll(async () => {
           await privateApp?.close();
@@ -2970,6 +3014,7 @@ describe('machine registration and transactional enrollment', () => {
         }, 90000);
 
         it('I14 extracts passed originals through the production private Celery handler and retains independent availability', async () => {
+          const usageBefore = await reportUsage();
           const c = await consumer();
           await fresh('admission-policy-set', {
             expectedRevision: '1',
@@ -3034,6 +3079,16 @@ describe('machine registration and transactional enrollment', () => {
               coverage: { attempted: 2, completed: 2 },
             },
           });
+          const usageAfter = await reportUsage();
+          expect(
+            usageAfter.counters.completedProcessingJobs -
+              usageBefore.counters.completedProcessingJobs,
+          ).toBe(1);
+          expect(
+            usageAfter.counters.publishedDocuments - usageBefore.counters.publishedDocuments,
+          ).toBe(1);
+          await settleCandidates(work());
+          expect((await reportUsage()).counters).toEqual(usageAfter.counters);
           const cap = await privateApp.get(StorageService).forRole('artifactRead').download({
             area: 'artifacts',
             tenantId,
@@ -3621,7 +3676,7 @@ describe('machine registration and transactional enrollment', () => {
             } finally {
               stopped = true;
               await pump;
-              worker.stop();
+              await worker.stop();
               await daemon.close();
               await rm(folder, { recursive: true, force: true });
             }
@@ -3823,6 +3878,222 @@ describe('machine registration and transactional enrollment', () => {
           await coordinated((tx) => observeCapacity(tx, tmpdir(), tmpdir()));
           await restoreLifecycleVersions(work(), privateApp.get(StorageService));
         }
+        it('TCP-I05 enforces signed deployment state over actual document/storage handlers without bypassing local policy', async () => {
+          const c = await versionConsumer();
+          const session = await versionUpload(c);
+          await finishVersion(session.id);
+          const snapshot = await withTenant(
+            owner,
+            tenantId,
+            async (db) => (await db.query('SELECT * FROM dms.deployment_control')).rows[0],
+          );
+          const material = JSON.parse(
+            await readFile(process.env.DMS_DEPLOYMENT_FIXTURE_FILE as string, 'utf8'),
+          );
+          const key = await importPKCS8(material.privateKey, 'RS256');
+          const expected = snapshot.binding;
+          let state = snapshot.decision as DecisionState;
+          let revision = 10,
+            sequence = 10;
+          const setPolicy = async (
+            policy: 'approved' | 'pending' | 'suspended',
+            freshEpoch = false,
+            expired = false,
+          ) => {
+            const now = Math.floor(Date.now() / 1000),
+              iat = expired ? now - 604801 : now,
+              epoch = freshEpoch ? randomUUID() : state.epoch;
+            const token = await new SignJWT({
+              version: 1,
+              iss: material.trust.issuer,
+              aud: `urn:thaarei:deployment:${expected.productId}`,
+              binding: expected,
+              epoch,
+              policyRevision: ++revision,
+              decisionSequence: ++sequence,
+              decisionId: randomUUID(),
+              iat,
+              nbf: iat,
+              exp: iat + 604800,
+              state: policy,
+              ...(policy === 'approved' ? { entitlement: 'product-business' } : {}),
+            })
+              .setProtectedHeader({ alg: 'RS256', typ: 'thaarei-deployment+jwt', kid: 'fixture' })
+              .sign(key);
+            state = await applyDecision(
+              freshEpoch ? initialDecisionState(epoch) : state,
+              token,
+              expected,
+              material.trust,
+              expired ? iat + 1 : now,
+            );
+            await withTenant(owner, tenantId, (db) =>
+              db.query('UPDATE dms.deployment_control SET decision=$1,quarantined=false', [
+                JSON.stringify(state),
+              ]),
+            );
+          };
+          const read = () => api(c, `/v1/documents/${session.documentId}`);
+          try {
+            expect((await read()).statusCode).toBe(200);
+            const pendingConsumer = await createConsumer();
+            await setPolicy('pending', true);
+            expect((await enroll(pendingConsumer)).statusCode).toBe(403);
+            expect((await read()).statusCode).toBe(403); // Existing data alone never permits initial reads.
+            expect((await app.inject({ method: 'GET', url: '/health/live' })).statusCode).toBe(200);
+            expect((await capability(c)).statusCode).toBe(200);
+            await expect(
+              fresh('document-inspect', { documentId: session.documentId }),
+            ).rejects.toMatchObject({ status: 403, response: { code: 'DEPLOYMENT_RESTRICTED' } });
+            await expect(fresh('operations-inspect')).resolves.toBeDefined();
+            await setPolicy('suspended');
+            expect((await read()).statusCode).toBe(403);
+            await setPolicy('approved');
+            expect((await capability(pendingConsumer)).statusCode).toBe(403);
+            expect((await enroll(pendingConsumer)).statusCode).toBe(201);
+            expect((await read()).statusCode).toBe(200);
+
+            await fresh('admission-policy-set', {
+              expectedRevision: '2',
+              policy: {
+                ...policy,
+                contentTypes: ['text/plain'],
+                profiles: ['secure-only', 'searchable'],
+              },
+            });
+            vi.spyOn(app.get(AdmissionFeatures), 'profiles').mockReturnValue([
+              'secure-only',
+              'searchable',
+            ]);
+            const admitted = await versionUpload(c, undefined, undefined, undefined, {
+              profile: 'searchable',
+            });
+            const running = await finishVersion(admitted.id, 'PASSED', true);
+            if (!running) throw new Error('Expected active scan lease');
+            await setPolicy('suspended');
+            expect(
+              (
+                await call('scanner', '/attempts/result', {
+                  ...running.lease,
+                  outcome: 'SUCCEEDED',
+                  code: 'OK',
+                  assessment: running.evidence,
+                })
+              ).statusCode,
+            ).toBe(200);
+            await settleCandidates(work());
+            const pendingJob = await work().internal(
+              async (tx) =>
+                (
+                  await tx.client.query(
+                    "SELECT * FROM dms.work_job WHERE upload_id=$1 AND task<>'document.scan'",
+                    [admitted.id],
+                  )
+                ).rows[0],
+            );
+            expect(pendingJob.state).toBe('QUEUED');
+            const dispatchCount = () =>
+              work().internal(
+                async (tx) =>
+                  (
+                    await tx.client.query(
+                      'SELECT count(*)::int AS n FROM dms.work_dispatch WHERE job_id=$1',
+                      [pendingJob.id],
+                    )
+                  ).rows[0].n,
+              );
+            expect(await dispatchCount()).toBe(0);
+            await work().recover();
+            expect(await dispatchCount()).toBe(0);
+            expect((await api(c, `/v1/documents/${admitted.documentId}`)).statusCode).toBe(200);
+            expect((await read()).statusCode).toBe(200);
+            const download = await api(c, `/v1/documents/${session.documentId}/download`);
+            expect(download.statusCode).toBe(200);
+            await expect(
+              fresh('document-inspect', { documentId: session.documentId }),
+            ).resolves.toBeDefined();
+            await expect(
+              fresh('document-delete', { documentId: session.documentId, expectedRevision: '1' }),
+            ).rejects.toMatchObject({ status: 403, response: { code: 'DEPLOYMENT_RESTRICTED' } });
+            expect((await start(c, { ...descriptor, contentType: 'text/plain' })).statusCode).toBe(
+              403,
+            );
+            expect((await call('publisher', '/dispatches/claim', {})).statusCode).toBe(403);
+            await setPolicy('approved', true, true);
+            expect((await read()).statusCode).toBe(200);
+            await setPolicy('approved');
+            await work().recover();
+            expect(await dispatchCount()).toBe(1);
+            await withTenant(owner, tenantId, (db) =>
+              db.query("UPDATE dms.application_registration SET status='disabled' WHERE id=$1", [
+                c.applicationId,
+              ]),
+            );
+            expect((await read()).statusCode).toBe(403);
+            await withTenant(owner, tenantId, (db) =>
+              db.query("UPDATE dms.application_registration SET status='active' WHERE id=$1", [
+                c.applicationId,
+              ]),
+            );
+            await withTenant(owner, tenantId, (db) =>
+              db.query(
+                "UPDATE dms.deployment_control SET decision=jsonb_set(decision,'{lastTime}',to_jsonb((extract(epoch FROM clock_timestamp())+60)::bigint))",
+              ),
+            );
+            expect((await read()).statusCode).toBe(403);
+            expect(
+              (
+                await withTenant(
+                  owner,
+                  tenantId,
+                  async (db) =>
+                    (
+                      await db.query('SELECT quarantined FROM dms.deployment_clock_state')
+                    ).rows[0],
+                )
+              ).quarantined,
+            ).toBe(true);
+            await withTenant(owner, tenantId, (db) =>
+              db.query('UPDATE dms.deployment_clock_state SET last_time=0,quarantined=false'),
+            );
+            await setPolicy('approved');
+            const corrupt = structuredClone(state);
+            if (!corrupt.accepted) throw new Error('Proof expected');
+            const claims = JSON.parse(
+              Buffer.from(corrupt.accepted.token.split('.')[1] as string, 'base64url').toString(),
+            );
+            corrupt.accepted.token = await new SignJWT(claims)
+              .setProtectedHeader({ alg: 'RS256', typ: 'thaarei-deployment+jwt', kid: 'unknown' })
+              .sign(key);
+            corrupt.accepted.digest = hash(corrupt.accepted.token);
+            await withTenant(owner, tenantId, (db) =>
+              db.query('UPDATE dms.deployment_control SET decision=$1', [JSON.stringify(corrupt)]),
+            );
+            expect((await read()).statusCode).toBe(403);
+            await withTenant(owner, tenantId, (db) =>
+              db.query('UPDATE dms.deployment_clock_state SET last_time=0,quarantined=false'),
+            );
+            await setPolicy('approved');
+            const markerPath = process.env.CONTROL_PLANE_RECOVERY_MARKER_FILE as string;
+            const marker = await readFile(markerPath, 'utf8');
+            try {
+              await writeFile(markerPath, randomBytes(36).toString('base64url'), { mode: 0o600 });
+              expect((await read()).statusCode).toBe(403);
+            } finally {
+              await writeFile(markerPath, marker, { mode: 0o600 });
+            }
+          } finally {
+            await withTenant(owner, tenantId, (db) =>
+              db.query('UPDATE dms.deployment_clock_state SET last_time=0,quarantined=false'),
+            );
+            await withTenant(owner, tenantId, (db) =>
+              db.query('UPDATE dms.deployment_control SET decision=$1,quarantined=$2', [
+                JSON.stringify(snapshot.decision),
+                snapshot.quarantined,
+              ]),
+            );
+          }
+        });
         it('releases abandoned reservations after capability expiry and retains observed bytes', async () => {
           const c = await versionConsumer();
           const empty = (await start(c, { ...descriptor, contentType: 'text/plain' })).json()
@@ -5017,6 +5288,7 @@ describe('machine registration and transactional enrollment', () => {
           ).toHaveLength(1);
         });
         it('I10 preserves current bytes under out-of-order publication and restores references through a new assessed revision', async () => {
+          const usageBefore = await reportUsage();
           const c = await versionConsumer(),
             first = await versionUpload(c);
           await finishVersion(first.id);
@@ -5075,7 +5347,7 @@ describe('machine registration and transactional enrollment', () => {
               )
             ).statusCode,
           ).toBe(409);
-          await finishVersion(session.id);
+          const completed = await finishVersion(session.id);
           const doc = (await api(c, `/v1/documents/${first.documentId}`)).json();
           expect(doc).toMatchObject({
             currentVersionId: session.versionId,
@@ -5095,6 +5367,27 @@ describe('machine registration and transactional enrollment', () => {
                 ).rows[0],
             ),
           ).toEqual(before);
+          const usageAfter = await reportUsage();
+          expect(usageAfter.activeDocuments - usageBefore.activeDocuments).toBe(1);
+          expect(
+            usageAfter.counters.publishedDocuments - usageBefore.counters.publishedDocuments,
+          ).toBe(1);
+          expect(
+            usageAfter.counters.publishedVersions - usageBefore.counters.publishedVersions,
+          ).toBe(4);
+          expect(usageAfter.counters.completedProcessingJobs).toBe(
+            usageBefore.counters.completedProcessingJobs,
+          );
+          const resultReplay = await call('scanner', '/attempts/result', {
+            ...completed.lease,
+            outcome: 'SUCCEEDED',
+            code: 'OK',
+            assessment: completed.evidence,
+          });
+          expect(resultReplay.statusCode).toBe(200);
+          expect(resultReplay.json().duplicate).toBe(true);
+          await settleCandidates(work());
+          expect((await reportUsage()).counters).toEqual(usageAfter.counters);
           const history = await api(c, `/v1/documents/${first.documentId}/versions?limit=1`);
           expect(history.statusCode).toBe(200);
           const page = history.json();
@@ -5809,7 +6102,7 @@ describe('machine registration and transactional enrollment', () => {
         it('recovers a lost confirmed-retry publication under the persisted execution budget', async () => {
           const { job } = await queued();
           await publish();
-          brokerWorker('retry_once');
+          const worker = brokerWorker('retry_once');
           await waitFor(
             () => state(job.id),
             (v) => v.state === 'RUNNING',
@@ -5819,8 +6112,21 @@ describe('machine registration and transactional enrollment', () => {
             () => state(job.id),
             (v) => v.state === 'RETRY_WAIT',
           );
-          await new Promise((r) => setTimeout(r, 1000)); // let the confirmed mandatory retry observe the missing binding
-          expect((await mq.api('/queues/dms/document.scan')).messages_ready).toBe(0);
+          // Observe native Celery's postrun signal after the unchanged confirmed
+          // publisher rejects the missing binding; broker management counts are cached.
+          await waitFor(
+            async () => worker.outcomes(),
+            (outcomes) =>
+              outcomes.some((value) => value.state === 'REJECTED' && value.reason === 'unroutable'),
+          );
+          expect(
+            await mq.api('/queues/dms/document.scan/get', 'POST', {
+              count: 1,
+              ackmode: 'ack_requeue_true',
+              encoding: 'auto',
+              truncate: 10000,
+            }),
+          ).toHaveLength(0);
           await withTenant(owner, tenantId, (db) =>
             db.query(
               "UPDATE dms.work_job SET next_eligible_at=now()-interval '100 seconds',recover_at=now()-interval '1 second' WHERE id=$1",
@@ -5928,7 +6234,8 @@ describe('machine registration and transactional enrollment', () => {
             () => state(job.id),
             (v) => v.state === 'RUNNING',
           );
-          worker.stop();
+          await worker.stop();
+          expect(worker.child.exitCode !== null || worker.child.signalCode !== null).toBe(true);
           expect((await work().recover()).recovered).toBe(0);
           await withTenant(owner, tenantId, async (db) => {
             await db.query(

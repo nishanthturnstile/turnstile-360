@@ -139,6 +139,8 @@ describe('protected consumer explorer and route contract', () => {
       { authorization },
       { cookie: 'session=untrusted' },
       { authorization: 'Bearer wrong' },
+      // Central deployment credentials are opaque 256-bit secrets, never DMS access JWTs.
+      { authorization: `Bearer ${randomBytes(32).toString('base64url')}` },
     ]) {
       const response = await app.inject({ method: 'GET', url: '/v1/capabilities', headers });
       expect(response.statusCode).toBe(401);

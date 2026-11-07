@@ -6526,6 +6526,7 @@
               "code": {
                 "type": "string",
                 "enum": [
+                  "DEPLOYMENT_RESTRICTED",
                   "INVALID_AUTH_REQUEST",
                   "LOGIN_TRANSACTION_INVALID",
                   "IDENTITY_REQUIRED",
@@ -6713,6 +6714,33 @@
           }
         ]
       },
+      "PeopleError403": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "DEPLOYMENT_RESTRICTED",
+              "PRODUCT_ACCESS_DENIED",
+              "PERMISSION_DENIED",
+              "CSRF_REJECTED",
+              "ACCESS_COVERAGE_DENIED",
+              "INVITATION_IDENTITY_MISMATCH"
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "allOf": [
+              {
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              { "pattern": "^[0-9a-f-]+$" }
+            ]
+          }
+        },
+        "required": ["code", "requestId"],
+        "additionalProperties": false
+      },
       "PeopleError400": {
         "anyOf": [
           {
@@ -6796,32 +6824,6 @@
           "code": {
             "type": "string",
             "enum": ["IDENTITY_REQUIRED", "LOGIN_REQUIRED", "INVITATION_IDENTITY_REQUIRED"]
-          },
-          "requestId": {
-            "type": "string",
-            "allOf": [
-              {
-                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-              },
-              { "pattern": "^[0-9a-f-]+$" }
-            ]
-          }
-        },
-        "required": ["code", "requestId"],
-        "additionalProperties": false
-      },
-      "PeopleError403": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "enum": [
-              "PRODUCT_ACCESS_DENIED",
-              "PERMISSION_DENIED",
-              "CSRF_REJECTED",
-              "ACCESS_COVERAGE_DENIED",
-              "INVITATION_IDENTITY_MISMATCH"
-            ]
           },
           "requestId": {
             "type": "string",

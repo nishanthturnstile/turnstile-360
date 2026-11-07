@@ -25,6 +25,27 @@
     "test:integration": {
       "dependsOn": ["^build"],
       "cache": false
+    },
+    "@thaarei/thaarei-control-plane#build": {
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": ["NEXT_TELEMETRY_DISABLED"],
+      "dependsOn": ["^build"]
+    },
+    "@thaarei/thaarei-control-plane#typecheck": {
+      "dependsOn": ["@thaarei/thaarei-control-plane#build"],
+      "outputs": []
+    },
+    "@thaarei/thaarei-control-plane#test:integration": {
+      "dependsOn": ["@thaarei/thaarei-control-plane#build"],
+      "cache": false,
+      "passThroughEnv": [
+        "PATH",
+        "DOCKER_HOST",
+        "DOCKER_CONTEXT",
+        "DOCKER_CONFIG",
+        "CONTROL_PLANE_TEST_IMAGE",
+        "DMS_CONTROL_TEST_IMAGE"
+      ]
     }
   }
 }

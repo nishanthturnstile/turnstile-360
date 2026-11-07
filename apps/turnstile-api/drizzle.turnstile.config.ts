@@ -6,6 +6,7 @@ if (existsSync('.env.migrate')) process.loadEnvFile('.env.migrate');
 export default defineConfig({
   dialect: 'postgresql',
   schema: [
+    './src/modules/deployment/deployment.schema.ts',
     './src/modules/auth/persistence/product.schema.ts',
     './src/modules/organization/persistence/organization.schema.ts',
     './src/modules/access/access.schema.ts',

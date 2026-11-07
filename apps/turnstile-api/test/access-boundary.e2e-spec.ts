@@ -16,6 +16,7 @@ import { AuthExceptionFilter } from '../src/modules/auth/browser-auth/auth-error
 import { BrowserAuthService } from '../src/modules/auth/browser-auth/browser-auth.service.js';
 import { verifyProductCsrf } from '../src/modules/auth/browser-auth/csrf.js';
 import { UserSessionGuard } from '../src/modules/auth/user-session/user-session.guard.js';
+import { DeploymentService } from '../src/modules/deployment/deployment.service.js';
 import { OnboardingService } from '../src/modules/onboarding/onboarding.service.js';
 import { policyFixtureAccess } from './access-fixture.js';
 
@@ -112,6 +113,7 @@ describe('default product permission boundary', () => {
     const module = await Test.createTestingModule({
       controllers: [PolicyFixture],
       providers: [
+        { provide: DeploymentService, useValue: { require: vi.fn(async () => {}) } },
         {
           provide: BrowserAuthService,
           useValue: {

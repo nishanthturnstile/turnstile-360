@@ -454,18 +454,30 @@ describe('independent DMS foundation', () => {
           child.stdout.on('data', (chunk) => {
             output += chunk;
           });
-          child.stderr.resume();
+          let failure = 'unclassified';
+          child.stderr.on('data', (chunk) => {
+            for (const line of String(chunk).split('\n')) {
+              try {
+                const value = JSON.parse(line);
+                if (
+                  value.type === 'packaged-explorer-failure' &&
+                  /^[a-z-]{1,40}$/.test(value.phase) &&
+                  /^[A-Za-z]{1,40}$/.test(value.kind)
+                )
+                  failure = `${value.phase}/${value.kind}`;
+              } catch {
+                /* Ignore unstructured output, which may contain credentials. */
+              }
+            }
+          });
           child.once('error', reject);
           child.once('exit', (code) =>
-            code === 0 ? resolve(output) : reject(new Error('Packaged explorer fixture failed')),
+            code === 0
+              ? resolve(output)
+              : reject(new Error(`Packaged explorer fixture failed (${failure})`)),
           );
           child.stdin.end(typeof input === 'string' ? input : JSON.stringify(input));
         });
-      await run([
-        'cp',
-        fileURLToPath(new URL('./packaged-explorer.mjs', import.meta.url)),
-        `${container}:/tmp/packaged-explorer.mjs`,
-      ]);
       const maintenance = new URL(process.env.DMS_MIGRATION_DATABASE_URL ?? '');
       maintenance.hostname = process.env.DMS_TEST_IMAGE_DATABASE_HOST ?? '';
       maintenance.port = '5432';
@@ -478,7 +490,7 @@ describe('independent DMS foundation', () => {
             'DMS_MIGRATION_DATABASE_URL',
             container,
             'node',
-            '/tmp/packaged-explorer.mjs',
+            '/run/packaged-explorer.mjs',
           ],
           { email, password },
           { ...process.env, DMS_MIGRATION_DATABASE_URL: maintenance.href },
@@ -486,7 +498,7 @@ describe('independent DMS foundation', () => {
       );
       for (const authorization of [undefined, 'Bearer wrong', `Bearer ${result.expiredToken}`]) {
         const response = JSON.parse(
-          await run(['exec', '--interactive', container, 'node', '/tmp/packaged-explorer.mjs'], {
+          await run(['exec', '--interactive', container, 'node', '/run/packaged-explorer.mjs'], {
             action: 'http',
             path: '/v1/capabilities',
             headers: authorization ? { authorization } : {},
@@ -507,7 +519,7 @@ describe('independent DMS foundation', () => {
         result.accessToken,
         async (path, headers) =>
           JSON.parse(
-            await run(['exec', '--interactive', container, 'node', '/tmp/packaged-explorer.mjs'], {
+            await run(['exec', '--interactive', container, 'node', '/run/packaged-explorer.mjs'], {
               action: 'http',
               path,
               headers,

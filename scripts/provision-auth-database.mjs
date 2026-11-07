@@ -3,18 +3,32 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 
 // Explicit operator action for a dedicated installation database. Never called at API startup.
-export async function provisionDatabase(environment, dmsAccessOnly = false) {
+export async function provisionDatabase(
+  environment,
+  dmsAccessOnly = false,
+  turnstileReporterOnly = false,
+) {
   const selection = environment.DATABASE_PROFILE ?? 'combined';
-  if (!['combined', 'dms'].includes(selection)) throw new Error('Invalid DATABASE_PROFILE');
+  if (!['combined', 'dms', 'turnstile'].includes(selection))
+    throw new Error('Invalid DATABASE_PROFILE');
+  if (
+    turnstileReporterOnly &&
+    (selection === 'dms' || !environment.TURNSTILE_REPORTER_DATABASE_URL)
+  )
+    throw new Error('Turnstile reporter provisioning requires its dedicated connection');
   const adminUrl = environment.PROVISION_DATABASE_URL;
   if (!adminUrl || !URL.canParse(adminUrl)) throw new Error('Missing operator database connection');
   const admin = new URL(adminUrl);
   const connections = [];
-  for (const owner of dmsAccessOnly
+  if (dmsAccessOnly && turnstileReporterOnly)
+    throw new Error('Choose one private provisioning scope');
+  for (const owner of dmsAccessOnly || turnstileReporterOnly
     ? []
     : selection === 'dms'
       ? ['auth', 'dms']
-      : ['auth', 'dms', 'turnstile']) {
+      : selection === 'turnstile'
+        ? ['turnstile']
+        : ['auth', 'dms', 'turnstile']) {
     for (const kind of ['runtime', 'migrator']) {
       const key = `${owner.toUpperCase()}_${kind === 'runtime' ? '' : 'MIGRATION_'}DATABASE_URL`;
       const value = environment[key];
@@ -34,7 +48,9 @@ export async function provisionDatabase(environment, dmsAccessOnly = false) {
       connections.push({ role, kind, password: decodeURIComponent(url.password) });
     }
   }
-  for (const kind of ['operator', 'coordinator']) {
+  for (const kind of turnstileReporterOnly || selection === 'turnstile'
+    ? []
+    : ['operator', 'coordinator']) {
     const key = `DMS_${kind.toUpperCase()}_DATABASE_URL`;
     const value = environment[key];
     const role = `thaarei_dms_${kind}`;
@@ -53,6 +69,23 @@ export async function provisionDatabase(environment, dmsAccessOnly = false) {
     )
       throw new Error(`Invalid ${key}`);
     connections.push({ role, kind, password: decodeURIComponent(url.password) });
+  }
+  if (selection !== 'dms' && !dmsAccessOnly) {
+    const value = environment.TURNSTILE_REPORTER_DATABASE_URL;
+    const role = 'thaarei_turnstile_reporter';
+    if (value) {
+      const url = new URL(value);
+      if (
+        !['postgres:', 'postgresql:'].includes(url.protocol) ||
+        url.username !== role ||
+        !url.password ||
+        url.host !== admin.host ||
+        url.pathname !== admin.pathname ||
+        url.hash
+      )
+        throw new Error('Invalid TURNSTILE_REPORTER_DATABASE_URL');
+      connections.push({ role, kind: 'reporter', password: decodeURIComponent(url.password) });
+    } else connections.push({ role, kind: 'reporter', password: null });
   }
   if (
     new Set(connections.filter((c) => c.password).map((connection) => connection.password)).size !==
@@ -129,7 +162,11 @@ export async function provisionDatabase(environment, dmsAccessOnly = false) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   try {
-    await provisionDatabase(process.env, process.argv.includes('--dms-access-only'));
+    await provisionDatabase(
+      process.env,
+      process.argv.includes('--dms-access-only'),
+      process.argv.includes('--turnstile-reporter-only'),
+    );
     console.log(
       'Installation database roles provisioned; run each owned migration and bootstrap command next',
     );

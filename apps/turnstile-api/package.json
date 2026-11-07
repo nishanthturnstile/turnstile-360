@@ -20,7 +20,8 @@
     "setup:verify-installation": "node --env-file-if-exists=.env.migrate dist/modules/organization/configuration-operator.js verify-installation",
     "configuration:inspect": "node --env-file-if-exists=.env.migrate dist/modules/organization/configuration-operator.js inspect",
     "configuration:prune": "node --env-file-if-exists=.env.migrate dist/modules/organization/configuration-operator.js prune",
-    "test:database": "vitest run --config vitest.config.database.ts"
+    "test:database": "vitest run --config vitest.config.database.ts",
+    "deployment:operator": "node dist/modules/deployment/operator.js"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.5",
@@ -38,7 +39,9 @@
     "pg": "8.23.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.1",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "@thaarei/control-plane-contracts": "workspace:*",
+    "@thaarei/deployment-control": "workspace:*"
   },
   "devDependencies": {
     "@nestjs/cli": "12.0.11",

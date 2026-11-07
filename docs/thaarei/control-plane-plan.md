@@ -2,7 +2,8 @@
 
 **Date:** 2026-11-06. **Owner:** Thaarei. Confidential and proprietary.
 
-**Status:** Proposed scope and design for review. No implementation has started.
+**Status:** Owner-adopted scope/design; TCP-I01 delivery started on 2026-11-06.
+Runtime implementation and release remain separate sequenced increments.
 The owner clarified that the control plane must approve customer product deployments and
 receive operational summaries, beyond the earlier registry-only draft.
 
@@ -17,9 +18,9 @@ customer applications, owning persistence and required DMS storage/processing se
 
 1. [Specification](control-plane-specification.md): terminology, TCP-R01–15, employee and
    customer journeys, included controls and operating-policy choices.
-2. [Architecture proposal](../../architecture.md#thaarei-central-control-plane-proposal):
+2. [Adopted architecture](../../architecture.md#thaarei-central-control-plane-proposal):
    component/network boundaries, credential matrix, pairing, signed approval, restrictions,
-   report sources, protocol and proposed timing/limits.
+   report sources, protocol and selected timing/limits.
 3. [Detailed implementation plan](control-plane-implementation-plan.md): TCP-I01–08,
    dependencies, changes by component and focused verification/release gates.
 4. [Review findings and corrections](control-plane-review.md): independent GPT Astra
@@ -33,14 +34,14 @@ uses “control plane” for the DMS API/coordinator and excludes a management a
 one-time DMS enrollment activates an intended consumer such as Turnstile inside one
 customer installation. It does not obtain central Thaarei approval or send fleet reports.
 
-This proposal adds that central approval as an additional product gate. Staff login,
+This adopted scope adds that central approval as an additional product gate. Staff login,
 central product credentials, signed deployment approvals and customer-local DMS machine
 tokens each have a different role. Customer browsers, workers and storage never receive
 central machine credentials or connect directly to the central app.
 
 The owner selected seven-day signed approval with daily renewal on 2026-11-06, with
-local verification rather than a central lookup on every business request. Read/recovery
-exceptions after expiry or suspension remain proposed. It changes the earlier expectation of full independence from
+local verification rather than a central lookup on every business request. The owner also adopted the read/recovery
+exceptions, staff policy, reporting/retention defaults and two-host outbound-only design. It changes the earlier expectation of full independence from
 central services; local customer identity, one-tenant isolation and DMS independence from
 Turnstile remain intact. Do not apply the new guard to an existing installation without
 coordinated registration, approval and recovery readiness.
@@ -53,6 +54,6 @@ integrating either customer backend. Reuse the separately developed DMS operatio
 projections when they are ready, add Turnstile's own reporter, and qualify the full chain
 with separate customer fixtures before rollout.
 
-This planning work is isolated on feat/thaarei-control-plane-plan. The standalone DMS
+Implementation starts on `feat/thaarei-control-plane-implementation` from current development. The standalone DMS
 branch and installed customer-test stack remain with their existing owner. No DMS source,
-credentials, services or data are changed by this proposal.
+credentials, services or data are changed by policy adoption.

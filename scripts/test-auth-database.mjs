@@ -2,14 +2,18 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import pg from 'pg';
 import { parse } from 'yaml';
 import { provisionDatabase } from './provision-auth-database.mjs';
 
-function run(command, args, env = process.env) {
+function run(command, args, env = process.env, input) {
   const result = spawnSync(command, args, {
     env,
+    input,
     encoding: 'utf8',
     // Keep a finite budget for each owning database file. Separate processes
     // retain complete failure output for the expanded serial suite. This
@@ -37,6 +41,9 @@ const image = parse(readFileSync('deploy/compose.local.yaml', 'utf8')).services.
 // The retired Settings-only structure suite now uses the canonical scoped workflow fixture.
 if (process.argv.includes('--structure-editor')) process.argv.push('--people-ui');
 const browser = process.argv.includes('--browser');
+let installationManifestDirectory;
+let turnstileDeploymentFixture;
+let deploymentFixture;
 const standalone = process.argv.includes('--standalone');
 // biome-ignore lint/suspicious/noUndeclaredEnvVars: This root-only integration launcher is uncached and runs outside Turbo.
 const standaloneImage = process.env.DMS_STANDALONE_IMAGE;
@@ -52,6 +59,12 @@ try {
     '--filter=@thaarei/dms-api',
     ...(standalone ? [] : ['--filter=@thaarei/turnstile-api']),
     ...(browser ? ['--filter=@thaarei/turnstile-web'] : []),
+  ]);
+  // Fixture modules consume compiled workspace packages. Load them only after the
+  // dependency build so direct invocations also work on a clean CI checkout.
+  const [{ seedDmsDeployment }, { seedTurnstileDeployment }] = await Promise.all([
+    import('./fixtures/dms-deployment.mjs'),
+    import('./fixtures/turnstile-deployment.mjs'),
   ]);
   // Test credentials stay in environment/memory, never shell command text or recorded output.
   run(
@@ -123,6 +136,7 @@ try {
     AUTH_SMTP_MODE: 'plain',
     AUTH_MAIL_FROM: 'identity@example.test',
   };
+  for (const key of Object.keys(env)) if (key.startsWith('CONTROL_PLANE_')) delete env[key];
   // Optional capabilities are configured only by their disposable fixtures, never inherited live secrets/transports.
   for (const key of [
     'IDENTITY_SERVICE_CLIENT_ID',
@@ -205,6 +219,13 @@ try {
       )
         delete env[key];
   }
+  if (!standalone) {
+    const reporter = new URL(env.TURNSTILE_DATABASE_URL);
+    reporter.username = 'thaarei_turnstile_reporter';
+    reporter.password = randomBytes(32).toString('base64url');
+    env.TURNSTILE_REPORTER_DATABASE_URL = reporter.href;
+  }
+  delete env.INSTALLATION_LOCAL_ID;
   await provisionDatabase(env);
   // Deployment scripts are exercised as compiled Node ESM commands with dedicated migrators.
   for (let repeat = 0; repeat < 2; repeat++) {
@@ -215,10 +236,36 @@ try {
     ]) {
       run('pnpm', ['--filter', `@thaarei/${application}`, `db:migrate:${owner}`], env);
     }
-    for (const application of standalone ? ['dms-api'] : ['dms-api', 'turnstile-api'])
+    for (const application of standalone ? ['dms-api'] : ['dms-api', 'turnstile-api']) {
       run('pnpm', ['--filter', `@thaarei/${application}`, 'db:bootstrap'], env);
+      if (application === 'dms-api' && !standalone && !env.INSTALLATION_LOCAL_ID) {
+        installationManifestDirectory = await mkdtemp(
+          join(tmpdir(), 'thaarei-shared-installation-'),
+        );
+        const outputFile = join(installationManifestDirectory, 'manifest.json');
+        run(
+          'node',
+          ['apps/dms-api/dist/modules/deployment/operator.js'],
+          env,
+          JSON.stringify({ action: 'manifest', outputFile }),
+        );
+        const exported = JSON.parse(readFileSync(outputFile, 'utf8'));
+        assert.equal(exported.tenantId, env.INSTALLATION_TENANT_ID);
+        env.INSTALLATION_LOCAL_ID = exported.localInstallationId;
+      }
+    }
   }
+  deploymentFixture = await seedDmsDeployment(env);
+  if (!standalone) turnstileDeploymentFixture = await seedTurnstileDeployment(env);
   if (standalone && standaloneImage) {
+    // CI's host UID can differ from the image's default node UID. Preserve 0600
+    // trust/marker files and run this disposable fixture as their non-root owner.
+    const userId = process.getuid?.();
+    const groupId = process.getgid?.();
+    assert.ok(
+      userId !== undefined && userId > 0 && groupId !== undefined,
+      'Standalone image verification requires a non-root POSIX fixture owner',
+    );
     const databaseHost = run('docker', [
       'inspect',
       '--format',
@@ -228,6 +275,9 @@ try {
     assert.ok(databaseHost, 'Missing isolated database network');
     const runtime = {
       NODE_ENV: 'test',
+      CONTROL_PLANE_ORIGIN: env.CONTROL_PLANE_ORIGIN,
+      CONTROL_PLANE_VERIFICATION_KEYS_FILE: '/run/deployment-trust',
+      CONTROL_PLANE_RECOVERY_MARKER_FILE: '/run/deployment-marker',
       AUTH_PROFILE: 'test',
       AUTH_MODE: 'standalone',
       DMS_DOCS_MODE: 'controlled',
@@ -259,6 +309,17 @@ try {
         '--detach',
         '--name',
         `${name}-dms-image`,
+        '--user',
+        `${userId}:${groupId}`,
+        '--read-only',
+        '--tmpfs',
+        '/tmp',
+        '--mount',
+        `type=bind,source=${join(process.cwd(), 'apps/dms-api/test/packaged-explorer.mjs')},target=/run/packaged-explorer.mjs,readonly`,
+        '--mount',
+        `type=bind,source=${env.CONTROL_PLANE_VERIFICATION_KEYS_FILE},target=/run/deployment-trust,readonly`,
+        '--mount',
+        `type=bind,source=${env.CONTROL_PLANE_RECOVERY_MARKER_FILE},target=/run/deployment-marker,readonly`,
         ...Object.keys(runtime).flatMap((key) => ['-e', key]),
         standaloneImage,
       ],
@@ -346,7 +407,10 @@ try {
       ),
     );
   else
-    for (const application of process.argv.includes('--identity-service') ||
+    for (const application of process.argv.includes('--configuration-upgrade') ||
+    process.argv.includes('--bff') ||
+    process.argv.includes('--turnstile-deployment') ||
+    process.argv.includes('--identity-service') ||
     process.argv.includes('--invitations') ||
     process.argv.includes('--recipients') ||
     process.argv.includes('--people') ||
@@ -355,34 +419,45 @@ try {
       ? ['turnstile-api']
       : standalone ||
           process.argv.includes('--dms-only') ||
+          process.argv.includes('--dms-deployment') ||
           process.argv.includes('--dms-access') ||
           process.argv.includes('--dms-admission')
         ? ['dms-api']
         : ['dms-api', 'turnstile-api']) {
-      const selected =
-        process.argv.includes('--dms-access') || process.argv.includes('--dms-admission')
-          ? ['test/enrollment.database-spec.ts']
-          : standalone
-            ? ['test/standalone.database-spec.ts']
-            : process.argv.includes('--user-management-release')
-              ? [
-                  'test/user-management-upgrade.database-spec.ts',
-                  'test/recipients.database-spec.ts',
-                ]
-              : process.argv.includes('--identity-service')
-                ? ['test/identity-service.database-spec.ts']
-                : process.argv.includes('--people')
-                  ? ['test/people.database-spec.ts']
-                  : process.argv.includes('--scoped-structure')
-                    ? ['test/scoped-structure.database-spec.ts']
-                    : process.argv.includes('--recipients')
-                      ? ['test/recipients.database-spec.ts']
-                      : process.argv.includes('--invitations')
-                        ? ['test/invitations.database-spec.ts']
-                        : readdirSync(`apps/${application}/test`)
-                            .filter((file) => file.endsWith('.database-spec.ts'))
-                            .sort()
-                            .map((file) => `test/${file}`);
+      const selected = process.argv.includes('--configuration-upgrade')
+        ? [
+            'test/configuration-upgrade.database-spec.ts',
+            'test/user-management-upgrade.database-spec.ts',
+          ]
+        : process.argv.includes('--bff')
+          ? ['test/bff.database-spec.ts']
+          : process.argv.includes('--turnstile-deployment')
+            ? ['test/deployment.database-spec.ts']
+            : process.argv.includes('--dms-deployment')
+              ? ['test/deployment.database-spec.ts']
+              : process.argv.includes('--dms-access') || process.argv.includes('--dms-admission')
+                ? ['test/enrollment.database-spec.ts']
+                : standalone
+                  ? ['test/standalone.database-spec.ts']
+                  : process.argv.includes('--user-management-release')
+                    ? [
+                        'test/user-management-upgrade.database-spec.ts',
+                        'test/recipients.database-spec.ts',
+                      ]
+                    : process.argv.includes('--identity-service')
+                      ? ['test/identity-service.database-spec.ts']
+                      : process.argv.includes('--people')
+                        ? ['test/people.database-spec.ts']
+                        : process.argv.includes('--scoped-structure')
+                          ? ['test/scoped-structure.database-spec.ts']
+                          : process.argv.includes('--recipients')
+                            ? ['test/recipients.database-spec.ts']
+                            : process.argv.includes('--invitations')
+                              ? ['test/invitations.database-spec.ts']
+                              : readdirSync(`apps/${application}/test`)
+                                  .filter((file) => file.endsWith('.database-spec.ts'))
+                                  .sort()
+                                  .map((file) => `test/${file}`);
       assert.ok(selected.length, `No database tests for ${application}`);
       for (const file of selected)
         console.log(
@@ -393,6 +468,11 @@ try {
     'Disposable PostgreSQL: repeatable owned migrations/bootstrap, runtime privilege isolation and auth persistence tests passed.',
   );
 } finally {
+  if (installationManifestDirectory)
+    await rm(installationManifestDirectory, { recursive: true, force: true });
+  if (turnstileDeploymentFixture)
+    await rm(turnstileDeploymentFixture, { recursive: true, force: true });
+  if (deploymentFixture) await rm(deploymentFixture, { recursive: true, force: true });
   if (standaloneImageCreated)
     spawnSync('docker', ['rm', '--force', `${name}-dms-image`], { stdio: 'ignore' });
   if (mailpitCreated)

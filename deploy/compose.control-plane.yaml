@@ -1,0 +1,59 @@
+name: thaarei-control-plane
+# Separate central Linux host only. No published database/app ports; Dokploy owns ingress.
+services:
+  control-plane:
+    build:
+      context: ..
+      dockerfile: apps/thaarei-control-plane/Dockerfile
+    environment:
+      CONTROL_PLANE_PROFILE: production
+      CONTROL_PLANE_PUBLIC_ORIGIN: ${CONTROL_PLANE_PUBLIC_ORIGIN:?Set the central HTTPS origin}
+      CONTROL_PLANE_DATABASE_URL: ${CONTROL_PLANE_DATABASE_URL:?Supply the central runtime URL}
+      CONTROL_PLANE_AUTH_SECRET_FILE: /run/secrets/control-plane-auth
+      CONTROL_PLANE_SIGNING_KEY_FILE: /run/secrets/control-plane-signing
+      CONTROL_PLANE_RECOVERY_MARKER_FILE: /run/secrets/control-plane-recovery
+      CONTROL_PLANE_SMTP_URL: ${CONTROL_PLANE_SMTP_URL:?Supply the central TLS SMTP relay}
+      CONTROL_PLANE_SMTP_FROM: ${CONTROL_PLANE_SMTP_FROM:?Supply the staff email sender}
+      CONTROL_PLANE_DMS_SUPPORTED_VERSIONS: ${CONTROL_PLANE_DMS_SUPPORTED_VERSIONS:-[]}
+      CONTROL_PLANE_TURNSTILE_SUPPORTED_VERSIONS: ${CONTROL_PLANE_TURNSTILE_SUPPORTED_VERSIONS:-[]}
+      CONTROL_PLANE_TRUST_PROXY: ${CONTROL_PLANE_TRUST_PROXY:-false}
+    secrets:
+      - source: control-plane-auth
+        target: control-plane-auth
+      - source: control-plane-signing
+        target: control-plane-signing
+      - source: control-plane-recovery
+        target: control-plane-recovery
+    expose: ["3000"]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3000/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+  postgres:
+    image: postgres:18.6-bookworm@sha256:5c4783a8cc3f0074912164f94dfa1be4e043438f0f707cf968d7af9a0d31a2c8
+    environment:
+      POSTGRES_DB: thaarei_control_plane
+      POSTGRES_PASSWORD: ${CONTROL_PLANE_POSTGRES_PASSWORD:?Supply the separate central bootstrap password}
+    volumes: [central-postgres:/var/lib/postgresql]
+    restart: unless-stopped
+volumes:
+  central-postgres:
+secrets:
+  control-plane-signing:
+    file: ${CONTROL_PLANE_SIGNING_KEY_HOST_FILE:?Supply an absolute protected deployment signing key file}
+  control-plane-recovery:
+    file: ${CONTROL_PLANE_RECOVERY_MARKER_HOST_FILE:?Supply the independent protected central recovery marker}
+  control-plane-auth:
+    file: ${CONTROL_PLANE_AUTH_SECRET_HOST_FILE:?Supply an absolute protected staff auth secret file}

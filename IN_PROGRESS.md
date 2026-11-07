@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-11-06
+Last updated: 2026-11-07
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -9,6 +9,21 @@ requirements remain in their linked specifications. This file records what has a
 been completed, verified, or left pending.
 
 ## Current position
+
+Control-plane delivery has started with TCP-I01 owner-adopted scope/architecture on
+2026-11-06. The remaining policy defaults are accepted. TCP-I02 central foundation/staff access now
+passes local source and production-image HTTP verification. TCP-REVIEW-02 fixed both
+review findings. TCP-I03 registry/policy records now pass local source and rebuilt-image
+HTTP/PostgreSQL verification with a closed pairing boundary. TCP-I04 machine protocol and
+private client now pass all four workspace gates and actual source/production-image
+HTTP/PostgreSQL verification after Docker restoration. TCP-I05 DMS integration now passes all
+four workspace gates and source/production-image HTTPS verification after merging the owning
+DMS foundation through development. TCP-I06 Turnstile integration now passes all four
+workspace gates, real browser/private identity journeys and joint-product HTTPS/reporting
+checks. TCP-I07 usage/health reporting now passes all four workspace gates and rebuilt
+central-image HTTPS verification. TCP-I08 isolated local implementation/qualification now
+passes its frozen workspace, container, recovery and browser gates; target release/acceptance
+remains deferred. See the current TCP-I08 handoff below.
 
 The owner-authorized 2026-11-04 fresh local reset has now replaced the earlier preserved
 installation: all seven Compose services are recreated, with fresh database/storage and
@@ -115,6 +130,628 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+TCP-CI-001 — **In progress** (owner: Codex control-plane implementation thread,
+2026-11-07). PR #15 CI remediation; standalone fixes verified, worker-fixture isolation
+correction under validation, latest-head remote checks pending. No merge, deployment or persistent-installation change is authorized.
+
+Fixed standalone verification's clean-checkout bootstrap: fixture modules consuming compiled
+workspace packages now load only after the owning Turbo dependency build. Missing output
+reproduced `ERR_MODULE_NOT_FOUND`; the fixed entrypoint rebuilt that output. Replaced Docker
+archive-copy delivery, which is rejected on a read-only rootfs even with `/tmp` tmpfs, with
+a read-only test-helper mount at container creation. These fixes were pushed as `aad1230`.
+
+That CI head passed bootstrap but failed inside the packaged explorer with suppressed
+stderr. Reproduced mode-0600 bind-file `EACCES` under a nonmatching container UID and readable
+files under their owner. The disposable image now runs as the non-root POSIX fixture owner,
+retaining 0600 file permissions and read-only rootfs/mounts. The image's shipped/default
+user and production configuration are unchanged. Added fixed phase/type-only failure
+classification and preserved nonzero exits; invalid-input verification confirms that raw
+input, credentials, URLs and error details are not printed.
+
+Local verification passes: `pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration`
+and the actual standalone image lane (10/10 tests, including protected explorer/browser,
+real machine reads and expired-token denial). The first integration attempt encountered an
+S3 unavailable response during I10 restoration; the full quiet recheck passed, including
+that lane, all owning PostgreSQL tests and authenticated SeaweedFS/browser/Node/Python
+transfer checks. No storage cause is assigned and no speculative production storage change
+was made. The safe diagnostic failure path and mismatched/owner file-read probes also pass.
+
+Prior control-plane qualification remains historical evidence for its recorded helper
+hashes; these CI changes affect test harnesses only. GitHub's original workspace and
+container-build checks passed; subsequent standalone success must be verified on the new
+fix head. `2b14ced` now passes standalone in both push/PR runs. One workflow's eight
+checks passed, but the other run's `checks` job failed with a worker-test reset deadlock
+and a subsequent RabbitMQ timing assertion. The full PR is therefore not yet green.
+Next: await actual worker process-group exit and private HTTP completion before fixture
+reset, observe the native confirmed-retry failure rather than a fixed sleep/cached queue
+statistic, validate and push that focused fixture correction. No production handler is
+being replaced. The existing watch remains active; close TCP-CI-001 only after all
+latest-head push/PR checks pass.
+
+Worker cleanup now awaits native process-group close and real private-handler `onSend`
+completion before parent fixture deletion can start. All three explicit worker-stop callers
+await exit; the killed-prefork regression asserts actual process termination. The lost
+confirmed-retry check observes Celery's native postrun `REJECTED/Unroutable` outcome via a
+finite fixture-only event, then reads the actual queue with basic-get instead of sleeping
+one second and trusting periodically sampled management counts. The production task,
+confirmed publisher, private HTTP handlers and database locking remain unchanged. Focused
+full enrollment/work verification passes 81 tests with 3 existing optional native skips;
+Current static checks, build and unit tests pass. The focused full enrollment/work lane
+passes 81 tests with 3 existing optional native skips. Complete workspace integration is
+active at `/tmp/pr15-worker-integration.log`; no pass is claimed until completion.
+Next: push the fixture-only race correction and use the existing watch to inspect every
+check from both workflow runs on the new head, not just one eight-job notification.
+
+
+TCP-I08 — **In progress** (release/recovery qualification; owner: Codex control-plane
+implementation thread, 2026-11-07). **The selected isolated local implementation and
+qualification gate is Completed. Target release/acceptance is Deferred** under the owner's
+explicit instruction not to deploy. No further local implementation blocker is recorded;
+this does not mark the full target release qualified.
+
+Accepted evidence: [control-plane-local-final.json](docs/qualification/control-plane-local-final.json).
+The frozen run on 2026-11-07 passed all eleven checks: `pnpm check`, `pnpm build`,
+`pnpm test`, `pnpm test:integration`, all four candidate image builds, the two-customer
+container/recovery lane, and both full-image auth and People browser suites. Production
+and verification/packaging helper integrity checks passed (`inputsStable:true`). Production
+fingerprint remains `dd7daf4a2b3916eea836b846fb87266be176aef888ca9f4e02c3d255437644cd` across 817 files; exact immutable image IDs,
+platform/users, dirty source/head, helper hashes, coverage and timings are in the evidence.
+`localQualification:passed` and `releaseQualified:false` deliberately describe different gates.
+Existing optional native processing skips are not newly qualified by this control-plane work.
+
+Extended `scripts/qualify-control-plane.mjs`, `scripts/test-control-plane.mjs`,
+`scripts/test-auth-browser.mjs` and the owning fixtures. Added container ingress, shipped
+reporter and key-recovery fixtures. The runner now inventories exact image IDs, records
+verification-helper hashes, rejects changed inputs and executes the actual DMS authority,
+Turnstile API and Nginx candidates in the browser lanes. Runtime containers mount exact
+public trust/marker/CA files; migration credentials and machine journals are not delivered
+to APIs. Private administrator handover uses the candidate maintenance command in a
+separate container. The telemetry regression assertion now reads the serving containers,
+not provisioning-process counters, and validates bounded latency fields.
+
+Verified local coverage and its limits:
+
+- Central candidate HTTPS ingress runs with production profile and verified STARTTLS.
+  Central application/database and each customer database have separate Docker networks;
+  only ingress joins customer networks. Both installations have distinct protected files,
+  PostgreSQL clusters and independently registered DMS/Turnstile products. Actual crossed
+  credentials, reports and signed grants are denied; machine keys have no staff authority.
+- Both shipped worker entrypoints run: DMS coordinator and Turnstile reporter. Container
+  DNS/TLS, authoritative SQL aggregate/report acknowledgement and clean shutdown pass.
+  A real lost DMS report acknowledgement followed by suspension and worker restart proves
+  durable replay. Report success is not represented as frontend availability.
+- Central pre-suspension backup restore stays quarantined by the independent marker;
+  missing-evidence reconciliation revokes credentials and requires fresh pairing/approval.
+  Both customers' full DMS authority/DMS database and private-journal restores pass actual
+  candidate API HTTP under marker quarantine and blocked central transport, then recover
+  through reviewed rebind and explicit approval.
+- DMS candidate HTTP passes actual central signer rollover/retirement, a forged renewal
+  while the compromised key remains trusted, independent trust-file revocation with central
+  transport blocked, and fresh-key rebind/reapproval. Separate network-disabled packaged
+  verifier checks use controlled clocks for expiry; seven-day validity does not constrain
+  successive forged grants from a still-trusted compromised key.
+- Turnstile database/private-journal restore, disconnected quarantine and actual private
+  rebind/reapproval pass owning PostgreSQL and production preflight. This restore lane is
+  not an authenticated image HTTP restore journey. The separate actual-image People lane
+  proves HTTP trust rollover/revocation and fixture-owner fresh-epoch recovery with genuine
+  signed proofs. These coverage boundaries are retained explicitly in the evidence.
+- Full-image browser suites pass canonical container discovery/JWKS DNS/TLS, real SMTP,
+  normal login/permissions/logout/recovery/session revocation, onboarding/Settings restart
+  and resume, invitations/recipient identity/setup/acceptance, private administrator release
+  opening, activation/restriction/expiry, write denial and safe browser storage/events.
+  Public browser ingress blocks private identity/work routes; backend identity uses private
+  canonical transport. Setup uses separate owning fixture processes, not replacement handlers.
+
+Upgrade/rollback handover is in [the qualification runbook](docs/runbooks/control-plane-qualification.md),
+with technical boundaries in [architecture.md](architecture.md). Owning schema upgrade tests,
+candidate restart and quarantined database/journal restores pass. No previously published
+enforcing release exists for a historical image downgrade; older unenforced runtimes,
+credential deletion, old markers and unsupported destructive schema downgrades are not
+rollback mechanisms. Arbitrary root/VM snapshot rollback remains outside the guarantee.
+
+The earlier first-stage record `control-plane-local.json` is historical. All functional
+checks also passed in `control-plane-local-attempt-1.json`, but its helper-integrity guard
+correctly rejected a browser-helper change during execution; that attempt is not accepted
+qualification. The final frozen record supersedes both for current local acceptance.
+
+Remaining TCP-I08 work is target-only and deferred: actual central/customer hosts and
+operators, Dokploy routing/headers, external DNS/TLS/SMTP/time, independent off-host recovery,
+existing-installation cutover and operator acceptance. Recheck source/images, time and
+release preflight when that separately authorized stage begins. No deployment or persistent-installation change occurred. No real customer credentials/data
+were used, and no commit or push occurred. Existing uncommitted work
+and the historical backup stash are preserved. All disposable fixtures are removed; only
+unrelated persistent services remain. Next product work is APP-001 scope agreement and a
+Document Approval specification/implementation plan; business implementation and migration
+remain outside the completed local control-plane scope.
+
+TCP-I07 — **Completed** (central usage/health reporting; owner: Codex control-plane
+implementation thread, 2026-11-07). Local implementation and required verification are
+complete on `feat/thaarei-control-plane-implementation`. Prior uncommitted work and the
+historical backup stash are preserved. No persistent customer installation, credentials or
+data were used; no commit, push or deployment occurred.
+
+Implemented central CLI-generated migrations 0008/0009 and owned `report.schema.ts`,
+`report-ingestion.ts` and `report-service.ts`: bounded snapshots with server receipt time,
+atomic immutable sync receipts, durable sequence order, independently ordered counter
+epochs and latest projections. Late/duplicate reports cannot replace newer data; epoch
+replacement makes current usage unknown until a new report arrives. Legacy reports remain
+compatible and labeled unordered. Private `report-maintenance.ts` / `reports:prune` removes
+90-day historical/latest payloads and 365-day central audit in bounded batches. Runtime
+cannot prune; identity, approval/activation, decision/receipt and minimal replay/counter
+fences survive. Staff reads enforce retention even before maintenance runs.
+
+DMS CLI-generated migrations 0058/0059 and `deployment/usage.schema.ts` capture publication
+and non-scan successful-job counts in the owning commit, with a local deduplication ledger,
+explicit baseline/epoch and safe overflow. New/restored versions never become additional
+logical documents. Existing records seed only the ledger, not fabricated lifetime totals.
+Active documents/original bytes and Turnstile canonical active members remain gauges.
+Both product reporters allocate durable per-binding sequences and journal the exact payload
+before HTTPS. Missing metrics remain unknown and cannot block a newer policy decision.
+Fixed JSON-null sequence metadata and fractional backoff values rejected by SQL schedulers.
+
+Added staff `/reports` and `/reports/[id]`, authenticated read APIs, client/environment/product
+filters, bounded cursor history, a gauge chart with missing-interval/epoch gaps, independent
+policy/freshness/self-reported-health displays, approval/contact dates and read-time notices.
+Version review uses explicit optional exact allowlists, never guessed security verdicts.
+Updated shared contracts/generated machine OpenAPI, Compose configuration, architecture and
+central/DMS operation runbooks. No alert worker, billing or automatic suspension was added.
+
+Verification: `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` all pass.
+The complete PostgreSQL lane passes **305 cases across 18 files, with six existing native
+skips**; pinned SeaweedFS passes authenticated storage and browser/Node/Python transfers.
+Unit verification retains Python 32 passes/24 optional native skips; those native paths are
+not newly qualified. Real DMS publication/restoration/result-replay and production extraction
+handlers verify one logical-document effect and once-only completed processing. Turnstile
+People HTTP checks verify the canonical gauge through failed/concurrent suspensions.
+
+Source and rebuilt central-image HTTPS checks pass lost acknowledgements/restarts, replay
+after suspension, out-of-order/missing-counter intervals, resets and safe-integer bounds,
+invalid metrics/privacy, Viewer/live-role access, filters/pagination, stale/version
+notices, retention and preserved evidence. The actual scheduled DMS reporter recovers its
+committed lost response under an intervening suspension without a second sample. The
+PostgreSQL adapter test terminates the reporter's operation-lock connection and proves its
+late response cannot advance accepted state; a fresh reporter recovers the durable journal.
+Metrics-provider failure still permits denial synchronization through the real central API.
+
+Rebuilt `thaarei-control-plane:tcp-i07` image
+`sha256:e0c0019fb76d0bfa56bc7324824961951910fab12541df45ed6d9ac9f9ef644b`
+passes the full central HTTPS suite. Its nonroot/read-only inventory includes owned report
+migrations and the private maintenance entrypoint. All disposable fixtures were removed;
+unrelated persistent services remain untouched. This is local source/central-image evidence,
+not target hosting, external SMTP or coordinated customer-image release qualification.
+
+Next: TCP-I08 exact central/DMS/Turnstile inventory, isolated target-like topology, supported
+restore/key-compromise/credential recovery drills, existing-installation rollout and target
+acceptance. There is no implementation blocker for TCP-I07.
+
+TCP-I06 — **Completed** (Turnstile activation/reporting; owner: Codex control-plane
+implementation thread, 2026-11-07). Local implementation and verification are complete on
+`feat/thaarei-control-plane-implementation`, against the TCP-I05/development foundation.
+Existing uncommitted work and the retained backup stash are preserved. No persistent
+installation, customer credentials, source/data migration, feature push or deployment occurred.
+
+Implemented owned CLI-generated migrations 0028/0029, durable binding/verified decision and
+clock/quarantine state, dedicated reporter role/process, private manifest/setup/rebind/rotation,
+replica/product locking, durable cadence and read-only credential mounts. The only reported
+Turnstile usage gauge is canonical active-member count; missing activity metrics stay absent.
+API runtime cannot rewrite approval or read machine credentials. Private bootstrap consumes
+`INSTALLATION_LOCAL_ID` from the nonsecret DMS manifest, so both independent product
+credentials bind to the same central customer installation/tenant. Retry cannot replace that
+identity; runtime/reporters have no identity insert/update privilege.
+
+Business guards and owning transactions retain current session/CSRF/permission/readiness
+checks, require full approval for changes, and allow qualified existing reads after
+suspension/expiry. Identity/session recovery and recipient identity setup remain accessible;
+acceptance/new delivery require approval. Added safe activation/restriction UI and explicit
+mid-form restriction guidance while preserving drafts. The authenticated DMS status field
+is opt-in through `Prefer: include-deployment-status`, preserving ordinary strict v1 consumer
+response shape. Complete customer Compose mappings separate public API trust from private
+reporter/setup credentials; architecture, generated OpenAPI and the
+[private Turnstile runbook](docs/runbooks/turnstile-deployment-control.md) document the flow.
+
+Verification: `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` pass.
+The full PostgreSQL lane passes **304 cases across 18 files, with six existing native skips**;
+pinned SeaweedFS verifies authenticated storage and browser/Node/Python transfers. Unit
+verification retains the existing Python 32 passes/24 optional native skips; those native
+paths are not newly qualified. Focused BFF transport passes 22 cases; historical configuration
+and user-management upgrades pass six cases each, preserving legacy rows while requiring
+explicit current bootstrap and valid signed approval before upgraded business reads.
+The two owned deployment cases verify DB-before-file recovery, generation fencing, shared
+locks/cadence, read-only credentials, SQL privacy, immutable identity and bounded cold start.
+
+Real production-profile browser HTTPS/OIDC journeys pass normal login, current permission
+removal/restoration, invitation issuance, private identity token/audience/client transport,
+recipient setup/verification/acceptance and account projection. The same journey verifies
+pending/never-activated suspension denial, approval/retry, qualified suspended/expired reads,
+mutation denial, independent DMS restriction, central-proof session rejection and safe status/
+browser-storage boundaries. The real central HTTPS suite pairs both products under one
+registry installation and verifies signed publication/ack, committed rotation-response loss,
+reapproval and independent central outage. A further actual scheduled reporter run sends its
+own SQL aggregate through the real central handler and persists the successful receipt/cadence.
+No fixture bypasses production proof verification or replaces the failing production handler.
+
+Fixed verification issues rather than relaxing policy: preserve the preference through the
+BFF fixture proxy; seed historical schema contracts before current bootstrap; use real focus
+revalidation instead of a disappearing-button race; and start the SMTP outage case with a
+fresh native rate window. An overlapping host rebuild caused an intermediate fixture startup
+failure; final integration ran sequentially with frozen source. Auth/proof validation,
+local policy, time fences and runtime rate limits were not weakened.
+
+The rebuilt `thaarei-turnstile-api:tcp-i06` image
+`sha256:3bd42e73ab5a44311b49113a575e0d53fcb8f9ab98adedd5ec9851661a0d4f02`
+passes packaged reporter module startup/shutdown with missing keys and no network. This is
+local build/startup evidence, not whole-release or target egress qualification. All owned
+disposable containers are removed; the unrelated pre-existing database remains untouched.
+Next: TCP-I07 central report retention/projections and staff usage/health views, then TCP-I08
+coordinated source/image inventory, target DNS/TLS/SMTP and restore/rollout acceptance.
+Implementation remains local and uncommitted. The pre-merge TCP-I01–04 stash is already
+reapplied historical backup; do not apply it over this tree.
+
+TCP-I05 — **Completed** (DMS activation/reporting integration; owner: Codex control-plane
+implementation thread, 2026-11-06). Owner authorized resuming after the DMS handoff. Fetched
+origin/development `f75c34f` (PR #13) and merged it locally as `9571576`, preserving both
+progress histories. The verified uncommitted TCP-I01–04 work was saved in a retained Git
+stash, reapplied and reconciled with DMS tooling/notices/dependencies. No source was copied
+from another checkout. The source blocker is resolved; no push or deployment occurred.
+
+Implemented DMS-owned deployment identity/decision/credential metadata and
+separate clock/quarantine persistence (CLI-generated 0054/0056 plus reviewed custom 0055/0057),
+transactional API admission/read classification with DEPLOYMENT_RESTRICTED errors, private
+setup/rebind/rotation and credential-generation recovery adapter, replica-shared operation
+lock and durable reporter cadence in the existing coordinator. API processes receive only
+public trust and an independent recovery marker. Coordinator secrets stay in owner-managed
+read-only directory mounts; private commands own file promotion. DMS operational summaries
+use the existing owned snapshot and strip per-application details. No customer business rows
+or credentials are reported. The clock fence commits before business transactions and has
+its own row, preserving decision-row sharing and quarantine after rejected requests.
+
+Public/private dispatch and admission require current approval. Restricted qualified reads
+retain local resource/consumer checks. Previously admitted scan/processing continuation may
+complete, with additional stages held durably without a new dispatch until approval returns;
+never-approved or recovery-quarantined installs cannot publish business results. Added a
+DMS-only activation entry and complete combined Turnstile customer entry/overlays, preserving
+local issuer/private identity routes, dedicated process settings and trusted-CA delivery.
+Both complete profiles resolve successfully; production-image HTTPS integration now passes.
+
+Verification: `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` pass. The
+database lane passes 302 cases across 17 files with six existing native skips; pinned
+SeaweedFS verifies authenticated storage and browser/Node/Python transfer boundaries. The
+focused DMS handler rerun passes 81 cases with three existing native skips, including exact
+private-command deployment denials and qualified reads. Unit tasks include the existing
+Python lane's 32 passes/24 optional native skips; those native paths are not newly qualified.
+Both real PostgreSQL/private-file adapter cases pass with durable rebind continuation,
+DB-before-file promotion recovery, operation contention, read-only credentials, shared cadence,
+safe summaries and bounded unavailable-central startup.
+
+Actual central/DMS HTTPS passes from source and both rebuilt production images, including
+owned bootstrap/manifest, pairing, approval, committed rotation-response loss,
+suspension/reapproval, credential isolation and central outage independent of local identity.
+The isolated fixture uses its explicit loopback test authentication profile; production
+validation remains intact. DMS-only and complete combined Compose configurations resolve,
+and deployment checks verify process settings/private mounts/CA delivery. Private commands
+now reject mismatched local installation identity before touching the deployment clock fence;
+the full rerun verifies the regression fix. No proof validator or local policy was weakened.
+
+Verified image IDs: `thaarei-dms-api:tcp-i05`
+`sha256:78f3913f62cbfea64740934632dc2030ba0230ff94df8d23161dc5e311330004`;
+`thaarei-control-plane:tcp-i05`
+`sha256:a1b71cb384fc63f10ca637d5135eae214e3c46fcd28fcc0020cb736a5871d88e`.
+Owning architecture and [private deployment runbook](docs/runbooks/dms-deployment-control.md)
+document configuration, approval, retries, rotation, restriction and supported restore/rebind.
+Disposable containers were removed; the unrelated pre-existing database remains untouched.
+
+Next: TCP-I06 Turnstile-owned activation/reporting, then TCP-I07 central report projections
+and TCP-I08 coordinated qualification/rollout. Actual customer DNS/TLS/SMTP, candidate
+inventories, restore drills and target acceptance remain release work. No persistent
+installation, customer credentials or source/data migration was changed. Implementation
+remains uncommitted locally; no feature push or deployment occurred. The retained pre-merge
+stash is a historical backup of TCP-I01–04, already reapplied; do not apply it over this tree.
+
+TCP-I04 — **Completed** (machine pairing, signed deployment decisions and credential recovery;
+owner: Codex control-plane implementation thread, 2026-11-06). Implementation and local
+acceptance pass on `feat/thaarei-control-plane-implementation`. The owner restored Docker
+Desktop WSL integration; the native CLI and Unix socket connect to engine 29.9.2. The earlier
+container-verification blocker is resolved. No customer installation was modified.
+
+Implemented platform-independent `@thaarei/control-plane-contracts`, strict version-1 local/
+expected manifests and machine activation/sync/rotation contracts, discriminated signed
+states, safe errors and generated `docs/api/control-plane.openapi.json`. Contract generation,
+dependency boundaries and Turbo builds include the new Node-only
+`@thaarei/deployment-control` package. No customer source/schema or deployed installation
+was changed; the DMS modification is one focused Fastify authentication-isolation regression.
+
+Central Route Handlers and additive CLI-generated migrations through
+`0007_productive_living_lightning.sql` implement digest-only pairing/machine credentials,
+atomic one-use consume/receipts, per-product binding epoch and generation, immutable issued
+signed-decision evidence/receipts and narrow owning runtime grants. Authentication resolves
+scope by unique live credential digest before binding comparison. Signing reserves sequence,
+releases the SQL transaction for JOSE cryptography, then fences current policy/state/epoch/
+generation/sequence/key before returning. Staff controls provide protected manifest export,
+transient pairing-file download/retry/revocation, Admin-only replacement/credential revocation
+and recent-MFA/audit/revision checks. Replacement suspends prior approval and requires fresh
+pairing/reapproval. Registry dates now distinguish first issuance, first/current-epoch
+product-reported valid application and authenticated contact; activity/version await TCP-I07.
+The earlier registry fixture's pairing stand-ins now use actual HTTP pairing.
+
+The public server package uses pinned production JOSE RS256 verification, full binding/type/
+issuer/audience/algorithm/key/time checks, revision/sequence ordering and durable denial beyond
+envelope expiry. It retains valid-at-application proof for the qualified read exception and
+closes on corrupt stored proof, revoked/downgraded trust, backward clock or restore quarantine.
+Invalid incoming proofs preserve usable retained state. Private setup/rotation persist exact
+request/binding/current/candidate/operation before HTTPS, recover with candidate sync (including
+past pairing receipt expiry), confirm generation/operation, then atomically promote. The
+Linux file adapter uses kernel flock across processes and fsynced atomic state files; APIs
+must not mount these credentials. Protected origin checks prevent an existing secret being
+sent to a changed central endpoint. Product-owned DB adapters/schedulers/enforcement remain
+TCP-I05/I06. Private CLIs, independent trust/authority markers, replacement/key overlap/
+revocation and supported restore/rebind procedures are documented in architecture/runbook;
+central restore reconciliation deliberately requires fresh pairing and approval. TCP-I08
+still owns target recovery/release qualification.
+
+Actual verification on 2026-11-06: `pnpm check`, `pnpm build`, `pnpm test`, and
+`git diff --check` pass. All six new server-package tests pass with the maintained production
+verifier, including algorithm/type/key/audience/issuer/binding/epoch/time rejection, delayed
+approval and equal-revision ordering, persisted denial expiry, invalid/corrupt proof,
+independent trust revocation/downgrade, restart without network, bounded transport,
+response-loss recovery, crashes before/after local promotion, origin mismatch, clock/restore
+quarantine, and actual cross-process lock release after process death. The DMS Fastify unit
+suite rejects opaque central-format machine credentials. The source production-build fixture and the same suite against the actual packaged image
+now also pass actual central registry/machine/staff HTTP and PostgreSQL behavior, including
+pairing expiry/revocation/concurrency/loss, candidate recovery beyond receipts, signed current
+policy/denial/replay, malformed reports, rotation loss/concurrency/promotion crashes, epoch
+replacement, clock/host-marker quarantine, recent MFA/roles and database privileges. These
+replace the earlier runtime-unavailable status; prior TCP-I03 results were not reused as
+TCP-I04 qualification.
+
+Actual container/workspace verification on 2026-11-06: `pnpm check`, `pnpm build`, `pnpm test`,
+`pnpm test:integration` and `git diff --check` pass. The owning disposable database suite
+passes 230 tests with its 3 existing skips. Built `thaarei-control-plane:tcp-i04`, image ID
+`sha256:6b35b394e2ad9bfec6f26db5bde82726651e83d1e6d1477c253a2d49bacc6ec5`, using the committed
+production Dockerfile. `CONTROL_PLANE_TEST_IMAGE=thaarei-control-plane:tcp-i04 node
+scripts/test-control-plane.mjs` passes packaged migrations and the actual read-only non-root
+image behind verified fixture HTTPS with protected auth/signer/recovery file mounts. The
+fixture's isolated containers/networks were cleaned up. No persistent volumes/ports/credentials
+were changed and no commit/push/deployment was made.
+
+Next: TCP-I05 DMS-owned integration, after its owning DMS-I18 operational/packaging contracts
+are available. TCP-I05/I06 must supply actual product identity exporters, persistence adapters,
+reporter scheduling and business admission/read enforcement; the current package does not
+change customer application behavior. TCP-I07 reporting and TCP-I08 target release/recovery
+qualification remain pending. Browser UI behavior and target DNS/TLS/SMTP/restore acceptance
+are not claimed by these HTTP/image checks.
+
+TCP-I03 — **Completed** (client/deployment registry and approval records; owner: Codex
+control-plane implementation thread, 2026-11-06). Implemented TCP-R04–06/R08/R13 on
+`feat/thaarei-control-plane-implementation`, preserving TCP-I01/I02 and review corrections.
+App-owned platform-independent Zod contracts, additive CLI-generated registry persistence,
+reviewed runtime column privileges and server-only transactional services now support the
+Clients UI and guarded staff HTTP surface. No customer or machine-protocol schema was added.
+
+Delivered client search/create/detail/edit/archive with permanent normalized code, explicit
+contact preservation/clearing, revisions and durable actor/input-bound request receipts.
+A response lost after commit can recover the same receipt/record with one audit mutation.
+Fresh readback uses a coherent snapshot rather than treating historical receipts as current
+policy. Installation/client/environment/local-installation/tenant and product/application
+bindings are immutable; composite FKs and uniqueness prevent inconsistent references and
+duplicate deployed product types. Runtime cannot rewrite bindings/codes, hard-delete
+identities, assert pairing, rewrite receipts or rewrite/delete audit. Drizzle metadata now
+tracks the existing staff custom migration and new registry privilege migration without
+changing existing staff SQL/filenames, keeping future CLI numbering consistent.
+
+Pending/approved/rejected/suspended transitions check current role/recent MFA, saved policy
+revision, pairing prerequisite and reason, and commit actor/time, before/after audit and
+receipt atomically. Staff/registry writes share the owning authorization lock and policy
+rows lock against future owning writers. Admin alone suspends; Operator/Admin may maintain
+registry and approve/reject/reapprove; Viewer reads. Rejection is pending-only, reapproval
+explicit, repeated/stale states conflict. Archive does not change product approval and blocks
+new deployment registration until unarchived. Registration/first/latest approval dates are
+separate; activation/activity/contact/version/health remain unavailable without their real
+sources. Reviewed UI changes preserve uncertain requests for retry, offer canonical reload,
+show saved data, and keep MFA reauthentication in another tab available.
+
+The production runtime cannot set pairing evidence. Positive policy cases use only a
+migrator-owned disposable pairing metadata stand-in, explicitly labelled as a contract
+fixture. Actual pairing, signing, activation/reporting and customer enforcement remain
+TCP-I04–08. No paired/allow-business flag, fake machine API or private production bypass
+was introduced. Configured bounds and transaction/privilege contracts are maintained in
+architecture; workflow and HTTP/receipt semantics are in the central operator runbook.
+
+Verification on 2026-11-06: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` passed. Three central unit cases include two critical registry
+contract regressions. The real Next HTTPS/PostgreSQL/Mailpit chain passed against built
+source and the new non-root/read-only production image. Registry cases cover actual lost
+response after commit, identical retries, duplicate creation and approve/suspend races,
+stale revisions, cross-record FK integrity, runtime privilege denial, forged pairing fields,
+never-approved suspension, live roles/recent MFA, explicit reapproval, archive independence,
+historical receipt replay, audit atomicity, literal search and bounded keyset reads. The
+existing auth chain also passes. Existing owning PostgreSQL suites passed 230 cases with
+3 existing skips; valid Turbo caches were used where available. Final Biome, local
+references and Git whitespace checks pass. No interactive browser or target qualification
+is claimed.
+
+Docker was initially unavailable through WSL and the Windows Linux-engine pipe. The owner
+restored it; no agent host/Desktop setting change or port fallback occurred. Runtime tests
+then exposed an unnecessary installation FOR SHARE lookup requiring update privilege on an
+immutable table; removed the lock while retaining protected binding columns, owning parent
+serialization and composite FK. The complete corrected runtime suites pass and disposable
+fixtures were removed.
+
+Verified local image: `thaarei-control-plane:tcp-i03`, ID
+`sha256:3bcb3cb1760d7942e234bb6a53319e928d97f14233390ac725096c237b3ce28e`.
+No commit/push/PR, target deployment, persistent central/customer provisioning, customer
+migration or DMS checkout change occurred. No customer services, credentials or data were
+changed by this workspace work.
+
+Handoff: TCP-I03's local gate is complete with an explicit closed pairing boundary.
+TCP-I04 machine pairing, per-product credentials, strict versioned machine contracts,
+signed decisions and durable ordering/rotation/trust recovery are next. Integrate actual
+pairing metadata only through that owning authenticated transaction and a separately
+reviewed runtime grant. Preserve customer integration/cutover and target TLS/SMTP/backup/
+restore gates. No TCP-I03 blocker remains.
+
+TCP-REVIEW-02 — **Completed** (TCP-I01/I02 defect review and corrections; owner: Codex
+control-plane implementation thread, 2026-11-06). Owner requested a review subagent using
+the review-agent skill, fixes for confirmed issues and next-step advice. One native,
+read-only subagent inspected the full tracked/untracked adoption/foundation change and
+confirmed two P2 defects, with no other qualifying findings. No extra independent recheck
+or reviewer-executed runtime suite is claimed. The parent validated both call paths and
+implemented the corrections; the [review record](docs/thaarei/control-plane-review.md#tcp-i01i02-implementation-review-tcp-review-02-2026-11-06)
+retains findings and scope separately from the historical Astra planning review.
+
+Fixed recovery SMTP preflight before rate limiting: native auth's before hook now checks
+the transport after the persistent HTTP rate budget and before account lookup. Exhausted
+budgets never probe SMTP, and relay failures still consume their request budget. Fixed
+post-commit bootstrap receipt loss when delivery runtime initialization fails: cleanup
+closes only a successfully initialized delivery runtime; the committed administrator ID/
+verification-required receipt and delivery-pending message remain available. Updated auth
+options/runtime/wrapper and private operator, owning HTTP regressions, architecture and
+operator/review documentation. No schema, product-policy or TCP-I03 feature was added.
+
+Verification on 2026-11-06: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` passed. Build used valid Turbo cache; the central source build and
+new real HTTP regressions also ran directly. Existing disposable PostgreSQL suites passed
+230 cases with 3 existing skips. The updated HTTPS/PostgreSQL/Mailpit chain passed on
+built source and on the rebuilt non-root/read-only production image. Regressions exhaust
+both recovery budgets before removing their own relay, prove 429 precedes SMTP probing,
+and show fresh relay-unavailable 503 requests are charged. Bootstrap deliberately uses a
+missing auth-secret file, checks the committed receipt against the owning row, rejects a
+second bootstrap, and resumes verification with repaired configuration. Final Biome,
+relative-reference and Git whitespace checks passed. Temporary central fixtures were
+removed; no interactive browser, production relay/TLS or target qualification is claimed.
+
+Verified local image: `thaarei-control-plane:tcp-review-02`, also retagged locally as
+`thaarei-control-plane:tcp-i02`; image ID
+`sha256:55b22d9d90532749e5c1347901ad321219f8206b1019412b20fa2d58c337ac41`.
+This supersedes the historical pre-review image recorded in TCP-I02 below. No commit,
+push, PR, deployment, existing customer/central provisioning or DMS checkout change occurred.
+Customer services, credentials and data remain untouched.
+
+Handoff: no findings from this review remain open. TCP-I03 is next: client registry,
+installation/deployed-product records, immutable bindings, retry-safe creation/readback,
+revision-checked policy transitions and transactional audit with fixed staff roles. Approval
+stays closed until actual pairing is verified through TCP-I04. Customer activation/reporting/
+enforcement and target TLS/SMTP/backup/restore/trust qualification stay in their owning
+increments. This review supplies next-step advice; it did not start TCP-I03 implementation.
+
+TCP-I02 — **Completed** (central foundation and employee access; owner: Codex
+control-plane implementation thread, 2026-11-06). Implemented TCP-R01–03/R08/R14's staff
+foundation on `feat/thaarei-control-plane-implementation`, preserving the uncommitted
+TCP-I01 adoption. Generated `apps/thaarei-control-plane` with installed create-next-app
+16.4.5 and the owned Better Auth/Drizzle schema with installed auth 1.7.14/drizzle-kit.
+Preserved existing Node/pnpm/library pins, Better Auth patch, LICENSE and third-party
+notices. Workspace build/type/boundary/schema/deployment checks and CI include the app.
+
+Delivered separate central auth/staff persistence and migration/runtime roles, bounded
+pools/deadlines, checksum-checked private migrations, explicit private first-admin bootstrap
+and proof-bound maintenance recovery. Public auth uses a strict route/body/origin allowlist,
+verified email/password, mandatory TOTP/single-use recovery codes, database-backed rate
+limits, secure host-only cookies and redacted responses. Native token-bearing session
+responses, public signup and MFA-disable are unavailable. Safe session reads and every
+protected page/handler enforce current staff membership/role and actual session MFA proof,
+with absolute/idle/recent-MFA limits. No Server Actions ship. Staff admission/change UI and
+HTTP serialize acting authorization, revision conflicts, verified-MFA last-admin protection,
+target session revocation and safe attributed before/after audit in owning transactions.
+Only implemented staff/auth tables exist; client/approval/report schemas remain TCP-I03+.
+
+Added independent `deploy/compose.control-plane.yaml` and non-root Node image, read-only
+runtime, protected host auth-secret delivery, explicit SMTP/proxy configuration and private
+maintenance entrypoints. [Operator runbook](docs/runbooks/control-plane.md) covers fresh
+roles/migrations, admission/verification/password/MFA, recovery, secret ownership and
+release limits. Fixed a real container packaging failure: Next 16.4 hashes external `pg`
+aliases under .next/node_modules, which pnpm deploy excludes; the build now reconstructs
+only emitted aliases against version-matched deployed production dependencies and includes
+production Next configuration. Provisioning refuses an absent URL rather than falling back
+to pg defaults, and malformed private JSON never echoes credential text in parser errors.
+
+Verification on 2026-11-06: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` passed; existing disposable PostgreSQL suites passed 230 cases with
+3 existing skips. Central real Next HTTP verification passed against both built source and
+the production image behind HTTPS with isolated PostgreSQL/Mailpit. It exercises unverified/
+public denial, direct protected handlers/pages, actual verification/password setup/reset,
+TOTP and single-use backup recovery, role removal/disablement with old sessions, concurrent
+last-admin self-demotion, revision/fresh-MFA/idle fencing, private recovery, logout, origin
+policy, secure cookie attributes, no-store recovery and safe DTO/log boundaries. The image
+lane additionally runs packaged migrations, validates the non-root read-only filesystem and
+protected secret mount on its own Docker network. Temporary fixtures were removed. Final
+Biome, local document references and Git whitespace checks passed; no interactive browser
+or production target verification is claimed. Source compatibility is checked by the real
+Next build and exact pinned offline auth CLI schema comparison.
+
+Tested local image: `thaarei-control-plane:tcp-i02`, image ID
+`sha256:79355c612f20b983d2cdf7f10c4d306ceb7a6acdeca3dcbefe2904a819d6e018`.
+No image push, persistent central/customer provisioning, deployment, commit, PR or DMS
+checkout change occurred. Existing customer services, credentials and data remain untouched.
+
+Handoff: TCP-I02's local gate is complete. TCP-I03 client/installation/product registry and
+approval records are next. No functioning central approval/reporting/customer enforcement
+is advertised by this foundation. Target central HTTPS/proxy policy, real SMTP TLS delivery,
+off-host backup and full restore/trust/two-host release qualification remain TCP-I08/target
+work; this fixture's explicit test SMTP profile is not production relay acceptance. Keep
+future DMS integration coordinated through development and preserve current-installation
+cutover gates. No TCP-I02 blocker remains.
+
+TCP-I01 — **Completed** (scope and architecture adoption; owner: Codex control-plane
+implementation thread, 2026-11-06). Owner authorized starting implementation and explicitly
+accepted the remaining read/recovery, local staff email/password with mandatory MFA and
+Admin/Operator/Viewer roles, reporting/retention and two-host/outbound HTTPS defaults.
+Seven-day approval/daily renewal remains selected. Work is on
+`feat/thaarei-control-plane-implementation`, based on current fetched `origin/development`
+`a2ac3a8` plus the planning handoff.
+
+Adopted the specification/overview/delivery status and architecture's operation classes,
+signed versus derived decision states, staff policy, selected Next/CLI 16.4.5 and existing
+Better Auth/Drizzle pins, central isolated fixed-port/configuration contract, secret/backup
+ownership and supported restore/trust recovery. Classified current Turnstile routes and
+DMS admission/read/private-work families, including invitation setup versus acceptance and
+publication quarantine. TCP-I04 supplies executable schemas; I05/I06 must enumerate the
+then-current integration handlers against this classification. Updated DMS requirements
+FR-02.10, FR-19.02 and NFR-09, product blueprint, DMS delivery boundary and standalone
+install/recovery references coherently. Updated docs index and planning review follow-up.
+Technical policy stays in architecture; these references do not duplicate runtime defaults.
+
+Verification on 2026-11-06: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` passed. Build (7 tasks) and unit-test graph (9 tasks) used valid
+Turbo caches; live API integration and disposable PostgreSQL verification ran, with 230
+database cases passed and 3 existing skips. Final Biome CI, relative-link/heading validation
+and Git diff whitespace checks passed. No new tests were added for this documentation-only
+adoption. Package metadata was checked without adding central dependencies; actual Next/
+Better Auth plugin generation, build and HTTP compatibility belong to TCP-I02. No central
+container, browser, two-host DNS/TLS/SMTP or recovery qualification is claimed.
+
+Handoff: the owner adoption gate is satisfied; TCP-I02 is next and authorized by the current
+implementation request. Generate the central Next app with the exact selected installed
+CLI, integrate workspace/boundary/build checks and deliver staff persistence/authentication,
+private bootstrap/recovery, mandatory MFA/live roles and focused real HTTP verification.
+Use isolated fixtures; do not bind central services on this active customer development
+machine. No schema, scaffold, runtime flag, dependency pin, deployment, customer service,
+credential or installation changed in TCP-I01. No commit/push/PR was performed. The existing
+installation and separate DMS checkout remain untouched; their integration/cutover gates
+remain in force. No unresolved TCP-I01 product-policy blocker remains.
+
+TCP-PR-01 — **Completed** (documentation integration and branch preparation;
+owner: Codex control-plane planning thread, 2026-11-06). Committed only the eight
+control-plane planning/reference/progress Markdown files and merged
+[PR #12](https://github.com/nishanthturnstile/turnstile-360/pull/12) into development as
+`a2ac3a815da768258b21c1a7f810232a5a27745f`. Both push and PR workflows passed all 12
+checks on `e805efc`, including workspace check/build/test/integration/smoke and all five
+container builds per workflow. The initial Markdown-formatting failure was corrected
+with installed Biome 2.6.4; local full Biome CI, document-content preservation checks,
+149 local reference checks and git diff checks passed. No target deployment occurred.
+
+Fetched updated origin/development after the merge and created
+`feat/thaarei-control-plane-implementation` from that exact merge commit. Only this
+administrative handoff changes on the new branch; no control-plane implementation,
+scaffold, schema, dependency or runtime configuration has started. Customer services,
+credentials, data and the separate DMS checkout remain untouched. The GitHub connector
+returned HTTP 403 when creating the PR; the already-authenticated GitHub CLI completed
+PR creation/merge and T3 linking succeeded.
+
+Handoff: branch preparation is complete. Wait for a new implementation instruction before
+starting TCP-I01 or later increments. The planning merge does not adopt remaining product
+defaults; seven-day approval/daily renewal stays selected and the documented read/recovery,
+staff-policy and metric/retention decisions remain proposed. Implementation must follow
+the merged specification, architecture proposal and reviewed delivery plan.
 
 DMS-REVIEW-02 — **In progress** (owner: Codex, 2026-11-06). Address the four
 review findings: terminal upload accounting, recovery inventory of unconfirmed copies,

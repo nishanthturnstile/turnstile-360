@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { z } from 'zod';
+import { startDeploymentReporter } from './modules/deployment/reporter.js';
 import { disposeObjects } from './modules/lifecycle/disposal.js';
 import { restoreLifecycleVersions } from './modules/lifecycle/lifecycle-restoration.js';
 import { observeService } from './modules/processing/operations.js';
@@ -33,6 +34,10 @@ const app = await createWorkApplication(),
   work = app.get(WorkService),
   storage = app.get(StorageService);
 await app.listen(config.DMS_WORK_PORT, config.DMS_WORK_HOST);
+const stopDeployment = startDeploymentReporter(
+  work.pool,
+  process.env.INSTALLATION_TENANT_ID as string,
+);
 let stopped = false,
   running = false;
 let active: Promise<void> | undefined;
@@ -109,6 +114,7 @@ const timer = setInterval(startTick, 5000);
 work.registerDrain(async () => {
   stopped = true;
   clearInterval(timer);
+  await stopDeployment();
   const timeout = new Promise<void>((resolve) => {
     const timer = setTimeout(resolve, 60000);
     timer.unref();

@@ -15,6 +15,7 @@ import {
 } from '@thaarei/dms-contracts/private';
 import { createPool } from '../../infrastructure/database/postgres.js';
 import type { MachinePrincipal } from '../access/access-policy.js';
+import { deploymentStatus, requireDeployment } from '../deployment/access.js';
 import { lockOriginal } from '../documents/download-policy.js';
 import type { StorageService } from '../storage/storage.service.js';
 import { hash, lockUsage, measuredStorageBytes } from '../uploads/admission.service.js';
@@ -90,16 +91,21 @@ export class WorkService implements OnApplicationShutdown, BeforeApplicationShut
       (role !== 'scanner' || new Date(input.signatureTime).getTime() > Date.now() + 60000)
     )
       throw new WorkError('WORK_INVALID', 400);
-    return this.authorized(principal, role, async (tx) => {
-      const identity = (
-        await tx.client.query('SELECT id FROM dms.work_identity WHERE issuer=$1 AND client_id=$2', [
-          principal.issuer,
-          principal.clientId,
-        ])
-      ).rows[0];
-      await observeService(tx, role, input.state, identity.id, input.signatureTime ?? null);
-      return { accepted: true as const };
-    });
+    return this.authorized(
+      principal,
+      role,
+      async (tx) => {
+        const identity = (
+          await tx.client.query(
+            'SELECT id FROM dms.work_identity WHERE issuer=$1 AND client_id=$2',
+            [principal.issuer, principal.clientId],
+          )
+        ).rows[0];
+        await observeService(tx, role, input.state, identity.id, input.signatureTime ?? null);
+        return { accepted: true as const };
+      },
+      'recovery',
+    );
   }
 
   constructor(private readonly config: WorkConfiguration) {
@@ -115,7 +121,7 @@ export class WorkService implements OnApplicationShutdown, BeforeApplicationShut
       async (tx) => {
         const safe = (
           await tx.client.query(
-            "SELECT count(*)=16 AND bool_and(relrowsecurity AND relforcerowsecurity AND pg_get_userbyid(relowner)='thaarei_dms_migrator') AS safe FROM pg_class WHERE oid IN ('dms.work_identity'::regclass,'dms.work_job'::regclass,'dms.work_dispatch'::regclass,'dms.work_attempt'::regclass,'dms.security_candidate'::regclass,'dms.binary_restore'::regclass,'dms.lifecycle_restore'::regclass,'dms.security_assessment_history'::regclass,'dms.extraction_stage'::regclass,'dms.processing_run'::regclass,'dms.search_generation'::regclass,'dms.search_chunk'::regclass,'dms.service_observation'::regclass,'dms.recovery_state'::regclass,'dms.backup_catalog'::regclass,'dms.disposal_intent'::regclass)",
+            "SELECT count(*)=20 AND bool_and(relrowsecurity AND relforcerowsecurity AND pg_get_userbyid(relowner)='thaarei_dms_migrator') AS safe FROM pg_class WHERE oid IN ('dms.work_identity'::regclass,'dms.work_job'::regclass,'dms.work_dispatch'::regclass,'dms.work_attempt'::regclass,'dms.security_candidate'::regclass,'dms.binary_restore'::regclass,'dms.lifecycle_restore'::regclass,'dms.security_assessment_history'::regclass,'dms.extraction_stage'::regclass,'dms.processing_run'::regclass,'dms.search_generation'::regclass,'dms.search_chunk'::regclass,'dms.service_observation'::regclass,'dms.recovery_state'::regclass,'dms.backup_catalog'::regclass,'dms.disposal_intent'::regclass,'dms.deployment_control'::regclass,'dms.deployment_clock_state'::regclass,'dms.deployment_usage'::regclass,'dms.deployment_usage_event'::regclass)",
           )
         ).rows[0]?.safe;
         if (!safe) throw new WorkError('WORK_UNAVAILABLE', 503);
@@ -127,6 +133,7 @@ export class WorkService implements OnApplicationShutdown, BeforeApplicationShut
     principal: MachinePrincipal,
     role: WorkRole,
     work: (tx: CoordinatorTx) => Promise<T>,
+    deployment: 'completion' | 'recovery' = 'completion',
   ) {
     return this.internal(async (tx) => {
       await tx.client.query('SELECT pg_advisory_xact_lock_shared(hashtextextended($1,0))', [
@@ -145,12 +152,14 @@ export class WorkService implements OnApplicationShutdown, BeforeApplicationShut
         principal.scopes[0] !== WORK_ROLE_SCOPE[role]
       )
         throw new WorkError('WORK_DENIED', 403);
+      await requireDeployment(tx.client, deployment);
       return work(tx);
     });
   }
   claimDispatches(principal: MachinePrincipal) {
     if (this.draining) throw new WorkError('WORK_UNAVAILABLE', 503);
     return this.authorized(principal, 'publisher', async (tx) => {
+      await requireDeployment(tx.client, 'full');
       const candidates = (
         await tx.client.query(
           `SELECT d.id,d.job_id FROM dms.work_dispatch d
@@ -297,6 +306,7 @@ export class WorkService implements OnApplicationShutdown, BeforeApplicationShut
   claim(principal: MachinePrincipal, envelope: WorkEnvelope) {
     if (this.draining) throw new WorkError('WORK_UNAVAILABLE', 503);
     return this.authorized(principal, WORK_TASK_ROLE[envelope.task], async (tx) => {
+      await requireDeployment(tx.client, 'full');
       const { job, now } = await this.job(tx, envelope);
       if (terminal(job.state)) return { state: 'terminal' };
       if (job.state === 'RUNNING') return { state: 'busy' };
@@ -838,7 +848,7 @@ export class WorkService implements OnApplicationShutdown, BeforeApplicationShut
           manifest.coverage.ocrNeeded > 0 &&
           manifest.status === 'PARTIAL'
         )
-          await enqueueWork(tx, job.upload_id, 'document.heavy', job.processing_run_id);
+          await enqueueWork(tx, job.upload_id, 'document.heavy', job.processing_run_id, true);
         const size = Number(accepted.rows[0].size);
         await tx.client.query(
           'UPDATE dms.admission_tenant_usage SET reserved_storage=reserved_storage-$1,artifact_bytes=artifact_bytes+$1',
@@ -901,7 +911,23 @@ export class WorkService implements OnApplicationShutdown, BeforeApplicationShut
           now = await wall(tx.client);
         if (!job || terminal(job.state)) return false;
         const active = sourceActive(source, now, job.task);
+        if (active && (await deploymentStatus(tx.client)).access !== 'full') return false;
         if (active && (!job.recover_at || job.recover_at > now)) return false;
+        if (
+          active &&
+          job.state === 'QUEUED' &&
+          job.executions === 0 &&
+          !(
+            await tx.client.query('SELECT 1 FROM dms.work_dispatch WHERE job_id=$1 LIMIT 1', [
+              job.id,
+            ])
+          ).rowCount
+        ) {
+          await createDispatch(tx, job);
+          await tx.client.query('UPDATE dms.work_job SET recover_at=NULL WHERE id=$1', [job.id]);
+          return true;
+        }
+
         if (active && job.state === 'RUNNING' && job.current_attempt_id) {
           const lease = (
             await tx.client.query<AttemptRow>(

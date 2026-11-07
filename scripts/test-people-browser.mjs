@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
+import { testDeployment } from './test-deployment-browser.mjs';
 export async function testPeople({
   page,
   context,
@@ -419,7 +420,9 @@ export async function testPeople({
   }
   stage('same-document session recovery retains the draft');
   await context.clearCookies();
-  await page.getByRole('button', { name: 'Refresh session and access', exact: true }).click();
+  // Focus/periodic revalidation may already hide the editor after cookie removal.
+  // Exercise that real recovery path instead of racing its disappearing button.
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await heading('Your session has ended');
   assert.equal(await page.getByLabel('Name', { exact: true }).isVisible(), false);
   calls.length = 0;
@@ -595,6 +598,7 @@ export async function testPeople({
   console.log(
     'People browser: real HTTPS/OIDC role creation, invitation approval, member suspension/reactivation, independent policy/loaders, dirty navigation and narrow scoped structure passed.',
   );
+  await testDeployment({ page, context, login, origin });
   return {
     secrets: [
       recipientPassword,

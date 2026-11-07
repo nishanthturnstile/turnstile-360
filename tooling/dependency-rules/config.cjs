@@ -3,6 +3,23 @@ const { resolve } = require('node:path');
 module.exports = {
   forbidden: [
     {
+      name: 'central-browser-no-server-package',
+      severity: 'error',
+      from: {
+        path: '^apps/thaarei-control-plane/src/app/(access/|staff/StaffEditor|clients/(ClientRegistry|ClientWorkspace|PairingControls|registry-client))',
+      },
+      to: { path: '(^packages/deployment-control/|^@thaarei/deployment-control$)' },
+    },
+    {
+      name: 'central-client-cannot-import-server',
+      severity: 'error',
+      from: {
+        path: '^apps/thaarei-control-plane/src/app/(access/|staff/StaffEditor|clients/(ClientRegistry|ClientWorkspace|PairingControls|registry-client))',
+      },
+      to: { path: '^apps/thaarei-control-plane/src/server/' },
+    },
+
+    {
       name: 'public-dms-client-uses-consumer-contracts-only',
       severity: 'error',
       from: { path: '^packages/dms-client/' },
@@ -20,18 +37,20 @@ module.exports = {
       from: {},
       to: { circular: true },
     },
-    ...['dms-api', 'dms-processing', 'turnstile-api', 'turnstile-web'].map((app) => ({
-      name: `no-imports-into-${app}`,
-      severity: 'error',
-      from: { pathNot: `^apps/${app}/` },
-      to: { path: `^apps/${app}/` },
-    })),
+    ...['dms-api', 'dms-processing', 'turnstile-api', 'turnstile-web', 'thaarei-control-plane'].map(
+      (app) => ({
+        name: `no-imports-into-${app}`,
+        severity: 'error',
+        from: { pathNot: `^apps/${app}/` },
+        to: { path: `^apps/${app}/` },
+      }),
+    ),
     {
       name: 'contracts-are-framework-independent',
       severity: 'error',
-      from: { path: '^packages/(dms-contracts|turnstile-contracts)/' },
+      from: { path: '^packages/(dms-contracts|turnstile-contracts|control-plane-contracts)/' },
       to: {
-        path: '(^apps/|^packages/dms-client/|node_modules/(@nestjs|pg|drizzle-orm|better-auth|@better-auth|openid-client|@fastify)/)',
+        path: '(^apps/|^packages/(dms-client|deployment-control)/|node_modules/(@nestjs|pg|drizzle-orm|better-auth|@better-auth|openid-client|@fastify)/)',
       },
     },
     {
@@ -57,7 +76,7 @@ module.exports = {
       severity: 'error',
       from: { path: '^apps/turnstile-web/' },
       to: {
-        path: '(^packages/dms-client/|^@thaarei/dms-client$|node_modules/(@nestjs|pg|drizzle-orm)/)',
+        path: '(^packages/(dms-client|deployment-control)/|^@thaarei/(dms-client|deployment-control)$|node_modules/(@nestjs|pg|drizzle-orm)/)',
       },
     },
     {

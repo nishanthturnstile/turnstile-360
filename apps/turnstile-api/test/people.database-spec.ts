@@ -769,11 +769,18 @@ describe('People administration HTTP with real PostgreSQL and linked authority p
     expect((await preview(protectedRole, 'verified')).statusCode).toBe(403);
   });
   it('protects the last administrator and serializes mutual suspensions by distinct subjects', async () => {
+    const activeMembers = async () =>
+      Number(
+        (await owned((db) => db.query('SELECT turnstile.deployment_summary() AS value'))).rows[0]
+          .value.activeMembers,
+      );
+    const beforeUsage = await activeMembers();
     const self = await targetCommand('member.suspend', 'operator');
     const before = await auditCount();
     const rejected = await mutate(`members/${members.operator}/suspend`, self, await confirm(self));
     expect(rejected.statusCode).toBe(409);
     expect(rejected.json().reason).toBe('last_administrator');
+    expect(await activeMembers()).toBe(beforeUsage);
     expect(await auditCount()).toBe(before);
     await grant('verified', templates.workspace_administrator as string);
     const one = await targetCommand('member.suspend', 'verified'),
@@ -785,6 +792,7 @@ describe('People administration HTTP with real PostgreSQL and linked authority p
       mutate(`members/${members.operator}/suspend`, two, tokenTwo, 'verified'),
     ]);
     expect(responses.filter((r) => r.statusCode === 200)).toHaveLength(1);
+    expect(await activeMembers()).toBe(beforeUsage - 1);
     expect(responses.some((r) => [401, 403, 409].includes(r.statusCode))).toBe(true);
     expect(
       (

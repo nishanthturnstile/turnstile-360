@@ -20,6 +20,7 @@ import {
 } from '../src/modules/organization/persistence/organization.repository.js';
 import { OwningStructureInvitations } from '../src/modules/people/invitation-structure-policy.js';
 import { closeFixturePool } from './access-fixture.js';
+import { approveUpgrade, historicalInstallation } from './deployment-fixture.js';
 
 describe('owning v1 to v2 configuration migration', () => {
   // An isolated database in the harness's disposable cluster; never reset its shared fixture.
@@ -160,7 +161,7 @@ describe('owning v1 to v2 configuration migration', () => {
       migrationsFolder: legacyFolder,
       migrationsSchema: 'turnstile_migrations',
     });
-    await bootstrapInstallation(environment);
+    await historicalInstallation(owner, environment);
     expect(await configurationOperator('initialize', operator, environment)).toMatchObject({
       requirementVersion: 1,
     });
@@ -300,7 +301,13 @@ describe('owning v1 to v2 configuration migration', () => {
     expect(await historicalSnapshot()).toEqual(before);
     expect(await durableRows()).toEqual(preserved);
     await migrateDatabase('turnstile', environment);
+    await bootstrapInstallation(environment);
     await accessOperator('initialize', operator, environment);
+    await expect(organization.read(actor)).rejects.toMatchObject({
+      status: 403,
+      response: { code: 'DEPLOYMENT_RESTRICTED' },
+    });
+    await approveUpgrade(owner, environment);
     const after = await organization.read(actor);
     expect(after.organization).toEqual(before.organization);
     expect(after.units).toEqual(before.units);
