@@ -110,7 +110,13 @@ export async function workBrokerFixture() {
           output = (output + String(chunk)).slice(-10000);
         });
         let failureStage = '';
+        let failureClass = '';
         child.stderr.on('data', (chunk) => {
+          const kind =
+            /\b(OperationalError|ConnectionRefusedError|ConnectionResetError|AccessRefused|NotAllowed|PreconditionFailed|TimeoutError|ModuleNotFoundError|ImportError|FileNotFoundError|PermissionError):/.exec(
+              String(chunk),
+            );
+          if (kind) failureClass = ` (${kind[1]})`;
           const status = /Private work API status (400|401|403|409|429|503)/.exec(String(chunk));
           if (status) failureStage = ` (HTTP ${status[1]})`;
           if (args.some((arg) => arg.endsWith('secure_transfer.py'))) {
@@ -133,7 +139,11 @@ export async function workBrokerFixture() {
         child.on('close', (code) => {
           clearTimeout(timeout);
           if (code !== 0)
-            reject(new Error(`Private Python transport fixture failed${failureStage}`));
+            reject(
+              new Error(
+                `Private Python transport fixture failed${args[0] === 'turnstile-processing' && args[1] === 'topology' ? ' (topology)' : ''}${failureStage}${failureClass}`,
+              ),
+            );
           else resolve(output);
         });
       });

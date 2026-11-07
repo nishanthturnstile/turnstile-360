@@ -23,6 +23,7 @@ and current progress take precedence over historical descriptions.
 
 ## Operations and reference material
 
+- [Fresh manual testing](runbooks/fresh-manual-testing.md): operator preparation and the central/customer/DMS test sequence; running status remains in progress.
 - [Runbooks](runbooks/): authentication, Dokploy and coordinated onboarding/user-management releases.
 - [API artifacts](api/): generated OpenAPI documents; regenerate using their owning scripts.
 - [Presentations](presentations/): explanatory HTML snapshots, not implementation status.

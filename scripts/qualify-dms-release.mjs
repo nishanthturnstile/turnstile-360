@@ -88,8 +88,21 @@ const inputInventory = Object.fromEntries(
     'apps/dms-processing/src/turnstile_processing/structure-models.json',
   ].map((p) => [p, sha(readFileSync(p))]),
 );
+const scannerInputs = Object.fromEntries(
+  ['main.cvd', 'daily.cvd', 'bytecode.cvd'].map((name) => [
+    name,
+    sha(readFileSync(join(resolve(option('--signatures-dir')), name))),
+  ]),
+);
+const ocrInputSha256 = sha(readFileSync(resolve(option('--ocr-fixture'))));
 let report;
 try {
+  const upgradeFrom = {
+    name: option('--previous-image'),
+    id: (
+      await run('docker', ['image', 'inspect', '--format', '{{.Id}}', option('--previous-image')])
+    ).trim(),
+  };
   await run('sha256sum', ['--check', 'SHA256SUMS'], {}, bundle);
   assert.equal(
     release.version,
@@ -181,8 +194,6 @@ try {
     bundle,
     '--previous-image',
     option('--previous-image'),
-    '--rollback-image',
-    option('--previous-image'),
     '--signatures-dir',
     resolve(option('--signatures-dir')),
     '--ocr-fixture',
@@ -211,6 +222,22 @@ try {
       image.id,
       'Candidate image tag changed during qualification',
     );
+  assert.equal(
+    (await run('docker', ['image', 'inspect', '--format', '{{.Id}}', upgradeFrom.name])).trim(),
+    upgradeFrom.id,
+    'Upgrade source image changed during qualification',
+  );
+  for (const [name, digest] of Object.entries(scannerInputs))
+    assert.equal(
+      sha(readFileSync(join(resolve(option('--signatures-dir')), name))),
+      digest,
+      'Scanner input changed during qualification',
+    );
+  assert.equal(
+    sha(readFileSync(resolve(option('--ocr-fixture')))),
+    ocrInputSha256,
+    'OCR input changed during qualification',
+  );
   const dirty = !!(await run('git', ['status', '--porcelain'])).trim();
   report = {
     schemaVersion: 1,
@@ -228,7 +255,14 @@ try {
       contractsDependenciesMigrations: inputInventory,
       bundleChecksumSha256: sha(readFileSync(join(bundle, 'SHA256SUMS'))),
     },
+    upgradeFrom,
+    scannerInputs,
+    ocrInputSha256,
     authority: 'bundled-better-auth',
+    deploymentPolicy:
+      'Genuine fixture-signed approvals through the owning migrator; production enforcement retained. Actual central pairing is qualified separately by the workspace HTTPS integration.',
+    rollback:
+      'No historical enforcing release is qualified for downgrade; candidate restart/forward and quarantined coherent recovery only. The pre-enforcement upgrade source is not a rollback target.',
     selectedProfile: release.images.some((i) =>
       i.name.startsWith('thaarei-dms-processing-structured:'),
     )

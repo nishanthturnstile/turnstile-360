@@ -1,18 +1,23 @@
 'use client';
 import type { FormEvent } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { request } from './client.ts';
+import { resetEntry } from './reset-entry.ts';
 export default function Access() {
   const [mode, setMode] = useState('login');
   const [token, setToken] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const initialized = useRef(false);
   const [setup, setSetup] = useState<{ totpURI: string; backupCodes: string[] } | null>(null);
   useEffect(() => {
-    const url = new URL(location.href);
-    if (url.searchParams.get('flow') === 'reset') {
-      setMode('reset');
-      setToken(url.searchParams.get('token') ?? '');
+    if (initialized.current) return;
+    initialized.current = true;
+    const entry = resetEntry(location.search);
+    if (entry) {
+      setMode(entry.mode);
+      setToken(entry.token);
+      setMessage(entry.message);
     }
     history.replaceState(null, '', '/access');
   }, []);
@@ -40,6 +45,13 @@ export default function Access() {
         setSetup(null);
         location.replace('/');
       } else if (mode === 'reset') {
+        if (!token) {
+          setMode('forgot');
+          setMessage(
+            'This reset link is invalid or has expired. Request a new password reset email.',
+          );
+          return;
+        }
         await request('/api/auth/reset-password', { token, newPassword: fields.password });
         setToken('');
         setMode('login');
@@ -103,8 +115,10 @@ export default function Access() {
               autoComplete={mode === 'reset' ? 'new-password' : 'current-password'}
               minLength={mode === 'reset' ? 15 : 1}
               maxLength={128}
+              aria-describedby={mode === 'reset' ? 'password-requirements' : undefined}
               required
             />
+            {mode === 'reset' && <span id="password-requirements">Use 15–128 characters.</span>}
           </label>
         )}
         {['mfa', 'backup'].includes(mode) && (

@@ -5879,7 +5879,10 @@ separately. It does not establish sustained monthly capacity or off-host surviva
 requirement ledger records automated evidence separately from manual, deployed and target
 acceptance. Compatible application rollback is qualified only for an explicit previous
 image/schema boundary; incompatible recovery requires the complete matching coherent
-cohort. Customer rollout, capacity, legal review and accountable sign-off remain separate.
+cohort. The current central-enforcing I20 candidate has no published enforcing
+predecessor qualified for downgrade. Its I19 upgrade source is not an authorized rollback
+target; qualify candidate restart and quarantined coherent recovery instead. Customer rollout,
+capacity, legal review and accountable sign-off remain separate.
 See the [handover runbook](docs/runbooks/dms-handover.md) and target acceptance template.
 
 ### Consumer API contract and explorer (DMS-I02)

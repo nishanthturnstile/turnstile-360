@@ -10,6 +10,40 @@ been completed, verified, or left pending.
 
 ## Current position
 
+2026-11-07 live manual-testing update: owner completed central registration, pairing,
+approval, customer verification/login and company setup. Protected administrator handover
+and release opening are complete. Both product approvals are acknowledged and both
+independent reporters have recent central records. A live invocation of the installed
+Turnstile capabilities service authenticates to DMS and validates tenant/application
+bindings with deploymentAccess=full. This is a machine/service-path check, not a new
+end-user controller/browser test. DMS document processing remains unconfigured in this
+installation: no worker identities or processing services, no admission policy, and
+capabilities advertise empty format/profile/language lists. The prepared processing
+setup step and manual document journeys remain pending. Turnstile document business
+workflows and actual production-host rollout also remain separate future work.
+Earlier dated empty-installation statements below are historical snapshots.
+
+2026-11-07 11:58 UTC update: DMS-I20 frozen local qualification run-5 passed and
+the owner-authorized fresh local manual registration environment is running. The old
+selected test containers and three selected data volumes were removed; unrelated
+projects were preserved. Central has zero clients/installations/products, customer has
+zero documents/members/organization units and incomplete empty v2 setup. Exactly one
+unverified bootstrap account exists in each authority, with two verification messages
+in local Mailpit. Neither product is paired or approved. Start with the ignored private
+.dms-manual-testing-20261107/START-HERE.md and the committed manual checklist.
+Local qualification is complete; manual, customer-release and target acceptance remain
+pending. Statements below describing the stopped pre-reset stack are historical.
+
+2026-11-07 assessment update: development now includes merged PR #15 (4d4810e),
+with all sixteen reviewed-head push/PR checks successful. Source/local qualification
+evidence confirms central/DMS/Turnstile activation and authentication integration.
+The older running-installation statements below are historical: the current Docker
+engine has three exited owner-test application containers with missing WSL bind mounts
+and no running Turnstile stack. No owner-installation restart, reset or cutover was
+performed by INTEGRATION-STATUS-01. DMS-I20 final frozen qualification and actual
+central/customer target rollout remain open; Turnstile document business features
+remain unimplemented. See the assessment handoff under Active work.
+
 Control-plane delivery has started with TCP-I01 owner-adopted scope/architecture on
 2026-11-06. The remaining policy defaults are accepted. TCP-I02 central foundation/staff access now
 passes local source and production-image HTTP verification. TCP-REVIEW-02 fixed both
@@ -130,6 +164,503 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+INSTALLATION-AUTOMATION-ASSESS-01 — **Completed** (proposal/assessment only; owner: Codex, 2026-11-07).
+Owner requests an evidence-based opinion on streamlining repeated fresh infrastructure
+setup across independent test regions and customer installations, based on this manual
+journey and its issues. Review supported distribution/private commands, topology,
+qualification and temporary local helpers; recommend reusable automation and explicit
+identity/approval gates without implementing an installer or changing accepted design.
+Preserve current runtime and all user work.
+Reviewed existing DMS bundle/init/wrapper, combined Turnstile overlay, control-plane
+qualification, private local prototypes, deployment and administrator-release procedures.
+Recommendation: a versioned combined customer release, validated nonsecret installation
+manifest with separate private secret delivery, and an operator-run resumable installer
+wrapping existing owning commands. Proposed actions include preflight/plan/install/status/
+resume/verify, durable receipts and live-state reconciliation, and separate update/restore
+operations. Reruns preserve identity/secrets/data; destructive test reset is never implicit.
+Proposed UX: import generated identity manifests, validate pairing files and normalize
+Windows/WSL paths, check/recover recent MFA, handle expired/reset/verification links with
+correct states, sequence local client provisioning before exposing ordinary login, and
+replace manual cookie copying with a separately designed short-lived login-proof handoff
+that leaves privileged grants in the private owning command. No new auth flow is claimed
+implemented. Preserve real production email/MFA, explicit staff approvals and accountable
+first-admin/customer business choices; isolated fixture workflows can automate test actors.
+Complete selected-profile readiness must include worker identities/admission/scanner data,
+processing and DMS capabilities as well as login, activation acknowledgements and fresh
+independent reports. Distinguish installed/awaiting human action/ready/target accepted.
+Keep central as registry/approval/reporting per TCP-R13, without remote shell or arbitrary
+customer deployment execution. An external operator/CI adapter may use existing Dokploy
+Compose create/environment/deploy APIs (official docs checked); do not embed customer
+migration/provider credentials in central/runtime services. Independent regions receive
+separate installation state/identities/credentials; replicas and DR follow their distinct
+identity/recovery designs. Reuse the recipe and release, never this local environment's
+private files. Keep test/local CA/Mailpit and production DNS/TLS/SMTP configuration explicit.
+Prioritize closing the still-pending local processing/document journey, then complete
+customer packaging and installer, then guided claim UX and repeated clean-Linux/failure-
+resume acceptance before customer rollout. No installer implementation, architecture
+adoption, infrastructure provisioning or runtime mutation was authorized/performed.
+Verification: source/runbook/history review, official Dokploy API reference and git diff
+--check. No application code changed; workspace tests were not rerun for this assessment.
+
+
+LOCAL-INTEGRATION-READY-01 — **Completed** (live assessment; owner: Codex, 2026-11-07).
+Owner asks whether setup and the Turnstile/DMS/central integration are complete. SQL
+confirms company setup complete with three organization units, access writes open,
+three customer OAuth clients and one active local DMS application. Both central products
+are approved, paired and activation-acknowledged. Latest independent reports were received
+at 14:37 (DMS) and 14:38 (Turnstile); DMS honestly reports processingReady=false.
+Invoked the installed compiled Turnstile CapabilitiesService/MachineTokenService inside
+the running product API container: real token acquisition and DMS HTTP request succeed,
+binding validation passes and deployment access is full. Its arrays are empty because
+admission is not configured. This exercises the production machine service path and
+does not replace user/session/permission-gated route or browser verification.
+Current containers include the coordinator/reporter but no publisher/scanner/extractor/
+heavy worker or scanner daemon. DMS work identities count is zero and processing setup
+has not run. Explained that processing.mjs is the remaining local document-runtime
+setup; Turnstile document screens/business integration and Linux/Dokploy rollout remain
+separate. Customer backends make outbound HTTPS sync/report calls to central; central
+returns signed decisions, with no customer-database access. No worker provisioning,
+policy changes or new feature work was performed for this status request. Source/SQL,
+container inventory, recent central reports and actual machine HTTP probe are the
+verification; workspace suites were not rerun for this operational assessment.
+
+
+CUSTOMER-ADMIN-HANDOVER-01 — **Completed** (owner: Codex, 2026-11-07).
+User reran completed client provisioning and sees Waiting for setup after normal login.
+CLIENTS.json and read-only SQL confirm three clients, active DMS enrollment, explicit
+initial product membership and closed user-management writes. No administrator handover
+result/cookie file exists. Confirm release preflight/image consistency, make completed
+client script return a clear nonmutating message, then obtain genuine signed-in product
+cookie through secure secret input for the existing private administrator handover.
+Preserve all accounts/configuration and use the owning release CLI, never direct grants
+or fabricated session proof.
+Final handoff: user submitted their normal __Host-turnstile cookie through the third
+secure request. Read the delivered secret only inside a command, normalized it into a
+mode-0600 private input and refreshed it through the real HTTPS /api/auth/session route.
+Confirmed the selected customer identity, then ran the supported release bootstrap CLI.
+SQL confirms one protected administrator and access revision 3. Refreshed the ordinary
+session/cookie again through the same API, then ran release open using the verified
+image inventory; it succeeded at revision 4 with public writes enabled, release ID bound
+and invitation recovery epoch bound. Final owning release verify reports ready=true.
+The authenticated /api/organization read returns 200 and session permissions confirm
+configuration management. No password, email flag or session proof was fabricated.
+The user began entering company configuration during verification; an initial empty-state
+assertion became stale and was replaced with access/shape checks. Current user-entered
+configuration was preserved, with organization/time-zone saved and setup not yet complete.
+No sample organization or units were created by Codex. Removed task-owned cookie and
+bootstrap/open input files after successful receipt/state reconciliation; retained only
+nonsecret results and protected operational logs. Evidence: private ADMIN-HANDOVER.json,
+HANDOVER-SESSION-CHECK.json and handover bootstrap/open result JSON. No application
+source/schema/image change or commit; normal authenticated CLI/API/SQL and exact image
+checks are operational verification. Full workspace suites were not rerun for supported
+operator commands. User can continue company setup, first unit, review and completion.
+Historical preparation/input-wait chronology follows.
+Milestone: private client helper now exits successfully with an explicit already-complete
+message when CLIENTS.json exists; syntax check and nonmutating rerun passed. Owning
+release verify reports ready=true at revision 2 with public writes closed. All three
+running authority/API/web images match the existing verified release inventory.
+Two secure cookie requests expired without a value (60s then 180s). No cookie was
+received, no administrator assignment/open command ran, and the workspace remains
+unchanged awaiting genuine normal-login cookie proof. Do not obtain/fabricate a cookie
+from DB secrets or bypass the supported release procedure. Next continuation: request
+current __Host-turnstile securely again when the user is ready, run bootstrap through
+handover.mjs, refresh the ordinary session/cookie and run open, then verify setup readiness.
+Private helper/documentation changes require no application rebuild; actual release
+preflight, exact image checks, safe helper rerun and git diff --check passed.
+
+
+CUSTOMER-LOCAL-CLIENTS-01 — **Completed** (client/enrollment bootstrap; owner: Codex, 2026-11-07).
+User reports invalid_client after opening the customer verification link. Read-only SQL
+confirms verification actually succeeded; both central products are approved and activation
+acknowledged, but auth has zero OAuth clients and DMS has zero application registrations.
+The verification callback reaches /sign-in, whose normal BFF login then hits the missing
+login client. Complete the already planned local login/machine/identity-service client
+provisioning, machine enrollment and initial explicit product access through supported
+private commands. Preserve user's manual first login/administrator handover. Never print
+verification tokens or credentials, and do not replay the shared verification URL.
+Ran the supported private customer-clients helper successfully. Provisioned three distinct
+managed OAuth clients (login, DMS machine, private identity service); registered/enrolled
+Turnstile through real canonical HTTPS, identified the verified subject read-only, granted
+explicit initial shell/connection access through the owning private product command,
+installed secrets only in private server env files and recreated only the product API.
+SQL confirms verified customer, three clients, one active DMS application, one product
+member and user-management writes still closed. No password or verification flag was
+changed by Codex; no protected administrator handover was bypassed. Ordinary HTTPS
+/api/auth/login redirects now reach the signed /sign-in entry (200) rather than invalid_client;
+no credentials were submitted in that probe. Evidence: private CLIENTS.json,
+CUSTOMER-LOGIN-ENTRY.json and protected helper output. No application source or schema
+changed; supported CLI results, read-only SQL and actual HTTPS redirect journey are the
+operational verification, so workspace suites were not rerun. User's first normal login
+and genuine-cookie administrator handover remain next, followed by company setup.
+
+
+CUSTOMER-VERIFY-RESEND-01 — **Completed** (delivery; owner: Codex, 2026-11-07).
+Owner explicitly requests a fresh customer verification email after expiry. Read-only
+state confirms admin@customer.test remains unverified. Request delivery through the
+normal customer-local HTTPS identity endpoint with its approved sign-in callback;
+confirm fresh capture in Mailpit without printing a verification link or changing flags.
+The guarded /identity/send-verification-email POST returned 200 with trusted local-CA
+TLS and exact Origin/callback. Mailpit confirms Verify your account email for the
+customer administrator at 14:10:26 UTC. Token/link/password were not printed; account
+verification remains for the user to complete through the captured email. Evidence:
+ignored latest-customer-verification.json. No code/schema/account flag changed; HTTPS
+response and captured delivery are the relevant checks, so workspace suites were not rerun.
+
+
+CENTRAL-MANUAL-SYNC-GUIDANCE-01 — **Completed** (explanation/current-state assessment; owner: Codex, 2026-11-07).
+User asks what the two sync commands and background Compose startup do after approval.
+Read-only central SQL confirms DMS and Turnstile approved and pairing verified, but
+neither current activation acknowledged. Inspected private helper/wrapper and both
+reporters: one-time sync authenticates with each paired credential, retrieves/verifies/
+persists its signed decision and acknowledges; coordinator and dedicated Turnstile
+reporter maintain scheduled sync and independent operational summaries. Explained -d
+and --no-build, expected central acknowledgement/report checks, and next separate local
+identity/enrollment/administrator-handover stage. No sync, startup or other mutation was
+performed because this request asks for explanation. Source/SQL inspection and git diff
+--check are the verification; no workspace suites rerun for guidance.
+
+
+CENTRAL-MANUAL-TURNSTILE-PAIR-01 — **Completed** (owner: Codex, 2026-11-07).
+Owner explicitly requests running Turnstile pairing using the downloaded JSON in the
+same WSL temp location. Confirmed product/origin, installation/tenant/application matches
+against its local manifest without printing the code. Run the supported private helper
+and verify central/local state. Preserve separate staff approval and customer enrollment.
+Supported helper succeeded through canonical HTTPS. Central SQL confirms DMS and
+Turnstile both pairing verified, each with one consumed pairing code; local Turnstile
+binding is persisted. Both policy states remain pending. Downloaded Turnstile file is
+mode 0600; code/credentials were not printed. User next refreshes Clients and explicitly
+approves both with recent MFA, then operator syncs signed decisions. No source/schema,
+account, product approval or local DMS enrollment changed. Command result and read-only
+central/local SQL are the operational verification; no workspace suites rerun.
+
+
+CENTRAL-MANUAL-DMS-PAIR-01 — **Completed** (owner: Codex, 2026-11-07).
+User downloaded a genuine DMS pairing file into WSL but supplied its Windows UNC path
+to a Linux Node command. Confirmed the corresponding Linux path under projects - WSL/temp,
+valid DMS product/origin and matching local installation/tenant bindings without printing
+the code. Run the already attempted authorized pairing with that Linux path, then verify
+central/local state. Preserve explicit staff approval as the next separate manual step.
+Executed the existing private helper with the actual Linux file path; command succeeded.
+Central confirms DMS pairing_verified_at set, consumed code and a non-revoked machine
+credential; local DMS binding is persisted. DMS remains pending approval. Turnstile is
+pending/unpaired. Restricted the downloaded secret file to mode 0600; neither code nor
+machine secret was printed. User should refresh Clients, then pair Turnstile and
+explicitly approve both products through fresh MFA. No code or database schema changed;
+normal HTTPS pairing plus read-only central/local SQL are the operational verification.
+Workspace test suites were not rerun for this supported private command. No approval,
+customer account, enrollment or business state was changed by this task.
+
+
+CENTRAL-MANUAL-PAIR-MFA-01 — **Completed** (operational diagnosis/guidance; owner: Codex, 2026-11-07).
+User reports pairing form disabled with Retry same request and no file download.
+Read-only state confirms an active verified MFA-enabled staff account and session,
+but latest MFA at 13:22:59 UTC is older than the required ten minutes at the observed
+13:48 request activity. Both products still have zero pairing rows. Owning executePairing
+requires recent MFA before writing; frontend retains the exact request/code after a
+rejected/uncertain result and disables changed intents while offering retry. Guided user
+to /access in a separate tab, choose Authenticator code, complete a fresh code, then
+return to the original tab and Retry same request. Preserve the original tab because
+the private pending code lives only in memory. No application code, credential, MFA
+proof or registry state changed. Private START-HERE now records fresh-MFA/retry steps.
+Read-only SQL/source inspection and git diff --check are the relevant verification;
+workspace suites were not rerun for operational guidance. User MFA/retry/download remain
+pending; no secrets were printed and no authentication requirement was bypassed.
+
+
+CENTRAL-MANUAL-PAIR-PATH-01 — **Completed** (diagnostics and guidance; owner: Codex, 2026-11-07).
+User ran pairing helper with the literal example /absolute/path/to/dms-pairing.json.
+Windows Downloads contains only dms-deployment-manifest.json, which has no pairing
+code. Read-only central SQL confirms zero pairing rows for either product. Improve
+ignored local helper diagnostics and replace placeholder guide paths with concrete
+Windows-through-WSL paths; guide user through actual initial pairing-file issuance.
+Do not issue/consume a code or change approval without the downloaded file.
+Ignored local operator helper now reports a missing file explicitly and rejects a
+nonsecret manifest with actionable pairing-file instructions before any private setup.
+Private START-HERE now gives actual Windows Downloads paths through /mnt/c, exact UI
+issuance steps, file naming and the unused-code-revocation meaning of Pairing ID.
+Verification: node --check passes; literal placeholder and actual manifest invocations
+both exit 1 with expected safe messages and no mutations. No production source changed,
+so workspace suites were not rerun. Actual code issuance/download and pairing remain
+pending with the manual tester; no secrets were printed or central state changed.
+
+
+CENTRAL-MANUAL-ACTIVATION-01 — **Completed** (state assessment/next-step guidance; owner: Codex, 2026-11-07).
+User asks the planned next sequence after creating an installation and two products.
+Read-only central SQL confirms exactly one installation, DMS and Turnstile both pending,
+neither pairing verified, no machine activation acknowledgements and zero pairing rows.
+Explained the existing plan: user issues/downloads distinct initial pairing files; private
+backend setup exchanges one-use codes for separate central machine credentials; user
+reviews verified bindings and approves each; operator syncs signed decisions/acknowledges
+and starts independent reporters. Customer identity, local Turnstile-to-DMS enrollment,
+normal-login administrator handover and company setup follow activation. Prepared private
+operator helpers already implement the local commands. Immediate user action is DMS and
+Turnstile Deployment setup and credentials > Issue initial pairing file. No code, registry
+policy, pairing, account or installation state was changed. Relevant verification was
+read-only SQL and owning source/runbook inspection; no workspace tests rerun.
+
+
+CENTRAL-MANUAL-INSTALL-01 — **Completed** (field guidance; owner: Codex, 2026-11-07).
+User requests installation registration values. Read both exported local manifests and
+current installation-create contract/form. Both manifests have matching local installation
+and tenant IDs and environment local-manual. Provided those nonsecret binding values
+with a descriptive local label/reason, and guided review/confirmation followed by separate
+DMS and Turnstile product registration under the same installation. No registry write or
+application/database change was performed. Read-only manifest/contract inspection is the
+verification; no workspace tests rerun for this guidance.
+
+
+CENTRAL-MANUAL-AUTH-02 — **Completed** (diagnosis and fresh verification delivery; owner: Codex, 2026-11-07).
+User reports generic authentication failure after another password reset. Read-only
+state confirms credential updated at 13:13:32 UTC, no remaining reset token/sessions,
+and central administrator email still unverified. Latest central verification message
+is from 11:57 and expired under the configured 30-minute lifetime. Request a fresh
+verification email through the normal HTTPS route into local Mailpit; leave the user
+to click it and complete their own login/MFA. Do not change password or verification flags.
+Normal HTTPS POST /api/auth/send-verification-email returned 200 using the trusted local
+CA, exact Origin and same-origin context. Mailpit confirms a fresh Verify your email
+message for the central administrator at 13:15:07 UTC. No verification link/token or
+password was printed. User must open this newest verification message, then sign in
+with their latest chosen password and enroll MFA. Password/verification/MFA flags were
+not changed by Codex. No application code changed; relevant verification was read-only
+state inspection, the normal guarded HTTPS request and fresh captured delivery. No
+workspace build/integration rerun for this operational diagnosis. Evidence is private
+latest-central-verification.json; actual user verification and sign-in remain pending.
+
+
+CENTRAL-RESET-INPUT-01 — **Completed** (owner: Codex, 2026-11-07).
+User reports Invalid input while choosing a new central password from the recovery
+page. Trace token handoff/form state and owning HTTP validation without exposing or
+changing their password or completing account setup on their behalf.
+Read-only evidence: user's credential updated at 12:45 UTC, no reset token remains and
+email is still unverified. Production browser reproduction confirmed that a callback
+with flow=reset and INVALID_TOKEN offers a new-password form and submits token=''.
+Added reset-entry validation, a once-only initialization fence preserving valid tokens
+through URL cleanup, a defensive empty-token submit guard and visible 15–128 character
+password guidance. Two focused regression tests pass. pnpm check/build/test pass;
+pnpm test:integration also passed. Built thaarei-manual-central:reset-fix and updated
+only the isolated central Compose image; database, secrets and accounts preserved.
+Deployed production UI browser check passes invalid/missing-token handling and a valid
+synthetic token through URL cleanup. A read-only HTTPS request to the actual provider
+invalid-token callback confirms its redirect; the browser checks that actual destination.
+Valid POST is intercepted with synthetic data, not a target password change.
+Preview automation failed twice with ERR_CERT_AUTHORITY_INVALID; fallback uses isolated
+Playwright and an HTTPS bridge verifying upstream GETs with the local CA, without
+disabling TLS checks. User's password/email verification/MFA remain untouched.
+Files: AccessForm.tsx, reset-entry.ts and test/reset-entry.test.ts in the control-plane
+application. Evidence: ignored reset-fix-{check,build,test,test-integration}.log,
+reset-fix-verification.log, reset-fix-image.json and the private browser regression
+helper. All four workspace gates, focused parser regressions, deployed browser form
+regression and canonical HTTPS entrypoints passed; git diff --check passes. No commit,
+push or production-host rollout occurred. User should refresh the page, verify their
+email if still pending, then sign in with the password they already chose. A fresh
+reset email is needed only when choosing another password or replacing an invalid link.
+
+
+CENTRAL-MANUAL-AUTH-01 — **Completed** (diagnosis/manual guidance; owner: Codex, 2026-11-07).
+Manual tester reports central /access showing generic authentication failure after
+Windows trust setup. Read-only SQL confirms central admin@thaarei.test is unverified,
+MFA disabled and zero sessions. Installed Better Auth configuration explicitly requires
+email verification; the owning HTTP wrapper deliberately returns the generic message
+for provider authentication failures. No relevant recent error log was emitted. Guided
+user to request a fresh link with Verify email, open the newest central verification
+message in Mailpit, then use central credentials and enroll MFA. No account flag,
+password, session, verification or MFA was changed by Codex. Browser tool status reports
+unavailable; no browser tab opened. Source/configuration inspection and read-only runtime
+state are the diagnosis evidence. No application code changed or workspace test rerun;
+manual verification/login/MFA remain pending with the user.
+
+
+WINDOWS-LOCAL-TRUST-01 — **Completed** (Windows configuration; owner: Codex, 2026-11-07).
+Owner requested Windows-side local test CA trust and loopback resolution for the WSL
+manual installation. Validated the public CA SHA-256 fingerprint and imported it only
+into Windows CurrentUser Root (thumbprint C73C3D4678F2F9DFF804F5C66BFC4D79B463F238).
+CA private key remains in WSL and was neither copied nor printed. Existing trust entries
+were preserved. All four names were unresolved through Windows DNS; Windows UAC elevation
+succeeded for a narrowly scoped hosts edit. Added central.localhost, turnstile.localhost,
+dms.localhost and files.localhost at 127.0.0.1 in a marked block, preserving other entries
+and backing up the original under the current user's LocalAppData/Thaarei/TurnstileManualTesting.
+Flushed Windows DNS and confirmed all four loopback resolutions. Native Windows HTTPS
+requests to central /access, Turnstile /sign-in and DMS /health/live returned 200 with
+normal certificate validation and no custom validation callback. Windows curl's stricter
+revocation policy returned CRYPT_E_NO_REVOCATION_CHECK because the local CA has no
+revocation service; no global revocation/TLS setting was changed. Browser verification
+remains with the manual tester after restarting the browser. Private Windows scripts,
+WINDOWS-TRUST.json and updated START-HERE.md are in the ignored manual directory.
+No application code, database, account verification, pairing or approval changed. Only
+progress documentation changed in the workspace; OS/DNS/HTTPS probes are the relevant
+verification, and workspace builds/integration tests were not rerun for this setup.
+
+
+DMS-I20-FINAL-01 — **Completed** (local qualification and fresh manual-test bootstrap; owner: Codex, 2026-11-07).
+Final handoff: qualification passed at 11:53 UTC; fresh local initialization and trusted
+HTTPS probes passed afterward. Report/ledger: docs/qualification/dms-i20-release.json
+and docs/qualification/dms-i20-ledger.json (203 FR/NFR acceptance states). Synthetic
+metadata p95 was 196.6 ms across 80 reads; interrupted capture/coherent restore passed
+with 127 objects. This does not establish sustained capacity or independent off-host
+survival. No historical pre-enforcement image is a qualified rollback target.
+
+Reset affected only turnstile-local's three old stopped application containers and its
+selected PostgreSQL/RabbitMQ/SeaweedFS volumes. Central/customer owning roles, migrations
+and empty initialization are complete. Setup preparation exposed a missing generated
+broker definition and an accidentally emptied storage identity JSON map; regenerated
+both from the retained dedicated private configuration and resumed without another reset.
+Both bootstrap accounts and their verification deliveries succeeded. A resume helper's
+final bookkeeping ReferenceError was corrected by finalizing SETUP.json after confirming
+the successful operations; no accounts were provisioned twice. Failure logs are retained.
+
+Central access, Turnstile sign-in, DMS liveness and canonical identity discovery pass
+HTTPS with the generated CA and certificate validation enabled. SQL confirms zero central
+registry rows, zero documents/product members/organization units, empty incomplete setup,
+one unverified account per authority and zero paired products. Mailpit captured exactly
+two bootstrap verification messages. Unrelated nilumi containers remain running.
+
+Private handoff: .dms-manual-testing-20261107/START-HERE.md, CREDENTIALS.txt, SETUP.json,
+ENTRYPOINTS.json, customer-release-inventory.json and per-product exported manifests.
+Credentials remain ignored/mode 0600 and were never printed. The private local CA must
+be trusted in the user's browser before manual HTTPS testing. Both registries remain
+empty for the user to register/pair/approve from scratch. The private operator helpers
+for clients/enrollment, genuine normal-login administrator handover and processing
+configuration are prepared and syntax-checked; their user-dependent journeys have not
+been executed. No sample users, units, documents, approvals or verification bypasses
+were created. Manual acceptance/customer release/target rollout remain pending.
+
+Actual verification: run-5 passes pnpm check/build/test/test:integration, exact-image
+standalone identity/native OCR, independent consumers/performance, interrupted backup/
+restore/quarantine/reapproval, processing/restarts/key rotation/log privacy, final source/
+image/input fingerprints. Customer API/authority compiled files/migrations and frontend
+assets/routes/security policy pass the exact-image UM inventory checks. Final generated
+evidence consistency and git diff --check pass. Browser/manual and production-host
+acceptance remain separate. No commit, push or real-host deployment occurred.
+
+Historical qualification/reset chronology follows.
+Frozen run-5 completed successfully: docs/qualification/dms-i20-release.json and the
+requirement ledger now record localQualified=true, customerReleased/targetAccepted/
+manualTested=false. All four workspace gates, exact-image identity/OCR, independent
+consumer/performance, interrupted capture/coherent restore/quarantine/reapproval, optional
+structured processing, restarts, key rotation and log privacy passed. Beginning the
+owner-authorized guarded local reset/initialization now; unrelated projects remain excluded.
+Resumed after provider interruption at 10:41 UTC: run-3 process is still alive;
+static/build/unit gates passed and integration remains active. Owner-selected local
+Docker preparation is recovered; reset stays gated on the successful final report.
+The recovered run-3 subsequently exited without final/FAILED evidence; it cannot count
+as complete. Removed only its four abandoned disposable fixture containers and started
+fresh frozen run-4 in this session. Private preflight corrected the recovery-epoch
+encoding and invitation SMTP host/certificate to match existing production validators.
+Run-4 passes all four workspace gates, exact-image standalone identity and native OCR;
+full distribution/independent-consumer/performance/recovery is active. Manual customer
+API images pass exact compiled/migration checks. Fresh frontend image and removal of
+one stale ignored host asset now pass exact route/asset/security-header verification;
+private customer release inventory is prepared. No owner reset has occurred.
+Owner authorized completing DMS-I20 frozen qualification/report before preparing a fresh
+manual-test installation, including deletion of this application’s existing database
+entries and registration from scratch. Preserve unrelated projects and credentials;
+finish qualification first, then scope the reset and document exact manual/operator steps.
+Qualification preparation found the pre-central I20 harness lacked signed approval and
+selected an unenforced I19 rollback image. Updated only qualification helpers/runbook:
+current DMS receives a genuine fixture-signed decision through its owning migrator;
+API mounts contain public trust/marker only, never the fixture signer. Restored HTTP
+must return DEPLOYMENT_RESTRICTED under an independently replaced marker, then a fresh
+fixture-owned signed epoch permits the owning recovery checks. Real central pairing is
+covered separately by workspace HTTPS integration. Removed unenforced historical rollback
+from I20 qualification; report explicitly retains the accepted no-prior-enforcing-release
+limit. Production handlers/guards remain unchanged. Draft manual checklist is
+docs/runbooks/fresh-manual-testing.md. Static checks pass; exact candidate rebuild is
+active (native Tesseract compilation), then frozen qualification will run. No owner
+runtime/database reset has occurred.
+Seven exact images and the complete bundle assembled successfully. Frozen qualification
+run-1 is active under .dms-i20-final-20261107; source/helpers are now frozen for this run.
+The manual checklist and documentation index were prepared before fingerprinting.
+Owner selected local isolated Docker testing. Prepared only ignored private configuration
+and certificates in .dms-manual-testing-20261107, with separate central/customer databases
+and networks, one loopback HTTPS ingress on reserved 23600 and Mailpit on 23605. No
+installation services/database reset/start has occurred while qualification runs.
+Frozen run-1 has passed all four workspace commands, exact-image standalone authority
+and native OCR, and is executing the full isolated distribution/independent-consumer/
+recovery lane. Planned local reset retains customer database name turnstile360 and
+Compose project turnstile-local. Read-only inventory identifies precisely three exited
+old application containers and the three project-labeled PostgreSQL/RabbitMQ/SeaweedFS
+volumes; unrelated projects remain outside scope. No deletion has occurred.
+Frozen run-1 failed correctly at scan-worker freshness: the preserved daily CVD is
+2026-11-05T06:26:24Z and exceeds 48 hours at the current clock. API upgrade, signed
+fixture approval, auth, workspace gates and native OCR passed before this input failure.
+No successful I20 report is claimed. Preserve run-1/FAILED.json and private logs; refresh
+signed scanner inputs without relaxing the bound, then run a new frozen qualification.
+Owner database/reset remains untouched.
+Freshclam obtained and verified complete daily CVD 28176; frozen scanner inputs are
+copied into signed-inputs and bound by new report hashes/rechecks. Run-2 passed static,
+build and unit gates, but integration failed during the private Python broker topology
+startup before I07 cases. No cause is assigned. Added finite command-phase/error-class
+failure diagnostics only (no raw stderr/credentials), and three fresh isolated broker
+startup/topology runs pass. Frozen run-3 is now active with fresh signed inputs and the
+same exact production candidate; no production handler, limit or test deadline changed.
+Local manual config/guarded reset/pairing commands are prepared privately but not run.
+Run-4 passed workspace gates, exact-image identity/OCR and independent-consumer/performance
+checks, but failed the new restored-deployment assertion: capabilities is intentionally
+a recovery/diagnostic route. Corrected the fixture to require capabilities reporting
+closed access and a real document GET returning DEPLOYMENT_RESTRICTED. Production guards
+are unchanged. A fresh frozen run is required; no successful report or owner reset claimed.
+Frozen run-5 is active with that corrected fixture and the same immutable production
+candidate. Its source remains frozen; inspect .dms-i20-final-20261107/qualification-run-5.log
+and run-5 step logs. Private reset script is ready but must not execute before localQualified
+is true for this run. Manual commands/guide are in ignored .dms-manual-testing-20261107;
+start with START-HERE.md after SETUP.json exists. Transient customer credentials are never
+printed. Three local client issuance, initial shell/connection access and real-login
+administrator handover helpers are prepared for user-driven verification/approval steps.
+Next: user follows the private START-HERE guide and fresh-manual-testing checklist.
+Codex supports the private pairing/client/handover/processing steps as the user completes
+verification, MFA and registration; retain the new volumes between manual tests.
+
+INTEGRATION-STATUS-01 — **Completed** (assessment; owner: Codex, 2026-11-07).
+Owner requested the completion inventory, central registration/customer login/backend
+trust trace and next delivery scope, and confirmed apps/thaarei-control-plane is the
+separate central application. Fetched origin/development and fast-forwarded the stale
+local checkout from 2939714 to 4d4810e, preserving this entry and upstream handoffs.
+GitHub confirms PR #15 merged with all sixteen reviewed-head push/PR checks successful;
+the development post-merge workflow 42355243157 is also successful. The merge tree matches
+reviewed head 96bf413. Older TCP-CI-001 pending statements below are historical; this
+assessment does not overwrite its owner's entry.
+
+Source inspection confirms central staff UI/MFA/registry/pairing/approval/reporting,
+independently credentialed DMS and Turnstile reporters, signed decision enforcement,
+customer-local OIDC/login/identity-service integration and locally enrolled DMS machine
+authorization. Central deployment approval does not create customer sessions or local
+consumer grants. Turnstile's active DMS adapter and machine token still provide only
+capability/status reads; document upload/retrieval/business workflows are not integrated
+into Turnstile. DMS-I01–19 implement the standalone document/processing capabilities.
+DMS-I20's final frozen qualification/report remains unfinished after its recorded
+interruption. TCP-I08 isolated local qualification passed; target acceptance is deferred.
+
+Current production inputs (817 files) exactly match the accepted
+control-plane-local-final.json fingerprint; both packaging-helper hashes match. Six
+verification helpers changed after that frozen run, so its exact helper inventory remains
+historical. Subsequent reviewed-head CI and this fresh integration run cover the updated
+helpers; no new full-image browser qualification is claimed here.
+
+Verification, 2026-11-07: current pnpm check/build/test/test:integration all pass.
+Build and unit pipelines used existing Turbo caches; the fresh integration run took
+691 seconds, including actual central registry/report/pairing and both product HTTPS
+journeys, 28 Fastify cases, 305 PostgreSQL passes across 18 files and authenticated
+SeaweedFS browser/Node/Python transfers. Six existing optional native database skips
+remain explicit, not newly qualified. Markdown Biome and git diff --check pass.
+An initial check on the stale checkout
+failed on pre-existing untracked DMS verification artifacts; the latest committed ignore
+rules exclude them, and current check passes without modifying those artifacts.
+
+Runtime limit: three old owner-test app containers are exited with missing Docker Desktop
+WSL bind mounts; their stateful project containers are absent from the current engine.
+The persistent installation therefore has no current live end-to-end pass. No restart,
+reset, reseed, migration, credential change, deployment, commit or push was performed.
+Only this progress assessment/current-position note was edited; other worktrees and
+handoffs were preserved, and disposable test resources cleaned up normally.
+
+Recommended next scope: finish DMS-I20's frozen qualification and evidence report, prepare
+an explicitly scoped restoration/current-version combined owner-test installation without
+resetting data, and agree APP-001's first business feature (Document Approval is the
+already recorded candidate) before its backend/contracts/UI implementation. Actual
+central/customer Linux/Dokploy DNS/TLS/SMTP/time, off-host recovery, existing-installation
+cutover and operator acceptance remain separate target work. Source/data migration and
+mobile remain outside this assessment's scope.
 
 TCP-CI-001 — **In progress** (owner: Codex control-plane implementation thread,
 2026-11-07). PR #15 CI remediation; standalone fixes verified, worker-fixture isolation

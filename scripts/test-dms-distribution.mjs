@@ -237,6 +237,23 @@ try {
       environment: { NODE_EXTRA_CA_CERTS: '/fixture/ca.crt' },
       volumes: [caVolume],
     };
+  for (const name of ['dms-api', 'coordinator', 'dms-maintenance']) {
+    Object.assign(services[name].environment, {
+      CONTROL_PLANE_ORIGIN: 'https://central.fixture.test',
+      CONTROL_PLANE_VERIFICATION_KEYS_FILE: '/fixture-policy/trust.json',
+      CONTROL_PLANE_RECOVERY_MARKER_FILE: '/fixture-policy/marker',
+    });
+    services[name].volumes.push(
+      './qualification/policy/trust.json:/fixture-policy/trust.json:ro',
+      './qualification/policy/marker:/fixture-policy/marker:ro',
+    );
+  }
+  mkdirSync(join(fixture, 'policy'), { mode: 0o700 });
+  for (const file of ['trust.json', 'marker'])
+    writeFileSync(join(fixture, 'policy', file), '', { mode: 0o600 });
+  services['dms-maintenance'].volumes.push(
+    './qualification/deployment.mjs:/app/qualification-deployment.mjs:ro',
+  );
   services.coordinator.volumes.push(
     './qualification/observe.mjs:/app/qualification-observe.mjs:ro',
   );
@@ -349,6 +366,18 @@ try {
     services['dms-maintenance'].image = `thaarei-dms-api:${version}`;
     writeOverlay();
     await dms('migrate');
+    await compose([
+      '--profile',
+      'tools',
+      'run',
+      '--rm',
+      '--no-deps',
+      '-T',
+      '--user',
+      `${process.getuid()}:${process.getgid()}`,
+      'dms-maintenance',
+      '/app/qualification-deployment.mjs',
+    ]);
     await compose(['up', '-d', '--no-build', 'dms-api']);
     await until('unready');
     await driver('refresh');
@@ -357,6 +386,20 @@ try {
     console.log(
       'Upgrade retained authority identity, signing keys, operator/work grants and enrolled consumer',
     );
+  }
+  if (!previousImage) {
+    await compose([
+      '--profile',
+      'tools',
+      'run',
+      '--rm',
+      '--no-deps',
+      '-T',
+      '--user',
+      `${process.getuid()}:${process.getgid()}`,
+      'dms-maintenance',
+      '/app/qualification-deployment.mjs',
+    ]);
   }
   // Real signed scanner databases only; no permissive daemon or mocked clean result.
   const incoming = join(install, 'signatures-incoming');

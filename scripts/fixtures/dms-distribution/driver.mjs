@@ -520,6 +520,21 @@ if (mode === 'verify') {
     headers: { authorization: `Bearer ${state.accessToken}` },
   });
   check([401, 403].includes(response.status), 'Suspended consumer retained access');
+} else if (mode === 'deployment-closed') {
+  const result = await token();
+  const headers = { authorization: `Bearer ${result.access_token}` };
+  const diagnostics = await call('/v1/capabilities', {
+    headers: { ...headers, prefer: 'include-deployment-status' },
+  });
+  check(
+    diagnostics.status === 200 && (await diagnostics.json()).deploymentAccess === 'closed',
+    'Restored deployment diagnostics must report closed access',
+  );
+  const response = await call(`/v1/documents/${state.documentId}`, { headers });
+  check(
+    response.status === 403 && (await response.json()).code === 'DEPLOYMENT_RESTRICTED',
+    'Restored deployment must deny business access',
+  );
 } else if (mode === 'foundation') {
   check((await call('/health/ready/auth')).status === 200, 'Previous authority unavailable');
 } else if (mode === 'ready' || mode === 'unready') {

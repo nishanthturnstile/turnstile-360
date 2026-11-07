@@ -265,7 +265,32 @@ export async function qualifyRecovery({
     cpSync(join(install, '.qualification.json'), join(recovered, '.qualification.json'));
     await recover('recovery-open', { ...input, backupId, accessReviewed: true });
     await targetCompose(['--profile', 'tools', 'run', '--rm', '--no-deps', 'broker-init']);
+    writeFileSync(
+      join(recovered, 'deploy/qualification/policy/marker'),
+      randomBytes(36).toString('base64url'),
+      { mode: 0o600 },
+    );
     await recover('up', {});
+    const authDeadline = Date.now() + 120000;
+    while ((await targetDriver('foundation', true)).status !== 0) {
+      if (Date.now() > authDeadline) throw new Error('Restored authority unavailable');
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    // Restore never opens business access using the backed-up deployment decision.
+    // Issue a fresh genuine proof only after demonstrating denial on the restored API.
+    await targetDriver('deployment-closed');
+    await targetCompose([
+      '--profile',
+      'tools',
+      'run',
+      '--rm',
+      '--no-deps',
+      '-T',
+      '--user',
+      `${process.getuid()}:${process.getgid()}`,
+      'dms-maintenance',
+      '/app/qualification-deployment.mjs',
+    ]);
     const deadline = Date.now() + 300000;
     while ((await targetDriver('ready', true)).status !== 0) {
       if (Date.now() > deadline) throw new Error('Restored services did not become ready');
