@@ -10,6 +10,26 @@ been completed, verified, or left pending.
 
 ## Current position
 
+2026-11-07 installation automation planning is complete: the proposed
+[specification](docs/deployment/installation_specification.md) defines IA-R01–18 and the
+[implementation plan](docs/deployment/installation_implementation_plan.md) sequences nine
+increments, with proposed technical design in architecture.md. All four workspace gates
+pass. Installer implementation starts with IA-I01 baseline/contract review and the
+remaining real-document evidence gate; no installer or target rollout was implemented
+by this planning task. The existing local installation remains unchanged.
+
+2026-11-07 processing follow-up: owner ran the prepared processing command successfully.
+Live checks now confirm four authorized worker roles, enabled admission policy, healthy
+publisher/scan/extract/heavy/scanner/broker containers and HTTPS API/processing readiness
+200. The installed Turnstile machine service reads DMS capabilities with full deployment
+access, PDF/PNG/plain-text formats, secure-only/searchable profiles and English. Central
+receives independent approved/acknowledged reports and DMS processingReady=true within
+the configured reporting cadence. Company setup remains complete and access open.
+Installer planning has no remaining configuration blocker. Real-file document smoke
+verification on this fresh installation and production/clean-host/recovery acceptance
+remain explicit checks to include in the plan. Older unconfigured-processing statements
+below describe earlier snapshots and are superseded by this update.
+
 2026-11-07 live manual-testing update: owner completed central registration, pairing,
 approval, customer verification/login and company setup. Protected administrator handover
 and release opening are complete. Both product approvals are acknowledged and both
@@ -164,6 +184,58 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+INSTALLATION-AUTOMATION-PLAN-01 — **Completed** (planning only; owner: Codex, 2026-11-07).
+Owner authorized creation of the installer specification and implementation plan after
+the successful local setup and processing-readiness assessment. Capture supported
+release packaging, operator-owned repeatable stages, guided staff/customer checkpoints,
+safe retries/resume, secret handling and clean-host/functional/recovery acceptance.
+Read the existing distribution, private handover and deployment-control boundaries
+before defining the proposal. This task writes planning documents only; it does not
+implement an installer, provision another host or change the running installation.
+Created docs/deployment/installation_specification.md (IA-R01–18) and the nine-increment
+installation_implementation_plan.md, with proposed technical design in architecture.md
+and a documentation-index entry. Requirements cover complete releases, typed intent,
+durable owner-command reconciliation, real MFA/approval/customer proof, processing and
+independent-host recovery/acceptance. Kept adoption/update/reset and target rollout
+outside this planning scope. Reviewed stage dependencies, actual owner-command retry
+guarantees, the verification/client ordering and the proposed private login-proof boundary.
+Verification on 2026-11-07: Node 24.21.0/pnpm 12.16.1 match; pnpm check, pnpm build,
+pnpm test and pnpm test:integration pass. Build/unit tasks reused valid Turbo cache;
+integration exercised actual central HTTPS/PostgreSQL, both product adapters, uncached
+owning database/migration/isolation tests and pinned SeaweedFS transfer checks. Biome,
+git diff --check, 187 local documentation links/anchors and unique requirement/increment
+IDs pass. No application code or live installation configuration/data changed; only
+disposable test fixtures ran. Handoff: IA-I01 is the first implementation increment;
+current-install document smoke, installer failure/resume qualification, independent
+Linux/Dokploy and off-host recovery/target acceptance remain unpassed future gates.
+
+INSTALLER-PLANNING-PREFLIGHT-01 — **Completed** (assessment; owner: Codex, 2026-11-07).
+Owner reports successful DMS processing setup and working Turnstile organization/setup
+and asks whether anything blocks installer planning. Inspect actual selected-profile
+readiness, worker/policy configuration, capabilities and central reporting. Keep any
+remaining document/recovery/target acceptance checks distinct from prerequisites for
+writing the plan. No new provisioning or business-data changes are authorized by this
+readiness assessment.
+Private PROCESSING.json records successful startup at 14:44 UTC. Source/SQL and
+container inventory confirm exactly one authorization for publisher/scanner/extractor/
+heavy, admission revision 1 enabled for text/plain, application/pdf and image/png, and
+healthy processing dependencies. Live installed Turnstile CapabilitiesService read
+succeeds with binding validation, deploymentAccess=full, three formats, two profiles
+and English. Both canonical HTTPS readiness endpoints return 200/ready=true. Central
+reports are approved/acknowledged and independent, with DMS processingReady=true;
+observed report ages are within the configured 13.5–15 minute successful-sync cadence.
+Company setup is complete, writes open and no current documents were present. No
+fresh-install real-file upload/scan/extraction/OCR/download journey was claimed verified.
+These functional checks, failed/restarted install resume, independent clean Linux target,
+versioned reviewed release and target recovery acceptance belong in the installer plan;
+none prevents drafting it now. T3 project scheduled-task listing returned no tasks, so
+no separate scheduled automation was claimed inspected or validated; organization setup
+was confirmed directly. No runtime, policy, data, code or schedule was changed. Evidence:
+private PROCESSING-READINESS.json, installed service probe, read-only SQL and container/
+central report state. git diff --check passes; workspace suites were not rerun for this
+operational assessment. No installer implementation or architecture adoption performed.
+
 
 INSTALLATION-AUTOMATION-ASSESS-01 — **Completed** (proposal/assessment only; owner: Codex, 2026-11-07).
 Owner requests an evidence-based opinion on streamlining repeated fresh infrastructure

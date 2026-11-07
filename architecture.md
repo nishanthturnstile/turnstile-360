@@ -5994,6 +5994,157 @@ interfaces private. Persistent data and off-host backups must survive app redepl
 See the [Dokploy runbook](docs/runbooks/dokploy.md) for operator steps; the complete target
 profile, sizing, upgrades and health semantics are defined above.
 
+## Proposed installation automation
+
+**Planning proposal, 2026-11-07:** The owner authorized the installation specification
+and delivery plan following the local setup journey. Installer implementation, new
+proof contracts and target rollout are separate authorizations. The existing central,
+customer authority and recovery designs above retain their accepted policy. This section
+owns the proposed technical design; the
+[specification](docs/deployment/installation_specification.md) owns IA-R01–18 and the
+[implementation plan](docs/deployment/installation_implementation_plan.md) owns IA-I01–09.
+Actual delivery/evidence belongs in IN_PROGRESS.md.
+
+### Installer placement and release ownership
+
+Use a versioned operator-run engine with a thin Docker-only target launcher, distributed
+with a complete combined customer release. Implement orchestration as a server-only
+workspace package, with pure versioned input/result validation separated from adapters.
+Finalize its package name/export boundaries in IA-I01; do not create scaffolds or schema
+migrations during planning. Adapters invoke packaged owning private commands or
+authenticated HTTP contracts, never another application's repositories/database code.
+No persistent installer API or inbound customer deployment agent is required.
+
+The customer host needs supported Docker/Compose and reviewed artifacts, not the source
+checkout or host Node/Python toolchains. Release assembly uses the pinned workspace
+toolchain and monorepo-root builds. Reuse DMS bundle verification/inventories/notices and
+add the exact Turnstile API/web/private commands and reporter. Bind the engine, profile,
+images, migrations and protected product-release inventory to one compatible release.
+Keep the existing DMS-only distribution independently supported. Central releases remain
+separate and are reused across customer installations.
+
+Keep infrastructure preparation separate from application stages: the operator provides
+the authorized host/Dokploy project, domains, production relay, capacity, secret custody
+and backup destination. The adapter validates them and configures only the selected
+application. Central remains registry, signed approval and disclosed reporting under
+TCP-R13; it stores no customer migrator/provider keys and issues no deployment commands.
+Application containers receive no Docker socket or installer/migration authority.
+
+### Installation inputs and protected state
+
+| Contract                  | Proposed content and ownership                                                                                                                                                                                                                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Installation intent       | Strict versioned nonsecret desired profile, environment/region label, customer key, canonical origins, selected release, ingress/network binding, SMTP transport metadata, explicit admission limits and references to private input handles. Unknown fields fail validation.               |
+| Generated local inventory | Durable local installation/tenant/Turnstile application identities and independently identified service clients/products. Generate once before dependent effects; export nonsecret bindings for central import. Central-assigned record IDs are retained from authoritative receipts.       |
+| Private input store       | Protected files/stdin or operator-scoped secret handles for role/service credentials, pairing candidates, temporary user proof and provider access. File permissions and mounts restrict each owner. Separate typed JSON, raw env and key writers; no wildcard dotenv rewrite.              |
+| Stage journal             | Engine/contract version, release binding, nonsecret intent fingerprint, installation binding, stage/operation ID, expected revisions, state, safe receipt reference, evidence time and next actor/action. No passwords, cookies, pairing codes, bearer tokens or low-entropy secret hashes. |
+| Evidence record           | Exact artifact/target bindings, bounded observed statuses, redacted request/receipt IDs, verification category/time and outstanding checks. Technical readiness and signed human target acceptance are different fields.                                                                    |
+
+Persist the binding and protected candidate material durably before external effects.
+Use exclusive creation/atomic replacement, appropriate fsync and owner permissions;
+secret generation must survive a crash before a downstream call. Keep journals private
+even though their exported projection excludes secrets. Secret values never pass through
+shell arguments, source, browser builds, rendered Compose output or general logs.
+Remove transient user proof when no longer needed; retain/recover pairing candidates
+according to their owning protocol rather than deleting them on an ambiguous response.
+
+One mutating invocation owns an installation lock. Read-only status can run concurrently;
+resume reconciles a stale lock only after proving no active owner remains. The journal
+records desired and last-observed state; it is not authorization and cannot override
+current application/central decisions. Missing/corrupt state or a different binding is
+a recovery problem, not permission to create new accounts/secrets or delete volumes.
+
+### Stages and replay rules
+
+Proposed operator actions are `plan`, `install`, `status`, `resume` and `verify`.
+These are interface labels until implemented, not current commands. Plan/default verify
+are read-only. Mutation starts only under an authorized installation intent. Versioned
+machine results distinguish completion, waiting for a named human action, retryable
+unavailability, conflicting state and manual reconciliation; assign exact finite codes
+and compatibility rules in IA-I03 before publishing a CLI.
+
+| Stage                                       | Dependencies and completion evidence                                                                                                                                                                                                             |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Preflight and artifact validation           | Trusted bundle/image compatibility; supported runtime/resources/clock; canonical DNS/TLS and private routing; protected inputs and selected profile.                                                                                             |
+| Base configuration and owned initialization | Retained identities/secrets; owning role/migration/bootstrap commands; storage and broker definitions; minimal authority/API running with business gates closed. Export nonsecret central inventory.                                             |
+| Central registration and activation         | Staff reviews import, delivers each protected pairing artifact and approves each product with current MFA. Local sync verifies signed decisions and activation acknowledgements independently.                                                   |
+| Customer identity and client integration    | Selected user completes actual email/password setup. Verified authority-admin credentials allow distinct local clients, enrollment and explicit initial grants. Normal product sign-in becomes available only when registration/policy are real. |
+| Private administrator handover              | Current ordinary-login proof, selected user/operator, compatible release, revision and recovery epoch validated by owning private commands. Bootstrap and opening remain explicit protected transitions.                                         |
+| Processing and workspace completion         | Operator-selected admission/work clients/signatures/services; administrator-confirmed company/time-zone/first unit through normal product setup. These independent branches may wait on different actors.                                        |
+| Verification and handover                   | Current technical/workspace state, separate permission/service probes, authorized document test evidence, recovery/backup custody and accountable target sign-off.                                                                               |
+
+Each mutating adapter declares its real retry contract. Reuse existing durable candidate
+and receipt recovery for deployment pairing/rotation; reuse exact keys/payloads/revisions
+for owner-provided receipt commands. After a lost acknowledgement inspect authoritative
+state before advancing. A credential/password/proof change is not the same payload under
+the old operation ID. If an expired proof requires a new operation, first reconcile the
+old result and obtain current authority/revision. Never replay stale approval/grant state
+after an intervening suspension, replacement, role removal or recovery.
+
+Fresh-only commands such as DMS init cannot be blindly rerun over partial configuration.
+Recover retained files and inspect owning state; add an owning inspect/reconciliation
+contract where needed during implementation. If a committed outcome cannot be identified
+safely, stop with a precise operator action. Do not promise exactly-once effects from a
+journal alone. Stage completion is reevaluated when its live prerequisites change.
+
+### Guided identity and operator handover
+
+Solve the observed verification/client bootstrap ordering explicitly: authority admin
+verification precedes client issuance, while product sign-in requires those real clients.
+Use an allowlisted setup-completion destination that shows preparation state until the
+private installer provisions them. Preserve actual verification/password flows and
+normal issuer/callback policy; do not mark verification in SQL or invent a login client.
+Expired mail/reset/MFA states lead to the owning recovery flow with bounded safe errors.
+
+Replace routine HttpOnly-cookie copying with a proposed scoped proof handoff. The private
+operator selects the intended administrator and creates a bounded challenge bound to
+installation/tenant/application, release, action, current revision/epoch and operation.
+After normal login, an explicit authenticated, CSRF-protected customer confirmation can
+produce a short-lived audience-bound proof for that challenge. The private release command
+must validate issuer/trust, expiry, one-time use and live identity/session before acting;
+proof alone grants no authority. Reuse current private bootstrap/open commands and their
+operator fence, release inventory and revision/epoch checks. Refresh proof after a
+transition as required rather than replacing the payload of a pending command.
+
+IA-I01/06 must settle and review proof signing/key custody, challenge delivery, expiry,
+replay storage and session revocation semantics before introducing routes or persistence.
+No token format, public granting endpoint or new OAuth device flow is accepted here.
+Until qualified, the existing protected private handover runbook remains authoritative.
+Production passwords/mailboxes/TOTP and migration credentials never enter central or an
+installer browser UI. The product browser retains its normal session protections.
+
+### Deployment adapters and readiness
+
+The isolated local adapter provides explicit test CA/Mailpit/loopback routing and uses
+the reserved local-port table. Validate Windows browser versus WSL/container trust and
+path resolution separately; trust only the public local CA in the testing browser/OS.
+Linux tools require Linux paths, including translated Windows-drive/WSL UNC selections.
+Keep the private CA key local. Disposable fixture actors may automate real email/TOTP
+handlers; no production skip-verification/MFA/approval flag is introduced.
+
+The Dokploy adapter uses an operator-scoped provider context or rendered configuration
+applied by the operator. Validate API/version capabilities before use and limit changes
+to the selected project/application; preserve volumes. Dokploy owns canonical ingress/TLS,
+with explicit same-origin `/api`/`/identity` routing and no public private-job/operator
+routes. Render secrets only into their protected owning settings. Host/cloud provisioning
+is a separate adapter scope, not an application runtime responsibility.
+
+Status is a projection of independent facts: per-product activation/acknowledgement,
+identity/client/enrollment, protected release state, API readiness, selected processing
+readiness, company completion and evidence age. Technical readiness, workspace readiness,
+document-test result and accountable acceptance stay separate. Missing mail/client/worker/
+admission/signature evidence produces a named pending condition. A report is self-reported
+health, not externally verified uptime. Use the existing cadence and freshness thresholds.
+Read-only verification does not generate test organizations/accounts/documents/grants.
+
+Each independent region/environment has new identities, private state and one tenant.
+Replicas/restarts share their installation's existing identity. Recovery retains its
+coherent binding/keys but follows current external markers, quarantine and central
+reconciliation before private release opening. The installer must recognize recovery
+markers and refuse to treat them as fresh setup. No active-active topology, automatic
+downgrade, secret rollback or destructive reset follows from this proposal. Independent
+off-host combined recovery qualification is required before target acceptance.
+
 ## Engineering and verification architecture
 
 Shared TypeScript configuration is in `tooling/typescript`: strict mode, checked indexed
