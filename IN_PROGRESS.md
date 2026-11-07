@@ -132,8 +132,8 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 ## Active work
 
 TCP-CI-001 — **In progress** (owner: Codex control-plane implementation thread,
-2026-11-07). PR #15 CI remediation; local fixes/verification complete, latest-head remote
-checks pending. No merge, deployment or persistent-installation change is authorized.
+2026-11-07). PR #15 CI remediation; standalone fixes verified, worker-fixture isolation
+correction under validation, latest-head remote checks pending. No merge, deployment or persistent-installation change is authorized.
 
 Fixed standalone verification's clean-checkout bootstrap: fixture modules consuming compiled
 workspace packages now load only after the owning Turbo dependency build. Missing output
@@ -160,8 +160,29 @@ was made. The safe diagnostic failure path and mismatched/owner file-read probes
 Prior control-plane qualification remains historical evidence for its recorded helper
 hashes; these CI changes affect test harnesses only. GitHub's original workspace and
 container-build checks passed; subsequent standalone success must be verified on the new
-fix head. Next: push the ownership/diagnostic fix, inspect all latest-head PR checks through
-the existing watch, fix any remaining failures and close TCP-CI-001 only when all pass.
+fix head. `2b14ced` now passes standalone in both push/PR runs. One workflow's eight
+checks passed, but the other run's `checks` job failed with a worker-test reset deadlock
+and a subsequent RabbitMQ timing assertion. The full PR is therefore not yet green.
+Next: await actual worker process-group exit and private HTTP completion before fixture
+reset, observe the native confirmed-retry failure rather than a fixed sleep/cached queue
+statistic, validate and push that focused fixture correction. No production handler is
+being replaced. The existing watch remains active; close TCP-CI-001 only after all
+latest-head push/PR checks pass.
+
+Worker cleanup now awaits native process-group close and real private-handler `onSend`
+completion before parent fixture deletion can start. All three explicit worker-stop callers
+await exit; the killed-prefork regression asserts actual process termination. The lost
+confirmed-retry check observes Celery's native postrun `REJECTED/Unroutable` outcome via a
+finite fixture-only event, then reads the actual queue with basic-get instead of sleeping
+one second and trusting periodically sampled management counts. The production task,
+confirmed publisher, private HTTP handlers and database locking remain unchanged. Focused
+full enrollment/work verification passes 81 tests with 3 existing optional native skips;
+Current static checks, build and unit tests pass. The focused full enrollment/work lane
+passes 81 tests with 3 existing optional native skips. Complete workspace integration is
+active at `/tmp/pr15-worker-integration.log`; no pass is claimed until completion.
+Next: push the fixture-only race correction and use the existing watch to inspect every
+check from both workflow runs on the new head, not just one eight-job notification.
+
 
 TCP-I08 — **In progress** (release/recovery qualification; owner: Codex control-plane
 implementation thread, 2026-11-07). **The selected isolated local implementation and

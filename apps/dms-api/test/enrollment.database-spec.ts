@@ -14,6 +14,7 @@ import {
 } from '@thaarei/deployment-control';
 import { DMS_MACHINE_SCOPES, enrollmentResponseSchema } from '@thaarei/dms-contracts';
 import { WORK_ROLE_SCOPE, type WorkRole } from '@thaarei/dms-contracts/private';
+import type { FastifyInstance } from 'fastify';
 import { importPKCS8, SignJWT } from 'jose';
 import { Pool } from 'pg';
 import { createApplication } from '../src/bootstrap.js';
@@ -1961,6 +1962,7 @@ describe('machine registration and transactional enrollment', () => {
           origin: string;
         const workers: Array<ReturnType<Awaited<ReturnType<typeof workBrokerFixture>>['worker']>> =
           [];
+        const activeWorkRequests = new Set<string>();
         const identities = new Map<WorkRole, { clientId: string; secret: string; token: string }>();
         const work = () => privateApp.get(WorkService);
         const tokenRefreshes = new Map<WorkRole, Promise<void>>();
@@ -2060,6 +2062,15 @@ describe('machine registration and transactional enrollment', () => {
           vi.stubEnv('DMS_WORK_ISSUER_URL', config.AUTH_ISSUER_URL);
           vi.stubEnv('DMS_WORK_ALLOW_HTTP', 'true');
           privateApp = await createWorkApplication();
+          // Observe the real handler lifetime, including requests whose worker disconnects.
+          const server: FastifyInstance = privateApp.getHttpAdapter().getInstance();
+          server.addHook('onRequest', async (request) => {
+            activeWorkRequests.add(request.id);
+          });
+          server.addHook('onSend', async (request, _reply, payload) => {
+            activeWorkRequests.delete(request.id);
+            return payload;
+          });
           await privateApp.listen(0, '127.0.0.1');
           origin = await privateApp.getUrl();
           mq = await workBrokerFixture();
@@ -2087,8 +2098,16 @@ describe('machine registration and transactional enrollment', () => {
               );
           });
         });
-        afterEach(() => {
-          for (const worker of workers.splice(0)) worker.stop();
+        afterEach(async () => {
+          await Promise.all(workers.splice(0).map((worker) => worker.stop()));
+          await new Promise<void>((resolve) => setImmediate(resolve));
+          // Parent beforeEach deletes shared rows. A killed worker's already accepted
+          // HTTP request must release its transaction before that cleanup can begin.
+          await waitFor(
+            async () => activeWorkRequests.size,
+            (count) => count === 0,
+            5000,
+          );
         });
         afterAll(async () => {
           await privateApp?.close();
@@ -3657,7 +3676,7 @@ describe('machine registration and transactional enrollment', () => {
             } finally {
               stopped = true;
               await pump;
-              worker.stop();
+              await worker.stop();
               await daemon.close();
               await rm(folder, { recursive: true, force: true });
             }
@@ -6083,7 +6102,7 @@ describe('machine registration and transactional enrollment', () => {
         it('recovers a lost confirmed-retry publication under the persisted execution budget', async () => {
           const { job } = await queued();
           await publish();
-          brokerWorker('retry_once');
+          const worker = brokerWorker('retry_once');
           await waitFor(
             () => state(job.id),
             (v) => v.state === 'RUNNING',
@@ -6093,8 +6112,21 @@ describe('machine registration and transactional enrollment', () => {
             () => state(job.id),
             (v) => v.state === 'RETRY_WAIT',
           );
-          await new Promise((r) => setTimeout(r, 1000)); // let the confirmed mandatory retry observe the missing binding
-          expect((await mq.api('/queues/dms/document.scan')).messages_ready).toBe(0);
+          // Observe native Celery's postrun signal after the unchanged confirmed
+          // publisher rejects the missing binding; broker management counts are cached.
+          await waitFor(
+            async () => worker.outcomes(),
+            (outcomes) =>
+              outcomes.some((value) => value.state === 'REJECTED' && value.reason === 'unroutable'),
+          );
+          expect(
+            await mq.api('/queues/dms/document.scan/get', 'POST', {
+              count: 1,
+              ackmode: 'ack_requeue_true',
+              encoding: 'auto',
+              truncate: 10000,
+            }),
+          ).toHaveLength(0);
           await withTenant(owner, tenantId, (db) =>
             db.query(
               "UPDATE dms.work_job SET next_eligible_at=now()-interval '100 seconds',recover_at=now()-interval '1 second' WHERE id=$1",
@@ -6202,7 +6234,8 @@ describe('machine registration and transactional enrollment', () => {
             () => state(job.id),
             (v) => v.state === 'RUNNING',
           );
-          worker.stop();
+          await worker.stop();
+          expect(worker.child.exitCode !== null || worker.child.signalCode !== null).toBe(true);
           expect((await work().recover()).recovered).toBe(0);
           await withTenant(owner, tenantId, async (db) => {
             await db.query(
