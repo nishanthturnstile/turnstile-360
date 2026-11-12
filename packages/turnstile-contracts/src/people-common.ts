@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import { configurationNameKey, normalizeConfigurationName } from './onboarding.js';
 
-// Feature contracts only. The installed flat catalog remains unchanged until I03/I04.
-export const PEOPLE_CATALOG_VERSION = 1;
-export const PEOPLE_API_VERSION = '1.0.0';
+// Public product catalogue. Legacy private replacement inputs remain a separate v1 contract.
+export const PEOPLE_CATALOG_VERSION = 2;
+export const PEOPLE_API_VERSION = '1.1.0';
 export const PEOPLE_LIMITS = {
   bodyBytes: 16_384,
   responseBytes: 1_048_576,
@@ -47,6 +47,8 @@ export const PEOPLE_PERMISSIONS = [
   'turnstile:configuration:manage',
   'turnstile:people:manage',
   'turnstile:roles:manage',
+  'turnstile:incidents:read',
+  'turnstile:risks:read',
   'turnstile:units:read',
   'turnstile:units:manage',
 ] as const;
@@ -56,6 +58,8 @@ export const COMPANY_ONLY_PERMISSIONS: readonly PeoplePermission[] = [
   'turnstile:configuration:manage',
   'turnstile:people:manage',
   'turnstile:roles:manage',
+  'turnstile:incidents:read',
+  'turnstile:risks:read',
 ];
 export const peoplePermissionSchema = z.enum(PEOPLE_PERMISSIONS);
 export const peopleIdSchema = z.uuid().toLowerCase();

@@ -3,10 +3,10 @@ WORKDIR /workspace
 ENV NEXT_TELEMETRY_DISABLED=1 TURBO_TELEMETRY_DISABLED=1
 RUN npm install --global pnpm@12.16.1
 COPY . .
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=thaarei-pnpm-12,target=/pnpm/store --mount=type=cache,id=thaarei-pnpm-metadata,target=/root/.cache/pnpm pnpm install --frozen-lockfile --store-dir /pnpm/store
 RUN pnpm exec turbo run build --filter=@thaarei/thaarei-control-plane
 RUN rm -rf apps/thaarei-control-plane/.next/cache
-RUN pnpm --filter @thaarei/thaarei-control-plane deploy --prod /runtime
+RUN --mount=type=cache,id=thaarei-pnpm-12,target=/pnpm/store --mount=type=cache,id=thaarei-pnpm-metadata,target=/root/.cache/pnpm pnpm --filter @thaarei/thaarei-control-plane deploy --prod --prefer-offline --store-dir /pnpm/store /runtime
 RUN node scripts/package-control-plane.mjs apps/thaarei-control-plane /runtime
 
 FROM node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20

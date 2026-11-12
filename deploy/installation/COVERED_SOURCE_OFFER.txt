@@ -1,0 +1,40 @@
+Thaarei — third-party covered-source offer (module-poc candidate)
+
+For third-party programs in this distribution whose licenses require a source offer,
+Thaarei offers any third party the complete corresponding source for the exact covered
+binaries, including covered modifications and required build/installation materials,
+under the applicable upstream licenses. Identify the exact image IDs from the verified
+installation.json payload and the module release from modules/artifact-inventory.json
+when requesting source. The outer payload covers the engine, DMS, PostgreSQL and the
+selected Turnstile API/web images; the inner inventories cover the selected modules.
+
+Contact any or all of:
+  nishanth@thaarei.com
+  technology@thaarei.com
+  muthurema@thaarei.com
+
+This offer remains valid for at least three years from the date Thaarei last supplies
+these binaries. Where the applicable license requires a longer period while spare
+parts or customer support are offered for a product model, that longer period applies.
+Network delivery is available without charge. If physical delivery is requested,
+charges will not exceed the reasonable physical cost of conveying the source.
+No further restriction is placed on recipients' rights under the applicable license.
+
+NOTICES and modules/NOTICES accompany this bundle. Upstream license/copyright files
+remain in the images, including packaged JavaScript dependency licenses and OS package
+copyright files. This limited candidate does not include a distribution-wide SPDX SBOM,
+per-image legal archives or source-access.json. Those materials and the exact covered
+source/build records must be assembled, reviewed and retained by the supplying release
+operator before customer distribution; requests under this offer are not limited to
+the files already present in this bundle. Local functional qualification does not
+establish completeness of corresponding source or license compliance.
+
+This offer covers third-party material and any modifications covered by its applicable
+license. It does not grant an open-source license to independent Thaarei-owned code or
+documentation, which remains under the accompanying LICENSE reproduced in NOTICES.
+Third-party license texts, notices and exceptions remain applicable and are retained.
+
+This candidate contains no processing workers, storage service, RabbitMQ or ClamAV image.
+Their separate complete-DMS distribution materials must accompany any later distribution
+that includes them. A locally assembled candidate does not authorize publishing,
+customer release or deployment.

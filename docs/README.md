@@ -18,6 +18,19 @@ mean a feature is implemented.
 | Turnstile design system   | [Designer/developer guide](turnstile/design-system.md)                                                                                                                                                                                                                                                                                                  |
 | Workspace                 | [Implementation plan](workspace/workspace_implementation_plan.md), [engineering standards](standards/workspace.md)                                                                                                                                                                                                                                      |
 
+Turnstile module delivery: [specification](turnstile/modules/module_delivery_specification.md)
+and [implementation plan](turnstile/modules/module_delivery_implementation_plan.md) —
+central staff catalogue/assignment, dependency visualization, selected customer images
+and signed module activation; [Astra review and dispositions](turnstile/modules/module_delivery_review.md)
+precede implementation.
+
+[Module contracts and ownership](turnstile/modules/module_contracts.md) records the MOD-I01
+shared-package conventions, fixed foundation inventory and retry/compatibility handoff.
+The [catalogue operations runbook](runbooks/module-catalogues.md) covers MOD-I02 staff
+classification/publication and independently provisioned public release trust.
+The [assignment runbook](runbooks/module-assignments.md) covers MOD-I03 per-product
+selection, dependency confirmation, desired-state approval and current-state recovery.
+
 Discovery and design proposals remain beside their feature's specification and plans.
 They preserve rationale and earlier decisions; the accepted specification, architecture
 and current progress take precedence over historical descriptions.
@@ -73,3 +86,13 @@ Permission-aware discovery: [runbook](runbooks/dms-discovery.md).
 DMS deployment approval/setup and combined customer profiles: [deployment control](runbooks/dms-deployment-control.md).
 
 - [Turnstile deployment approval and reporter operations](runbooks/turnstile-deployment-control.md)
+
+- [Selected Turnstile delivery](runbooks/module-delivery.md): MOD-I04 source/profile-bound API/web builds, verified private local bundles, central references and qualification.
+
+- [Installation intent milestone](runbooks/installation-intents.md): MOD-I05 central reservation/issuance, verified combined preparation, recovery and qualification.
+
+- [Signed module decisions](runbooks/module-decisions.md): staged v2 enforcement, installed release context and qualification boundaries.
+- [Module access](runbooks/module-access.md): customer capabilities, explicit reader permissions and guarded selected entries.
+- [Module transitions](runbooks/module-transitions.md): staff activation, restrictive changes and private profile cutover/recovery.
+
+Fresh combined module installation: [operator handover runbook](runbooks/installation-handover.md) and [local qualification record](turnstile/modules/module_installation_qualification.md).

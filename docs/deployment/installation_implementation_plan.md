@@ -13,12 +13,21 @@ Dokploy adapter. Reuse the existing DMS distribution/private commands and centra
 Keep runtime authorization in the owning applications. Do not promote the dated local
 helpers unchanged or add deployment execution to the central application.
 
+**Module delivery extension, 2026-11-09:** The owner requested central selection,
+dependency visualization, selected images and signed module activation. Follow the
+[module plan](../turnstile/modules/module_delivery_implementation_plan.md): MOD-I01
+contracts extend IA-I01; MOD-I04 artifact exclusion/inventory gates IA-I02; MOD-I05/06
+intent/activation contracts gate the module-specific IA-I03 adapter. Generic journal,
+host/TLS and private provisioning work may proceed without all business modules.
+The module POC now includes real central assignment/enforcement, superseding the earlier
+suggestion to defer it. No application implementation is claimed by this planning update.
+
 ## Existing primitives and delivery gaps
 
 | Area                  | Reuse                                                                                                                                                                       | New work                                                                                                                                       |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | Distribution          | DMS release builder, exact image/checksum inventory, Docker-only wrapper, notices/source offers and image verifiers.                                                        | Complete compatible Turnstile/DMS customer bundle, including product maintenance commands, web/API images, reporter and selected dependencies. |
-| Configuration         | DMS fresh-only initializer, explicit provisioning/migrations/storage init and processing broker-config CLI.                                                                 | Versioned installation intent/inventory, secret references, typed composition for all owners and safe partial-init reconciliation.             |
+| Configuration         | Combined signed-intent private preparation (MOD-I05), the DMS fresh-only initializer, explicit provisioning/migrations/storage init and processing broker-config CLI.       | Versioned installation intent/inventory, secret references, typed composition for all owners and safe partial-init reconciliation.             |
 | Central integration   | Nonsecret manifests, registry/revision controls, protected pairing artifacts, durable deployment-client candidate/receipt recovery, signed approval and separate reporters. | Guided inventory import, file validation/delivery and operator status/resume across both products.                                             |
 | Customer identity     | Verification/recovery, managed OAuth clients, local enrollment, distinct identity adapter and protected release commands.                                                   | Readiness-aware verification/sign-in sequence and a separately reviewed proof handoff preserving private grant authority.                      |
 | Processing/operations | Worker authorization, admission policy, signature importer, readiness/capabilities, coherent recovery and release barriers.                                                 | Selected-profile orchestration, consolidated evidence and a qualified complete customer recovery handoff.                                      |
@@ -46,6 +55,10 @@ administrator proof trust/transport and the verification-before-client ordering 
 adding endpoints or storage. Specify the exact supported platform matrix from the pinned
 release/runtime checks; do not guess target architecture or Compose support.
 
+Include MOD-I01's catalogue, dependency resolver, reserved fresh-registration identities,
+assignment/profile digests, signed intent and v1/v2 compatibility. Existing/local-first
+adoption keeps exported actual IDs; central-first reservation is not remote provisioning.
+
 Complete the still-pending current local real-file DMS journey only with an authorized
 test scope, or perform it in a disposable reproduction. Record actual scan, extraction,
 OCR, retrieval and original hashes independently from I20 fixture results. Do not invent
@@ -71,6 +84,9 @@ and the user-management release inventory. Include inventories/notices/source ma
 for all added images and a supported compatibility boundary. Install with no target
 build or mutable image substitution. Test missing archives, wrong images and incompatible
 profile/version refusal before database/configuration mutation.
+
+MOD-I04 must demonstrate actual module exclusion and profile-bound inventories before
+this complete customer release is frozen; a runtime feature flag alone cannot pass it.
 
 **Gate:** clean artifact-only Linux environment verifies/starts the actual packaged
 entrypoints and private commands without a checkout or host Node/Python. Ordinary

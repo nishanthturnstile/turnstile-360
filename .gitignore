@@ -22,3 +22,14 @@ deploy/data/
 # Private standalone backup/recovery configuration, proofs, archives and fences.
 .dms-*
 .next/
+# Generated only in isolated selected-module image builds.
+apps/turnstile-web/module-build-inputs.json
+apps/*/module-selection.json
+
+# Private resumable installation plans contain generated secrets.
+**/.installation-preparation.json
+**/.turnstile-preparation.json
+**/preparation-receipt.json
+**/.configuration-*.tmp
+**/.turnstile-*.tmp
+**/.installation-*.tmp

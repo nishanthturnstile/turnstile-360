@@ -29,7 +29,8 @@
     "zod": "4.6.7",
     "@thaarei/control-plane-contracts": "workspace:*",
     "@thaarei/deployment-control": "workspace:*",
-    "jose": "6.2.14"
+    "jose": "6.2.14",
+    "@thaarei/module-catalog": "workspace:*"
   },
   "devDependencies": {
     "auth": "1.7.14",

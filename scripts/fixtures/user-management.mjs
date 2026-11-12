@@ -209,7 +209,7 @@ const reapprove = {
 const mutation = (command) => ({ command, confirmation: impact });
 export const peopleExamples = {
   PermissionCatalog: {
-    catalogVersion: 1,
+    catalogVersion: 2,
     permissions: [
       { id: 'turnstile:access', applicability: 'scope_neutral', implies: [] },
       { id: 'turnstile:dms:capabilities:read', applicability: 'company_only', implies: [] },
@@ -220,6 +220,8 @@ export const peopleExamples = {
       },
       { id: 'turnstile:people:manage', applicability: 'company_only', implies: [] },
       { id: 'turnstile:roles:manage', applicability: 'company_only', implies: [] },
+      { id: 'turnstile:incidents:read', applicability: 'company_only', implies: [] },
+      { id: 'turnstile:risks:read', applicability: 'company_only', implies: [] },
       { id: 'turnstile:units:read', applicability: 'scope_aware', implies: [] },
       {
         id: 'turnstile:units:manage',
@@ -252,13 +254,13 @@ export const peopleExamples = {
   },
   ScopedUnitContext: { unit: site, ancestors: [root] },
   ScopedUnitDetail: { revision: 5, accessRevision: 3, unit: site, ancestors: [root] },
-  UserAccessContext: { catalogVersion: 1, accessRevision: 3, fingerprint: fixtureDigest, grants },
+  UserAccessContext: { catalogVersion: 2, accessRevision: 3, fingerprint: fixtureDigest, grants },
   AccessAwareUserSession: {
     user: { id: 'example-recipient', name: 'Samira Example', email: 'samira@example.test' },
     permissions: ['turnstile:access', 'turnstile:units:read', 'turnstile:units:manage'],
     session: { expiresAt: '2026-11-03T18:00:00Z', idleExpiresAt: '2026-11-03T10:30:00Z' },
     csrfToken: fixtureSecret,
-    access: { catalogVersion: 1, accessRevision: 3, fingerprint: fixtureDigest, grants },
+    access: { catalogVersion: 2, accessRevision: 3, fingerprint: fixtureDigest, grants },
   },
   PeoplePath: { id: fixtureMember.id },
   PeopleMutationHeaders: { 'idempotency-key': fixtureId(99) },

@@ -476,7 +476,14 @@ describe('People administration HTTP with real PostgreSQL and linked authority p
     expect(JSON.stringify(review.json()).includes(members.operator as string)).toBe(false);
     expect((await mutate('roles', command, null, 'unverified')).statusCode).toBe(403);
     const roleCatalog = (await get('catalog', 'verified')).json();
-    expect(roleCatalog.permissions).toHaveLength(7);
+    expect(roleCatalog.permissions).toHaveLength(9);
+    expect(roleCatalog.catalogVersion).toBe(2);
+    for (const id of ['turnstile:incidents:read', 'turnstile:risks:read'])
+      expect(roleCatalog.permissions).toContainEqual({
+        id,
+        applicability: 'company_only',
+        implies: [],
+      });
     expect(roleCatalog.organizationRevision).toEqual(expect.any(Number));
     expect(roleCatalog.grantableCompanyPermissions).toEqual([
       'turnstile:access',

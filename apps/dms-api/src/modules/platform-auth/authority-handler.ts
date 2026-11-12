@@ -185,7 +185,9 @@ export async function mountAuthorityHandler(server: FastifyInstance, authority: 
         // Recovery accepts only exact operator-approved screen destinations.
         const approvedRecovery = (value: unknown, purpose: 'resetUrl' | 'verificationUrl') =>
           typeof value === 'string' &&
-          authority.config?.AUTH_LOGIN_CLIENTS.some((client) => client[purpose] === value);
+          ((purpose === 'verificationUrl' &&
+            authority.config?.AUTH_SETUP_COMPLETION_URL === value) ||
+            authority.config?.AUTH_LOGIN_CLIENTS.some((client) => client[purpose] === value));
 
         const destination =
           path === '/identity/request-password-reset'

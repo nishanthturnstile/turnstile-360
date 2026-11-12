@@ -204,6 +204,7 @@ async function apply(
       );
       break;
     }
+    case 'installation.reserve':
     case 'installation.create': {
       await clientRow(db, command.clientId, true);
       const count = (
@@ -227,19 +228,36 @@ async function apply(
             clientId,
             command.environment,
             command.label,
-            command.localInstallationId,
-            command.tenantId,
+            command.type === 'installation.reserve' ? randomUUID() : command.localInstallationId,
+            command.type === 'installation.reserve' ? randomUUID() : command.tenantId,
             committedAt,
           ],
         )
       ).rows[0];
+      if (command.type === 'installation.reserve') {
+        writer(actor, true);
+        for (const product of ['dms', 'turnstile']) {
+          await db.query(
+            `INSERT INTO control_plane.registry_product(id,client_id,installation_id,product,application_id,policy_changed_by,registered_at,policy_changed_at) VALUES($1,$2,$3,$4,$5,$6,$7,$7)`,
+            [
+              randomUUID(),
+              clientId,
+              resourceId,
+              product,
+              product === 'turnstile' ? randomUUID() : null,
+              actor.id,
+              committedAt,
+            ],
+          );
+        }
+      }
       await recordAudit(
         db,
         actor,
         command,
         clientId,
         resourceId,
-        'installation.created',
+        command.type === 'installation.reserve' ? 'installation.reserved' : 'installation.created',
         null,
         installationDto(row),
         committedAt,
@@ -358,7 +376,7 @@ export async function executeRegistry(headers: Headers, raw: unknown) {
       // Transactions contain only bounded SQL, never SMTP, crypto hashing or remote calls.
       await db.query('SELECT pg_advisory_xact_lock($1)', [STAFF_LOCK]);
       const actor = await staffContext(session.session.id, db);
-      writer(actor, command.type === 'product.policy');
+      writer(actor, command.type === 'product.policy' || command.type === 'installation.reserve');
       if (
         command.type === 'product.policy' &&
         command.decision === 'suspend' &&

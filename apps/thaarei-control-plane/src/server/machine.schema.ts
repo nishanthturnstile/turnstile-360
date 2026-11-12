@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   check,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -103,10 +104,71 @@ export const machineDecision = central.table(
   },
   (t) => [
     index('machine_decision_current_idx').on(t.productId, t.epoch, t.revision, t.sequence),
+    uniqueIndex('machine_decision_application_binding_idx').on(t.productId, t.epoch, t.id),
     check('machine_decision_order', sql`${t.revision}>0 AND ${t.sequence}>0`),
     check(
       'machine_decision_state',
       sql`${t.state} IN ('pending','approved','rejected','suspended')`,
     ),
+  ],
+);
+
+// Presence is a permanent v2 floor. Runtime may create a closed fence, but cannot
+// delete it or directly update active authority. MOD-I08 uses its reviewed SQL writer.
+export const moduleAuthority = central.table(
+  'module_authority',
+  {
+    productId: uuid('product_id')
+      .primaryKey()
+      .references(() => registryProduct.id),
+    minimumVersion: integer('minimum_version').notNull().default(2),
+    document: jsonb('document'),
+  },
+  (t) => [
+    check('module_authority_version', sql`${t.minimumVersion}=2`),
+    check(
+      'module_authority_bound',
+      sql`${t.document} IS NULL OR (jsonb_typeof(${t.document})='object' AND octet_length(${t.document}::text)<=131072)`,
+    ),
+  ],
+);
+
+// Authenticated machine observation is an installation claim, not an attestation or grant.
+export const moduleObservation = central.table(
+  'module_observation',
+  {
+    productId: uuid('product_id')
+      .primaryKey()
+      .references(() => registryProduct.id),
+    epoch: uuid('epoch').notNull(),
+    installed: jsonb('installed').notNull(),
+    observedAt: time('observed_at').notNull().defaultNow(),
+  },
+  (t) => [
+    check(
+      'module_observation_bound',
+      sql`jsonb_typeof(${t.installed})='object' AND octet_length(${t.installed}::text)<=1024`,
+    ),
+  ],
+);
+
+// Validated product-reported application evidence; never independent runtime attestation.
+export const machineApplication = central.table(
+  'machine_application',
+  {
+    productId: uuid('product_id')
+      .primaryKey()
+      .references(() => registryProduct.id),
+    epoch: uuid('epoch').notNull(),
+    decisionId: uuid('decision_id').notNull(),
+    appliedAt: time('applied_at').notNull(),
+    receivedAt: time('received_at').notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.productId, t.epoch, t.decisionId],
+      foreignColumns: [machineDecision.productId, machineDecision.epoch, machineDecision.id],
+      name: 'machine_application_decision_binding_fk',
+    }),
   ],
 );

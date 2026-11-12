@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noUndeclaredEnvVars: Uncached disposable orchestration; private fixture paths never enter Turbo task hashes.
 import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
@@ -10,14 +11,24 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
+import { exportSPKI, generateKeyPair, SignJWT } from 'jose';
 import pg from 'pg';
 import { parse } from 'yaml';
 import { verifyDecision } from '../packages/deployment-control/dist/index.js';
 import { verifyCentralMachines } from './fixtures/control-plane-machines.mjs';
+import { verifyModuleAssignments } from './fixtures/control-plane-module-assignments.mjs';
+import { verifyModuleMachines } from './fixtures/control-plane-module-machines.mjs';
+import { verifyModuleTransitions } from './fixtures/control-plane-module-transitions.mjs';
+import { verifyCentralCatalogues } from './fixtures/control-plane-modules.mjs';
 import { verifyOfflineImage } from './fixtures/control-plane-offline.mjs';
 import { verifyCentralRegistry } from './fixtures/control-plane-registry.mjs';
 import { verifyDmsCentralHttp } from './fixtures/dms-central-http.mjs';
+import { verifyInstallationHandover } from './fixtures/installation-handover.mjs';
+import { verifyCombinedPreparation } from './fixtures/installation-preparation.mjs';
+import { moduleCutoverControl } from './fixtures/module-cutover-control.mjs';
 import { verifyTurnstileCentralHttp } from './fixtures/turnstile-central-http.mjs';
+import { verifyInstalledModuleDecisions } from './fixtures/turnstile-module-decisions.mjs';
+import { verifyInstallationIntent } from './installation-intent.mjs';
 
 const exec = promisify(execFile);
 const root = resolve(import.meta.dirname, '..');
@@ -26,9 +37,7 @@ const temporary = await mkdtemp(join(tmpdir(), 'thaarei-central-http-'));
 const name = `thaarei-central-test-${randomBytes(6).toString('hex')}`;
 const containers = [];
 const image = process.env.CONTROL_PLANE_TEST_IMAGE;
-// biome-ignore lint/suspicious/noUndeclaredEnvVars: Uncached root qualification launcher; not a Turbo task input.
 const qualifyTwoClients = process.env.CONTROL_PLANE_QUALIFY_TWO_CLIENTS === 'true';
-// biome-ignore lint/suspicious/noUndeclaredEnvVars: Uncached local qualification option.
 const containerQualification = process.env.CONTROL_PLANE_QUALIFY_CONTAINERS === 'true';
 assert.ok(
   !containerQualification || image,
@@ -134,7 +143,7 @@ try {
     '-subj',
     '/CN=localhost',
     '-addext',
-    `subjectAltName=DNS:localhost,DNS:central.fixture.test,DNS:${name}-mail,IP:127.0.0.1`,
+    `subjectAltName=DNS:localhost,DNS:turnstile.fixture.test,DNS:dms.fixture.test,DNS:files.fixture.test,DNS:mailpit,DNS:central.fixture.test,DNS:${name}-mail,IP:127.0.0.1`,
   ]);
   if (containerQualification) {
     env.NODE_EXTRA_CA_CERTS = join(temporary, 'cert.pem');
@@ -220,6 +229,14 @@ try {
     );
     await assert.rejects(
       limited.query('UPDATE control_plane.staff_audit SET reason=reason'),
+      /permission denied/,
+    );
+    await assert.rejects(
+      limited.query('DELETE FROM control_plane.module_authority WHERE false'),
+      /permission denied/,
+    );
+    await assert.rejects(
+      limited.query('UPDATE control_plane.module_authority SET document=NULL WHERE false'),
       /permission denied/,
     );
   } finally {
@@ -308,6 +325,45 @@ try {
   });
   env.CONTROL_PLANE_SMTP_URL = `smtp://127.0.0.1:${mail[1025]}`;
   env.CONTROL_PLANE_SMTP_FROM = 'staff@thaarei.test';
+  const moduleReleaseKeys = await generateKeyPair('RS256');
+  const cutoverFixture = process.env.MOD_I08_SELECTED_FIXTURE
+    ? JSON.parse(await readFile(process.env.MOD_I08_SELECTED_FIXTURE, 'utf8'))
+    : null;
+  const installationFixture = process.env.MOD_I09_INSTALLATION_FIXTURE
+    ? JSON.parse(await readFile(process.env.MOD_I09_INSTALLATION_FIXTURE, 'utf8'))
+    : null;
+  const preparationFixture = process.env.MOD_I05_PREPARATION_FIXTURE
+    ? JSON.parse(await readFile(process.env.MOD_I05_PREPARATION_FIXTURE, 'utf8'))
+    : null;
+  env.CONTROL_PLANE_MODULE_RELEASE_TRUST_FILE = join(temporary, 'module-release-trust.json');
+  await writeFile(
+    env.CONTROL_PLANE_MODULE_RELEASE_TRUST_FILE,
+    JSON.stringify({
+      issuer: 'https://releases.fixture.test',
+      keys: [
+        { kid: 'module-release-test', publicKey: await exportSPKI(moduleReleaseKeys.publicKey) },
+        ...(preparationFixture?.releaseTrust.keys ?? []),
+        ...(installationFixture?.releaseTrust.keys ?? []),
+        ...(cutoverFixture?.releaseTrust.keys ?? []),
+      ],
+    }),
+    { mode: 0o600 },
+  );
+  env.CONTROL_PLANE_MODULE_REFERENCE_DIRECTORY = join(temporary, 'module-references');
+  await mkdir(env.CONTROL_PLANE_MODULE_REFERENCE_DIRECTORY, { mode: 0o755 });
+  const signModuleEvidence = (payload, seconds = 600, purpose = 'catalogue') =>
+    new SignJWT(payload)
+      .setProtectedHeader({
+        alg: 'RS256',
+        typ: `thaarei-module-${purpose}+jwt`,
+        kid: 'module-release-test',
+      })
+      .setIssuer('https://releases.fixture.test')
+      .setAudience(`urn:thaarei:module-${purpose}`)
+      .setIssuedAt()
+      .setNotBefore(Math.floor(Date.now() / 1000))
+      .setExpirationTime(Math.floor(Date.now() / 1000) + seconds)
+      .sign(moduleReleaseKeys.privateKey);
   env.CONTROL_PLANE_SIGNING_KEY_FILE = join(temporary, 'deployment-signer.json');
   env.CONTROL_PLANE_RECOVERY_MARKER_FILE = join(temporary, 'recovery-marker');
   env.CONTROL_PLANE_PUBLIC_KEYS_OUTPUT_FILE = join(temporary, 'public-keys.json');
@@ -382,6 +438,8 @@ try {
         `${name}-postgres:5432`,
       ),
       CONTROL_PLANE_SMTP_URL: `smtp://${name}-mail:1025`,
+      CONTROL_PLANE_MODULE_RELEASE_TRUST_FILE: '/run/module-release-trust.json',
+      CONTROL_PLANE_MODULE_REFERENCE_DIRECTORY: '/run/module-references',
       CONTROL_PLANE_AUTH_SECRET_FILE: '/run/control-plane-auth',
       CONTROL_PLANE_SIGNING_KEY_FILE: '/run/deployment-signer',
       CONTROL_PLANE_RECOVERY_MARKER_FILE: '/run/recovery-marker',
@@ -438,6 +496,10 @@ try {
         '--mount',
         `type=bind,source=${env.CONTROL_PLANE_AUTH_SECRET_FILE},target=/run/control-plane-auth,readonly`,
         '--mount',
+        `type=bind,source=${env.CONTROL_PLANE_MODULE_RELEASE_TRUST_FILE},target=/run/module-release-trust.json,readonly`,
+        '--mount',
+        `type=bind,source=${env.CONTROL_PLANE_MODULE_REFERENCE_DIRECTORY},target=/run/module-references,readonly`,
+        '--mount',
         `type=bind,source=${env.CONTROL_PLANE_SIGNING_KEY_FILE},target=/run/deployment-signer,readonly`,
         '--mount',
         `type=bind,source=${env.CONTROL_PLANE_RECOVERY_MARKER_FILE},target=/run/recovery-marker,readonly`,
@@ -453,6 +515,8 @@ try {
         `${name}-ingress`,
         '--network',
         name,
+        '--network-alias',
+        'central.fixture.test',
         '-p',
         `127.0.0.1:${ingressPort}:${ingressPort}`,
         '--read-only',
@@ -603,7 +667,14 @@ try {
   const mailOrigin = `http://127.0.0.1:${mail[8025]}`;
   async function emailLink(to, pattern) {
     for (let i = 0; i < 40; i++) {
-      const list = await (await fetch(`${mailOrigin}/api/v1/messages`)).json();
+      let list;
+      try {
+        list = await (await fetch(`${mailOrigin}/api/v1/messages`)).json();
+      } catch (error) {
+        if (error.cause?.code !== 'ECONNREFUSED') throw error;
+        await setTimeout(100);
+        continue;
+      }
       for (const item of list.messages ?? []) {
         if (!item.To?.some((entry) => entry.Address === to)) continue;
         const message = await (await fetch(`${mailOrigin}/api/v1/message/${item.ID}`)).json();
@@ -641,6 +712,19 @@ try {
     assert.equal(response.status, 200, response.text);
     return response;
   }
+  async function verifyTotp(person, uri) {
+    let response = await person.call('/api/auth/two-factor/verify-totp', { code: totp(uri) });
+    if (response.status === 429) {
+      const retry = Number(response.headers['retry-after']);
+      assert.ok(
+        Number.isFinite(retry) && retry >= 0 && retry <= 60,
+        'Bounded MFA rate-limit retry required',
+      );
+      await setTimeout(retry * 1000 + 100);
+      response = await person.call('/api/auth/two-factor/verify-totp', { code: totp(uri) });
+    }
+    return response;
+  }
   async function enroll(person, email, pass) {
     const login = await signIn(person, email, pass);
     assert.equal(login.status, 200, login.text);
@@ -653,9 +737,7 @@ try {
     const setup = await person.call('/api/auth/two-factor/enable', { password: pass });
     assert.equal(setup.status, 200, setup.text);
     const codes = setup.json();
-    const verified = await person.call('/api/auth/two-factor/verify-totp', {
-      code: totp(codes.totpURI),
-    });
+    const verified = await verifyTotp(person, codes.totpURI);
     assert.equal(verified.status, 200, verified.text);
     assert.ok(!verified.text.includes('token'));
     assert.ok(
@@ -731,12 +813,188 @@ try {
     database,
     runtimeUrl: env.CONTROL_PLANE_DATABASE_URL,
     reauthenticateAdmin: async () => {
-      const checked = await admin.call('/api/auth/two-factor/verify-totp', {
-        code: totp(adminCodes.totpURI),
-      });
+      const checked = await verifyTotp(admin, adminCodes.totpURI);
       assert.equal(checked.status, 200, checked.text);
     },
   });
+  const moduleCatalogues = await verifyCentralCatalogues({
+    admin,
+    viewer,
+    anonymous,
+    database,
+    runtimeUrl: env.CONTROL_PLANE_DATABASE_URL,
+    origin,
+    signEvidence: signModuleEvidence,
+    reauthenticateAdmin: async () => {
+      const checked = await verifyTotp(admin, adminCodes.totpURI);
+      assert.equal(checked.status, 200, checked.text);
+    },
+  });
+  await verifyModuleAssignments({
+    verifyIntent: async (token, expected) =>
+      verifyInstallationIntent(
+        token,
+        JSON.parse(await readFile(env.CONTROL_PLANE_PUBLIC_KEYS_OUTPUT_FILE, 'utf8')),
+        expected,
+      ),
+    referenceDirectory: env.CONTROL_PLANE_MODULE_REFERENCE_DIRECTORY,
+    signDelivery: (payload, seconds) => signModuleEvidence(payload, seconds, 'delivery'),
+    admin,
+    viewer,
+    anonymous,
+    database,
+    origin,
+    runtimeUrl: env.CONTROL_PLANE_DATABASE_URL,
+    signEvidence: signModuleEvidence,
+    ...moduleCatalogues,
+    reauthenticateAdmin: async () => {
+      const checked = await verifyTotp(admin, adminCodes.totpURI);
+      assert.equal(checked.status, 200, checked.text);
+    },
+  });
+  const moduleReleaseTrust = JSON.parse(
+    await readFile(env.CONTROL_PLANE_MODULE_RELEASE_TRUST_FILE, 'utf8'),
+  );
+  await verifyModuleMachines({
+    admin,
+    viewer,
+    anonymous,
+    database,
+    publicTrust,
+    releaseTrust: {
+      version: 1,
+      revision: 1,
+      issuer: moduleReleaseTrust.issuer,
+      keys: moduleReleaseTrust.keys.map((k) => ({
+        kid: k.kid,
+        pem: k.publicKey,
+        status: 'active',
+        lastIssuedAt: null,
+      })),
+    },
+    signDelivery: (payload) => signModuleEvidence(payload, 86400, 'delivery'),
+    reauthenticateAdmin: async () => {
+      const response = await verifyTotp(admin, adminCodes.totpURI);
+      assert.equal(response.status, 200, response.text);
+    },
+  });
+  await verifyModuleTransitions({
+    admin,
+    viewer,
+    anonymous,
+    database,
+    referenceDirectory: env.CONTROL_PLANE_MODULE_REFERENCE_DIRECTORY,
+    signEvidence: signModuleEvidence,
+    reauthenticateAdmin: async () =>
+      assert.equal((await verifyTotp(admin, adminCodes.totpURI)).status, 200),
+    reauthenticateViewer: async () =>
+      assert.equal((await verifyTotp(viewer, viewerCodes.totpURI)).status, 200),
+  });
+  if (cutoverFixture) {
+    assert.ok(containerQualification, 'Actual cutover needs canonical central ingress');
+    const control = await moduleCutoverControl({
+      fixture: cutoverFixture,
+      admin,
+      origin,
+      publicTrust,
+      temporary,
+      referenceDirectory: env.CONTROL_PLANE_MODULE_REFERENCE_DIRECTORY,
+      signEvidence: signModuleEvidence,
+      reauthenticateAdmin: async () =>
+        assert.equal((await verifyTotp(admin, adminCodes.totpURI)).status, 200),
+      run,
+      centralIngress: `${name}-ingress`,
+    });
+    try {
+      console.log(
+        await run(
+          process.execPath,
+          ['scripts/test-auth-database.mjs', '--browser', '--module-cutover'],
+          {
+            env: {
+              ...env,
+              MOD_I08_CONTROL_FILE: control.file,
+              MOD_I08_SELECTED_FIXTURE: process.env.MOD_I08_SELECTED_FIXTURE,
+              AUTH_BROWSER_FULL_IMAGES: 'true',
+              AUTH_BROWSER_DMS_IMAGE: 'thaarei-mod-i08-dms:qualification',
+              AUTH_BROWSER_API_IMAGE: `sha256:${cutoverFixture.bundles[0].inventory.images.find((i) => i.role === 'turnstile-api').digest}`,
+              AUTH_BROWSER_WEB_IMAGE: `sha256:${cutoverFixture.bundles[0].inventory.images.find((i) => i.role === 'turnstile-web').digest}`,
+            },
+            timeout: 900000,
+          },
+        ),
+      );
+    } finally {
+      await control.close();
+    }
+  }
+  if (process.env.MOD_I06_SELECTED_FIXTURE) {
+    assert.ok(
+      containerQualification,
+      'Selected image qualification requires real container ingress',
+    );
+    await verifyInstalledModuleDecisions({
+      fixture: JSON.parse(await readFile(process.env.MOD_I06_SELECTED_FIXTURE, 'utf8')),
+      admin,
+      anonymous,
+      database,
+      publicTrust,
+      temporary,
+      env,
+      run,
+      origin,
+      postgres: `${name}-postgres`,
+      network: name,
+      reauthenticateAdmin: async () => {
+        const checked = await verifyTotp(admin, adminCodes.totpURI);
+        assert.equal(checked.status, 200, checked.text);
+      },
+      dropRotation: () => updateFault('rotation', true),
+      dropReport: () => updateFault('report', true),
+      centralUnavailable: async (operation) => {
+        updateFault('unavailable', true);
+        try {
+          return await operation();
+        } finally {
+          updateFault('unavailable', false);
+        }
+      },
+    });
+  }
+  if (installationFixture)
+    await verifyInstallationHandover({
+      fixture: installationFixture,
+      admin,
+      anonymous,
+      origin,
+      publicTrust,
+      temporary,
+      referenceDirectory: env.CONTROL_PLANE_MODULE_REFERENCE_DIRECTORY,
+      signEvidence: signModuleEvidence,
+      reauthenticateAdmin: async () =>
+        assert.equal((await verifyTotp(admin, adminCodes.totpURI)).status, 200),
+      run,
+      centralIngress: `${name}-ingress`,
+      mailContainer: `${name}-mail`,
+      mailUrl: `http://127.0.0.1:${mail[8025]}`,
+      services,
+    });
+  if (preparationFixture)
+    await verifyCombinedPreparation({
+      admin,
+      anonymous,
+      origin,
+      fixture: preparationFixture,
+      temporary,
+      run,
+      referenceDirectory: env.CONTROL_PLANE_MODULE_REFERENCE_DIRECTORY,
+      publicTrust: JSON.parse(await readFile(env.CONTROL_PLANE_PUBLIC_KEYS_OUTPUT_FILE, 'utf8')),
+      signEvidence: signModuleEvidence,
+      reauthenticateAdmin: async () => {
+        const response = await verifyTotp(admin, adminCodes.totpURI);
+        assert.equal(response.status, 200, response.text);
+      },
+    });
   await verifyCentralMachines({
     admin,
     viewer,
@@ -814,13 +1072,45 @@ try {
       );
     },
   });
-  async function verifyCustomer(label) {
+  if (cutoverFixture) {
+    const probe = JSON.parse(
+      await readFile(join(cutoverFixture.runDirectory, 'central-restore-probe.json'), 'utf8'),
+    );
+    const response = await anonymous.call(
+      '/api/machine/v1/sync',
+      {
+        version: 2,
+        reportId: randomUUID(),
+        binding: probe.binding,
+        epoch: probe.epoch,
+        applied: null,
+        installed: probe.installed,
+      },
+      { headers: { authorization: `Bearer ${probe.secret}` } },
+    );
+    assert.equal(
+      response.status,
+      401,
+      'Central recovery must retire the actual customer module credential',
+    );
+    const saved = (
+      await database.query(
+        'SELECT minimum_version FROM control_plane.module_authority WHERE product_id=$1',
+        [probe.binding.productId],
+      )
+    ).rows[0];
+    assert.equal(saved.minimum_version, 2);
+    console.log(
+      'Actual module-managed customer remained fenced after central restore with missing independent evidence; its v2 floor persisted and restored receipts could not renew its retired credential.',
+    );
+  }
+  async function verifyCustomer(label, customerContainers = containerQualification) {
     const customerTemporary = join(temporary, label);
     await mkdir(customerTemporary, { mode: 0o700 });
     // The fixture CA remains owned by the central ingress; customer state/roles live in a different cluster.
     await writeFile(join(customerTemporary, 'cert.pem'), ca, { mode: 0o600 });
     let customerNetwork = name;
-    if (containerQualification) {
+    if (customerContainers) {
       customerNetwork = `${name}-${label}`;
       await run('docker', ['network', 'create', customerNetwork]);
       customerNetworks.push(customerNetwork);
@@ -865,8 +1155,10 @@ try {
         }
       }
     }
+    if (customerContainers && !qualifyTwoClients)
+      await run('docker', ['network', 'connect', customerNetwork, customerPostgres]);
     const sharedInstallation = await verifyDmsCentralHttp({
-      containerQualification,
+      containerQualification: customerContainers,
       signerFile: env.CONTROL_PLANE_SIGNING_KEY_FILE,
       qualifyRecovery: qualifyTwoClients,
       admin,
@@ -899,7 +1191,7 @@ try {
       },
     });
     await verifyTurnstileCentralHttp({
-      containerQualification,
+      containerQualification: customerContainers,
       signerFile: env.CONTROL_PLANE_SIGNING_KEY_FILE,
       qualifyRecovery: qualifyTwoClients,
       installationBinding: sharedInstallation,
@@ -934,9 +1226,17 @@ try {
     });
     return JSON.parse(await readFile(join(customerTemporary, 'dms-private/product.json'), 'utf8'));
   }
-  const customerA = await verifyCustomer('customer-a');
+  // The module cutover already qualifies its actual selected API/web/reporter. Its
+  // separate v1 compatibility fixture uses source, never a downgraded selected image.
+  // The complete TCP image qualifier still supplies both legacy candidate images.
+  const compatibilityContainers = containerQualification && !cutoverFixture && !installationFixture;
+  if (cutoverFixture || installationFixture)
+    console.log(
+      'Separate legacy v1 compatibility uses source; selected customer containers were qualified above.',
+    );
+  const customerA = await verifyCustomer('customer-a', compatibilityContainers);
   if (qualifyTwoClients) {
-    const customerB = await verifyCustomer('customer-b');
+    const customerB = await verifyCustomer('customer-b', compatibilityContainers);
     for (const [one, other] of [
       [customerA, customerB],
       [customerB, customerA],
@@ -1085,19 +1385,11 @@ try {
   );
   if ((await admin.call('/api/session')).status !== 200) {
     await signIn(admin, bootstrap.email, password);
-    assert.equal(
-      (await admin.call('/api/auth/two-factor/verify-totp', { code: totp(adminCodes.totpURI) }))
-        .status,
-      200,
-    );
+    assert.equal((await verifyTotp(admin, adminCodes.totpURI)).status, 200);
   }
   if ((await viewer.call('/api/session')).status !== 200) {
     await signIn(viewer, member.email, viewerPassword);
-    assert.equal(
-      (await viewer.call('/api/auth/two-factor/verify-totp', { code: totp(viewerCodes.totpURI) }))
-        .status,
-      200,
-    );
+    assert.equal((await verifyTotp(viewer, viewerCodes.totpURI)).status, 200);
   }
   const memberRevision = (
     await database.query('SELECT revision FROM control_plane.staff WHERE user_id=$1', [member.id])
@@ -1117,11 +1409,7 @@ try {
     ).status,
     403,
   );
-  assert.equal(
-    (await admin.call('/api/auth/two-factor/verify-totp', { code: totp(adminCodes.totpURI) }))
-      .status,
-    200,
-  );
+  assert.equal((await verifyTotp(admin, adminCodes.totpURI)).status, 200);
   assert.equal(
     (
       await admin.call(
@@ -1190,8 +1478,7 @@ try {
   );
   assert.equal((await admin.call('/api/session')).status, 403);
   assert.equal(
-    (await admin.call('/api/auth/two-factor/verify-totp', { code: totp(adminCodes.totpURI) }))
-      .status,
+    (await verifyTotp(admin, adminCodes.totpURI)).status,
     401,
     'Idle session cannot reopen with a factor alone',
   );

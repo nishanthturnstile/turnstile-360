@@ -1,0 +1,65 @@
+#!/bin/sh
+set -eu
+umask 077
+trap 'launcher_status=$?; case "$launcher_status" in 0|10|20|30) ;; *) printf "%s\n" "{\"version\":1,\"state\":\"conflict\",\"nextActor\":\"operator\",\"conditions\":[\"launcher-preflight-or-private-runtime-reconciliation-required\"]}"; exit 20;; esac' 0
+test "$(id -u)" -ne 0
+case "${1:-}" in plan|install|resume|status|verify|pair|sync|owner|identity) ;; *) printf '%s\n' 'Usage: installer plan|install|resume|status|verify|pair|sync|owner|identity /absolute/private/input.json [/absolute/private/command.json]' >&2; exit 20;; esac
+case "${THAAREI_INSTALLER_IMAGE:-}" in sha256:*) ;; *) printf '%s\n' 'Provision THAAREI_INSTALLER_IMAGE with the independently pinned engine content identity.' >&2; exit 20;; esac
+engine_hex=${THAAREI_INSTALLER_IMAGE#sha256:}
+test "${#engine_hex}" -eq 64
+case "$engine_hex" in *[!0-9a-f]*) exit 20;; esac
+case "${2:-}" in /*) ;; *) exit 20;; esac
+case "${THAAREI_INSTALLATION_DIRECTORY:-}" in /*) ;; *) exit 20;; esac
+test -n "${THAAREI_INSTALLER_NETWORK:-}"
+for private_path in "$2" "$THAAREI_INSTALLATION_DIRECTORY"; do
+  case "$private_path" in *','*|*'
+'*) exit 20;; esac
+  test "$(readlink -f -- "$private_path")" = "$private_path"
+done
+test -d "$THAAREI_INSTALLATION_DIRECTORY"
+test "$(stat -c %a "$THAAREI_INSTALLATION_DIRECTORY")" = 700
+input_directory=$(dirname -- "$2")
+test -d "$input_directory"
+test "$(stat -c %a "$input_directory")" = 700
+bundle_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+state_directory=$(readlink -f -- "$THAAREI_INSTALLATION_DIRECTORY")
+case "$state_directory/" in "$bundle_directory/"*) exit 20;; esac
+case "$bundle_directory/" in "$state_directory/"*) exit 20;; esac
+test "$(docker image inspect --format '{{.Id}}' "$THAAREI_INSTALLER_IMAGE")" = "$THAAREI_INSTALLER_IMAGE"
+input_directory=$(readlink -f -- "$input_directory")
+for owned_directory in "$input_directory" "$state_directory"; do
+  test "$(stat -c %u "$owned_directory")" = "$(id -u)"
+done
+for selected_directory in "$bundle_directory" "$state_directory" "$input_directory"; do
+  ancestor=$selected_directory
+  while [ "$ancestor" != / ]; do
+    test ! -e "$ancestor/.git"
+    ancestor=$(dirname -- "$ancestor")
+  done
+done
+for readonly_directory in "$input_directory" "$bundle_directory"; do
+  case "$state_directory/" in "$readonly_directory/"*) exit 20;; esac
+  case "$readonly_directory/" in "$state_directory/"*) exit 20;; esac
+done
+case "$input_directory/" in "$bundle_directory/"*) exit 20;; esac
+case "$bundle_directory/" in "$input_directory/"*) exit 20;; esac
+if [ -n "${3:-}" ]; then
+  test "$(dirname -- "$3")" = "$input_directory"
+  test "$(readlink -f -- "$3")" = "$3"
+fi
+# Only this explicit private operator container receives the local Docker socket.
+# Keep paths identical inside/outside so the engine can create fixed owning mounts.
+if [ -n "${THAAREI_INSTALLER_CA_FILE:-}" ]; then
+  case "$THAAREI_INSTALLER_CA_FILE" in "$input_directory"/*) ;; *) exit 20;; esac
+fi
+docker run --rm -i --network "$THAAREI_INSTALLER_NETWORK" --read-only --cap-drop ALL --security-opt no-new-privileges:true \
+  --pids-limit 128 --memory 2g --cpus 1 --tmpfs /tmp:size=128m,noexec,nosuid,nodev \
+  --user "$(id -u):$(id -g)" --group-add "$(stat -c %g /var/run/docker.sock)" \
+  --env "THAAREI_INSTALLATION_DIRECTORY=$state_directory" --env "THAAREI_INSTALLER_NETWORK=$THAAREI_INSTALLER_NETWORK" \
+  --env "THAAREI_INSTALLER_INPUT_DIRECTORY=$input_directory" --env "THAAREI_INSTALLER_BUNDLE_DIRECTORY=$bundle_directory" \
+  --env "THAAREI_INSTALLER_IMAGE=$THAAREI_INSTALLER_IMAGE" --env "NODE_EXTRA_CA_CERTS=${THAAREI_INSTALLER_CA_FILE:-/etc/ssl/certs/ca-certificates.crt}" \
+  --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
+  --mount "type=bind,source=$bundle_directory,target=$bundle_directory,readonly" \
+  --mount "type=bind,source=$input_directory,target=$input_directory,readonly" \
+  --mount "type=bind,source=$state_directory,target=$state_directory" \
+  "$THAAREI_INSTALLER_IMAGE" node dist/cli.js "$@"

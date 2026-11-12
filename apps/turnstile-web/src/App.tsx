@@ -3,6 +3,8 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import {
   type DeploymentStatusDto,
   deploymentStatusSchema,
+  type ModuleCapabilitiesDto,
+  moduleCapabilitiesSchema,
   type UserSessionDto,
   type WorkspaceStatusDto,
 } from '@thaarei/turnstile-contracts';
@@ -43,6 +45,7 @@ import { OnboardingJourney } from './features/onboarding/OnboardingJourney';
 import { People, peoplePaths } from './features/people/People';
 import { LegacyUnitPrompt } from './features/settings/LegacyUnitPrompt';
 import { Settings } from './features/settings/Settings';
+import { selectedModuleRoutes } from './module-composition';
 
 const DesignSystem = import.meta.env.DEV
   ? lazy(() => import('./design-system/DesignSystem'))
@@ -168,6 +171,7 @@ export function Workspace() {
   const identityId = useRef<string | undefined>(undefined);
   const [checking, setChecking] = useState(false);
   const [session, setSession] = useState<UserSessionDto>();
+  const [modules, setModules] = useState<ModuleCapabilitiesDto>();
   const [deployment, setDeployment] = useState<DeploymentStatusDto>();
   const [workspace, setWorkspace] = useState<WorkspaceStatusDto>();
   const { pathname: routePath } = useLocation();
@@ -180,6 +184,7 @@ export function Workspace() {
   }, [routePath, navigate]);
   const knownPath =
     path === '/' ||
+    selectedModuleRoutes.some((module) => module.path === path) ||
     peoplePaths.includes(path) ||
     path === '/auth-unavailable' ||
     path === '/waiting-for-setup' ||
@@ -215,6 +220,7 @@ export function Workspace() {
           if (current !== generation.current || checkId !== checks.current) return false;
           const subjectChanged = !!identityId.current && identityId.current !== value.user.id;
           if (subjectChanged) {
+            setModules(undefined);
             setWorkspace(undefined);
             setState('loading');
           }
@@ -227,6 +233,7 @@ export function Workspace() {
           setDeployment(activation);
           if (activation.access === 'closed') {
             setSession(value);
+            setModules(undefined);
             setState('activation');
             return false;
           }
@@ -234,6 +241,18 @@ export function Workspace() {
           if (current !== generation.current || checkId !== checks.current) return false;
           setSession(value);
           setWorkspace(status);
+          let capabilities: ModuleCapabilitiesDto | undefined;
+          if (status.status === 'complete' && selectedModuleRoutes.length) {
+            try {
+              capabilities = await productRequest('/api/modules', {
+                schema: moduleCapabilitiesSchema,
+              });
+            } catch (error) {
+              if (error instanceof ProductError && error.status === 401) throw error;
+            }
+          }
+          if (current !== generation.current || checkId !== checks.current) return false;
+          setModules(capabilities);
           // Navigation may have joined this fresh check while it was draining a prior read.
           setPath(fresh ? window.location.pathname : requestedPath);
           setState('ready');
@@ -242,6 +261,7 @@ export function Workspace() {
           return true;
         } catch (error) {
           if (current !== generation.current || checkId !== checks.current) return false;
+          setModules(undefined);
           if (error instanceof ProductError && error.status === 401) {
             // Keep the last subject's mounted draft owners hidden during in-page recovery.
             setState('expired');
@@ -317,6 +337,7 @@ export function Workspace() {
     setMessage('');
     const retryUntil = logout?.retryUntil ?? Date.now() + 300000;
     setSession(undefined);
+    setModules(undefined);
     setLogout({ csrf, retryUntil });
     try {
       const result = await endSession(csrf);
@@ -527,6 +548,7 @@ export function Workspace() {
     ) : state === 'unavailable' ? (
       <AccountState kind="unavailable" retry={() => void check()} pending={checking} />
     ) : null;
+  const ModulePage = selectedModuleRoutes.find((module) => module.path === path)?.Component;
   const notFound = (
     <div className="flex flex-col gap-5">
       <h1 className="page-title">Page not found</h1>
@@ -589,7 +611,14 @@ export function Workspace() {
       header={header}
       destinations={
         state === 'ready'
-          ? workspaceDestinations(routePath, workspace.canManageConfiguration, session)
+          ? workspaceDestinations(
+              routePath,
+              workspace.canManageConfiguration,
+              session,
+              modules?.modules.filter((module) =>
+                selectedModuleRoutes.some((route) => route.id === module.id),
+              ),
+            )
           : []
       }
       settings={
@@ -608,6 +637,15 @@ export function Workspace() {
           notFound
         ) : setupPaths.some((value) => value === path) || path === '/waiting-for-setup' ? (
           <ContentLoading label="Opening workspace…" />
+        ) : ModulePage ? (
+          <Suspense fallback={<ContentLoading label="Opening module…" />}>
+            <ModulePage
+              key={`${session.user.id}:${path}`}
+              session={session}
+              capabilities={modules}
+              onCheck={refreshWorkspace}
+            />
+          </Suspense>
         ) : peoplePaths.includes(path) ? (
           <People
             key={session.user.id}
@@ -648,17 +686,36 @@ export function Workspace() {
             <h1 className="page-title">Welcome, {session.user.name}.</h1>
             <p className="intro">You’re signed in to Turnstile 360.</p>
             <div className="flex flex-col gap-6">
-              <Empty>
-                <EmptyHeader>
-                  <EmptyTitle>
-                    <h2>Your workspace is ready</h2>
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    Business features will appear here as they become available to your
-                    organization.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
+              {modules?.modules.length ? (
+                modules.modules
+                  .filter((module) => selectedModuleRoutes.some((route) => route.id === module.id))
+                  .map((module) => (
+                    <Card key={module.id}>
+                      <CardHeader>
+                        <CardTitle>
+                          <h2>{module.title}</h2>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardFooter>
+                        <ButtonLink href={module.path} variant="outline">
+                          Open {module.title}
+                        </ButtonLink>
+                      </CardFooter>
+                    </Card>
+                  ))
+              ) : (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyTitle>
+                      <h2>Your workspace is ready</h2>
+                    </EmptyTitle>
+                    <EmptyDescription>
+                      Business features will appear here as they become available to your
+                      organization.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              )}
               {workspace.canManageConfiguration && (
                 <>
                   <Card>
@@ -733,6 +790,34 @@ export default function App() {
       </Suspense>
     );
   }
+  if (path === '/setup-preparation')
+    return (
+      <AuthLayout>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h1>Sign-in preparation</h1>
+            </CardTitle>
+            <CardDescription>
+              Your administrator is preparing sign-in for this installation.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {new URLSearchParams(window.location.search).has('error') ? (
+              <Notice message="That verification link could not be completed. Request a new verification email before continuing." />
+            ) : (
+              <p>
+                Complete the steps in your verification or password email. Return to sign in when
+                your administrator confirms setup is ready.
+              </p>
+            )}
+          </CardContent>
+          <CardFooter>
+            <ButtonLink href="/sign-in">Continue to sign in</ButtonLink>
+          </CardFooter>
+        </Card>
+      </AuthLayout>
+    );
   if (path === '/invitations/join')
     return (
       <AuthLayout>

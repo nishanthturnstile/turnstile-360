@@ -67,6 +67,10 @@ const authorityEnvironment = z
     AUTH_PROFILE: z.enum(['local', 'test', 'production']).default('local'),
     NODE_ENV: z.string().optional(),
     AUTH_MODE: z.enum(['combined', 'standalone']).default('combined'),
+    AUTH_SETUP_COMPLETION_URL: z.preprocess(
+      (v) => (v === '' ? undefined : v),
+      canonicalAuthorityUrl.optional(),
+    ),
     AUTH_LOGIN_CLIENTS: z.preprocess((value) => {
       if (value === undefined || value === '') return [];
       try {
@@ -196,6 +200,12 @@ const authorityEnvironment = z
           issue('AUTH_LOGIN_CLIENTS');
       }
     }
+    if (
+      config.AUTH_SETUP_COMPLETION_URL &&
+      (config.AUTH_MODE !== 'combined' ||
+        config.AUTH_SETUP_COMPLETION_URL !== `${config.AUTH_PUBLIC_ORIGIN}/setup-preparation`)
+    )
+      issue('AUTH_SETUP_COMPLETION_URL');
     const authDb = new URL(config.AUTH_DATABASE_URL);
     const dmsDb = new URL(config.DMS_DATABASE_URL);
     if (authDb.username === dmsDb.username) issue('DMS_DATABASE_URL');

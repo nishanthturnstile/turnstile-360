@@ -236,6 +236,34 @@ export const machineError = z
     ]),
   })
   .strict();
+// Private installer readback, scoped to the authenticated product's exact current epoch.
+// This projection is not a signed decision and cannot authorize business access.
+export const machineStatusRequest = z
+  .object({ version: z.literal(1), binding, epoch: id })
+  .strict();
+export const machineStatusResponse = z
+  .object({
+    version: z.literal(1),
+    binding,
+    epoch: id,
+    policyRevision: positive,
+    policyState: z.enum(['pending', 'approved', 'rejected', 'suspended']),
+    paired: z.boolean(),
+    activationAcknowledged: z.boolean(),
+    moduleDesired: z
+      .object({
+        catalogueDigest: z.string().regex(/^[a-f0-9]{64}$/),
+        profileDigest: z.string().regex(/^[a-f0-9]{64}$/),
+        assignmentRevision: positive,
+      })
+      .strict()
+      .nullable(),
+    lastContactAt: z.iso.datetime().nullable(),
+    reportReceivedAt: z.iso.datetime().nullable(),
+    reportFreshness: z.enum(['never', 'current', 'stale']),
+  })
+  .strict();
+
 const schemas = {
   MachineError: machineError,
   MachineReport: machineReport,
@@ -248,6 +276,8 @@ const schemas = {
   SyncRequest: syncRequest,
   SyncResponse: syncResponse,
   RotationRequest: rotateRequest,
+  MachineStatusRequest: machineStatusRequest,
+  MachineStatusResponse: machineStatusResponse,
   Decision: decision,
 };
 export const openApi = {
@@ -274,6 +304,7 @@ export const openApi = {
       [
         ['activate', 'ActivationRequest', 'MachineReceipt'],
         ['sync', 'SyncRequest', 'SyncResponse'],
+        ['status', 'MachineStatusRequest', 'MachineStatusResponse'],
         ['rotate', 'RotationRequest', 'MachineReceipt'],
       ] as const
     ).map(([name, input, output]) => [
@@ -298,7 +329,9 @@ export const openApi = {
             '409': {
               description: 'Binding, operation or generation conflict; reconcile before retry',
             },
-            '413': { description: 'Body exceeds 32 KiB' },
+            '413': {
+              description: name === 'status' ? 'Body exceeds 4 KiB' : 'Body exceeds 32 KiB',
+            },
             '503': { description: 'Unavailable or recovery quarantine' },
           },
         },

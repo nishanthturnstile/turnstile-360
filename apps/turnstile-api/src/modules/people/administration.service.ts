@@ -6,6 +6,7 @@ import {
   invitationListResponseSchema,
   memberListQuerySchema,
   memberListResponseSchema,
+  PEOPLE_CATALOG_VERSION,
   PEOPLE_PERMISSIONS,
   peopleIdSchema,
   peopleListQuerySchema,
@@ -97,7 +98,7 @@ export class AdministrationService {
   async catalog(actor: ConfigurationActor) {
     return this.store.run(actor, 'either', async (tx) =>
       permissionCatalogSchema.parse({
-        catalogVersion: 1,
+        catalogVersion: PEOPLE_CATALOG_VERSION,
         organizationRevision: tx.organizationRevision,
         grantableCompanyPermissions: PEOPLE_PERMISSIONS.filter((id) =>
           covers(tx.access, id, { kind: 'company' }),

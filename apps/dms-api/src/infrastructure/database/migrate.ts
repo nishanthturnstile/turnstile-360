@@ -68,6 +68,9 @@ export async function assertInstallation(environment = process.env) {
 
 async function installationOperation(environment: NodeJS.ProcessEnv, bootstrap: boolean) {
   const owner = 'dms';
+  const localId = environment.INSTALLATION_LOCAL_ID
+    ? z.uuid().toLowerCase().parse(environment.INSTALLATION_LOCAL_ID)
+    : undefined;
   const tenantId = z.uuid().toLowerCase().parse(environment.INSTALLATION_TENANT_ID);
   const customerKey = z
     .string()
@@ -111,9 +114,22 @@ async function installationOperation(environment: NodeJS.ProcessEnv, bootstrap: 
       if (bootstrap) {
         await client.query("SELECT set_config('app.tenant_id',$1,true)", [tenantId]);
         await client.query(
-          'INSERT INTO dms.deployment_control(tenant_id) VALUES($1) ON CONFLICT DO NOTHING',
-          [tenantId],
+          localId
+            ? 'INSERT INTO dms.deployment_control(tenant_id,local_installation_id) VALUES($1,$2) ON CONFLICT DO NOTHING'
+            : 'INSERT INTO dms.deployment_control(tenant_id) VALUES($1) ON CONFLICT DO NOTHING',
+          localId ? [tenantId, localId] : [tenantId],
         );
+      }
+      if (localId) {
+        await client.query("SELECT set_config('app.tenant_id',$1,true)", [tenantId]);
+        const saved = (
+          await client.query(
+            'SELECT local_installation_id FROM dms.deployment_control WHERE tenant_id=$1',
+            [tenantId],
+          )
+        ).rows[0];
+        if (saved?.local_installation_id !== localId)
+          throw new Error('Installation deployment identity cannot be replaced');
       }
       if (inserted?.rowCount) {
         await client.query("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);

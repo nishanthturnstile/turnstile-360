@@ -1,0 +1,8 @@
+# Optional overlay on compose.control-plane.yaml, same separate Thaarei host.
+# Public release verification trust only; no signing key or customer credential here.
+services:
+  control-plane:
+    environment:
+      CONTROL_PLANE_MODULE_RELEASE_TRUST_FILE: /run/module-release-trust.json
+    volumes:
+      - ${CONTROL_PLANE_MODULE_RELEASE_TRUST_HOST_FILE:?Supply the absolute public release trust JSON}:/run/module-release-trust.json:ro

@@ -21,7 +21,8 @@
     "configuration:inspect": "node --env-file-if-exists=.env.migrate dist/modules/organization/configuration-operator.js inspect",
     "configuration:prune": "node --env-file-if-exists=.env.migrate dist/modules/organization/configuration-operator.js prune",
     "test:database": "vitest run --config vitest.config.database.ts",
-    "deployment:operator": "node dist/modules/deployment/operator.js"
+    "deployment:operator": "node dist/modules/deployment/operator.js",
+    "modules:operator": "node --env-file-if-exists=.env --env-file-if-exists=.env.migrate dist/modules/module-access/module-access-operator.js"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.5",

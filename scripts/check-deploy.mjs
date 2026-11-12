@@ -18,6 +18,7 @@ for (const file of [
   'deploy/compose.dms-results.yaml',
   'deploy/compose.dms-structure.yaml',
   'deploy/compose.control-plane.yaml',
+  'deploy/compose.control-plane-modules.yaml',
   'deploy/compose.dms-control-plane.yaml',
   'deploy/compose.customer-complete.yaml',
   'deploy/compose.dms-activated.yaml',

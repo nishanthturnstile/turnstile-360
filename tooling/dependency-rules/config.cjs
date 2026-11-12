@@ -3,10 +3,22 @@ const { resolve } = require('node:path');
 module.exports = {
   forbidden: [
     {
+      name: 'installer-engine-is-private-operator-only',
+      severity: 'error',
+      from: { path: '^apps/' },
+      to: { path: '(^packages/installation-engine/|^@thaarei/installation-engine$)' },
+    },
+    {
+      name: 'module-catalog-has-no-node-runtime',
+      severity: 'error',
+      from: { path: '^packages/module-catalog/' },
+      to: { dependencyTypes: ['core'], dependencyTypesNot: ['type-only'] },
+    },
+    {
       name: 'central-browser-no-server-package',
       severity: 'error',
       from: {
-        path: '^apps/thaarei-control-plane/src/app/(access/|staff/StaffEditor|clients/(ClientRegistry|ClientWorkspace|PairingControls|registry-client))',
+        path: '^apps/thaarei-control-plane/src/app/(access/|modules/CatalogueEditor|staff/StaffEditor|clients/(ClientRegistry|ClientWorkspace|ModuleAssignment|ModuleDependencyGraph|PairingControls|registry-client))',
       },
       to: { path: '(^packages/deployment-control/|^@thaarei/deployment-control$)' },
     },
@@ -14,7 +26,7 @@ module.exports = {
       name: 'central-client-cannot-import-server',
       severity: 'error',
       from: {
-        path: '^apps/thaarei-control-plane/src/app/(access/|staff/StaffEditor|clients/(ClientRegistry|ClientWorkspace|PairingControls|registry-client))',
+        path: '^apps/thaarei-control-plane/src/app/(access/|modules/CatalogueEditor|staff/StaffEditor|clients/(ClientRegistry|ClientWorkspace|ModuleAssignment|ModuleDependencyGraph|PairingControls|registry-client))',
       },
       to: { path: '^apps/thaarei-control-plane/src/server/' },
     },
@@ -25,6 +37,17 @@ module.exports = {
       from: { path: '^packages/dms-client/' },
       to: { path: '^packages/dms-contracts/(src|dist)/(index|private|identity-service)' },
     },
+    ...['turnstile-api', 'turnstile-web'].flatMap((app) =>
+      ['incident-management', 'risk-management'].map((id) => ({
+        name: `${app}-${id}-private-source`,
+        severity: 'error',
+        from: {
+          path: `^apps/${app}/src/`,
+          pathNot: `^apps/${app}/src/(features/${id}/|module-composition\\.ts$)`,
+        },
+        to: { path: `^apps/${app}/src/features/${id}/` },
+      })),
+    ),
     {
       name: 'no-unresolved-imports',
       severity: 'error',
@@ -48,7 +71,9 @@ module.exports = {
     {
       name: 'contracts-are-framework-independent',
       severity: 'error',
-      from: { path: '^packages/(dms-contracts|turnstile-contracts|control-plane-contracts)/' },
+      from: {
+        path: '^packages/(dms-contracts|turnstile-contracts|control-plane-contracts|module-catalog)/',
+      },
       to: {
         path: '(^apps/|^packages/(dms-client|deployment-control)/|node_modules/(@nestjs|pg|drizzle-orm|better-auth|@better-auth|openid-client|@fastify)/)',
       },
@@ -76,7 +101,7 @@ module.exports = {
       severity: 'error',
       from: { path: '^apps/turnstile-web/' },
       to: {
-        path: '(^packages/(dms-client|deployment-control)/|^@thaarei/(dms-client|deployment-control)$|node_modules/(@nestjs|pg|drizzle-orm)/)',
+        path: '(^packages/(dms-client|deployment-control|installation-engine)/|^@thaarei/(dms-client|deployment-control|installation-engine)$|node_modules/(@nestjs|pg|drizzle-orm)/)',
       },
     },
     {

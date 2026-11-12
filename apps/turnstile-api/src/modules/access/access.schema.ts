@@ -171,7 +171,7 @@ export const accessRolePermission = productSchema
       }),
       check(
         'access_permission_catalog',
-        sql`${t.permission} IN ('turnstile:access','turnstile:dms:capabilities:read','turnstile:configuration:manage','turnstile:people:manage','turnstile:roles:manage','turnstile:units:read','turnstile:units:manage')`,
+        sql`${t.permission} IN ('turnstile:access','turnstile:dms:capabilities:read','turnstile:configuration:manage','turnstile:people:manage','turnstile:roles:manage','turnstile:units:read','turnstile:units:manage','turnstile:incidents:read','turnstile:risks:read')`,
       ),
     ],
   )
@@ -261,7 +261,7 @@ export const accessCommandReceipt = productSchema
       check('access_receipt_digest', sql`${t.digest} ~ '^[0-9a-f]{64}$'`),
       check(
         'access_receipt_operation',
-        sql`${t.operation} IN ('legacy.replace','legacy.retire','administrator.bootstrap','administrator.handover','member.assignments','member.suspend','member.reactivate','role.create','role.patch','role.delete','invitation.issue','invitation.resend','invitation.cancel','invitation.reapprove','unit.create','unit.rename','unit.delete','unit.move','release.open','release.close','release.recover')`,
+        sql`${t.operation} IN ('legacy.replace','legacy.retire','administrator.bootstrap','administrator.handover','member.assignments','member.suspend','member.reactivate','role.create','role.patch','role.delete','invitation.issue','invitation.resend','invitation.cancel','invitation.reapprove','unit.create','unit.rename','unit.delete','unit.move','release.open','release.close','release.recover','module.grant','module.revoke')`,
       ),
       check(
         'access_receipt_structure_revisions',

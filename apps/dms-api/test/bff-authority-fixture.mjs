@@ -1,5 +1,6 @@
 // Separate-process fixture: consumers use HTTP and private fixture IPC, never DMS imports.
 import { randomBytes } from 'node:crypto';
+import { writeFileSync } from 'node:fs';
 import { Pool } from 'pg';
 import { createApplication } from '../dist/bootstrap.js';
 import { withTenant } from '../dist/infrastructure/database/postgres.js';
@@ -13,6 +14,7 @@ import {
 import { AuthorityService } from '../dist/modules/platform-auth/authority/authority.service.js';
 import { manageOAuthClient } from '../dist/modules/platform-auth/manage-client.js';
 import { provisionUser } from '../dist/modules/platform-auth/provision-user.js';
+import { createRecoveryDelivery } from '../dist/modules/platform-auth/recovery-delivery.js';
 import { smtpFixture } from './smtp-fixture.ts';
 
 const smtp = process.env.AUTH_BROWSER_MAILPIT_URL
@@ -45,6 +47,17 @@ if (process.env.AUTH_BROWSER_MAILPIT_URL)
     const candidate = error.body?.code ?? error.code;
     const code =
       typeof candidate === 'string' && /^[A-Z0-9_]{1,64}$/.test(candidate) ? candidate : 'UNKNOWN';
+    if (process.env.AUTH_BROWSER_DIAGNOSTIC_FILE)
+      writeFileSync(
+        process.env.AUTH_BROWSER_DIAGNOSTIC_FILE,
+        JSON.stringify({
+          name: error.name,
+          message: error.message,
+          cause: String(error.cause),
+          stack: error.stack,
+        }),
+        { mode: 0o600 },
+      );
     process.send?.({ diagnostic: `${error.name} ${code}` });
     process.exit(1);
   });
@@ -61,6 +74,21 @@ const authority = app.get(AuthorityService);
 const config = authority.config;
 const auth = authority.auth;
 if (!config || !auth) throw new Error('Authority fixture configuration missing');
+// Mailpit HTTP readiness can precede its STARTTLS listener. Verify the real production
+// transport before creating any account; never retry partially committed provisioning.
+if (process.env.AUTH_BROWSER_MAILPIT_URL) {
+  process.send?.({ phase: 'verify SMTP readiness' });
+  const delivery = createRecoveryDelivery(config);
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await delivery.verify();
+      break;
+    } catch (error) {
+      if (attempt === 29) throw error;
+      await new Promise((done) => setTimeout(done, 100));
+    }
+  }
+}
 const password = randomBytes(24).toString('base64url');
 const users = {};
 process.send?.({ phase: 'provision verified users' });

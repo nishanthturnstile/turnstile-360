@@ -1,6 +1,6 @@
 # Turnstile 360 and Thaarei DMS architecture
 
-**Updated:** 2026-11-06
+**Updated:** 2026-11-11
 
 **Status:** Accepted technical design with workspace foundations implemented. The explicitly
 marked Thaarei central control-plane proposal below awaits adoption.
@@ -194,7 +194,11 @@ Future process entry points and feature files are added with their capabilities.
 │   │   ├── src/{public,internal,events,artifacts}/
 │   │   └── generated/ fixtures/
 │   ├── dms-client/src/
-│   └── turnstile-contracts/src/
+│   ├── turnstile-contracts/src/
+│   ├── control-plane-contracts/src/
+│   ├── module-catalog/src/
+│   ├── deployment-control/src/
+│   └── installation-engine/src/
 ├── patches/                               # pinned dependency corrections
 ├── tooling/
 │   ├── typescript/{base,library}.json
@@ -204,6 +208,7 @@ Future process entry points and feature files are added with their capabilities.
 │   ├── compose.local.yaml, compose.dev.yaml, compose.dokploy.yaml, compose.mailpit.yaml
 │   ├── Dockerfile.dev, development-ports.json
 │   ├── nginx/nginx.conf
+│   ├── installation/{Dockerfile,installer}
 │   └── artifacts/
 ├── tests/system/
 ├── .github/workflows/workspace.yml
@@ -217,11 +222,15 @@ Future process entry points and feature files are added with their capabilities.
 `apps/turnstile-mobile` is a possible future path and does not exist. `turnstile_processing`
 is the current Python import name; its responsibility is reusable DMS processing.
 
-| Package                        | Intended contents / consumers                                                                                                                    | Boundary                                                                                                                                          |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@thaarei/dms-contracts`       | Public DMS requests/responses, separate private job payloads, events, artifact schemas, errors/statuses; API/client and generated Python schemas | Schemas/types only; no Nest, database, Turnstile domain logic, or credentials. Keep private contracts separate from public exports as implemented |
-| `@thaarei/dms-client`          | Typed HTTP calls, transport configuration, machine-token attachment, stable errors, idempotency-aware retries for trusted backends               | Depends on DMS contracts; no DMS repositories/services or Turnstile user authorization; never bundled into a frontend                             |
-| `@thaarei/turnstile-contracts` | Product requests/responses, schemas, errors, pagination for Turnstile API, web, and future mobile                                                | Platform-independent; no DOM, Node-only runtime, UI framework, Nest, database, or DMS internal-job dependencies                                   |
+| Package                            | Intended contents / consumers                                                                                                                    | Boundary                                                                                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@thaarei/dms-contracts`           | Public DMS requests/responses, separate private job payloads, events, artifact schemas, errors/statuses; API/client and generated Python schemas | Schemas/types only; no Nest, database, Turnstile domain logic, or credentials. Keep private contracts separate from public exports as implemented |
+| `@thaarei/dms-client`              | Typed HTTP calls, transport configuration, machine-token attachment, stable errors, idempotency-aware retries for trusted backends               | Depends on DMS contracts; no DMS repositories/services or Turnstile user authorization; never bundled into a frontend                             |
+| `@thaarei/turnstile-contracts`     | Product requests/responses, schemas, errors, pagination for Turnstile API, web, and future mobile                                                | Platform-independent; no DOM, Node-only runtime, UI framework, Nest, database, or DMS internal-job dependencies                                   |
+| `@thaarei/control-plane-contracts` | Platform-independent signed machine/status/report contracts                                                                                      | No Nest, databases, server state or credentials                                                                                                   |
+| `@thaarei/module-catalog`          | Pure module catalogue, profile, intent and decision schemas/validation                                                                           | No Node-only runtime or application/database imports                                                                                              |
+| `@thaarei/deployment-control`      | Server-only signing verification, durable deployment client/store and private preparation primitives                                             | Public contracts and authenticated HTTP; no cross-application database imports; never a browser dependency                                        |
+| `@thaarei/installation-engine`     | Versioned private operator orchestration and strict release/input/result contracts                                                               | Only the transient operator gets Docker authority; invokes owning packaged commands/public HTTP, never application source or repositories         |
 
 The current manifest dependency graph is:
 
@@ -5994,6 +6003,595 @@ interfaces private. Persistent data and off-host backups must survive app redepl
 See the [Dokploy runbook](docs/runbooks/dokploy.md) for operator steps; the complete target
 profile, sizing, upgrades and health semantics are defined above.
 
+## Proposed centrally managed Turnstile modules
+
+**Reviewed planning baseline, 2026-11-09; Astra findings resolved by the parent.** Central staff
+assignment, dependency visualization, controlled classification and actual selected delivery
+are part of this POC, superseding the earlier central-entitlement deferral. These documents
+do not change runtime policy/schema. The
+[specification](docs/turnstile/modules/module_delivery_specification.md) owns MOD-R01–20;
+the [plan](docs/turnstile/modules/module_delivery_implementation_plan.md) owns MOD-I01–10.
+Existing TCP/identity/recovery guarantees remain except the explicitly new module policy.
+The installation proposal below consumes these contracts.
+The [review/disposition record](docs/turnstile/modules/module_delivery_review.md) distinguishes
+the independent draft review from the parent's final corrections. Implemented increments
+are described below. MOD-I01–08 implement central desired assignment, selected customer
+delivery and reviewed activation; distributed installer and staff status integration remain
+with MOD-I09, and wider target acceptance remains with MOD-I10.
+
+### MOD-I01 implemented shared foundation
+
+`packages/module-catalog` implements strict catalogue/profile/assignment/intent/delivery/
+v2 decision payloads, dependency proposal and exact confirmation, canonical UTF-8 Web
+Crypto hashing, active dependant removal closure and catalogue/profile/release context
+checks. Root exports are framework/platform independent and dependency checks include
+this package, including an explicit no-Node-builtins rule. Central catalogue administration
+now consumes it through MOD-I02; current v1 issuance/verification and deployment remain unchanged.
+The fixed `foundation` metadata entry must exist and remain Core; catalogue reclassification
+cannot remove the existing identity/access base by substituting a different Core module.
+
+The [contract/ownership reference](docs/turnstile/modules/module_contracts.md) freezes the
+current foundation inventory, wire conventions, actor/retry matrix and compatibility
+handoff. Parsing/context validation is not signature/live-time/identity/epoch/order
+verification. MOD-I06 must implement those before runtime use. Only test catalogues
+mention the two unimplemented placeholders; no production catalogue is advertised.
+
+### MOD-I02 central catalogue implementation
+
+Central `/modules` and `/modules/[id]` provide Admin import/classification/publication
+and admitted Operator/Viewer read/export views. Staff-only `/api/module-catalogues`
+commands reuse canonical origin/CSRF, current staff admission/MFA and shared staff lock;
+`/api/module-catalogues/[id]` reads/exports the version, and `/code/[id]` reads verified
+source metadata. Categories alone can change; known code facts remain immutable. The
+fixed foundation cannot be demoted. Required-link views and impact review accompany the
+editor; customer assignment/dependency graph is MOD-I03.
+
+Owning Drizzle migration 0010 and private privilege migration 0011 introduce module_code,
+module_catalogue, module_receipt and module_audit in the central schema. Runtime cannot
+update/delete code, receipts or audit, change source identity, insert released versions,
+or rewrite a released catalogue. A database trigger fences released edits and exact
+revision progression. Successful mutation/receipt/audit are one transaction with live
+Admin/recent-MFA recheck under STAFF_LOCK. Crypto verification/hashing of candidates is
+performed before locking; no network calls/builds/customer database access occur.
+
+Release intake uses separate local public SPKI trust configured through
+CONTROL_PLANE_MODULE_RELEASE_TRUST_FILE, never the deployment signing key. The optional
+compose.control-plane-modules.yaml overlay supplies its explicit read-only mount. Missing
+trust blocks intake/publication, not staff read access or existing product operation.
+Known keys/issuer, RS256, fixed catalogue JWT type/audience and at most 24-hour validity
+are required. Code evidence carries a strict code catalogue; classification evidence
+binds candidate catalogue digest, code digest and exact draft revision. Only code-supported
+metadata is accepted; no code upload, URL-selected key or arbitrary command exists.
+Existing central recovery authority also gates publication.
+
+Exact committed receipts are recovered under current Admin/MFA before revalidating an
+expired token; they convey historical outcome only, with canonical readback remaining
+separate. Reused IDs with changed bodies conflict. Lists use independent 50-row cursors;
+request JSON is bounded to 256 KiB, stored documents 128 KiB, and public trust 32 KiB/eight
+keys. Raw signed tokens are not persisted; proof digests/key IDs and category/digest audit
+summaries retain safe provenance. See the [runbook](docs/runbooks/module-catalogues.md)
+for exact wire payloads, custody, failure recovery and source/target verification limits.
+This increment does not seed a production catalogue, assign customer modules, issue v2
+module grants or change customer runtimes.
+
+### MOD-I03 central product assignments
+
+Each registered Turnstile product links to a staff Modules page under
+`/clients/[id]/products/[productId]/modules`; DMS has no assignment UI. Staff reads and
+Admin/Operator current-MFA writes use `/api/registry/products/[id]/modules`. A bounded
+published-only catalogue list uses `/api/module-catalogues/assignable`. Staff cannot add
+code facts, remove Core, mutate classification or submit unsigned installed/effective
+facts. Checkboxes, required/optional dependency graph and equivalent text links use the
+shared resolver. Additional dependencies and the complete resolved set require explicit
+confirmation for both draft save and approval; unsaved edits cannot approve an old draft.
+
+Owning migration 0012 adds append-only module_assignment_entry snapshots and a separate
+module_assignment_state with draft/desired pointers. Composite foreign keys bind each
+pointer to its product and draft/approved kind. Migration 0013 revokes runtime snapshot
+updates/deletes and permits only pointer columns to change. Stored documents are bounded
+to 64 KiB; commands to 32 KiB. Published immutable catalogue IDs/digests, full binding,
+requested/confirmed IDs, canonical profile, actor/reason and operation remain attributable.
+Customer catalogue publication never changes another product's saved assignment.
+
+The shared assignment command's expectedRevision is the registry product revision.
+Draft save and desired approval each consume one revision and immutable snapshot ID;
+approved assignment revisions can have gaps. This fences stale commands against registry
+policy/pairing changes using the existing STAFF_LOCK and product row lock. Profile/hash
+preparation precedes locks; live role/MFA, binding/revision, saved exact draft and recovery
+authority are rechecked in the owning transaction. Snapshot/pointer/revision/registry
+audit/module receipt commit atomically. Historical exact receipts remain recoverable under
+current writer/MFA but cannot rewrite canonical state after later narrowing/suspension.
+The registry policy state/approval dates and existing v1 protocol are not changed by a
+desired assignment. No client-wide default operation or customer database access exists.
+
+Draft and approved desired snapshots are persisted independently; observed/effective
+module views are explicitly null until their later owning inventory/v2 adapters exist.
+Legacy reports and ordinary product approvals do not synthesize module evidence. Actual
+current status can show Unassigned, Awaiting package, Upgrade required for existing v1
+pairing and Restricted for product denial. The projection defines Ready for setup,
+Awaiting activation, Active and Inventory mismatch from later verified owning facts;
+staff input cannot assert these facts. Desired targets can be prepared for a legacy
+product, but delivering/activating module authority waits for its reviewed compatible
+upgrade. Commands asserting active policy/removal remain closed until MOD-I06/08; this
+increment does not implement active transitions or grant modules from desired approval.
+See the [assignment runbook](docs/runbooks/module-assignments.md) for workflow/recovery.
+
+### MOD-I04 selected artifacts and local-bundle delivery
+
+The owning source map in `scripts/module-source-map.mjs` maps known Individual IDs to
+Incident/Risk Nest and React entries; both require only Foundation and introduce no
+module-specific dependency package. Existing auth/configuration/onboarding/people/settings
+web features remain Foundation. Dependency rules fence each feature's private source from
+other features/foundation except the generated API composition. Placeholders have no HTTP
+routes, customer navigation or user/action authority before MOD-I06/07 enforcement.
+
+Selected Docker stages build the shared catalogue package, verify the exact resolver
+profile/source inventory/platform, then prune unselected feature source before Nest/Vite.
+Destructive composition requires the stage-created marker and /workspace. Unknown source
+ownership or public assets fail closed. A fixed allowlist assembles API dist/database/
+production dependencies/package metadata rather than copying all pnpm deploy output;
+Nginx receives only selected Vite output and nonsecret selection metadata. Source maps,
+chunk input ownership, complete runtime file/link hashes, dependency inventories, required
+notices and generated selected-profile documentation form the proof. Final runtime layers
+contain no build stage, host env, signing key or customer identity. Images retain pinned
+bases, non-root users and monorepo-root build contexts. Ordinary default builds are Core-only.
+
+The generic strict delivery request contains the released catalogue, exact canonical
+profile and digest. The source digest hashes a sorted explicit owning build-input inventory,
+including root manifests/patches/compiler options and release tooling; it is not an ad hoc
+Git ID. Source/code facts must match the known version/dependency map. Classification-only
+changes are supported through a new released catalogue/profile. Shared helpers bind the
+signed result to request/catalogue/source/profile/platform, require exactly API/web image
+roles and derive the release ID from exact archive/image/inventory/notices/docs identities.
+Results use RS256, separately provisioned release SPKI trust, fixed type
+`thaarei-module-delivery+jwt`, audience `urn:thaarei:module-delivery`, HTTPS issuer, known kid,
+no remote/embedded keys and at most 24-hour validity. Catalogue evidence cannot substitute
+for delivery evidence, and neither can grant module or product/user authority.
+
+The POC release adapter uses a configured private local bundle directory, atomic staging/
+commit and exact-profile verified reuse across customers. It builds/starts both production
+commands with no credentials/network/host bindings and checks non-root/read-only liveness
+and closed business access. Verification compares final ownership/inventory and the actual
+archive's OCI descriptors (legacy Docker config identity supported) with required content
+identities, rejecting missing/substituted images/files and unknown bundle content. Recipient
+load verifies the archive before Docker loading and then checks exact installed images.
+Private pipeline renewal revalidates original signatures and all artifacts on the pinned
+source; central/recipient ordinary verification never accepts expired results.
+
+Central exports the current approved generic request at
+`/api/registry/products/[id]/modules/build-request` under staff read authority. An optional
+read-only `CONTROL_PLANE_MODULE_REFERENCE_DIRECTORY` contains only provisioned signed
+`<profileDigest>.json` descriptors, not artifacts or pull credentials. The existing separate
+release trust file verifies each result on read, checks full resolver/current desired
+context and exposes only the matching inventory/reference. Missing/invalid/expired evidence
+projects Awaiting package; verified matching availability can project Ready for setup,
+with existing legacy upgrade restrictions. Observed/effective authority remains null.
+This filesystem reference index is the explicit POC persistence adapter; no new SQL ledger,
+staff arbitrary upload/build endpoint, central Docker socket or artifact proxy is added.
+Production private registry/HTTPS distribution and target rollout require their configured
+adapter/acceptance; no URL fetching is implemented by this local adapter. See the
+[delivery runbook](docs/runbooks/module-delivery.md) for custody, commands and recovery.
+
+### Catalogue ownership and staff responsibilities
+
+Retain one modular Nest/Fastify backend and selected Vite/web composition. A business
+module does not create a tenant, DMS application, OAuth client or separate process.
+Freeze the current foundation inventory from actual source in MOD-I01. Initial Individual
+IDs are `incident-management` and `risk-management`, each requiring only the foundation.
+
+A platform-independent catalogue/resolver package (proposed `@thaarei/module-catalog`)
+owns strict metadata/deterministic resolution, with no Nest, repositories, credentials or
+executable import paths. Owning build adapters map known IDs to API/web entrypoints.
+Central Next services own catalogue/assignment/intent/audit/delivery records. Customer
+Nest services own installed inventory, verified module policy and runtime capabilities.
+Apps never import one another's code/databases; internal feature interfaces expose only
+approved services/projections. Import rules reject private repository access and cycles.
+
+Separate code capability from classification. Trusted release tooling supplies exact
+code-supported module versions/dependencies. Central Admin drafts Core/Individual changes
+for known IDs; an external trusted pipeline verifies the combined catalogue against the
+pinned source and supplies matching release evidence. Only then is the immutable catalogue
+released/assignable. A staff form cannot invent code, edit code dependencies or upload a
+plugin. Promotion/demotion preserves IDs/routes/data but creates a new catalogue digest;
+old catalogue/profile/customer records never change in place.
+
+Catalogue attestation and selected-profile inventory are distinct pipeline outputs.
+The first verifies code-supported declarations/classification against source without
+needing a customer assignment. The latter verifies actual built images for a resolved
+selection. This avoids a catalogue-publication/assignment/build dependency cycle. Only
+verified available artifacts can move a customer's delivery state past Awaiting package.
+
+Admin owns catalogue publication; Admin/Operator owns product assignment/activation;
+Viewer reads. Use existing live staff role/recent-MFA/reason/revision/receipt rules on
+committed policy changes. Assignment belongs to one Turnstile product, not the client
+globally. Core is required for that catalogue. Selecting Individual modules proposes a
+dependency closure; staff explicitly confirms every extra dependency before committing.
+Installation/dependency inclusion grants no customer membership, role or action right.
+Core classification is not editable per customer; a customer's bundle is an assignment.
+
+Use checkboxes plus an accessible dependency graph and equivalent text list. Distinguish
+required/optional edges, missing requirements and affected dependants. Drag-and-drop is
+not required and establishes no execution order. Customer settings cannot reclassify a
+feature to bypass policy. New classifications take effect only through a new verified
+release and deliberate existing-installation update.
+
+### Metadata, profiles and persistence ownership
+
+These are logical contracts, not SQL schema/migrations:
+
+| Record                 | Content and authority                                                                                                                                                                                                                                                                         |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Released catalogue     | Immutable ID/version/digest, source/release compatibility, exact module IDs/versions/category, required IDs, optional integrations and supported platform. Verified code inventory plus Admin classification.                                                                                 |
+| Assignment             | Product/installation binding, catalogue digest, explicitly requested Individual IDs, reviewed resolved IDs, revision, operation/receipt, reason and actor/time. Desired authority, separate from effective state.                                                                             |
+| Release profile        | Catalogue/source/platform/contract/migration compatibility plus canonical resolved module/version set. Generic reusable digest, without customer identity/secrets.                                                                                                                            |
+| Delivery inventory     | Profile, exact image/archive digests, notices/source inventory and private tools; signed release evidence checked against the expected source/catalogue/profile request.                                                                                                                      |
+| Installation intent    | Version, intent ID/revision, fresh/adoption mode, central client/installation/product IDs, reserved local installation/tenant/Turnstile application IDs, environment/customer key, assignment/catalogue/profile/release references and validity. Central-signed metadata, not a bearer grant. |
+| Effective module state | Installed immutable inventory/catalogue, verified decision/order, authorized active profile, allowed IDs, local-disable subset and attributed acknowledgement. Customer-owned durable state.                                                                                                  |
+
+Bounds: at most 64 modules and 512 total dependency/integration edges per catalogue;
+unique lowercase slug IDs of 3–64 characters; display labels of 1–100 characters. Resolve
+exact module versions within one catalogue, with no arbitrary version-range/mixed-catalogue
+solver in v1. Reject unknown fields/IDs, duplicate edges, cycles, incompatible platforms/
+contracts and Core requiring Individual. Optional references do not imply entitlement.
+Cycle detection applies to required edges; reciprocal optional-integration references
+are allowed metadata, not permission for circular code imports or implicit dependencies.
+
+Canonical profile input has fixed-version keys, catalogue/source/platform identifiers
+and sorted unique module IDs/exact versions. One shared serializer/SHA-256 helper and
+fixtures make property/declaration order irrelevant; any source/catalogue/platform
+change produces a new profile digest. Do not implement separate ad hoc hashes in UI,
+central and pipeline. Central/local persistence stay in their owning databases; define
+concrete schema/ACLs/migrations only in the owning implementation increment.
+Policy mutation, audit and receipts commit atomically. Reconcile exact receipts/current
+state after lost acknowledgement; changed payload/authority is a new operation. No secret
+inputs enter evidence. A success marker/journal is not current authorization.
+
+### MOD-I07 customer module access
+
+The platform-independent Turnstile contracts expose `GET /api/modules` (version 1 bounded
+links plus signed active context) and `GET /api/modules/{incident-management|risk-management}/entry`.
+Only selected Nest feature modules register their entry controllers/services. Selected Vite
+composition imports those same IDs lazily; excluded implementations and routes are absent.
+Shared navigation intersects the current backend projection with the installed route registry.
+Landing pages fetch backend messages, recheck admission on failures and discard obsolete
+subject/access/policy results. The foundation, setup and authentication flows retain their
+existing boundaries and components. No business-domain tables or DMS writes are introduced.
+
+People permission catalogue version 2 adds explicit company-only `turnstile:incidents:read`
+and `turnstile:risks:read`. The nine-action catalogue and existing scoped contracts, SQL
+permission constraint, deferred role/assignment guards and security-definer People mutation/
+coverage functions agree. Protected system templates and the three-action legacy import
+stay unchanged. Central module assignment and protected administrator status grant neither
+new permission. A private owning module operator creates/reuses exact custom reader roles
+and company assignments for an existing active, verified normal user; it uses existing
+installation/configuration/access locks, revision, audit and durable command receipts.
+A replay reports current state without reapplying an interveningly revoked assignment.
+Public normal role administration retains its existing authority ceiling.
+
+`ModuleAccessService` admits both controller and internal service calls. It commits the
+existing deployment clock/quarantine preflight, holds the real deployment snapshot and
+access-context locks, rereads active membership/fingerprint/setup, requires the existing
+private handover/release barrier, verifies the installed signed release and current signed
+v2 module authority, then intersects installed IDs, explicit user permission and local
+reductions before invoking feature code. Invalid proofs/configuration close admission;
+there is no v1 module authority or retained module-read exception. Controller user guards
+remain an additional layer. Module responses/errors, including excluded 404s, have
+`Cache-Control: private, no-store` and `Referrer-Policy: no-referrer`.
+
+Protected API environment `TURNSTILE_DISABLED_MODULES` is a JSON array of the two known
+business IDs, unique, maximum two, default `[]`. A process restart applies it. It removes
+those IDs and required dependants from signed authority, never expands it. DMS enrollment,
+machine scopes and product approval remain independent; a module grant does not establish
+a DMS connection. Staff activation/cutover uses the MOD-I08 flow below. See the
+[module access runbook](docs/runbooks/module-access.md) and generated
+[module OpenAPI](docs/api/turnstile-modules.openapi.json); completion belongs in IN_PROGRESS.
+
+### Central-first fresh setup and artifact delivery
+
+Keep the existing local-export adoption path. Add an explicit fresh central-first mode:
+central reserves nonsecret expected local installation/tenant/Turnstile application UUIDs
+before a host exists. This does not create a customer database, account or OAuth client.
+MOD-I05's combined private preparation adapter composes the owning DMS and Turnstile
+configuration commands, while standalone DMS initialization remains supported. It accepts a
+verified reserved intent once and generates distinct private configuration locally.
+Existing initialized state cannot be
+rebound by this path. Independent environments get independent reservations; replicas/
+recovery preserve their coherent identities.
+
+Sign intents with maintained RS256/JOSE, explicit type `thaarei-installation-intent+jwt`,
+fixed installer audience/configured issuer and provisioned trusted public keys. Maximum
+initial validity is 24 hours; no token-controlled key URL or untrusted embedded key.
+Intent metadata does not authorize pairing, private artifact access, activation or user
+access. Deliver existing protected one-use pairing files separately through staff HTTPS,
+never codes in URLs/localStorage. Renewing an expired unconsumed intent preserves IDs;
+expiry after successful preparation does not reset state or replace committed receipts.
+
+Staff confirms modules; central resolves a verified generic profile or shows Awaiting
+package. An external pipeline builds/verifies/publishes. Central stores only a bounded
+declarative request/result with known source/catalogue/profile IDs: no Docker socket,
+customer migrator, shell, arbitrary source URL/command/plugin or customer deployment key.
+The operator launcher retrieves the digest-pinned bundle through explicitly configured
+private distribution with local scoped credentials. POC can use a transferred local
+bundle. Production retrieval checks approved HTTPS origin/certificate/signature/digests,
+rejects unapproved redirects/locations and keeps credentials out of URLs/logs. Reuse
+existing artifact storage/release facilities; no new central registry/proxy by default.
+Provision release signing trust independently from central decision signing trust.
+
+Before affected setup/cutover compare retained intent/revision, current desired state
+and actual package. Changed assignment stops for reconciliation, preserving IDs/secrets/
+data, not silently choosing another profile. The initializer remains fresh-only; partial
+DMS/Turnstile pairing resumes independent durable candidates/receipts. Public intent
+metadata cannot claim a product; actual pairing enforces one-use credentials/generation.
+Root-level cloning remains outside existing supported rollback/enforcement guarantees;
+this is not hardware attestation.
+
+### MOD-I05 central-first private preparation
+
+`installation.reserve` extends the owning registry command
+with central-generated nonsecret local installation/tenant/application and two product UUIDs.
+The existing installation/product tables and unique constraints retain immutable bindings;
+under the staff/client lock, both pending products, reservation audit and ordinary registry
+receipt commit together. Exact retries require current writer/MFA and preserve all IDs.
+`installation.create` continues the existing local-export/adoption path. No schema migration,
+customer database, credential, pairing or approval is created by reservation.
+
+The staff POST `/api/registry/products/[id]/modules/installation-intent` requires current
+Admin/Operator MFA, recovery authority, expected product revision, a reservation audit,
+approved desired assignment and a matching verified package. Filesystem/release verification
+is prepared before mutation locks; the locked transaction rechecks product/desired context.
+An existing module receipt stores the strict nonsecret intent payload atomically with audit;
+signing occurs after commit with the maintained central RS256 key, distinct purpose/audience
+and 24-hour lifetime. Stable intent ID is the Turnstile product UUID; its context revision
+is the current registry product revision. A new renewal operation retains identities and
+uses current context; an exact historical retry preserves original expiry/context only.
+
+The private Node verifier checks provisioned central trust/key status, exact signing header,
+issuer/audience/time, full binding, independent DMS product ID, profile/release and assignment/
+intent revision. It supplies no credentials or runtime authorization. Staff controls support
+reviewed fresh reservation and reviewed retryable intent downloads without browser storage.
+
+The Node/Linux coordinator `scripts/prepare-installation.mjs` consumes protected local
+operator input, separate public trusts, a signed selected bundle and an independently pinned
+locally loaded DMS image. It verifies physical inventory/signatures, checks the intent/package
+context and calls the canonical central HTTPS `/api/installation-intents/status` endpoint.
+This stateless endpoint verifies a current unexpired central-purpose signature and recovery
+authority and returns only whether the desired assignment/release remains current. It grants
+no pairing, artifact retrieval, renewal or business authority. Ordinary pairing revisions
+can increase while the same desired context remains current; assignment revisions cannot.
+The coordinator checks freshness again before recording configuration completion.
+
+Both owning initializers validate input in read-only/no-network containers before any plan
+is committed, then generate configuration under the operator UID with no network, added
+privileges or capabilities. Private 0700 directories/0600 regular files reject symlinks,
+unsafe modes and unknown/replaced state. Each owning plan is synced and committed once
+before synced atomic publication of its files; retries restore missing files from retained
+secret material and never overwrite mismatches or regenerate committed secrets. The parent
+identity/settings/image journal fences another intent/assignment/package or settings change;
+its completion receipt contains only bindings and file digests, not authority. Completed or
+partial product credential/candidate directories remain untouched. Renewed intents for the
+same context preserve identities/secrets; changed context stops for explicit reconciliation,
+not fresh reset or implicit upgrade. Interrupted configuration and lost receipts resume the
+same committed preparation. Root-level cloning remains outside this mechanism's guarantees.
+
+DMS configuration supports combined authority/resource origins and explicit reserved local
+installation/tenant IDs. Its owning bootstrap inserts that local ID only for a fresh row and
+rejects replacement transactionally; the old generated-local-ID standalone path remains
+compatible. Turnstile configuration supplies reserved application identity, independent
+runtime/migrator/reporter passwords, correct product/invitation key formats and its existing
+controlled STARTTLS relay settings. OAuth/client secret fields remain empty until the real
+verified-customer authority workflow issues them. Separate deployment overlays retain
+independent machine state/markers and no implicit approval. Configuration/access initialization,
+role provisioning and actual target work continue through their explicit owning commands;
+central never performs them. New release artifacts use dependency and registry-metadata
+BuildKit caches while retaining pinned pnpm supply-chain policy checks.
+
+Source/local qualification uses actual initializer Docker images, real central HTTPS/SQL
+handlers, a separate disposable customer database and the owning bootstrap/pairing commands.
+Production registry/host rollout and whole-installer journals stay with their IA and
+MOD-I09–10 owners. Module activation/cutover follows MOD-I08 below. See the
+[intent runbook](docs/runbooks/installation-intents.md) for exact inputs, commands, WSL paths,
+secret custody and qualification scope.
+
+### Signed module decisions and compatibility
+
+Current strict deployment decision v1 approves only `product-business`. Add explicit
+Turnstile decision v2, retaining JWT type/algorithm/issuer/audience, full identity/epoch
+binding and order checks. Approved v2 binds the active catalogue/profile/release and
+active assignment revision, the change assignment revision producing current policy,
+and the complete effective allowed IDs. Desired catalogue/profile/assignment context is
+separate and never grants authority to a new profile. No ID absent
+from that installed catalogue/profile may be authorized. Pending/rejected/suspended
+variants confer no module allow authority. Unsigned report/profile/status or HTTP 200
+cannot grant access.
+
+Module-managed products have a durable central minimum decision version of 2 and a
+verified local release requiring v2. Negotiation cannot downgrade it. Missing/unknown/
+malformed claims fail closed for module business access. Stage central dual support,
+then enforcing customer artifacts, then explicit activation. Legacy v1 Turnstile keeps
+its existing foundation policy only; new module assignments wait for reviewed upgrade.
+DMS products and independent credentials can remain v1. Qualify the full mixed-version
+matrix; no older binary may reopen a module-managed installation after enforcement.
+
+The shared server-only implementation exposes strict `verifyModuleDecision` and
+`evaluateModuleDecision` alongside the v1 verifier. The owning store supplies a branded,
+immutable installed release context from `verifyInstalledModuleRelease`, which verifies
+purpose-separated release evidence against independent provisioned trust and the trusted
+image's exact compiled profile. Installed build evidence may outlive its original bounded
+issuance window; it cannot extend a business grant. Key revocation and monotonic release
+trust revisions still apply. Central sync now accepts explicit v1/v2 bodies at the existing machine sync endpoint.
+A separate `module_authority` row permanently requires v2, independent of machine epoch.
+The current-MFA Admin enforcement endpoint commits that restrictive floor with product
+revision, receipt and audit; it cannot grant modules. Runtime can insert only a closed
+fence and cannot delete it or directly update active authority. Issuance validates persisted active
+context against the exact release request, rechecks policy/floor/epoch after signing,
+and returns pending for absent activation or a replacement epoch. MOD-I08 adds the
+reviewed activation/restriction flow below; direct runtime document writes remain denied.
+
+Selected images compile the exact installed profile into their owning adapter. The API
+and reporter read separately protected signed release evidence and public release trust,
+then re-verify context during SQL application/evaluation. Fresh private preparation writes
+these files and binds their hashes to its receipt. The legacy development source remains
+v1. Supported activation/cutover and installed-path qualification follow MOD-I08 below.
+See the [decision runbook](docs/runbooks/module-decisions.md).
+
+Reuse atomic policyRevision/decisionSequence and durable denial. Module or authorized
+profile/catalogue changes require a newer policy revision. Same-revision renewal cannot
+change module authority; conflicting content is a protocol error. Persist the complete
+verified policy/acknowledgement atomically before opening access. Stale receipts/reports/
+renewals cannot restore removed modules. Restores use external quarantine/new epoch/
+current central reconciliation, including catalogue/assignment/active-profile evidence;
+missing independent central evidence needs fresh reviewed approval, not restored renewal.
+
+Retain seven-day maximum grant/daily renewal/fifteen-minute reporting. No central lookup
+per user request. Removal applies locally on sync; an offline installation that never
+receives it loses all catalogue-managed business module access when its current grant
+expires, including reads. Applied removal remains denial after envelope expiry. Every
+new business module, including one promoted to Core, needs current approved v2 authority.
+The existing fixed foundation is enumerated from current routes/services in MOD-I01;
+its previously accepted product-level read/identity/recovery exceptions remain intact.
+Category promotion cannot turn business functionality into a foundation exception.
+Module IDs are not OAuth scopes, tenants or local DMS registrations.
+
+| Verified state                                                         | Catalogue-managed business reads                        | New module writes/work                | Existing foundation                                                                                                        |
+| ---------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Current approved v2, module present/allowed/enabled                    | Allowed with current user/resource rights.              | Allowed with owning rights/readiness. | Existing product/local rules.                                                                                              |
+| Approved but module absent, removed or locally disabled                | Denied, including direct landing/API reads.             | Denied; no new dispatch.              | Existing product/local rules.                                                                                              |
+| Cached approval expired during outage, including unseen remote removal | Denied; prior activation is not a module-read fallback. | Denied.                               | Existing product prior-activation read exception only where already supported; identity/private recovery remain available. |
+| Signed pending/rejected/suspended, or its durable denial after expiry  | Denied.                                                 | Denied.                               | Existing product policy, including its distinct prior-activation requirements, remains unchanged.                          |
+| Invalid/unknown/wrong-profile proof or supported restore quarantine    | Denied.                                                 | Denied.                               | Only owning diagnostics/identity/recovery exceptions; no inferred business approval.                                       |
+
+The product-level authorized-read exception cannot override this business-module matrix.
+Network loss alone does not close still-valid approved module authority; it cannot extend
+its expiry or add a module. Safety completion/cleanup of work admitted before restriction
+is separately classified by its owning feature, not exposed as a user business read.
+
+### MOD-I08 reviewed transitions and private cutover
+
+The current-MFA Admin/Operator activation endpoint
+`POST /api/registry/products/[id]/modules/activate` independently reviews current product,
+desired assignment, active basis, machine epoch and a matching fresh installed observation.
+It verifies the desired package with the independently provisioned release reference index.
+Migration 0016 records bounded authenticated machine inventory (self-reported, never an
+attestation). The sync adapter commits that observation separately so a wrong active-profile
+sync can remain a conflict without producing a different signed policy at the same revision.
+Migration 0017 retains the permanent floor and direct runtime document-update denial; its
+bounded SECURITY DEFINER writer checks live staff/MFA, product revision/floor and epoch.
+Restrictions can only reduce the old allowed set without changing its installed context.
+
+Assignment draft/approval now carry a current active basis and explicit active-catalogue
+removal closure. Saving does not narrow access; approval atomically updates the desired
+pointer, restricts old authority, advances the shared product revision and writes audit/
+receipt. Additions remain staged. Draft-to-approval review ignores only the mechanically
+advanced basis policy revision; the locked current basis and saved draft revision must still
+match. Initial or subsequent activation separately writes the exact verified target request,
+current epoch, desired assignment and complete allowed set under the same locks. Historical
+receipt retries cannot replay activation over a later restriction. Old-epoch documents grant
+nothing after replacement. The staff page exposes bounded central authority/inventory facts
+for review; full acknowledgement/effective reporting and installer handover remain MOD-I09.
+
+The Node/Linux owner helper `scripts/module-cutover.mjs` is a POC tools-checkout workflow,
+not a customer application or the combined installer. Its private input pins both complete
+bundles, exact old API/web/reporter container IDs, fixed configuration, desired/policy basis
+and current access revision. It uses the existing feature-release closer and owning SQL/
+file deployment quarantine, stops old containers, captures a checksummed coherent product
+schema/private-state/configuration archive, loads/verifies target artifacts, applies forward
+owning migrations and checks identity/setup/local access fingerprints. RLS-aware dump uses
+explicit fixed-tenant PGOPTIONS and insert statements. No domain schema or data deletion is
+introduced. File plans use private modes, kernel locking, fsync/atomic rename and immutable
+input/artifact identities; interruption preserves a closed resumable checkpoint. Private input
+is limited to 32 KiB, at most 16 exact mounts/containers and 16 reconciliation reviews. Backup
+paths must be disjoint from all live inputs; only staging owned by that plan may be regenerated.
+The target also verifies against the installation's independent release trust before any
+closure. The helper preserves that file, its key revocations/retirement and its revision;
+delivery trust cannot provision or reactivate installed signing keys.
+
+The supported cutover then uses existing replacement pairing and private rebind, current
+product approval, fresh installed observation, explicit current-MFA module activation and
+signed sync. Customer rebind preserves minimum decision version and independent release-trust
+revision floors. Old credentials/activation are retired, while fixed IDs, completion, grants
+and data are retained. The helper's verify phase requires the new epoch/current target proof,
+matching preserved fingerprints and stopped old processes. Normal protected administrator
+opening remains explicit. A private access change during the closed interval needs a new
+normal-login administrator review and current revision before rebaselining; it never changes
+central authority or overwrites the changed grants. Prior review receipts cannot replace a
+newer baseline. Central changes require fresh central review.
+
+Existing external-marker quarantine and fresh online epoch rules govern coherent central/
+customer restores. Archive/receipts are evidence, never current authority. Missing independent
+evidence, wrong profiles, retired secrets or lower-trust/v1 images remain closed. Feature work
+admitted before restriction may perform only its owning explicit safety/cleanup; no new
+module work is inferred. See the [transition runbook](docs/runbooks/module-transitions.md)
+and [activation OpenAPI](docs/api/module-transitions.openapi.json); actual qualification is
+recorded in IN_PROGRESS.
+
+### Assignment transitions and effective access
+
+Keep desired assignment, available package, reported installed profile, authorized active
+profile and allowed IDs separate. Reported inventory is self-reported, not attestation.
+
+Assignment changes record both a current active basis (catalogue/profile/active assignment
+and policy revision) and the desired target catalogue/profile/revision. They also record
+explicitly unassigned IDs and the staff-reviewed removal closure using the **active**
+catalogue's mandatory dependant graph. Commit that restrictive policy with assignment,
+receipt and audit before waiting for delivery. A stale active basis requires conflict/
+fresh review, not silent recalculation under different authority.
+
+For any combined change, removals take precedence: effective IDs become the current
+allowed IDs minus explicitly removed IDs and their confirmed affected dependants.
+Apply this even when additions or a new target catalogue are pending; local enforcement
+occurs on sync or the expiry bound above. Stage additions separately until verified
+profile installation and explicit activation. A delayed build/old acknowledgement cannot
+reintroduce removed rights. Pure classification migration is not unassignment. Existing
+Core cannot be removed individually; a request to do so is rejected or requires the
+supported compatible catalogue/profile cutover, rather than silently weakening Core.
+
+Thus Incident-only to Risk-only removes Incident authority immediately at central commit
+(locally on sync/expiry), leaves only the foundation while Risk delivery is pending, then
+enables Risk after verified cutover/approval. The same rule applies to an explicitly
+deselected active Individual module across catalogue versions. Classification-only
+promotion/demotion preserves unchanged active authority until its deliberate cutover.
+
+| Transition                           | Required result                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Initial assignment                   | Desired authority may be approved before installation. Activation still requires actual pairing, matching inventory, recent-MFA staff activation approval and local signed application/acknowledgement.                                                                                                                                                                |
+| Add missing code                     | Preserve only authority remaining after explicit removals/dependant restrictions; show Upgrade required for additions. Install the exact new profile under private cutover controls, then explicitly approve its activation. Old-profile grants cannot authorize the new profile.                                                                                      |
+| Remove Individual within a catalogue | Review/remove active affected dependants; closure must stay valid, including explicit Individual unassignment across target catalogues. A newer signed allowed-set restriction against the currently installed profile denies removed-module reads/writes/entry/jobs. Retain data/private recovery; files remain until a narrower package is installed and authorized. |
+| Reapprove                            | Newer reviewed approval, compatible installed code and current local rights are required; stale decisions cannot restore access.                                                                                                                                                                                                                                       |
+| Reclassify across catalogues         | Stage a verified new catalogue/profile and deliberate compatible update. Preserve unchanged classification-only authority until cutover; apply separately confirmed Individual removals immediately against the active context. A new demotion cannot unassign old Core in place.                                                                                      |
+| Interrupt or restore                 | Preserve identities/secrets/data, reconcile current receipts/desired/active state and quarantine unknown profile/binding or supported restore. No v1 downgrade, retired-secret rollback or implicit writer opening.                                                                                                                                                    |
+
+Explicit module removal denies all removed-module business access, stricter than the
+existing whole-product expired/suspended authorized-read exception, which remains
+unchanged. Core cannot be unassigned individually. Removal retains data/user grants;
+reapproval reevaluates current membership/permissions. Fence new operation admission;
+already admitted work follows its owning safe completion/cleanup classification. Future
+business modules must define these boundaries; this POC adds no workflow engine.
+
+Effective access requires installed code, signed module authority, optional local enablement,
+actor/resource permission, overall product operation permission and applicable readiness.
+Internal calls/optional integrations check the called capability; dependency inclusion
+is not user authorization. Local configuration may reduce, never expand, signed rights.
+Use policy at actual operation admission and owning transactional checks for future writes,
+not a stale browser snapshot. Existing identity/setup/recovery exemptions remain bounded.
+
+Proposed `GET /api/modules` returns only the current user's permitted installed entries
+and safe catalogue/profile/decision context, private/no-store. Landing routes are
+`GET /api/modules/incident-management/entry` and the Risk equivalent, returning ID/title/
+message. Explicit read permissions are `turnstile:incidents:read` and `turnstile:risks:read`,
+assigned through normal private administration; protected admin or module assignment
+does not imply them. No domain tables are needed. Extend permission schema/constraints
+only during the owning implementation, never in planning.
+
+API/web composition and allowlisted runtime assembly share the resolved profile. Verify
+excluded implementation files/dependencies/chunks/source maps/docs/private tools absent.
+Shared allowed libraries and bounded catalogue IDs are not excluded implementation.
+Retain existing foundation migration history; future feature migration/data lifecycle
+belongs to its implementation. No generic drop/uninstall is added. Navigation uses
+backend capabilities; absent routes do not register, installed-but-disallowed routes deny.
+Reports add only bounded catalogue/profile/release IDs, assignment/applied decision
+revisions, installed/allowed IDs and finite mismatch status under existing privacy limits.
+No module usage, business records, users or customer credentials are added.
+
 ## Proposed installation automation
 
 **Planning proposal, 2026-11-07:** The owner authorized the installation specification
@@ -6005,13 +6603,19 @@ owns the proposed technical design; the
 [implementation plan](docs/deployment/installation_implementation_plan.md) owns IA-I01–09.
 Actual delivery/evidence belongs in IN_PROGRESS.md.
 
+The [central module plan](docs/turnstile/modules/module_delivery_implementation_plan.md)
+adds prerequisites to IA-I01/02/03: catalogue/profile/activation contracts and central-first
+reserved identity mode. Existing/local-first adoption preserves actual exported IDs.
+Provisioning/migration and deployment execution remain with the customer operator.
+
 ### Installer placement and release ownership
 
 Use a versioned operator-run engine with a thin Docker-only target launcher, distributed
 with a complete combined customer release. Implement orchestration as a server-only
 workspace package, with pure versioned input/result validation separated from adapters.
-Finalize its package name/export boundaries in IA-I01; do not create scaffolds or schema
-migrations during planning. Adapters invoke packaged owning private commands or
+The bounded module POC is implemented by `@thaarei/installation-engine` as detailed
+below; complete infrastructure/processing/target acceptance remains with the wider IA
+track. Adapters invoke packaged owning private commands or
 authenticated HTTP contracts, never another application's repositories/database code.
 No persistent installer API or inbound customer deployment agent is required.
 
@@ -6032,13 +6636,13 @@ Application containers receive no Docker socket or installer/migration authority
 
 ### Installation inputs and protected state
 
-| Contract                  | Proposed content and ownership                                                                                                                                                                                                                                                              |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Installation intent       | Strict versioned nonsecret desired profile, environment/region label, customer key, canonical origins, selected release, ingress/network binding, SMTP transport metadata, explicit admission limits and references to private input handles. Unknown fields fail validation.               |
-| Generated local inventory | Durable local installation/tenant/Turnstile application identities and independently identified service clients/products. Generate once before dependent effects; export nonsecret bindings for central import. Central-assigned record IDs are retained from authoritative receipts.       |
-| Private input store       | Protected files/stdin or operator-scoped secret handles for role/service credentials, pairing candidates, temporary user proof and provider access. File permissions and mounts restrict each owner. Separate typed JSON, raw env and key writers; no wildcard dotenv rewrite.              |
-| Stage journal             | Engine/contract version, release binding, nonsecret intent fingerprint, installation binding, stage/operation ID, expected revisions, state, safe receipt reference, evidence time and next actor/action. No passwords, cookies, pairing codes, bearer tokens or low-entropy secret hashes. |
-| Evidence record           | Exact artifact/target bindings, bounded observed statuses, redacted request/receipt IDs, verification category/time and outstanding checks. Technical readiness and signed human target acceptance are different fields.                                                                    |
+| Contract                  | Proposed content and ownership                                                                                                                                                                                                                                                                                        |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Installation intent       | Strict versioned nonsecret desired profile, environment/region label, customer key, canonical origins, selected release, ingress/network binding, SMTP transport metadata, explicit admission limits and references to private input handles. Unknown fields fail validation.                                         |
+| Generated local inventory | Durable local installation/tenant/Turnstile application identities and independently identified service clients/products. Central-first fresh mode accepts verified reserved IDs once; local-first/adoption exports actual retained IDs. Keep module catalogue/profile/revision bindings with authoritative receipts. |
+| Private input store       | Protected files/stdin or operator-scoped secret handles for role/service credentials, pairing candidates, temporary user proof and provider access. File permissions and mounts restrict each owner. Separate typed JSON, raw env and key writers; no wildcard dotenv rewrite.                                        |
+| Stage journal             | Engine/contract version, release binding, nonsecret intent fingerprint, installation binding, stage/operation ID, expected revisions, state, safe receipt reference, evidence time and next actor/action. No passwords, cookies, pairing codes, bearer tokens or low-entropy secret hashes.                           |
+| Evidence record           | Exact artifact/target bindings, bounded observed statuses, redacted request/receipt IDs, verification category/time and outstanding checks. Technical readiness and signed human target acceptance are different fields.                                                                                              |
 
 Persist the binding and protected candidate material durably before external effects.
 Use exclusive creation/atomic replacement, appropriate fsync and owner permissions;
@@ -6056,12 +6660,13 @@ a recovery problem, not permission to create new accounts/secrets or delete volu
 
 ### Stages and replay rules
 
-Proposed operator actions are `plan`, `install`, `status`, `resume` and `verify`.
-These are interface labels until implemented, not current commands. Plan/default verify
-are read-only. Mutation starts only under an authorized installation intent. Versioned
+The bounded MOD-I09 launcher implements `plan`, `install`, `status`, `resume` and
+`verify`, plus explicit owning adapters listed below. The complete installation stages
+and target acceptance remain wider IA work. Plan/default verify are read-only. Mutation
+starts only under an authorized installation intent. Versioned
 machine results distinguish completion, waiting for a named human action, retryable
-unavailability, conflicting state and manual reconciliation; assign exact finite codes
-and compatibility rules in IA-I03 before publishing a CLI.
+unavailability, conflicting state and manual reconciliation. The exact finite codes
+and compatibility rules are fixed for the implemented module POC below.
 
 | Stage                                       | Dependencies and completion evidence                                                                                                                                                                                                             |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -6144,6 +6749,102 @@ reconciliation before private release opening. The installer must recognize reco
 markers and refuse to treat them as fresh setup. No active-active topology, automatic
 downgrade, secret rollback or destructive reset follows from this proposal. Independent
 off-host combined recovery qualification is required before target acceptance.
+
+### MOD-I09 artifact-only local installation and staff handover
+
+The implemented server-only `@thaarei/installation-engine` 0.1.0 owns the bounded
+`module-poc` fresh Linux/amd64 flow. It imports public packages and invokes packaged
+owning commands; applications cannot import it. A signed combined release binds five
+exact image content IDs (engine, PostgreSQL, independent DMS API, selected Turnstile
+API/web), the inner selected module delivery and eleven fixed file digests/sizes.
+Independent provisioned release trust verifies both inventories; central public signing
+trust separately verifies the fresh reserved intent. Unknown roles/files, substitutions,
+revoked or late-retired signers and platform/engine mismatch stop before initialization.
+Release attestations are durable content evidence: verify their original issuance and
+current key revocation/retirement policy, including on a resumed setup after publication
+expiry. They provide no current authority. Every affected write still requires the
+current unexpired central intent and live desired-context check below. This allows an
+approved generic artifact to be reused across regions without regenerating secrets or
+binaries when staff renews setup authority. This POC accepts a transferred local bundle.
+It performs no registry pull, remote artifact fetch or redirect. A production HTTPS distribution adapter remains a wider IA gate and
+must use the configured origin/scoped local credentials described above.
+
+`deploy/installation/installer` is the supported Docker-only POSIX launcher. The operator
+loads the complete archive, independently pins the engine SHA, and supplies disjoint
+canonical artifact, 0700 private input and 0700 state directories outside a checkout.
+Only the transient private engine receives the local Docker socket. APIs/reporters never
+receive it or migrator/provision credentials. The engine uses Docker API 1.52 compatibility,
+requires at least 4 GiB/2 CPUs and no more than 300 seconds daemon clock skew. Commands
+have 180 second Docker deadlines, 16 MiB response/output bounds, 10 MiB x 3 logs and
+bounded memory/CPU/PID/tmpfs limits. Outer artifacts are at most 32 GiB per fixed file;
+source inventories are bounded at 16 MiB. These are POC admission defaults, not measured
+production capacity. PostgreSQL data uses a labeled persistent volume and is never deleted.
+Owned network/volume labels bind both local installation ID and state-directory digest.
+An optional explicit RFC1918 /24 privateSubnet is immutable input and is checked on
+network reuse; address-pool/conflict failures never select a fallback subnet.
+Ingress/TLS remain operator/Dokploy owned; generated Nginx routing uses actual container
+names and canonical origins and exposes only public product/identity routes.
+
+Actions are `plan`, `install`, `resume`, `status`, `verify`, `pair`, `sync`, `owner` and
+`identity`. JSON results use 0 complete, 10 waiting for a named actor, 20 conflict/owning
+reconciliation and 30 retryable unavailability. Read-only status verifies retained signed
+metadata at issuance time with current key revocation policy; write actions require current
+unexpired intent and recheck desired state before each affected owning command/opening.
+A changed context preserves files, identities, credentials, completed receipts and volumes.
+One mutator holds a kernel flock; process death releases it without stale-PID guessing.
+
+Durable private command recipes precede effects. A deterministic container name recovers
+lost create/start responses; successful exited commands are recorded before cleanup and
+never rerun. Replayable owning configuration, migration/bootstrap, deployment candidate/
+sync and pure inspection commands may retry the same retained payload after a nonzero
+exit. Role provisioning first requires TCP readiness (the temporary PostgreSQL Unix-socket
+bootstrap is insufficient). Its private exit 75 identifies an allowlisted connection
+failure before any role DDL and permits retry of the same retained input; every attempt
+resets that eligibility. Unknown role outcomes still stop. Fresh-only account/client/key issuance, legacy access replacement and uncertain
+proof-bearing grants stop for owning reconciliation instead of inventing exactly-once
+semantics. Explicit reviewed pairing `rebind` supersedes failed prior pairing/sync jobs;
+it invokes the existing owning recovery protocol and never resets floors or database state.
+A private HMAC binds each owner command file to its retained payload without publishing
+low-entropy secret hashes. Transient proof payloads are removed on settlement; original
+operator input files remain in operator custody and must be removed after use.
+
+The optional exact same-origin `/setup-preparation` verification destination solves email
+verification before real client issuance. It grants no session or access. Private identity
+setup uses the verified selected authority administrator, distinct login/machine/identity
+service clients, real application enrollment and explicit initial permissions. The existing
+ordinary-login protected private bootstrap/open/module-grant commands remain authoritative;
+this does not implement the proposed IA-I06 scoped public proof exchange. Current permission
+and release inspection remain owning private operations; no central report or historic
+installer receipt is proof of current user access or workspace/processing readiness.
+
+Central `/api/machine/v1/status` is an authenticated own-binding/current-epoch read with
+no issuance or business grant. Validated application metadata is recorded in
+`control_plane.machine_application`, linked to the issued exact product/epoch/decision.
+Its monotonic update rejects stale epoch/revision/sequence rollback. Staff projections show
+observed inventory, central authority, last acknowledged module grant and independent
+DMS/Turnstile pairing/approval/reporting. Acknowledged access requires current authority,
+approved current product revision/epoch and an unexpired issued decision. It remains
+product-reported evidence, never runtime attestation or a replacement for local permissions.
+Production Linux/Dokploy, off-host recovery, processing acceptance and accountable target
+sign-off remain separate wider installer gates.
+
+MOD-I10 handoff evidence uses a separate full workspace source/test/tool/document inventory
+with executable flags, alongside the existing selected-image source digest. Git HEAD alone
+does not identify an uncommitted candidate. A fixed public record contains exact contracts,
+catalogues/profiles/images, safe historical assignment/epoch/acknowledgement projections,
+log hashes and the MOD-R01–20 trace. Ignored private state/build output, the generated record
+and mutable progress log are excluded. Checksums are review evidence, never trusted release
+publication, current authority or runtime attestation. Read-only verification detects byte
+and executable drift without querying a customer. Source changes require a new record.
+
+The limited module-poc bundle retains its fixed signed file set and uses its own source
+offer; it does not claim that the complete-DMS SPDX/source-access/legal archives are bundled.
+External pinned Syft inventories and actual per-image legal archives for its five exact
+images are retained as independently transferred evidence sidecars. Packaging cache identity
+includes offer, notices and proprietary license bytes. Inventory/notice collection does not
+certify corresponding-source completeness or customer distribution acceptance. See the
+[release handoff](docs/turnstile/modules/module_release_handover.md) and
+[support runbook](docs/runbooks/module-release.md).
 
 ## Engineering and verification architecture
 

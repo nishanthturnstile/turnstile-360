@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-11-07
+Last updated: 2026-11-12
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -9,6 +9,121 @@ requirements remain in their linked specifications. This file records what has a
 been completed, verified, or left pending.
 
 ## Current position
+
+2026-11-11 MOD-I09 and MOD-I10 are **completed for the locally qualified module POC**.
+The artifact-only fresh installer/staff handover, all four selected profiles, restrictive
+cutovers/recovery and exact release evidence are implemented and verified. The
+[frozen record](docs/qualification/module-release-20261111.json) pins 1,339 source/test/
+tool/document files, contracts/catalogues/profiles, historical assignment revision 3,
+exact images and nine execution log hashes. All four workspace gates and focused actual
+image/browser/cutover/fresh/Docker-failure checks pass. See the
+[requirement handoff](docs/turnstile/modules/module_release_handover.md) and
+[support runbook](docs/runbooks/module-release.md). Separate Linux/Dokploy, off-host
+recovery, production distribution, real-document/capacity, corresponding-source/license
+completeness and accountable human/target acceptance remain pending under the wider
+installer gates. No live customer installation, credential or preexisting volume changed.
+Older MOD-I08/I09-next statements below describe their historical milestone boundaries.
+
+2026-11-11 MOD-I08 is **completed and locally qualified**. Current-MFA staff activation,
+atomic restrictive desired changes, supported private selected-profile cutover and coherent
+recovery are implemented. All four workspace gates pass. Eight real selected API/web
+images plus central/DMS images passed ordinary-login HTTPS/PostgreSQL add/remove/Core
+classification, interrupted archive/resume, current-epoch activation, retained setup/grants/
+trust floors and central/customer restore fences. No live customer installation or volume
+changed. Next: MOD-I09 installer and central staff handover integration. See the
+[transition runbook](docs/runbooks/module-transitions.md). Earlier MOD-I08-next notes are historical.
+
+2026-11-11 MOD-I07 is **completed and locally qualified**. Backend module capabilities
+and selected Incident/Risk landing endpoints require current signed v2 authority, an
+installed verified release, local enablement and explicit current user read permissions.
+Company-only permission catalogue v2, owning migrations/SQL guards, private audited reader
+grants and selected web navigation are implemented. All four workspace gates pass, and
+all four actual API/web image profiles pass normal-login HTTPS/PostgreSQL browser journeys.
+Existing installations/volumes were preserved. Next: MOD-I08 staff activation, module
+change/removal and recovery transitions. See the [module access runbook](docs/runbooks/module-access.md).
+Earlier MOD-I07-next notes are historical.
+
+
+2026-11-11 MOD-I06 signed module decisions are **completed and locally qualified**.
+Strict v2 central issuance, permanent Admin/MFA version fences, verified selected-image
+release context and durable SQL/private-file recovery pass real container HTTPS/PostgreSQL
+checks. The selected Incident image's API evaluator, store and shipped reporter pass the
+binding/ordering/expiry/denial/replay/restore matrix; two isolated v1 customer clusters
+verify compatibility and independent credentials. All four workspace gates pass, including
+database and storage integration. No existing customer installation was migrated or
+upgraded. Next: MOD-I07 capabilities and user-permission-guarded placeholder entries;
+reviewed staff activation/cutover remains MOD-I08. See the
+[decision runbook](docs/runbooks/module-decisions.md).
+
+
+2026-11-10 MOD-I05 is implemented and locally qualified. Central reservations and signed
+intents now feed the combined private configuration coordinator, owning Docker initializers
+and durable secret-preserving file plans. Actual central HTTPS/PostgreSQL plus selected
+initializer images verify input validation, immutable reserved bootstrap, configuration/access
+initialization, interrupted writes/retries, expiry/renewal, independent/partially paired
+products, duplicate setup, existing-state refusal, private modes and changed-assignment
+fences. All four workspace gates pass, with final isolated target-path verification passing.
+See the [intent/preparation runbook](docs/runbooks/installation-intents.md). No live customer
+configuration, authority, database or deployment changed. MOD-I06 signed module decisions
+is next; broader installer automation and production rollout remain their owning work.
+
+2026-11-10 MOD-I04 selected module artifacts are implemented and locally qualified.
+Incident/Risk placeholder entries are composed from the shared exact profile; unselected
+implementation is removed before compilation and API output is assembled from an explicit
+allowlist. The private local-bundle adapter binds signed results to source/catalogue/
+profile/platform, verifies/reuses exact artifacts and publishes only central references.
+Central exports approved build requests and shows matching verified package availability
+without granting module access. All four workspace gates pass. Four linux/amd64 profiles
+(Core, Incident, Risk, both) built eight real API/web images and passed non-root/read-only
+production startup, closed business access, exclusion/inventory/archive, signature,
+substitution, load/reuse/renewal checks. See the [delivery runbook](docs/runbooks/module-delivery.md).
+No live migration, deployment, customer configuration or module authority changed.
+Next: MOD-I05 central-first installation intent/private preparation; MOD-I06/07 own signed
+runtime enforcement/navigation. Earlier MOD-I04-next statements are historical.
+
+2026-11-09 MOD-I03 central per-product assignment is implemented and locally verified.
+Turnstile product pages now link to published-catalogue selection with fixed Core entries,
+keyboard checkboxes, required/optional dependency graph/text equivalents and explicit
+full-set confirmation. Immutable draft/approved snapshots, product-bound pointers,
+current revisions and atomic receipt/audit preserve independently approved desired state.
+The view separates desired selection from unknown observed/effective module authority;
+ordinary v1 product approval never becomes module activation. All four workspace gates
+pass, including real central HTTPS/PostgreSQL/Chromium and existing integration suites.
+See the [assignment runbook](docs/runbooks/module-assignments.md). No live migration,
+deployment or customer module authority changed. Next: MOD-I04 selected artifact builds
+and exclusion/inventory verification. Earlier MOD-I03-next statements are historical.
+
+2026-11-09 MOD-I02 central catalogue administration is implemented and locally verified.
+Staff can import separately signed code metadata, draft Core/Individual classification,
+review dependency impacts, export an exact build plan and publish an immutable version
+with matching release evidence. Atomic receipts/audit and current Admin MFA protect
+mutations; Operator/Viewer have read access. All four workspace gates pass, including
+real HTTPS/PostgreSQL/browser catalogue checks and the full database/storage suite.
+No live central migration/redeployment, production catalogue seed or customer activation
+change occurred. See the [catalogue runbook](docs/runbooks/module-catalogues.md).
+Next: MOD-I03 per-product assignment and dependency selection UI. Earlier MOD-I02-next
+statements describe the preceding milestone.
+
+2026-11-09 MOD-I01 shared foundation is implemented and verified. The new
+`@thaarei/module-catalog` package supplies strict metadata/assignment/intent/v2 payloads,
+dependency proposal/confirmation, portable canonical hashing and active removal closure.
+Twenty focused tests and all four workspace gates pass. The fixed foundation cannot be
+omitted/demoted; no application issuer, customer activation, database or UI was changed.
+The [contract reference](docs/turnstile/modules/module_contracts.md) freezes source-backed
+foundation inventory and ownership/retry/compatibility rules. MOD-I02 central catalogue
+persistence/intake/UI is next. Earlier planning-only statements below are historical.
+
+2026-11-09 central module planning is complete. The
+[module specification](docs/turnstile/modules/module_delivery_specification.md) defines
+MOD-R01–20; the [implementation plan](docs/turnstile/modules/module_delivery_implementation_plan.md)
+sequences ten increments with central catalogue/assignment, dependency visualization,
+selected artifact delivery and signed customer activation. Astra reviewed the draft;
+the parent resolved its high mixed-transition and medium expiry/read findings in the
+[review record](docs/turnstile/modules/module_delivery_review.md). All four workspace
+gates and final document checks pass. MOD-I01 is the first implementation task and
+extends the installer's IA-I01; selected packaging/intent gates precede IA-I02/03 freeze.
+Earlier proposals deferring central entitlements from the POC are superseded. No module
+application implementation, customer deployment or runtime mutation occurred.
 
 2026-11-07 installation automation planning is complete: the proposed
 [specification](docs/deployment/installation_specification.md) defines IA-R01–18 and the
@@ -184,6 +299,544 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+MOD-PR — **In progress** (owner: Codex, 2026-11-12). User requested committing all
+accumulated changes and opening a PR against development. Fetched origin/development;
+local development matches it. Packaging the already-qualified MOD-I01–10 implementation
+on feat/centrally-managed-module-delivery; frozen source verification passes. No runtime
+source change or deployment is part of this publication task.
+
+MOD-I10 — **Completed** (source/local module POC; owner: Codex, 2026-11-11).
+Added the MOD-R01–20 handler/test/execution trace, immutable source/contract/catalogue/
+profile/assignment/image record, read-only drift verification, exact-image material
+collector and operator/support handoff. The public record has 1,339 file byte/executable
+identities, all four selected profiles plus the promoted-Core cutover profile, safe
+historical revision/epoch/order/acknowledgement and independent product IDs, nine final
+execution log hashes and explicit production-pending gates. No token, private signer,
+cookie, credential or customer data is published. Its checksum is
+`c6eeb468f72450afe191c6d8e9b63b3403627e9317178e709e414e6f9d57801c`.
+Corrected the limited bundle's inaccurate complete-DMS source-offer references, preserved
+the original contacts/offer, and included offer/notices/proprietary-license in package
+cache identity. The new signed combined manifest is
+`7ed81c812c18ca22cc47b66c371a9730e63eb49dc481ed23c659862945553729`;
+only the source-offer covered file changed. All five transferred image IDs, selected
+Incident profile, catalogue and source `eb9ea073ec2e75e729e9b146e2338529c499ebd31baed6fb286bd7812d9ee5d5`
+remain the same as MOD-I09. Separate rebuilt central/DMS qualification images are recorded
+independently. Pinned Syft archive and executable verification, five actual SPDX/Syft/
+source inventories and retained per-image notice archives pass. The 22 undeclared license
+metadata entries remain visible; zero restricted declarations is not distribution approval
+or proof of complete corresponding source.
+All four required gates pass: `pnpm check`, `pnpm build`, `pnpm test`, sequential
+`pnpm test:integration`. The latter ran actual central HTTPS/PostgreSQL/browser policy,
+owning SQL/migration/auth/isolation and authenticated SeaweedFS/transfer paths; six existing
+non-module conditional OCR/assessment/standalone cases are skipped, no module regression
+skipped. Current-source four-profile actual API/web login/permission/negative-access,
+add/remove/Core cutover/interruption/lost-ack/restore/trust, and corrected exact-package
+fresh installer/real email/client/normal login/setup/explicit Incident/DMS integration
+pass. Real Docker create/start response loss, post-effect checkpoint obstruction and
+confirmed pre-effect role retry pass with preserved secrets/no duplicate execution.
+Fresh, retained rerun, recovery and negative/conflict evidence are separately identified.
+Fixed browser-fixture cleanup ordering so all own attached containers are removed before
+its network; the explicit serial browser /24 avoids default-pool exhaustion. Removed only
+one empty network proven created by this task's failed first run; older networks/volumes
+are preserved. The selected substitution test now retains the actual release signer ID
+so archive substitution reaches its intended production verifier rather than an earlier
+wrong-key rejection.
+Final frozen checksum/source verification, all 20 references and nine final log hashes,
+private-data projection scan, Biome and Git whitespace checks pass. Public artifacts:
+[record](docs/qualification/module-release-20261111.json),
+[handoff](docs/turnstile/modules/module_release_handover.md),
+[support](docs/runbooks/module-release.md). Protected detailed evidence remains in
+`/tmp/mod-i10-{selected,cutover,installation,materials}-20261111` and
+`/tmp/mod-i10-{check,build,test,integration,installer,inventories}.log`.
+Separate clean Linux/Dokploy/TLS/mail, off-host recovery, authenticated production
+distribution, real-document/capacity, corresponding-source/license completeness,
+independent human replay and accountable target acceptance remain wider IA/release gates.
+Proposed IA-I06 public scoped proof UX remains separate; current protected private proof
+is supported. No live deployment, migration, account/credential/trust change, preexisting
+database volume deletion, commit, push or merge occurred. No module-plan work remains
+for this local POC; production readiness is not claimed.
+
+MOD-I09 — **Completed** (source/local module POC; owner: Codex, 2026-11-11).
+Implemented `@thaarei/installation-engine` 0.1.0, the Docker-only artifact launcher and
+signed five-image release assembly. Strict signatures/current key policy, exact physical
+profile/images, protected inputs, kernel locking and durable owning-command receipts
+preserve committed identities/secrets across retries. The engine invokes owning private
+configuration/role/migration/bootstrap, independent pairing/sync, verified identity/client
+and administrator/module handover commands; it imports no application/database source.
+Current unexpired intent and live desired checks gate affected mutations/opening. Explicit
+rebind uses existing protocol/floors; unknown fresh-only outcomes stop for reconciliation.
+Role provision waits for final TCP readiness and retries only confirmed pre-effect connection
+failures. Generated ingress uses actual container names and per-server private-safe logging.
+Central validates/persists exact decision application proofs and exposes authenticated own-
+product status. Staff separately sees inventory, central authority, acknowledged grant and
+independent DMS/Turnstile pairing/approval/reporting, with reviewed v2 enforcement/checklist.
+Actual fresh signed Incident-only artifacts passed the separate customer-operator journey:
+no checkout/host Node/Python dependency, UUID transcription or customer SQL seed; owning
+fresh PostgreSQL setup; independent pair/approve/activate/ack/report; real STARTTLS email
+verification before clients; three purpose-specific clients and real DMS enrollment/probe;
+normal login, protected administrator bootstrap/open, UI company/first unit, no implicit
+module read, explicit Incident landing/API and DMS capabilities, Risk absence and changed-
+assignment stop without reset. Real Docker dropped create/start responses, post-effect
+checkpoint failure, failed-plan retry, concurrent resume, expired publication evidence,
+tamper/revocation/private-mode rejection and general-log privacy checks passed. Fixed
+initial startup-path, identity-audience, public preparation-route and journal-key mismatches
+found by the actual journey. Reports remain claims, never user-access/runtime attestation.
+`pnpm check`, `pnpm build`, `pnpm test` and final sequential `pnpm test:integration` passed.
+Integration includes actual central HTTPS/SQL/browser, owning migration/privilege/isolation,
+auth persistence and authenticated SeaweedFS/transfer checks. Six existing conditional
+non-module native OCR/assessment/standalone profile cases remain skipped. Default Docker
+subnet exhaustion was resolved with explicit isolated POC /24s and the existing source-mode
+legacy compatibility path; no preexisting networks/volumes were removed. The selected
+customer path uses actual images, and auxiliary source compatibility is labeled separately.
+Source/profile/catalogue/release and all image identities, actual cases and limits:
+[qualification](docs/turnstile/modules/module_installation_qualification.md). Supported
+commands/custody: [handover runbook](docs/runbooks/installation-handover.md).
+Separate Linux/Dokploy, off-host recovery, production HTTPS distribution, processing/target
+acceptance and the proposed public scoped proof UX remain wider IA/release gates. Existing
+protected private proof remains authoritative; global status does not infer universal readiness.
+MOD-I10 is the next planned increment, not started. No live installation, credential, old
+volume, commit, push or merge changed. Final logs: `/tmp/mod9-{check,build,test}-qualified.log`,
+`/tmp/mod9-customer-qualified.log`, `/tmp/mod9-integration-qualified.log`. Private fixture
+state and database volumes remain under operator custody; no secrets are recorded here.
+
+MOD-I01–08-REVIEW — **Completed** (owner: Codex review sub-agent, 2026-11-11).
+Review every accumulated tracked and untracked module-delivery change against HEAD,
+including source, migrations, selected artifacts, preparation/cutover, tests and docs.
+OCR delegation provides deterministic inventory/rules only; review and confirmed fixes
+remain local. Initial inventory: 206 changed paths (167 OCR reviewable, 39 OCR-excluded
+paths also included for manual/structural review). No live customer state, credentials,
+volumes or deployment changes are authorized. Milestone: production source/configuration,
+SQL/snapshot chains and full fixture paths reviewed. Confirmed/fixed cutover trust custody:
+the helper no longer reconstructs installed trust with every delivery key marked active;
+it validates the target against provisioned installed trust and preserves key status/revision.
+Real-helper regressions cover absent/revoked/retired target signers before closure. Refreshed
+stale operational references to implemented v2 authority/restriction/activation. All 206
+original paths are reviewed (167 OCR reviewable plus all 39 excluded paths), with zero
+skips. `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` pass, including
+real central HTTPS/PostgreSQL/browser, owning migration/isolation and authenticated storage
+checks. Six existing conditional non-module database cases remain skipped (native OCR/
+assessment and standalone profile/image cases); required module runtime checks were available.
+The final exact-version `pnpm test:module:cutover /tmp/mod-i08-cutover-final-20261111 --resume`
+passes: specific installed-trust rejections before closure, all selected API/web/reporter
+cutovers, interrupted archive/resume, protected reconciliation, retained setup/grants/floors
+and actual customer/central restore fences. Qualifier runs were sequential with separate
+disposable run directories; all their temporary containers/databases were cleaned up.
+No confirmed implementation defect remains from this review. MOD-I09 launcher/full staff
+status/handover and MOD-I10/wider Linux/Dokploy/off-host target gates remain planned scope.
+No live/customer state, trust, secret, deployment or preexisting volume changed; no commit,
+push or merge occurred. Detailed findings, full path ledger, verification and limits:
+[module implementation review](docs/turnstile/modules/module_implementation_review.md).
+Final logs: `/tmp/module-review-{check,build,test,integration,cutover-final}.log`.
+
+MOD-I08 — **Completed** (source/local qualification; owner: Codex, 2026-11-11).
+Implemented strict current-MFA staff activation with current product/desired revision,
+active basis, pairing epoch, authenticated installed observation and independently verified
+package checks. Desired approval atomically restricts explicit Individual removals and
+active dependants before staging additions, within and across catalogues. Historical receipts
+cannot replay activation over later restrictions; conflicting operator revisions are fenced.
+Drizzle-generated migrations 0016/0017 add observation and the bounded authority writer
+while preserving permanent v2 floors and direct runtime authority-update denial.
+
+The private Linux/Docker tools-checkout helper verifies complete source/target bundles,
+closes feature access, stops exact old processes, quarantines the owning store, creates a
+checksummed product-only database/private-state archive, stages exact artifacts and applies
+forward migrations. Its locked durable plan supports same-request resume and preserves
+unknown staging data. Replacement pairing, current product/module approval and verification
+retain fixed identities, completed setup, local grants/data and v2/release-trust floors.
+A protected current administrator can review intervening local access changes without
+replacing them. Normal administrator opening stays explicit. See the
+[architecture](architecture.md#mod-i08-reviewed-transitions-and-private-cutover),
+[runbook](docs/runbooks/module-transitions.md) and generated activation OpenAPI.
+
+Verification: `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed,
+including real central HTTPS/PostgreSQL and database/storage suites. Final check/build/test
+rerun and `pnpm test:module:cutover /tmp/mod-i08-cutover-final-20261111 --resume` passed.
+The latter verified four signed profiles/eight actual selected API/web images plus real
+central/DMS images: normal login, Incident-to-both-to-Risk-to-Core-Risk cutovers, missing
+package/current approval, stopped old processes, interrupted archive/same-request resume,
+lost acknowledgements/stale replay, distinct-operator conflicts, intervening local revocation/
+protected reconciliation, retained identities/setup/grants/trust floors, target API access
+and independent DMS approval. Actual product archive restore retained active/desired/floor
+evidence, stayed closed without independent evidence and rejected retired credentials;
+actual central restore retired the module-managed customer credential while preserving v2.
+Standalone central transition fixtures use synthetic signed inventory; the selected-image
+journey separately verifies the actual installed path. Separate legacy v1 compatibility
+runs from source here; legacy candidate-image/reporter coverage remains the TCP qualifier.
+
+Disposable containers/databases were cleaned up. Existing customer installations/volumes
+were preserved; no live rollout, commit, push or merge occurred. The helper still requires
+the owning tools checkout. MOD-I09 owns the distributed combined launcher, full staff
+handover/status integration and wider installer target gates; separate Linux/Dokploy and
+off-host production recovery acceptance remain pending under their owning plans.
+
+
+MOD-I07 — **Completed** (source/local qualification; owner: Codex, 2026-11-11).
+Implemented platform-independent capability/entry contracts and generated OpenAPI;
+`GET /api/modules` plus selected `/api/modules/<id>/entry` controllers; service-level
+admission before feature execution; and lazy selected web routes, backend-derived Home/
+navigation links, bounded loading/denial/retry states and obsolete-response exclusion.
+Existing login/setup/private handover/release barriers and independent DMS policy remain.
+
+People catalogue v2 adds company-only Incident/Risk read permissions without changing system
+templates or three-action legacy grants. Drizzle-generated migrations 0030 and 0032 extend
+permission/receipt constraints; owning custom migration 0031 extends deferred scope guards
+and actual SQL People coverage/mutations. The private module operator assigns exact custom
+reader roles to verified admitted users under existing locks/revisions/audit/receipts.
+Replay after intervening revocation reports current state without restoring rights.
+`TURNSTILE_DISABLED_MODULES` removes local modules/dependants and cannot expand signed rights.
+
+Verification: final `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration`
+passed, including real central HTTP, PostgreSQL ownership/roles/setup/People/invitation/
+recovery suites and authenticated storage/browser/Node/Python transfer checks. Existing
+configured optional native/model skips remain. Focused contract tests pass. Real production
+API/web images for Core-only, Incident-only, Risk-only and both (eight selected images,
+plus an independent DMS image) passed physical exclusion/inventory/archive/signature/reuse,
+normal HTTPS login, absent implicit rights, private handover/release opening, explicit
+reader grants, direct URL/API denial, excluded 404s, service-level callback denial, private/
+no-store headers, actual deferred SQL company-scope rejection, local disablement preserving
+the other module, permission revocation/receipt replay, signed removal/expiry/suspension,
+anonymous denial and independent DMS approval/live machine scopes, where applicable.
+
+The real-image run found the missing module receipt constraint; migration 0032 corrected it.
+Older catalogue-count and implicit-all-permissions invitation fixtures now assert current
+explicit rights. An intermittent SMTP fixture startup failure was captured privately;
+browser setup now verifies the real production STARTTLS transport before account creation,
+without retrying partial provisioning or bypassing verification/TLS. The final complete
+four-profile run passed with this preflight. Qualified image source digest matches current
+owned source inventory. Private qualification evidence is
+`/tmp/mod-i07-selected-fixed-20261111/qualification.json`; logs are
+`/tmp/mod-i07-selected-final.log` and `/tmp/mod-i07-{check,build,test,integration}.log`.
+Test signing material remains private in the fixture directory.
+
+See [the runbook](docs/runbooks/module-access.md). Staff activation/cutover and broader
+change/recovery behavior remain MOD-I08; the browser fixture privately seeded real signed
+active authority and did not add a production activation writer. No business-domain schema,
+live customer migration/deployment/configuration/authority change, volume deletion, commit
+or push occurred. Existing dirty work was preserved; no MOD-I07 blocker remains.
+
+MOD-I06 — **Completed** (source/local qualification; owner: Codex, 2026-11-11).
+Implemented strict versioned Turnstile sync/decisions, full binding/epoch/order/context
+verification and separate module access evaluation. Same-revision renewal cannot change
+active/desired/assignment/allowed-set facts. Module reads deny on expiry or durable denial;
+existing foundation read exceptions stay separate. Shared client journals exact requests,
+refuses downgrade/profile substitution, preserves candidate recovery and commits accepted
+proof/credential promotion/ack state atomically.
+
+Central migrations 0014/0015 add permanent product v2 fences independent of credentials.
+Current-MFA Admin, origin, expected revision, atomic receipt and audit protect restrictive
+enforcement. Runtime can insert only a closed fence; it cannot delete/downgrade it or
+write active policy. Issuance validates active context and rechecks floor/epoch/policy after
+signing. Ordinary product approval, desired assignment and reported inventory grant no
+module authority. Replacement remains suspended until product approval, then pending
+until current-epoch module activation. Active transitions remain gated for MOD-I08.
+
+Selected image composition embeds the exact compiled profile. Separate protected signed
+release evidence/public trust feed API evaluation and reporter SQL application, including
+unchanged-proof persistence. Durable v2/release-trust floors prevent rollback. Fresh
+preparation writes and pins those files in its immutable plan and completion receipt.
+Legacy v1 Turnstile/DMS retain their existing foundation/product semantics. Central Docker
+packaging uses the existing pinned pnpm caches with supply-chain policy intact.
+
+Actual qualification:
+- Final `pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` pass. Central
+  unit tests 9/9 and deployment-control tests 14/14 pass; real database/storage suites pass.
+- Real central HTTPS/PostgreSQL handlers exercise recent MFA/enforcement receipt recovery,
+  strict version fences, exact signed context, lost sync, removal/stale replay and replacement.
+  Runtime SQL privileges explicitly deny active-policy update and version-fence deletion.
+- Fresh selected Incident API/web images pass bundle signature, archive/inventory/exclusion
+  verification. Actual API evaluator/private CLI/store run in the selected production image
+  with owning PostgreSQL roles, public trust, nonroot/read-only roots and bounded privileges.
+  The API evaluator receives no private machine or migration/reporter SQL credential.
+- Shipped selected reporter completes canonical TLS sync, owning SQL publication and a central
+  report, then shuts down cleanly. Full binding/catalogue/profile/release/module substitution,
+  unknown/v1 version and equal-revision conflicts are rejected by the actual SQL save handler.
+- Actual ingress loses sync/rotation acknowledgements; retry after intervening removal cannot
+  reopen Incident. A real private-file rename obstruction after SQL commit leaves the SQL
+  restriction authoritative; restoring the old file and syncing repairs the journal safely.
+- Fresh customer processes with a controlled clock exercise outage/expired module reads and
+  signed suspension, retaining only the prior-activated foundation read exception. An old
+  approval row with a changed independent host marker triggers durable quarantine; reviewed
+  replacement/rebind changes epoch, blocks old proofs and leaves modules pending. Invalid
+  release proof closes access; proof repair alone cannot clear quarantine.
+- Final real central-container TLS run with two separate customer PostgreSQL clusters and
+  legacy v1 DMS/Turnstile reporters passes isolation, independent credentials, actual central
+  pre-denial backup/restore, key rollover/retirement/revocation and explicit recovery approval.
+
+Evidence: `/tmp/mod-i06-selected-20261111/selected-qualification.json` (13 installed-path
+checks, immutable selected API/central image IDs and final workspace gate results).
+Qualification code: scripts/fixtures/control-plane-module-machines.mjs and
+scripts/fixtures/turnstile-module-decisions.mjs; the decision runbook records exact options.
+Active module authority is explicitly seeded by private fixture SQL; this does not claim
+staff activation UI or ordinary module landing HTTP/login flows. API qualification invokes
+real owning evaluator/store functions in the selected image; legacy DMS additionally uses
+packaged HTTP. MOD-I07 owns capabilities/permissions/landing journeys, MOD-I08 activation/
+cutover, MOD-I09 status UI and MOD-I10 broader acceptance. No live migration/deployment,
+customer configuration/authority, volume deletion, commit or push occurred. Existing dirty
+work was preserved. Earlier Docker-unavailable/incomplete notes are superseded.
+
+MOD-I05 — **Completed** (source/local qualification; owner: Codex, 2026-11-10).
+Owner explicitly requested completion of the remaining combined initializer/recovery gate.
+Preserved existing dirty changes and all live installations. Central reservations, strict
+signed intents and their prior role/MFA/revision/audit/receipt verification remain intact.
+
+Implemented the combined private coordinator and owning DMS/Turnstile configuration CLIs.
+Read-only/no-network validation precedes private identity/secret-plan commits. Synced private
+plans and atomic file publication retain exact IDs, independent role/product keys and all
+committed credentials across interrupted writes and lost completion responses. Existing
+configuration, symlinks/unsafe modes, changed identity/context/settings and incompatible
+inputs are refused without replacement. The coordinator verifies selected artifacts and
+local DMS image identity, checks central HTTPS freshness before/after generation, and
+records only a binding/file-digest completion receipt. Pairing candidate/product state is
+preserved independently. OAuth client secrets start empty; public metadata never creates
+a credential, grant, approval or customer database. Added real staff reservation and
+reviewed intent-download controls, explicit typed relay settings, private-plan ignore rules,
+Windows/WSL guidance and source/operational architecture updates.
+
+DMS owning bootstrap now accepts a reserved local installation UUID and rejects replacement;
+the default standalone-generated UUID path remains compatible. Turnstile uses its existing
+immutable owning bootstrap and real manifest/application identity checks. No new SQL schema
+or live migration was needed. Packaging reuses dependency and registry-metadata caches
+without weakening pinned pnpm supply-chain validation.
+
+Verification so far: all four workspace gates pass, including disposable PostgreSQL/RLS,
+existing auth/HTTP/browser integration and authenticated SeaweedFS storage. Nine shared
+client/preparation tests pass, including a real interrupted filesystem write/replay,
+private modes, existing-state refusal and symlink rejection. The actual end-to-end gate
+passed for the selected source-backed package, central HTTPS/catalogue/assignment/intent,
+Docker initializer validation/generation, private file failure/resume, expiry/renewal,
+wrong/independent reservations, owning PostgreSQL provisioning/bootstrap, configuration/
+access initialization, partial and duplicate product pairing, unchanged credentials and
+changed desired-assignment refusal. Both products remain pending/unapproved after pairing.
+The final immutable images are under `/tmp/mod-i05-completion-qualified`. After one central
+page check returned 500 during overlapping build/verification work, the final central fixture
+was rerun alone and passed completely. Exact final command:
+`MOD_I05_PREPARATION_FIXTURE=/tmp/mod-i05-completion-qualified/fixture.json node scripts/test-control-plane.mjs`.
+This includes the actual initializer, owning configuration/access initialization, bootstrap,
+partial/duplicate pairing and changed-state refusal checks. Final check/build/test also pass;
+the complete workspace integration gate passed with PostgreSQL and storage. Build/output
+verification must run sequentially when sharing Next's compiled output. No fixture
+replaces the production initializer, bootstrap or central machine handlers; private Docker
+initializers are exercised, while owning bootstrap/pairing also run as compiled Node commands.
+
+No live customer configuration, account/client, database, Docker data volume or deployment
+changed. No production catalogue/key/reference was seeded. Broader installer journals,
+production distribution/host rollout and module runtime activation remain their IA and
+MOD-I06–10 owners. Changed assignment/context intentionally stops for reviewed reconciliation,
+not fresh reset or implicit cutover. MOD-I05's required local gate is complete. MOD-I06 signed Turnstile module decisions is
+next on the owner's request; current package/preparation evidence grants no module access. See the
+[intent/preparation runbook](docs/runbooks/installation-intents.md).
+
+MOD-I04 — **Completed** (source/local POC qualification; owner: Codex, 2026-11-10).
+Owner requested the next increment: selected Incident/Risk placeholder composition,
+allowlisted customer packaging, trusted release request/result and artifact exclusion
+verification across all four profiles. Preserve existing changes and local installations.
+2026-11-10 milestone: added isolated resolver-backed source selection, explicit foundation/
+Individual ownership, Incident/Risk placeholder entries and selected API/web Docker inputs.
+Added strict generic build requests, separate signed result context and local private-bundle
+build/verify/reuse/reference tooling. Central exports approved requests and verifies a
+read-only provisioned descriptor index; package availability never activates modules.
+2026-11-10 verification: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` all pass. The latter exercises actual central HTTPS/Next/PostgreSQL/
+Chromium export/reference handlers, wrong-purpose/expired/forged/context-mismatched
+results, separate availability/authority, existing authentication/integration journeys,
+owned database roles/migrations and authenticated storage. Four focused delivery tests
+cover canonical customer-free requests, source/catalogue/profile/platform/image binding,
+forgery/expiry/type/audience/key rejection and private historical renewal fencing.
+The initial auth rate-budget preflight saw an SMTP 503; the final complete integration
+run passed unchanged production handlers/limits. No authentication policy was weakened.
+
+`node scripts/test-selected-module-images.mjs /tmp/mod-i04-profiles-20261110-qualified`
+passed all four linux/amd64 profiles with eight actual API/web images. Checks start real
+packaged Nest/Nginx non-root/read-only without network/host ports/credentials, prove closed
+business access, compare feature ownership and runtime/dependency/map/chunk inventories,
+verify exact archive image identities, reject missing/substituted content, recover/reuse
+committed bundles and exercise actual CLI load/publication/renewal. A separate actual
+archive check also rejected a correctly signed result substituting a required image ID;
+the original descriptor was restored. Private fixture qualification/inventories remain
+under that /tmp directory; its signing key is disposable test trust, not a release key.
+
+BuildKit's lack of /.dockerenv is handled by a stage-created private marker; pnpm's extra
+README/lock output is excluded by fixed runtime assembly. Source digests now include all
+workspace manifests, compiler/boundary/runtime probes and owning release tools; code UUIDs
+are deterministic per source/platform. The runbook and architecture describe the explicit
+read-only filesystem POC reference adapter, 24-hour expiry/renewal and production adapter
+limits. No live installation, database migration, customer volume, deployment or credential
+changed; no production catalogue/reference was seeded. Production registry/HTTPS retrieval,
+clean target acceptance and signed customer activation remain later owning work.
+Next authorized increment on owner request: MOD-I05; do not treat package availability,
+ordinary v1 product approval or fixture success as module/user access authority.
+
+MOD-I03 — **Completed** (source/local verification; owner: Codex, 2026-11-09).
+Owner requested the next reviewed increment: per-Turnstile-product module assignments,
+dependency selection/confirmation and separate desired/draft/observed/effective views.
+Preserve existing edits and running installations. Reuse current staff admission/MFA,
+CSRF, immutable catalogue/resolver and revision/receipt/audit patterns. Verify real
+central browser/API/PostgreSQL races, lost responses and intervening policy changes.
+Customer packaging, v2 activation and live migration/deployment remain later work.
+2026-11-09 milestone: added owning generated assignment migrations, append-only draft/
+approval snapshots with product/kind-constrained pointers, atomic product revision/
+receipt/audit service and exact published-catalogue/profile confirmation. Added the
+Turnstile product Modules link and staff page with locked Core controls, dependency graph,
+equivalent keyboard/text selection, full-set review and separate desired/draft/status views.
+Current v1 reports/approvals never populate module-aware observed/effective authority.
+Unit status checks and production Next build pass. Actual HTTPS/PostgreSQL/Chromium
+assignment checks pass: binding/catalogue/closure, role/MFA/CSRF, revision races, audit
+rollback, lost responses, desired narrowing/suspension replay, cross-product pointers,
+independent installations and keyboard dependency review/save/approval. Expanded central
+fixture hit its real MFA rate budget; harness now honors bounded Retry-After with a fresh
+TOTP, without changing production limits. The complete central fixture passes. Added
+the assignment runbook and architecture/contract references for shared product revisions,
+immutable snapshots, historical receipts and unknown observed/effective staging state.
+Final fixture also verifies MFA expiry after lost approval and live writer demotion before
+receipt retry; both pass through actual handlers. pnpm check/build/test/test:integration
+all pass on 2026-11-09 with Node 24.21.0/pnpm 12.16.1 and valid Turbo caches where
+applicable. Verification includes the central/independent-product HTTPS suites, owned
+database migrations/isolation, existing conditional DMS skips and pinned SeaweedFS
+boundaries. No new feature checks are skipped. Final Biome, relative documentation
+targets and git diff --check pass. No live database migration/deployment or production
+catalogue was performed; exact production-image/target rollout remains a release check.
+Observed/effective read fields are explicitly null until MOD-I04/06 supplies owning
+evidence adapters; no staff command fabricates those facts or grants module access.
+MOD-I04 is next; actual customer v2 activation and active transitions remain MOD-I06/08.
+
+MOD-I02 — **Completed** (source/local verification; owner: Codex, 2026-11-09).
+Owner requested the next reviewed increment: central catalogue persistence, verified
+code/release intake, classification drafts/publication and staff read/admin screens.
+Reuse live staff/MFA/CSRF, revision/receipt/audit patterns and separate release trust.
+Preserve all existing edits/data; do not deploy/migrate the live installation.
+2026-11-09 milestone: implemented owning migrations 0010/0011, immutable code/released
+catalogues, category-only drafts, separate public release trust/signature intake, atomic
+receipt/audit services, bounded routes and Admin review/confirm with staff read views.
+Real Next HTTPS/PostgreSQL and Chromium classification checks pass, including current
+MFA/roles/CSRF, conflicting revisions, lost responses, expiry-safe exact receipts,
+matching publication evidence, audit rollback and runtime privilege/immutability guards.
+Workspace pnpm check/build/test/test:integration pass on 2026-11-09 with Node 24.21.0
+and pnpm 12.16.1; valid Turbo build caches reused where applicable. Initial full
+integration reached an existing invitation SMTP assertion failure (unknown versus
+smtp_accepted); its focused 21-test rerun and subsequent complete integration rerun
+both pass without changing that test or mail handling. Full rerun includes actual
+central/independent product HTTPS integration, owned database/isolation suites and
+pinned SeaweedFS boundaries; three existing DMS document cases remain skipped.
+Final repository Biome, document links and git diff --check pass.
+No live migration/deployment, customer assignment, production catalogue seed or customer
+protocol change occurred. Exact production-image/target rollout and public-trust custody
+remain release checks. Next: MOD-I03 per-product assignments/dependency UI; actual
+selected artifact and customer placeholder delivery remain MOD-I04–07.
+
+MOD-I01 — **Completed** (shared foundation; owner: Codex, 2026-11-09).
+Owner authorized starting the reviewed module delivery plan. Implement shared strict
+catalogue/profile/assignment/intent/decision contracts, deterministic dependency resolution
+and canonical profile hashing, source-backed foundation inventory and ownership/retry/
+compatibility documentation. Preserve existing planning edits and running installations;
+no central schema/UI or customer activation changes in this increment.
+Implemented packages/module-catalog with strict metadata payloads, dependency proposals,
+explicit closure confirmation, portable canonical hashes, active removal closure and
+profile/release context checks. Added framework/Node boundary enforcement and the frozen
+foundation/ownership/retry/compatibility reference. Twenty focused tests pass, including
+fixed catalogue/profile SHA-256 vectors, all four selections, invalid dependency graphs,
+Core promotion/foundation preservation, explicit dependency confirmation, active-catalogue
+removals and strict legacy/v2/context/intent failures. pnpm check/build/test and
+test:integration pass on 2026-11-09; valid Turbo cache reused where applicable, real
+central HTTP/PostgreSQL, owning database/isolation and pinned SeaweedFS checks completed.
+Final Biome, git diff --check and new documentation-target checks pass. Node 24.21.0 and
+pnpm 12.16.1 match; lockfile adds only the new workspace importer, no dependency upgrades.
+No application protocol issuer/verifier or customer state changed. Schemas/context parsing
+do not verify signature/time-now/binding epoch/order or grant authority: owning runtime
+verification remains MOD-I06. Next: MOD-I02 owning catalogue persistence/intake/UI;
+selected image exclusion and actual placeholder/customer flow remain MOD-I04–07.
+
+MODULE-CENTRAL-PLAN-01 — **Completed** (reviewed planning only; owner: Codex, 2026-11-09).
+Owner requests a final implementation plan for Thaarei staff choosing customer Turnstile
+modules centrally, visualizing dependencies, classifying core/individual modules and
+delivering/activating the selected customer profile. Incorporate the Incident/Risk POC
+and installer ordering; obtain an Astra sub-agent review after drafting, then resolve
+findings. Scope is reviewed planning documents and references, not application/SQL
+implementation or target deployment. Preserve the preceding assessment/proposal entries.
+Created docs/turnstile/modules/module_delivery_specification.md (MOD-R01–20) and the
+ten-increment module_delivery_implementation_plan.md, with canonical proposed design in
+architecture.md. Updated installer prerequisites, control-plane scope and docs index.
+Resolved global classification versus per-product assignment, closed Core dependencies,
+central-first reserved identities, separate catalogue attestation/profile build evidence,
+external artifact delivery, exact profile-bound v2 decisions, desired/installed/effective
+states, explicit removal/read policy and recovery/downgrade fences.
+Independent gpt-6-astra review verified seven draft fingerprints and found one high and
+one medium issue. Parent resolved both: mixed changes apply confirmed active removals/
+dependant restrictions first (including cross-catalogue replacement), while additions
+wait for delivery/approval; all catalogue-managed business operations, including reads,
+need current signed authority, with a separate matrix preserving fixed-foundation rules.
+Added delayed Incident-to-Risk replacement/lost-ack tests and expiry/suspension/offline
+tests to the future gates. Clarified complete combined initialization is new MOD-I05
+work. module_delivery_review.md retains the review link, draft hashes and dispositions;
+no independent Astra re-review of the parent's corrected revision is claimed.
+Verification on 2026-11-09: pnpm check, pnpm build, pnpm test and pnpm test:integration
+pass (valid Turbo cache reused where applicable; owning central HTTP/PostgreSQL,
+uncached database/migration/isolation and pinned SeaweedFS checks completed). Final
+Biome, git diff --check, 219 local documentation links/anchors, 20 unique requirements
+and ten increments pass. Only documentation/progress changed; disposable test fixtures
+ran, with no customer state or live configuration changes. Handoff: start MOD-I01 shared
+strict contracts/resolver/source inventory. All runtime module, profile-exclusion,
+fresh combined setup, real-user POC and independent-target/recovery acceptance remain
+future implementation gates; existing real-document smoke also remains separately open.
+
+MODULE-POC-SOLUTION-01 — **Completed** (design proposal only; owner: Codex, 2026-11-09).
+Owner requests the solution first for a small modular-delivery POC: current core plus
+Incident Management and Risk Management placeholder modules, selectable customer images,
+dependency representation and future optional-to-core reclassification. Define a single
+catalogue with derived core/individual lists, safe profile/dependency validation, selective
+API/web packaging and a bounded demonstrable scope. Preserve previous assessment entries.
+No application implementation, entitlement-policy adoption, schema changes or live
+deployment is part of this proposal. Proposed one publisher-owned versioned catalogue
+with stable module IDs/category/required dependencies/optional integrations and derived
+Core/Individual lists. Current foundation stays fixed; Incident Management and Risk
+Management start as independent individual placeholders requiring only the foundation.
+Profiles cover core-only, incident-only, risk-only and both. Real POC acceptance must
+verify excluded API/web artifacts/dependencies/routes/jobs, actual authenticated message
+endpoints/screens, server-authoritative enablement and dependency refusal. Existing login
+and permission checks remain in force. Use an explicit test profile for initial selection;
+production control-plane module entitlement integration remains separate, not simulated
+as an implemented central capability. Optional-to-core promotion preserves identity/code
+location but is a validated publisher release change, with closed core dependencies and
+explicit upgrade/approval compatibility; it cannot silently modify installed customers.
+Prepared /tmp/turnstile-module-delivery-proposal.html as a self-contained illustrative
+interactive catalogue/profile/dependency view, including category changes and a clearly
+labelled hypothetical Risk-requires-Incident validator example. This preview does not
+build images, exercise backend handlers or qualify physical artifact exclusion. Verified
+728px dark and 390px light layouts with html_preview; both report no console errors.
+Reviewed owning source/architecture and official Nest module/Docker multi-stage guidance.
+Only progress metadata and the standalone visual explanation changed. Biome and git diff
+--check pass; application/runtime suites were not rerun for this solution-only proposal.
+Next implementation scope, if requested: catalogue/resolver and two real placeholders,
+selective build/image verification and negative dependency/access checks before wiring
+module profiles into IA-I01/02/03. No Incident/Risk business workflows or tables proposed.
+
+MODULE-PACKAGING-ASSESS-01 — **Completed** (advice only; owner: Codex, 2026-11-08).
+Owner asks how to ship only purchased Turnstile modules, control cross-module dependencies
+and sequence that foundation relative to the proposed installer. Inspect current module/
+build/access boundaries and recommend a scoped design and delivery order. Advice only:
+do not implement module selection/entitlements, adopt new policy, change the installation
+plan or alter the running installation. Current AppModule has fixed imports; Nest build
+and pnpm deploy package the compiled API. Central's strict v1 approved decision carries
+product-business entitlement, not a commercial feature-module catalogue. Existing Nest
+modules and permission gates are not selective shipping or module licensing.
+Recommendation: one codebase with explicit required core and versioned feature catalogue,
+mandatory/optional dependency graph and supported release profiles. Generate selected API/
+web composition and assemble only selected artifacts/dependencies/assets/private tools;
+verify physical image absence as well as absent routes/jobs and runtime denial. Retain
+separate installed, centrally approved, locally enabled and actor-authorized checks.
+Missing mandatory dependencies reject a profile; optional integration loads only when
+both modules are available/authorized. Shared primitives belong in core only when their
+product scope warrants it, not as hidden delivery of an unpurchased business module.
+Keep module contracts/data ownership explicit, enforce import boundaries and avoid cycles;
+no microservice per feature or new tenant/application identity is implied. Future addition/
+removal uses a verified compatible profile/update and preserves retained data.
+Sequence: extend IA-I01 with module/profile/entitlement design and prove a narrow selection/
+dependency/enforcement path before freezing IA-I02 packaging and IA-I03 installer inputs.
+General preflight/owned-provisioning work need not wait for every business module.
+Verification: repository source/design inspection, NestJS architecture skill and official
+Nest modules/Docker multi-stage/Vite build configuration documentation. Only this progress
+assessment changed; no plan adoption, implementation, schema or runtime changes. Biome and
+git diff --check pass; runtime suites were not rerun for this advice-only assessment.
 
 INSTALLATION-AUTOMATION-PLAN-01 — **Completed** (planning only; owner: Codex, 2026-11-07).
 Owner authorized creation of the installer specification and implementation plan after

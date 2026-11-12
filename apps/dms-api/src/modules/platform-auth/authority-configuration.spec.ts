@@ -58,6 +58,30 @@ describe('authority configuration boundary', () => {
     expect(() => parseAuthorityEnvironment(env)).toThrow();
   });
 
+  it('allows only the exact combined setup completion page', () => {
+    const env = authorityEnvironment();
+    const accepted = `${env.AUTH_PUBLIC_ORIGIN}/setup-preparation`;
+    expect(
+      parseAuthorityEnvironment({ ...env, AUTH_SETUP_COMPLETION_URL: accepted })
+        .AUTH_SETUP_COMPLETION_URL,
+    ).toBe(accepted);
+    for (const url of [
+      'https://attacker.test/setup-preparation',
+      `${accepted}?next=https://attacker.test`,
+      `${accepted}/`,
+      `${env.AUTH_PUBLIC_ORIGIN}/other`,
+    ]) {
+      expect(() => parseAuthorityEnvironment({ ...env, AUTH_SETUP_COMPLETION_URL: url })).toThrow();
+    }
+    expect(() =>
+      parseAuthorityEnvironment({
+        ...env,
+        AUTH_MODE: 'standalone',
+        AUTH_SETUP_COMPLETION_URL: accepted,
+      }),
+    ).toThrow();
+  });
+
   it('does not invent secrets or clients when unset', () => {
     expect(() => parseAuthorityEnvironment({})).toThrow(/AUTH_SECRET/);
   });

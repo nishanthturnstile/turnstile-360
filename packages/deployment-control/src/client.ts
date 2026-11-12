@@ -11,19 +11,22 @@ import {
   origin,
   pairingFile,
   rotateRequest,
-  type SyncResponse,
   sameBinding,
-  syncRequest,
-  syncResponse,
 } from '@thaarei/control-plane-contracts';
+import {
+  type VersionedSyncResponse,
+  versionedSyncRequest,
+  versionedSyncResponse,
+} from '@thaarei/module-catalog';
 import { z } from 'zod';
+import { assertVerifiedModuleRelease, type VerifiedModuleRelease } from './module-release.js';
 import {
   applyDecision,
   type DecisionState,
   evaluateDecision,
   initialDecisionState,
   type TrustBundle,
-  verifyDecision,
+  verifyInstalledDecision,
 } from './verifier.js';
 
 const proof = z
@@ -41,6 +44,8 @@ const decisionState = z
     quarantined: z.boolean(),
     accepted: proof.nullable(),
     activation: proof.nullable(),
+    minimumVersion: z.literal(2).optional(),
+    releaseTrustRevision: z.number().int().nonnegative().optional(),
   })
   .strict();
 const credential = z
@@ -66,7 +71,7 @@ export const storedProduct = z
       ])
       .nullable(),
     decision: decisionState.nullable(),
-    report: syncRequest.nullable(),
+    report: versionedSyncRequest.nullable(),
   })
   .strict();
 export type StoredProduct = z.infer<typeof storedProduct>;
@@ -76,6 +81,8 @@ export interface ProductStore {
   load(): Promise<StoredProduct | null>;
   save(value: StoredProduct): Promise<void>;
   recoveryMarker(): Promise<string>;
+  // Supplied by the owning installed adapter; no request-selected version switch.
+  moduleRelease?(): Promise<VerifiedModuleRelease | null>;
 }
 export type Transport = ((
   path: 'activate' | 'sync' | 'rotate',
@@ -286,19 +293,24 @@ export class DeploymentClient {
     value: StoredProduct,
     secret: string | undefined,
     candidate = false,
-  ): Promise<SyncResponse> {
+  ): Promise<VersionedSyncResponse> {
     if (!secret) throw new Error('Machine secret missing');
     const trust = await this.trust();
+    const release = (await this.store.moduleRelease?.()) ?? undefined;
+    if (release) assertVerifiedModuleRelease(release);
+    if (value.decision?.minimumVersion === 2 && !release)
+      throw new Error('Verified v2 release missing; downgrade forbidden');
     if (trust.revision < value.trustRevision)
       throw new Error('Trust downgrade requires reconciliation');
     if (!value.report) {
       const claims = value.decision?.accepted
-        ? await verifyDecision(
+        ? await verifyInstalledDecision(
             value.decision.accepted.token,
             value.binding,
             value.decision.epoch,
             trust,
             this.now(),
+            value.decision.minimumVersion === 2 ? release : undefined,
             true,
           )
         : null;
@@ -311,7 +323,16 @@ export class DeploymentClient {
         metrics = null;
       }
       value.report = {
-        version: 1,
+        ...(release
+          ? {
+              version: 2 as const,
+              installed: {
+                catalogueDigest: release.request.profile.catalogueDigest,
+                profileDigest: release.request.profileDigest,
+                releaseId: release.releaseId,
+              },
+            }
+          : { version: 1 as const }),
         ...(metrics
           ? {
               report: {
@@ -335,7 +356,21 @@ export class DeploymentClient {
       };
       await this.store.save(value);
     }
-    const response = syncResponse.parse(await this.transport('sync', value.report, secret));
+    if (release) {
+      if (
+        value.report.version !== 2 ||
+        value.report.installed.releaseId !== release.releaseId ||
+        value.report.installed.profileDigest !== release.request.profileDigest ||
+        value.report.installed.catalogueDigest !== release.request.profile.catalogueDigest
+      )
+        throw new Error(
+          'Pending sync journal differs from installed v2 release; reconcile before retry',
+        );
+    } else if (value.report.version !== 1) throw new Error('Cannot downgrade pending v2 sync');
+    const response = versionedSyncResponse.parse(
+      await this.transport('sync', value.report, secret),
+    );
+    if (response.version !== value.report.version) throw new Error('Sync version mismatch');
     if (
       !sameBinding(response.binding, value.binding) ||
       response.receiptId !== value.report.reportId
@@ -363,7 +398,14 @@ export class DeploymentClient {
     )
       throw new Error('Credential confirmation mismatch');
     const state: DecisionState = value.decision ?? initialDecisionState(response.epoch);
-    const updated = await applyDecision(state, response.decision, value.binding, trust, this.now());
+    const updated = await applyDecision(
+      state,
+      response.decision,
+      value.binding,
+      trust,
+      this.now(),
+      release,
+    );
     // Decision, current/candidate promotion and journal clearing are ONE durable commit.
     value.decision = updated;
     value.trustRevision = Math.max(value.trustRevision, trust.revision);
@@ -387,7 +429,8 @@ export class DeploymentClient {
         const now = this.now();
         if (trust.revision < value.trustRevision)
           throw new Error('Trust downgrade requires reconciliation');
-        const result = await evaluateDecision(value.decision, value.binding, trust, now);
+        const release = (await this.store.moduleRelease?.()) ?? undefined;
+        const result = await evaluateDecision(value.decision, value.binding, trust, now, release);
         if (result.state === 'reconciliation-required') value.decision.quarantined = true;
         value.decision.lastTime = Math.max(value.decision.lastTime, now);
         value.trustRevision = Math.max(value.trustRevision, trust.revision);

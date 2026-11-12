@@ -257,6 +257,8 @@ components:
                   "turnstile:configuration:manage",
                   "turnstile:people:manage",
                   "turnstile:roles:manage",
+                  "turnstile:incidents:read",
+                  "turnstile:risks:read",
                   "turnstile:units:read",
                   "turnstile:units:manage",
                 ],
