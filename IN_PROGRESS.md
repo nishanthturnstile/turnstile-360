@@ -300,11 +300,13 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
-MOD-PR — **In progress** (owner: Codex, 2026-11-12). User requested committing all
-accumulated changes and opening a PR against development. Fetched origin/development;
-local development matches it. Packaging the already-qualified MOD-I01–10 implementation
-on feat/centrally-managed-module-delivery; frozen source verification passes. No runtime
-source change or deployment is part of this publication task.
+MOD-PR — **Completed** (owner: Codex, 2026-11-12). Committed all 253 accumulated
+MOD-I01–10 paths on feat/centrally-managed-module-delivery and opened
+[PR #16](https://github.com/nishanthturnstile/turnstile-360/pull/16) against development.
+Implementation commit: 336a3e2. Origin/development matched the local base before branching.
+Frozen source verification, staged private-material scan and whitespace checks pass;
+required/focused execution evidence is the unchanged MOD-I10 qualification above.
+No runtime source change, deployment or merge was performed by this publication task.
 
 MOD-I10 — **Completed** (source/local module POC; owner: Codex, 2026-11-11).
 Added the MOD-R01–20 handler/test/execution trace, immutable source/contract/catalogue/
