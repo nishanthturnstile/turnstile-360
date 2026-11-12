@@ -314,12 +314,94 @@ snapshot; this test-only correction has separate verification logs at /tmp/pr16-
 including the successful /tmp/pr16-integration-home.log. PR #16 merged during validation; fix publication uses a follow-up PR;
 GitHub validation of the new commit remains pending. Concurrent UI work was preserved.
 
+REPO-SYNC-01 — **Completed** (owner: Codex, 2026-11-12). Owner requested
+committing pending handoffs to development and pulling its latest remote state.
+Reconciled final PR #15 CI notes from the other worktree into this checkout and
+committed the operator/login/audit handoffs. Pulled origin/development with rebase
+onto 92f7320, preserving PR #18's transport test correction and both documentation
+histories during conflict resolution. Only IN_PROGRESS.md changed in the local commit.
+Validation: Git whitespace checks and clean working-tree/ancestry checks; no runtime
+change or application tests needed for these documentation-only changes. The source
+worktree's duplicate local notes and historical stash remain preserved. No push was
+requested or performed; this local development commit remains ahead of origin.
 
-TCP-UX-RUN-01 — **In progress** (owner: Codex, 2026-11-12). Owner authorized publishing
-the redesign PR, merging into development and starting all existing local applications
-for hands-on control-plane testing. Checking branch dependencies, retained manual-testing
-configuration and Docker resources before publication/startup. Preserve existing data and
-credentials. Next: publish/merge the reviewed UI change and verify persistent endpoints.
+REPO-MERGE-AUDIT-01 — **Completed** (assessment; owner: Codex, 2026-11-12).
+Fetched/pruned origin and inspected every local/remote branch, all three linked
+worktrees, GitHub PR history/open PRs and the retained stash. No open PRs. Remote
+development is 92f7320 (PR #18 merged); local development remains ac9c7c5, behind
+two commits, with preexisting uncommitted operator notes preserved. No merge/push,
+checkout update, stash application/drop or runtime change was performed.
+
+Outstanding tracked working changes are documentation only: this checkout's
+IN_PROGRESS.md (login diagnosis, UI publication/runtime handoff and this audit), plus
+IN_PROGRESS.md in the control-plane implementation worktree (final PR #15 CI results).
+The transport CI worktree is clean; no untracked files were reported in any worktree.
+All branch tips are ancestors of remote development except user-management's final
+handoff (git cherry confirms patch-equivalence), module-delivery b125c76 (its test
+file is byte-identical to merged PR #18; only its historical handoff differs), and
+origin/main's two promotion merge commits. No missing implementation was found in
+these branch-only commits. PRs #16, #17 and #18 are merged into development.
+
+One historical TCP-I01–04/TCP-I05-handoff stash remains on the control-plane branch.
+All 122 changed/untracked paths exist in development; 88 exact file versions are
+reachable in development history. The remaining 34 versions differ from reachable
+versions and need detailed reconciliation if recovering or deleting the stash;
+path coverage alone does not prove every stashed hunk was incorporated. Preserve it.
+Remaining housekeeping: reconcile/publish the two local documentation handoffs,
+fast-forward this checkout with documentation preservation, and assess the historical
+stash before cleanup. Validation was Git/GitHub inspection, patch comparison and
+stash path/blob inventory; workspace build/tests and container checks were not run
+for this assessment-only documentation update. No feature/release gap was implemented.
+
+TCP-LOGIN-01 — **Completed** (diagnosis/private guidance correction; owner: Codex,
+2026-11-12). Reproduced the actual HTTPS sign-in failure with the initial password from
+its ignored private credential note: HTTP 401. A read-only diagnostic using the installed
+Better Auth password verifier confirmed the retained staff account exists, is active,
+email-verified, Administrator and MFA-enrolled, but the listed initial password does not
+match its current credential. No account/auth configuration failure or missing setup was
+found. Corrected only the central password guidance in the ignored note, retaining its
+original privately. Use the standard Forgot password flow and local Mailpit to choose a
+new password if the current one is unknown; preserve the existing authenticator/recovery
+codes. No password, MFA, session policy or database record was reset or bypassed by this
+investigation. No application source change; existing generic authentication errors
+remain intact. Validation: real HTTPS rejection plus read-only account/hash verification;
+recovery SMTP/TLS verification passed and local Mailpit returned HTTP 200. No reset
+email was initiated; the owner can use the normal account recovery interface.
+
+TCP-UX-RUN-01 — **Completed** (owner: Codex, 2026-11-12). Owner authorized publishing
+and merging the redesign into development and restoring all retained manual-test apps.
+Committed/pushed UI source d81423f and opened PR #17 against development; it includes the
+module-delivery prerequisite PR #16. The latter's earlier failed checks job
+was a timing-sensitive transport test, while its other run passed; reran that failed job.
+PR #16 passed all check contexts and merged into development at 267a5a2 on
+2026-11-12 04:59 UTC. PR #17 then passed every check context and merged into
+development at ac9c7c5 on 2026-11-12 05:01 UTC. Updated the local development branch
+by fast-forward to that merge, preserving this local operator handoff.
+
+Restored the existing private central/customer Compose stacks and retained volumes and
+credentials. Built thaarei-manual-central:ui-redesign, backed up the existing central
+PostgreSQL database to its ignored private directory, applied owning central migrations
+successfully and started the redesigned image. HTTPS access and central readiness return
+200; the live HTML contains the redesigned sign-in. Turnstile sign-in/identity and DMS
+API readiness return 200. Both products completed authenticated sync successfully.
+ClamAV signatures were stale after the stopped interval: enabled the existing updater
+profile, assigned its private egress network an unused explicit 10.254.252.0/24 subnet
+because Docker automatic pools were exhausted, updated signatures to 28180 and reloaded
+the daemon. Scanner worker preflight and presence are ready; DMS processing readiness
+now returns 200. Other existing networks and volumes were preserved. These were private
+operator configuration/startup actions, not changes to committed deployment defaults.
+
+Owner test URLs: https://central.localhost:23600/access and
+https://turnstile.localhost:23600/sign-in; Mailpit remains http://localhost:23605.
+Use existing staff/customer accounts and the retained local CA/hostname setup. No passwords,
+MFA seeds or pairing files were printed or committed. Runtime is ready for owner testing;
+Both PR merges and the local development checkout are complete. Rechecked all six
+HTTPS access/readiness/identity endpoints after the merge: all return 200; the control
+plane still serves the redesigned sign-in. All processing workers and stateful services
+with configured health checks are healthy. This operational handoff remains a local
+uncommitted documentation update; published source is the verified merged UI commit. Source checks were already fully
+qualified under TCP-UX-01; central image build, migrations and actual HTTPS startup were
+additionally verified in this publication/startup task.
 
 TCP-UX-01 — **Completed** (source/local UI qualification; owner: Codex, 2026-11-12).
 Owner requested the complete control-plane UX audit, reviewed plan and redesign. Worked
@@ -358,9 +440,10 @@ Actual nonsecret screenshots were visually reviewed and retained in
 `/tmp/thaarei-control-plane-ui-mPrUNm`; a review gallery is at
 `/tmp/thaarei-control-plane-redesign.html`. Final Biome/whitespace checks pass.
 
-Handoff: implementation and local verification are complete; changes remain uncommitted
-for owner review. No central Docker image rebuild, Dokploy rollout, customer mutation or
-production acceptance was performed. Existing module-release frozen artifacts remain
+Historical implementation handoff: UI changes were initially uncommitted for owner
+review. TCP-UX-RUN-01 above subsequently records their PR publication/merge, central
+image rebuild and retained local runtime startup. Dokploy rollout and production
+acceptance remain separate. Existing module-release frozen artifacts remain
 historical; deploying the redesigned central UI requires its normal new-image qualification.
 Existing installations, reserved ports and preexisting Docker volumes were preserved.
 
@@ -1453,9 +1536,10 @@ central/customer Linux/Dokploy DNS/TLS/SMTP/time, off-host recovery, existing-in
 cutover and operator acceptance remain separate target work. Source/data migration and
 mobile remain outside this assessment's scope.
 
-TCP-CI-001 — **In progress** (owner: Codex control-plane implementation thread,
-2026-11-07). PR #15 CI remediation; standalone fixes verified, worker-fixture isolation
-correction under validation, latest-head remote checks pending. No merge, deployment or persistent-installation change is authorized.
+TCP-CI-001 — **Completed** (owner: Codex control-plane implementation thread,
+2026-11-07). PR #15 CI remediation and verification complete on `96bf413`. All 16
+checks across both push and pull-request workflows passed. No merge, deployment or
+persistent-installation change occurred.
 
 Fixed standalone verification's clean-checkout bootstrap: fixture modules consuming compiled
 workspace packages now load only after the owning Turbo dependency build. Missing output
@@ -1498,12 +1582,21 @@ confirmed-retry check observes Celery's native postrun `REJECTED/Unroutable` out
 finite fixture-only event, then reads the actual queue with basic-get instead of sleeping
 one second and trusting periodically sampled management counts. The production task,
 confirmed publisher, private HTTP handlers and database locking remain unchanged. Focused
-full enrollment/work verification passes 81 tests with 3 existing optional native skips;
-Current static checks, build and unit tests pass. The focused full enrollment/work lane
-passes 81 tests with 3 existing optional native skips. Complete workspace integration is
-active at `/tmp/pr15-worker-integration.log`; no pass is claimed until completion.
-Next: push the fixture-only race correction and use the existing watch to inspect every
-check from both workflow runs on the new head, not just one eight-job notification.
+full enrollment/work verification passes 81 tests with 3 existing optional native skips.
+Current `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` all pass;
+the complete integration run includes PostgreSQL and authenticated SeaweedFS/browser/
+Node/Python transfer checks. No production handler, retry budget or database locking
+policy was changed.
+
+Accepted remote verification on `96bf4132b2f743257d96070a8e7478e268c25b7f`:
+[workflow run 42354537415](https://github.com/nishanthturnstile/turnstile-360/actions/runs/42354537415)
+and [workflow run 42354542531](https://github.com/nishanthturnstile/turnstile-360/actions/runs/42354542531)
+each passed all eight jobs, including standalone, workspace checks and all six image
+builds. GitHub reports the open PR's merge state CLEAN. This verifies both runs rather
+than relying on a deduplicated eight-check notification. Earlier failed runs are historical.
+All CI fixes are committed/pushed; this completion handoff is recorded locally after
+verification without another code push. Remaining release/deployment scope stays deferred
+under TCP-I08. No further CI remediation is pending.
 
 
 TCP-I08 — **In progress** (release/recovery qualification; owner: Codex control-plane
