@@ -7,7 +7,6 @@ import {
   type Binding,
   binding,
   type Decision,
-  MAX_DECISION_SECONDS,
   machineReceipt,
   machineStatusRequest,
   machineStatusResponse,
@@ -442,11 +441,17 @@ export async function sync(headers: Headers, raw: unknown) {
       )
     ).rows[0];
     const now = Math.floor(Date.now() / 1000);
+    const lifetime = runtime().config.decisionSeconds;
+    const cachedClaims = cached ? decodeJwt(cached.token) : undefined;
     if (
       cached &&
-      decodeJwt(cached.token).version === input.version &&
+      cachedClaims?.version === input.version &&
       decodeProtectedHeader(cached.token).kid === kid &&
-      new Date(cached.expires_at).getTime() / 1000 - now >= RENEW_BELOW_SECONDS
+      typeof cachedClaims.exp === 'number' &&
+      typeof cachedClaims.iat === 'number' &&
+      cachedClaims.exp - cachedClaims.iat <= lifetime &&
+      new Date(cached.expires_at).getTime() / 1000 - now >=
+        Math.min(RENEW_BELOW_SECONDS, Math.floor((lifetime * 6) / 7))
     )
       return { p, current, cached: String(cached.token), claims: null };
     const seq = current.sequence + 1;
@@ -465,7 +470,7 @@ export async function sync(headers: Headers, raw: unknown) {
       decisionId: randomUUID(),
       iat: now,
       nbf: now,
-      exp: now + MAX_DECISION_SECONDS,
+      exp: now + lifetime,
       ...policy,
     });
     return { p, current, cached: null, claims };

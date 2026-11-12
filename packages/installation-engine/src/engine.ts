@@ -23,6 +23,7 @@ import {
   installerInput,
   ownerCommand,
   pairingInput,
+  retryOpenInput,
   type StageJournal,
   stageJournal,
 } from './contracts.js';
@@ -345,6 +346,28 @@ export async function execute(
       current,
     });
     const pairRequest = action === 'pair' ? pairingInput.parse(control) : undefined;
+    if (action === 'retry-open') {
+      const retry = retryOpenInput.parse(control);
+      const owned = await docker.json<{ Containers: Record<string, unknown> }>(
+        'GET',
+        `/networks/${encodeURIComponent(network)}`,
+      );
+      assert.ok(owned);
+      for (const id of Object.keys(owned.Containers)) {
+        const process = await docker.inspect(id);
+        assert.ok(process);
+        assert.equal(process.Config.Labels['thaarei.installation'], local);
+        assert.ok(artifact.release.images.some((candidate) => candidate.id === process.Image));
+      }
+      const output = await jobs.retryOpen(retry.stage, retry.administratorCookie);
+      const result = jsonOutput(output);
+      assert.equal(result.action, 'release-open');
+      assert.equal(result.tenantId, intent.binding.tenantId);
+      assert.equal(result.applicationId, applicationId);
+      atomic(join(state, 'last-owner-result.json'), output);
+      if (result.publicWritesEnabled === true && result.releaseId === intent.releaseId)
+        writeJson(join(state, 'handover-open.json'), { stage: retry.stage });
+    }
     await jobs.resume(pairRequest?.mode === 'rebind' ? pairRequest.product : undefined);
     const job = jobs.run.bind(jobs);
     const dmsInput = {

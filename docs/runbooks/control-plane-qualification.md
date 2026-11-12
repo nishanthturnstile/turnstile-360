@@ -2,7 +2,7 @@
 
 TCP-I08 is staged local qualification; it never authorizes a persistent customer cutover.
 Follow [the accepted topology and recovery design](../../architecture.md#thaarei-central-control-plane-proposal)
-and [operator commands](control-plane.md). Completion/evidence is recorded in
+and [operator commands](../deployment/thaarei_ecosystem_guide.md#central). Completion/evidence is recorded in
 [IN_PROGRESS.md](../../IN_PROGRESS.md).
 
 Run `node scripts/qualify-control-plane.mjs /absolute/new-evidence.json` from the workspace.

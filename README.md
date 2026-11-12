@@ -3,10 +3,12 @@
 Thaarei monorepo for the Turnstile 360 React application/backend and the reusable,
 self-hostable document management platform it consumes.
 
-Development environments, application entry points, package boundaries, build/test
-pipelines, and deployment configuration are in place. The APIs expose application
-identity/liveness, the persisted shared authority and the Turnstile BFF/user access boundary.
-Document workflows, processing jobs and business functionality remain later increments.
+For setup, start with [START_HERE.md](START_HERE.md): the
+[Thaarei ecosystem guide](docs/deployment/thaarei_ecosystem_guide.md) followed by the
+[customer installation guide](docs/deployment/customer_deployment_guide.md). The workspace includes independent DMS services, central deployment
+administration, Turnstile authentication/company setup/access management and selected
+module delivery. Incident/Risk currently expose guarded landing pages. Actual completion,
+verification and remaining product/production scope are recorded in IN_PROGRESS.md.
 
 See [architecture.md](architecture.md) for the complete system design, component boundaries,
 installed and selected stack, DMS flows, deployment picture, and shared web/future-mobile
@@ -50,8 +52,8 @@ unless you intend to delete local data.
 For a fresh environment, prepare the root infrastructure `.env`, each API's separate
 private runtime/migration configuration and the installation through the
 [authentication runbook](docs/runbooks/authentication.md) first. Blank examples intentionally
-do not establish a working auth installation. Development starts the existing PostgreSQL,
-Mailpit, RabbitMQ and SeaweedFS services; document/broker integration remains pending.
+do not establish a working auth installation. Development starts PostgreSQL, Mailpit, RabbitMQ and SeaweedFS. Full DMS processing
+uses the separately selected complete distribution and owning work configuration.
 No credentials are copied into development images or supplied to Vite. Production uses
 its own Dockerfiles and Dokploy Compose; this does not change deployment.
 
@@ -102,7 +104,7 @@ The [repository layout and package dependencies](architecture.md#repository-and-
 define application, contract/client, tooling, and deployment ownership.
 
 The artifact-only module installation launcher and private handover workflow are described in
-[the installation handover runbook](docs/runbooks/installation-handover.md).
+[the installation handover runbook](docs/deployment/customer_deployment_guide.md#customer).
 The [module release handoff](docs/turnstile/modules/module_release_handover.md) links
 requirements to frozen local evidence, inventories and the remaining target gates.
 
@@ -116,7 +118,7 @@ requirements to frozen local evidence, inventories and the remaining target gate
 - [Workspace implementation plan](docs/workspace/workspace_implementation_plan.md): ordered workspace tasks, CLI provenance, scope, and verification limits.
 - [Workspace standards](docs/standards/workspace.md): ownership, toolchain, code, configuration, and testing rules.
 - [Authentication operations](docs/runbooks/authentication.md): private role/migration/bootstrap/account/client commands, immediate credential cutover and fixture verification.
-- [Dokploy runbook](docs/runbooks/dokploy.md): container build contexts, ingress, environment, and installation boundaries.
+- [Dokploy runbook](docs/deployment/customer_deployment_guide.md#ingress): container build contexts, ingress, environment, and installation boundaries.
 - [DMS product blueprint](docs/dms/headless_dms_product_blueprint_v1.md): product promise, included/deferred scope, correctness requirements, and decision history.
 - [DMS functionality requirements](docs/dms/headless_dms_functionality_requirements_v1.md): feature dependency order after workspace setup.
 
@@ -135,10 +137,10 @@ retain the accepted no-mandatory-paid-license dependency policy.
 See the [documentation index](docs/README.md) for plans, specifications and runbooks by area.
 
 Selected Turnstile module artifacts and private local-bundle qualification follow the
-[module delivery runbook](docs/runbooks/module-delivery.md). Signed runtime authority and
+[module delivery runbook](docs/deployment/thaarei_ecosystem_guide.md#delivery). Signed runtime authority and
 explicit user permissions follow the [module access runbook](docs/runbooks/module-access.md).
 Staff activation and private profile changes follow the
 [transition runbook](docs/runbooks/module-transitions.md); package availability alone grants no access.
 
 Central-first combined private configuration preparation and its explicit owning bootstrap
-sequence are documented in the [installation intent runbook](docs/runbooks/installation-intents.md).
+sequence are documented in the [installation intent runbook](docs/deployment/thaarei_ecosystem_guide.md#registration).

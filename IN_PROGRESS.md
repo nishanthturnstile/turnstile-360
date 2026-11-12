@@ -63,7 +63,7 @@ initializer images verify input validation, immutable reserved bootstrap, config
 initialization, interrupted writes/retries, expiry/renewal, independent/partially paired
 products, duplicate setup, existing-state refusal, private modes and changed-assignment
 fences. All four workspace gates pass, with final isolated target-path verification passing.
-See the [intent/preparation runbook](docs/runbooks/installation-intents.md). No live customer
+See the [intent/preparation runbook](docs/deployment/thaarei_ecosystem_guide.md#registration). No live customer
 configuration, authority, database or deployment changed. MOD-I06 signed module decisions
 is next; broader installer automation and production rollout remain their owning work.
 
@@ -76,7 +76,7 @@ Central exports approved build requests and shows matching verified package avai
 without granting module access. All four workspace gates pass. Four linux/amd64 profiles
 (Core, Incident, Risk, both) built eight real API/web images and passed non-root/read-only
 production startup, closed business access, exclusion/inventory/archive, signature,
-substitution, load/reuse/renewal checks. See the [delivery runbook](docs/runbooks/module-delivery.md).
+substitution, load/reuse/renewal checks. See the [delivery runbook](docs/deployment/thaarei_ecosystem_guide.md#delivery).
 No live migration, deployment, customer configuration or module authority changed.
 Next: MOD-I05 central-first installation intent/private preparation; MOD-I06/07 own signed
 runtime enforcement/navigation. Earlier MOD-I04-next statements are historical.
@@ -89,7 +89,7 @@ current revisions and atomic receipt/audit preserve independently approved desir
 The view separates desired selection from unknown observed/effective module authority;
 ordinary v1 product approval never becomes module activation. All four workspace gates
 pass, including real central HTTPS/PostgreSQL/Chromium and existing integration suites.
-See the [assignment runbook](docs/runbooks/module-assignments.md). No live migration,
+See the [assignment runbook](docs/deployment/thaarei_ecosystem_guide.md#assignment). No live migration,
 deployment or customer module authority changed. Next: MOD-I04 selected artifact builds
 and exclusion/inventory verification. Earlier MOD-I03-next statements are historical.
 
@@ -100,7 +100,7 @@ with matching release evidence. Atomic receipts/audit and current Admin MFA prot
 mutations; Operator/Viewer have read access. All four workspace gates pass, including
 real HTTPS/PostgreSQL/browser catalogue checks and the full database/storage suite.
 No live central migration/redeployment, production catalogue seed or customer activation
-change occurred. See the [catalogue runbook](docs/runbooks/module-catalogues.md).
+change occurred. See the [catalogue runbook](docs/deployment/thaarei_ecosystem_guide.md#catalogue).
 Next: MOD-I03 per-product assignment and dependency selection UI. Earlier MOD-I02-next
 statements describe the preceding milestone.
 
@@ -299,6 +299,104 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+ARTIFACT-CLEANUP-01 — **Completed** (owner: Codex, 2026-11-12).
+Inspect the three user-selected historical DMS verification directories, remove unused
+private test artifacts, document their purpose and retention boundary, then commit and
+push the accumulated Titan implementation/documentation changes to development.
+All 15 existing containers inspected: no mounts or Compose source labels reference
+.dms-i19-verification, .dms-i20-verification or .dms-i20-final-20261107.
+Removed those three directories (approximately 19 GiB) after also checking active Titan
+configuration, symlinks, process working directories/open files and filesystem mounts.
+Current Titan installation, database volumes and tracked qualification reports remain;
+historical report paths now identify deleted local evidence, not retrievable backups.
+Added private-directory retention guidance to the customer guide. All four central and
+seven customer containers remain running. All four required pnpm gates (check, build, test,
+test:integration) pass, including actual PostgreSQL and SeaweedFS verification. Logs:
+/tmp/titan-publish-gates/. Staged whitespace and private-file checks pass. This development
+publication includes the accumulated Titan setup fixes, separate customer deployment and
+consolidated guides; the user explicitly authorized commit/push. No production deployment
+or broader acceptance completion is claimed.
+
+DOCS-CONSOLIDATE-01 — **Completed** (owner: Codex, 2026-11-12).
+Consolidated setup into [Thaarei ecosystem](docs/deployment/thaarei_ecosystem_guide.md)
+and [customer installation](docs/deployment/customer_deployment_guide.md). Ten overlapping
+setup runbooks removed after migrating commands/input formats and repairing links. Root
+START_HERE is navigation only; feature operations and historical evidence remain distinct.
+Added concrete central container bootstrap and catalogue-signing recipe; corrected stale
+processing and suspension claims. Documented the full-DMS wrapper's missing activation
+configuration and the required exact-image activated overlay (wider packaging gate remains).
+Release README now embeds the canonical customer guide without broken checkout links;
+DMS releases include both guides. Updated installer cache and generated DMS ledger references;
+immutable release reports/source inventories were not rewritten or requalified.
+Removed nine unmounted obsolete private rehearsal helpers/logs and the empty capture
+directory; running services, volumes, signer/trust, receipts and operating credentials retained.
+Verification: 615 local Markdown links/anchors resolve; all 23 shell examples and embedded
+Node snippets parse. Both catalogue-signing recipes executed and verified with disposable
+keys, then those keys were removed. Focused release-guide regression passed. Final pnpm
+check/build/test/test:integration passed, including real PostgreSQL and SeaweedFS verification;
+initial moved-link Markdown formatting corrected. Logs: /tmp/titan-doc-gates/ and
+/tmp/titan-doc-packaging-test.log. Final Biome and git diff --check passed.
+All seven Titan customer services remain running. No commit/push, live redeployment, fresh
+release-image/archive build or new browser acceptance in this documentation/cleanup task.
+Wider product/target acceptance remains tracked by TITAN-EXEC-01, not marked complete here.
+
+TITAN-EXEC-01 — **In progress** (owner: Codex, 2026-11-12).
+The supported local module-POC journey, separate customer Docker deployment, discovered
+setup fixes and manual guide are delivered; the wider acceptance matrix remains open.
+Baseline development c75b4cb; implementation/documentation changes are included in the
+ARTIFACT-CLEANUP-01 development publication. Wider acceptance work remains open.
+
+- Authorized scoped reset removed 19 containers, 8 dedicated volumes, 11 networks and
+  old .dms-manual-testing-20261107 state. Unrelated/unproven resources were preserved.
+- Fresh central bootstrap, browser email verification/login/TOTP, catalogue publication,
+  Titan registration/reservation, independent product pairing/approval, module activation,
+  customer identity and administrator handover succeeded. No MFA/TLS bypass or sudo needed.
+- Browser company setup saved Titan, Asia/Kolkata and Titan Headquarters. Customer data
+  survived transfer to independent titan-customer Compose: six services plus a nonroot
+  gateway, with external volumes/networks retained. New Dockerfile/Compose and protected
+  exact-service export automate this transfer; production TLS remains Dokploy-owned.
+- Fixed stale proof recovery with narrow receipt-preserving retry-open; actual retained
+  failed job succeeded on attempt two. Added real release replay-after-close regression.
+  Added bounded shorter signed decisions, verified actual 120-second expiry, and corrected
+  misleading removal wording. Seven-day default restored. No live SQL/session/journal edits.
+- Browser checks passed: both/Incident-only/no Individual modules; central removal and
+  restoration requiring activation; direct URL denial; independent DMS/Turnstile suspension;
+  local Incident disablement with Risk usable; suspension retained after API restart;
+  central outage before expiry, natural expiry and renewal. Normal configuration restored.
+- Invited reader completed UI email/account/login/acceptance through the gateway; Incident
+  worked, Risk was hidden/denied. Membership suspension blocked existing and fresh-login
+  access; reviewed reactivation restored membership. This is not identity-session revocation.
+- Final pnpm check/build/test/test:integration passed, including PostgreSQL release receipt
+  replay and SeaweedFS storage integration. Logs: /tmp/titan-final-{check,build,test,test-integration}.log.
+- Fixed local ingress recreation losing its manual customer network connection by declaring
+  external network/aliases in owning Compose; login and signed sync verified after recreation.
+- Removed temporary normal-proof capture code/mount and transient proof/consumed pairing
+  inputs. Retained live private state at /home/dev/titan-local-20261112 and central ignored
+  .dms-titan-20261112. Current project: compose-reviewed/customer.yaml plus project.env.
+- [START_HERE](START_HERE.md), [manual guide](docs/deployment/customer_deployment_guide.md),
+  [results](docs/deployment/titan_acceptance_results.md) and
+  [follow-up plan](docs/deployment/installation_implementation_plan.md#titan-rehearsal-follow-up--2026-11-12)
+  record exact boundaries. Remaining: Risk-only central variant, full profile/Core cutovers,
+  staff/recipient edge cases, coherent restore, packaged tools update and clean-host/Dokploy
+  acceptance. Full documents/OCR cannot be tested through the current Turnstile UI; this
+  module POC does not deploy DMS processing/storage. Do not mark the full matrix passed.
+
+
+TITAN-RESET-PLAN-01 — **Completed** (planning only; owner: Codex, 2026-11-12).
+Created [the Titan reset/browser acceptance plan](docs/deployment/titan_fresh_install_validation_plan.md)
+with scoped Docker/data cleanup, central-first installation, real MFA, independent product
+activation, customer onboarding, module/permission matrix, expiry/outage/replay cases and
+post-validation documentation replacement. Inspected architecture/runbooks, old private
+START-HERE and live Docker metadata. Remote development checked with git ls-remote:
+92f7320; local c75b4cb includes it plus the existing documentation handoff commit.
+No deletion, runtime configuration, provisioning or browser acceptance performed.
+Current UI gaps: first-admin/private installation operations, full DMS document workflows,
+and accelerated expiry; preserve these distinctions during execution. Browser tools are
+available; no browser-use/agentic-browser skill found in available roots. Verification:
+local Markdown target/whitespace checks only; workspace build/test gates and runtime/browser
+checks not run for this planning-only change. Next: execute the reviewed plan beginning
+with exact resource/mount ownership inventory; retain unrelated projects and source inputs.
 
 PR16-CI — **Completed** (test fix/local verification; owner: Codex, 2026-11-12).
 Fixed the CI redirect test's 100 ms deadline racing cold HTTP connections: ordinary
@@ -540,7 +638,7 @@ legacy compatibility path; no preexisting networks/volumes were removed. The sel
 customer path uses actual images, and auxiliary source compatibility is labeled separately.
 Source/profile/catalogue/release and all image identities, actual cases and limits:
 [qualification](docs/turnstile/modules/module_installation_qualification.md). Supported
-commands/custody: [handover runbook](docs/runbooks/installation-handover.md).
+commands/custody: [handover runbook](docs/deployment/customer_deployment_guide.md#customer).
 Separate Linux/Dokploy, off-host recovery, production HTTPS distribution, processing/target
 acceptance and the proposed public scoped proof UX remain wider IA/release gates. Existing
 protected private proof remains authoritative; global status does not infer universal readiness.
@@ -774,7 +872,7 @@ production distribution/host rollout and module runtime activation remain their 
 MOD-I06–10 owners. Changed assignment/context intentionally stops for reviewed reconciliation,
 not fresh reset or implicit cutover. MOD-I05's required local gate is complete. MOD-I06 signed Turnstile module decisions is
 next on the owner's request; current package/preparation evidence grants no module access. See the
-[intent/preparation runbook](docs/runbooks/installation-intents.md).
+[intent/preparation runbook](docs/deployment/thaarei_ecosystem_guide.md#registration).
 
 MOD-I04 — **Completed** (source/local POC qualification; owner: Codex, 2026-11-10).
 Owner requested the next increment: selected Incident/Risk placeholder composition,
@@ -2071,7 +2169,7 @@ Only implemented staff/auth tables exist; client/approval/report schemas remain 
 
 Added independent `deploy/compose.control-plane.yaml` and non-root Node image, read-only
 runtime, protected host auth-secret delivery, explicit SMTP/proxy configuration and private
-maintenance entrypoints. [Operator runbook](docs/runbooks/control-plane.md) covers fresh
+maintenance entrypoints. [Operator runbook](docs/deployment/thaarei_ecosystem_guide.md#central) covers fresh
 roles/migrations, admission/verification/password/MFA, recovery, secret ownership and
 release limits. Fixed a real container packaging failure: Next 16.4 hashes external `pg`
 aliases under .next/node_modules, which pnpm deploy excludes; the build now reconstructs
@@ -2378,7 +2476,7 @@ Verification on 2026-11-06:
   from response and real API logs. Partial-initialization export guard passes.
 
 See [qualification evidence](docs/qualification/dms-i18-distribution.json) and the
-[distribution runbook](docs/runbooks/dms-distribution.md). The actual engine is Docker Desktop
+[distribution runbook](docs/deployment/customer_deployment_guide.md#standalone-dms). The actual engine is Docker Desktop
 with a WSL2 Linux kernel; this is local container evidence, not bare-server/Dokploy or customer
 acceptance. External authority is not selected and no single-host HA claim is made.
 At the I18 handoff, next increments were I19 coherent backup/recovery/disposal and I20 customer
@@ -6524,7 +6622,7 @@ DNS/TLS verification remain pending; local evidence does not establish deployed 
 | WSP-004       | 2026-10-31 | Python package created with uv; processing folders, Ruff, mypy, pytest, and packaging configured                                                                                                                                                              | [Processing project](apps/dms-processing/README.md), [Python configuration](apps/dms-processing/pyproject.toml)                                                                                                                                                                                                                                                                  |
 | WSP-005       | 2026-10-31 | DMS/Turnstile contracts and internal DMS client package boundaries established                                                                                                                                                                                | [DMS contracts](packages/dms-contracts/README.md), [DMS client](packages/dms-client/README.md), [Turnstile contracts](packages/turnstile-contracts/README.md)                                                                                                                                                                                                                    |
 | WSP-006       | 2026-10-31 | Biome, TypeScript 6.0.3 strict checks, Nest decorator metadata support, and dependency rules configured and validated                                                                                                                                         | [Tooling](tooling/README.md), [standards](docs/standards/workspace.md)                                                                                                                                                                                                                                                                                                           |
-| WSP-007       | 2026-10-31 | Dockerfiles, local infrastructure Compose, Dokploy application Compose, Nginx frontend serving, and CI workflow added                                                                                                                                         | [Deployment runbook](docs/runbooks/dokploy.md), [workflow](.github/workflows/workspace.yml); image builds/deployment remain unverified                                                                                                                                                                                                                                           |
+| WSP-007       | 2026-10-31 | Dockerfiles, local infrastructure Compose, Dokploy application Compose, Nginx frontend serving, and CI workflow added                                                                                                                                         | [Deployment runbook](docs/deployment/customer_deployment_guide.md#ingress), [workflow](.github/workflows/workspace.yml); image builds/deployment remain unverified                                                                                                                                                                                                               |
 | WSP-008       | 2026-10-31 | Application-specific identities replaced generated demo responses; proprietary Thaarei ownership recorded                                                                                                                                                     | [License](LICENSE), private package metadata, Python wheel license verified                                                                                                                                                                                                                                                                                                      |
 | ARC-001       | 2026-10-31 | Future web/mobile clients share the Turnstile backend; authoritative business logic stays server-side                                                                                                                                                         | [Client architecture](architecture.md#turnstile-application-architecture); no mobile project added                                                                                                                                                                                                                                                                               |
 | ARC-002       | 2026-10-31 | Codex clarified one customer tenant per installation with multiple independent applications; separate installations per customer, shared Turnstile web/mobile backend registration, no SaaS tenant provisioning                                               | [Customer deployment model](architecture.md#customer-deployment-and-application-model), blueprint v1.6, requirements v1.3 (FR-01.01/03/06, FR-06.06), DMS-001 bootstrap acceptance, README/runbook/agent rules; design only                                                                                                                                                      |
@@ -7089,5 +7187,5 @@ Empty modules and folders do not count as implemented capabilities.
 - [Workspace standards](docs/standards/workspace.md)
 - [DMS product blueprint](docs/dms/headless_dms_product_blueprint_v1.md)
 - [Sequenced DMS functionality requirements](docs/dms/headless_dms_functionality_requirements_v1.md)
-- [Dokploy runbook](docs/runbooks/dokploy.md)
+- [Dokploy runbook](docs/deployment/customer_deployment_guide.md#ingress)
 - [Development commands](README.md#start-locally)

@@ -6,7 +6,7 @@ Web Crypto/TextEncoder keeps hashing portable to Node 24 and browsers. No execut
 entrypoints, Node builtins or server services are exported. No production catalogue is
 published by the shared package. MOD-I04 owns source-backed Incident/Risk packaging and
 the strict generic delivery request/result adapter; see the
-[delivery runbook](../../runbooks/module-delivery.md).
+[delivery runbook](../../deployment/thaarei_ecosystem_guide.md#delivery).
 
 ## Fixed foundation inventory
 

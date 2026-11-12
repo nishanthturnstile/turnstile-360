@@ -88,8 +88,8 @@ The freeze tool checks recorded exit codes, not a reexecution of every command.
 
 ## Support and reconciliation
 
-Follow [fresh handover](installation-handover.md) for the supported launcher commands and
-private input schema; [assignments](module-assignments.md), [decisions](module-decisions.md),
+Follow [fresh handover](../deployment/customer_deployment_guide.md#customer) for the supported launcher commands and
+private input schema; [assignments](../deployment/thaarei_ecosystem_guide.md#assignment), [decisions](module-decisions.md),
 [access](module-access.md) and [transitions](module-transitions.md) own their respective
 operations. Always compare actual binding, desired revision, installed profile, active
 authority, acknowledgement, independent product approval and report freshness separately.

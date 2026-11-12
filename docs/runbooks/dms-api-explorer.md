@@ -1,7 +1,7 @@
 # Consumer API explorer and independent manual testing
 
 DMS-I02 exposes only implemented consumer operations. Use the
-[standalone foundation runbook](dms-standalone.md) first for database migration/bootstrap,
+[standalone foundation runbook](../deployment/customer_deployment_guide.md#standalone-dms) first for database migration/bootstrap,
 verified operator setup and independent client provisioning. The accepted technical
 contract is maintained in [architecture](../../architecture.md#consumer-api-contract-and-explorer-dms-i02).
 The explorer includes implemented registry, upload and batch status reads. Use the

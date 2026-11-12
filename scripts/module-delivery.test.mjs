@@ -8,6 +8,7 @@ import {
   profileDigest,
   validateDeliveryEvidence,
 } from '../packages/module-catalog/dist/index.js';
+import { installationGuide } from './installation-release.mjs';
 import { sourceCatalogue } from './module-build-source.mjs';
 import { verifyToken } from './module-delivery.mjs';
 
@@ -137,4 +138,16 @@ test('only explicit pipeline historical verification can renew expired identical
       true,
     ),
   );
+});
+
+// A source-path move must not ship a signed README with missing instructions or
+// checkout-relative links on a Docker-only customer host.
+test('installer README embeds the current customer procedure without repository-only links', () => {
+  const guide = installationGuide();
+  assert.match(guide, /installer plan/);
+  assert.match(guide, /retry-open/);
+  assert.match(guide, /"operation": "provision-user"/);
+  assert.match(guide, /repository reference: thaarei_ecosystem_guide\.md/);
+  assert.match(guide, /\[Prepare and install\]\(#customer\)/);
+  assert.doesNotMatch(guide, /\[[^\]\n]+\]\((?!#|https?:)[^)]+\)/);
 });

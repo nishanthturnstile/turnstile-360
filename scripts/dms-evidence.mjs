@@ -16,7 +16,10 @@ export function requirements() {
 }
 const owning = 'apps/dms-api/test/enrollment.database-spec.ts';
 const groups = {
-  '01': ['apps/dms-api/test/standalone.database-spec.ts', 'docs/runbooks/dms-standalone.md'],
+  '01': [
+    'apps/dms-api/test/standalone.database-spec.ts',
+    'docs/deployment/customer_deployment_guide.md',
+  ],
   '02': [owning, 'docs/runbooks/authentication.md'],
   '03': ['apps/dms-api/test/api-docs.e2e-spec.ts', 'docs/runbooks/dms-api-explorer.md'],
   '04': [owning, 'docs/runbooks/dms-audit.md'],
@@ -34,7 +37,7 @@ const groups = {
   16: ['apps/dms-processing/tests/test_ocr.py', 'docs/runbooks/dms-ocr.md'],
   17: [owning, 'docs/runbooks/dms-results.md'],
   18: [owning, 'docs/runbooks/dms-discovery.md'],
-  19: ['scripts/test-dms-distribution.mjs', 'docs/runbooks/dms-distribution.md'],
+  19: ['scripts/test-dms-distribution.mjs', 'docs/deployment/customer_deployment_guide.md'],
   20: ['scripts/fixtures/dms-distribution/recovery.mjs', 'docs/runbooks/dms-recovery.md'],
 };
 export function ledger(report) {

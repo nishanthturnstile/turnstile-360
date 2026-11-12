@@ -41,7 +41,7 @@ migrations before starting the updated runtime. No real installation is provisio
 Local host testing uses fixed port 23601. Browser authentication uses
 http://localhost:23600. See the [reserved ports](../../architecture.md#reserved-local-ports).
 
-Standalone foundation installation and private operators: [runbook](../../docs/runbooks/dms-standalone.md).
+Standalone foundation installation and private operators: [runbook](../../docs/deployment/customer_deployment_guide.md#standalone-dms).
 
 Protected consumer explorer and external-backend examples: [manual testing](../../docs/runbooks/dms-api-explorer.md).
 
@@ -89,6 +89,6 @@ I16 results, reprocessing and optional offline structure: [results runbook](../.
 
 Permission-aware discovery: [runbook](../../docs/runbooks/dms-discovery.md).
 
-I18 versioned standalone installation, separate API/processing readiness and private operational commands: [distribution runbook](../../docs/runbooks/dms-distribution.md).
+I18 versioned standalone installation, separate API/processing readiness and private operational commands: [distribution runbook](../../docs/deployment/customer_deployment_guide.md#standalone-dms).
 
 Deployment pairing, private setup/rotation, restriction and combined customer profiles: [DMS deployment control](../../docs/runbooks/dms-deployment-control.md).

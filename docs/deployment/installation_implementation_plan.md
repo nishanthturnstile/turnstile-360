@@ -286,7 +286,7 @@ an explicit architecture decision, never an installer default.
 
 ## Owning implementation references
 
-- [DMS distribution](../runbooks/dms-distribution.md) and its
+- [DMS distribution](customer_deployment_guide.md#standalone-dms) and its
   [Docker-only wrapper](../../deploy/distribution/dms): artifact/init/private command boundary.
 - [DMS activation](../runbooks/dms-deployment-control.md),
   [Turnstile activation](../runbooks/turnstile-deployment-control.md) and the
@@ -297,5 +297,41 @@ an explicit architecture decision, never an installer default.
   administration, ordinary-login proof and private release opening.
 - [Work authority](../runbooks/dms-work.md), [admission](../runbooks/dms-admission.md) and
   [recovery](../runbooks/dms-recovery.md): selected-profile processing and coherent custody.
-- [Dokploy operations](../runbooks/dokploy.md) and
-  [manual qualification](../runbooks/fresh-manual-testing.md): target routing and human journeys.
+- [Dokploy operations](customer_deployment_guide.md#ingress) and
+  [manual qualification](customer_deployment_guide.md#validation): target routing and human journeys.
+
+## Titan rehearsal follow-up — 2026-11-12
+
+The owner authorized browser execution, setup fixes, a separate customer Compose and
+simplification. See [observed results](titan_acceptance_results.md) and the
+[manual sequence](customer_deployment_guide.md); this update does not mark all IA increments complete.
+
+- Delivered during the rehearsal: narrow receipt-preserving retry of failed release
+  opening with fresh real-session proof; isolated customer runtime export and gateway
+  Dockerfile/Compose; bounded shorter signed decisions for actual expiry testing;
+  accurate removal text describing customer sync/offline expiry.
+- IA-I06 priority: replace private HttpOnly-cookie handover with the already proposed
+  scoped, expiring browser confirmation/proof exchange. Keep normal MFA/session checks,
+  explicit operator intent and current release/revision binding. Do not generalize the
+  temporary local ingress capture into a product credential endpoint.
+- IA-I03/07 priority: extend owning reconciliation to uncertain account/client/module-grant
+  outcomes only after each owner exposes safe receipt/status semantics. `retry-open`
+  deliberately does not make those operations replayable.
+- IA-I02/08 priority: package the customer Compose transfer/export and independently
+  reviewed maintenance tool updates with inventories/notices; qualify lifecycle transfer,
+  failed recreation, clean-host replay and coherent restore. Fresh module bundles still
+  bind exact original engine/image identities and do not silently update themselves.
+- IA-I04/09 priority: complete the full DMS storage/processing profile and real-document
+  acceptance on the actual target. Current Turnstile UI exposes connection checking,
+  not document upload/OCR/download workflows. Record unsupported browser cases separately.
+- Qualification still needs the remaining catalogue/Core reclassification cutovers,
+  selected-profile customer deployments, full staff/recipient role matrix, restore and
+  independent Linux/Dokploy target acceptance. Do not substitute earlier fixture results
+  for this customer's missing evidence.
+
+Documentation audit follow-up (2026-11-12): the full-DMS distribution wrapper still
+selects the base complete manifest, while current business access requires independently
+configured deployment trust/pairing. Its fixture installs test policy separately. The
+customer guide now requires the activated overlay, the retained project/volumes and exact
+image overrides before business access; packaging that full activation-aware lifecycle
+remains IA-I04/09 work. Do not describe base `./dms up` as sufficient customer activation.

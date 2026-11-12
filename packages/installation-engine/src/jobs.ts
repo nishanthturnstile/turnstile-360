@@ -32,6 +32,41 @@ export class PrivateJobs {
       current: () => Promise<void>;
     },
   ) {}
+  // Only release.open has the required receipt contract here. A fresh browser
+  // generation replaces proof, never the operation key, subject or revision.
+  async retryOpen(stage: string, administratorCookie: string) {
+    const op = this.c.journal.jobs[stage];
+    assert.ok(op && op.phase !== 'superseded' && !op.replayable);
+    if (op.phase === 'complete' && op.exitCode === 0)
+      return this.settle(stage, {} as Configuration);
+    const recipe = JSON.parse(
+      privateText(join(this.c.state, `${stage}.recipe.json`)),
+    ) as Configuration;
+    assert.deepEqual(recipe.Entrypoint, ['sh']);
+    assert.deepEqual(recipe.Cmd, [
+      '-c',
+      'exec node "$@" < /run/installer-input.json',
+      'owning-command',
+      'dist/modules/access/release-operator.js',
+      'open',
+    ]);
+    assert.equal(recipe.Image, this.c.image('turnstile-api'));
+    assert.equal(recipe.Labels['thaarei.installation'], this.c.local);
+    assert.equal(recipe.Labels['thaarei.installer.operation'], stage);
+    if (op.phase !== 'complete') return this.settle(stage, recipe);
+    const inputPath = join(this.c.state, `${stage}.input.json`);
+    const payload = JSON.parse(privateText(inputPath));
+    assert.ok(typeof payload.administratorCookie === 'string');
+    assert.ok(typeof payload.key === 'string' && typeof payload.expectedRevision === 'number');
+    assert.ok(typeof payload.administratorUserId === 'string');
+    await this.c.current();
+    // The retained recipe always mounts this exact file. Repeating a crashed
+    // preparation is safe; receipt semantics belong to the unchanged owning CLI.
+    writeJson(inputPath, { ...payload, administratorCookie });
+    writeJson(join(this.c.state, `${stage}.resolved.json`), { ...payload, administratorCookie });
+    await this.retry(stage, true);
+    return this.settle(stage, recipe);
+  }
   async resume(rebindProduct?: string) {
     for (const [stage, op] of Object.entries(this.c.journal.jobs)) {
       if (op.phase === 'superseded') continue;
@@ -74,9 +109,9 @@ export class PrivateJobs {
       await this.settle(stage, recipe);
     }
   }
-  private async retry(stage: string) {
+  private async retry(stage: string, explicitOpen = false) {
     const op = this.c.journal.jobs[stage];
-    assert.ok(op?.replayable && op.phase === 'complete' && op.exitCode !== 0);
+    assert.ok((op?.replayable || explicitOpen) && op?.phase === 'complete' && op.exitCode !== 0);
     if (op.id) await this.c.docker.remove(op.id);
     assert.ok(op.attempt < 100, 'Private command retry bound reached; inspect evidence');
     const recipe = JSON.parse(

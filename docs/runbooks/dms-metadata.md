@@ -3,7 +3,7 @@
 I11 implements FR-12.01–07. [Architecture](../../architecture.md#metadata-tags-and-references-i11)
 owns limits and policy. Migrate the owning DMS schema through 0031 before enabling this code.
 No auth migration is required. Use the same private migration procedure as the
-[standalone runbook](dms-standalone.md); this work does not migrate an installed service.
+[standalone runbook](../deployment/customer_deployment_guide.md#standalone-dms); this work does not migrate an installed service.
 
 Every operation requires a current active machine registration and existing document
 ownership or the operation-specific explicit grant. Reads require `dms:documents:read`; mutations require `dms:documents:write`.

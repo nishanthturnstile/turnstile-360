@@ -1,0 +1,32 @@
+pid /tmp/nginx.pid;
+error_log /dev/stderr warn;
+events { worker_connections 1024; }
+http {
+  # No query strings, cookies, authorization headers or signed callback URLs in logs.
+  log_format safe '$request_method $status $body_bytes_sent';
+  access_log /dev/stdout safe;
+  client_body_temp_path /tmp/client_body;
+  proxy_temp_path /tmp/proxy;
+  fastcgi_temp_path /tmp/fastcgi;
+  uwsgi_temp_path /tmp/uwsgi;
+  scgi_temp_path /tmp/scgi;
+  resolver 127.0.0.11 valid=10s ipv6=off;
+  server {
+    listen 8080;
+    set $product_api ${TURNSTILE_API_UPSTREAM};
+    set $product_web ${TURNSTILE_WEB_UPSTREAM};
+    set $authority ${DMS_API_UPSTREAM};
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-Host $http_host;
+    proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+    proxy_set_header X-Forwarded-For $http_x_forwarded_for;
+    add_header Referrer-Policy no-referrer always;
+    location ^~ /internal/ { return 404; }
+    location = /health/gateway { access_log off; return 200 'ok'; }
+    location /api/ { proxy_pass http://$product_api:3002; }
+    location = /api { proxy_pass http://$product_api:3002; }
+    location /identity/ { proxy_pass http://$authority:3001; }
+    location /.well-known/ { proxy_pass http://$authority:3001; }
+    location / { proxy_pass http://$product_web:8080; }
+  }
+}

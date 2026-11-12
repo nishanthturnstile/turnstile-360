@@ -1,6 +1,7 @@
 import 'server-only';
 import { readFileSync, statSync } from 'node:fs';
 import { isAbsolute } from 'node:path';
+import { MAX_DECISION_SECONDS } from '@thaarei/control-plane-contracts';
 import { z } from 'zod';
 
 const versions = z
@@ -16,6 +17,12 @@ const versions = z
   .pipe(z.array(z.string().regex(/^[A-Za-z0-9][A-Za-z0-9.+_-]{0,99}$/)).max(20))
   .default([]);
 const schema = z.object({
+  CONTROL_PLANE_DECISION_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(60)
+    .max(MAX_DECISION_SECONDS)
+    .default(MAX_DECISION_SECONDS),
   CONTROL_PLANE_DMS_SUPPORTED_VERSIONS: versions,
   CONTROL_PLANE_TURNSTILE_SUPPORTED_VERSIONS: versions,
   CONTROL_PLANE_PROFILE: z.enum(['development', 'test', 'production']).default('production'),
@@ -66,6 +73,7 @@ export function parseConfig(env: Record<string, string | undefined>) {
   const smtp = new URL(value.CONTROL_PLANE_SMTP_URL);
   if (!['smtp:', 'smtps:'].includes(smtp.protocol)) throw new Error('Invalid SMTP transport');
   return {
+    decisionSeconds: value.CONTROL_PLANE_DECISION_SECONDS,
     origin: origin.origin,
     supportedVersions: {
       dms: value.CONTROL_PLANE_DMS_SUPPORTED_VERSIONS,

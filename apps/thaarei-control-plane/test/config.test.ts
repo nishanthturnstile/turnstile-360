@@ -19,6 +19,10 @@ test('central configuration rejects noncanonical production origin and unprotect
       CONTROL_PLANE_SMTP_FROM: 'control@example.test',
     };
     assert.equal(parseConfig(env).production, true);
+    assert.equal(parseConfig(env).decisionSeconds, 7 * 86400);
+    assert.equal(parseConfig({ ...env, CONTROL_PLANE_DECISION_SECONDS: '60' }).decisionSeconds, 60);
+    for (const value of ['0', '59', '604801', '60.1', 'invalid', ''])
+      assert.throws(() => parseConfig({ ...env, CONTROL_PLANE_DECISION_SECONDS: value }));
     assert.deepEqual(
       parseConfig({ ...env, CONTROL_PLANE_DMS_SUPPORTED_VERSIONS: '["1.0.0"]' }).supportedVersions
         .dms,

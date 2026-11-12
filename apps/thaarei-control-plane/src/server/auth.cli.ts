@@ -7,6 +7,7 @@ import { authOptions } from './auth-options.ts';
 // Offline schema generation only; no runtime defaults, database connections or seeds.
 export const auth = betterAuth({
   ...authOptions({
+    decisionSeconds: 7 * 86400,
     supportedVersions: { dms: [], turnstile: [] },
     moduleReferenceDirectory: undefined,
     moduleReleaseTrustFile: undefined,

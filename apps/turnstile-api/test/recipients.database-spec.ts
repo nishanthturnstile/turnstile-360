@@ -1451,6 +1451,33 @@ describe('restricted invitation recipient HTTP and atomic PostgreSQL acceptance'
       changed: false,
     });
     expect((await context(flow.cookie)).statusCode).toBe(200);
+    // A lost opening acknowledgement is reconciled with a fresh ordinary proof.
+    // Its historical receipt must not reopen a release closed in the meantime.
+    await releaseOperator('close', {
+      operatorId: 'release-fixture',
+      key: randomUUID(),
+      expectedRevision: (await versions()).expectedAccessRevision,
+    });
+    const freshLogin = await purposeLogin(
+      '',
+      await authorityLogin(fixture.users.operator?.email),
+      '/',
+    );
+    const freshCookie = freshLogin.cookie.split(';')[0] as string;
+    expect(
+      await releaseOperator('open', { ...opening, administratorCookie: freshCookie }),
+    ).toMatchObject({
+      publicWritesEnabled: false,
+      replayed: true,
+      changed: false,
+    });
+    expect((await context(flow.cookie)).statusCode).toBe(503);
+    await releaseOperator('open', {
+      ...opening,
+      key: randomUUID(),
+      expectedRevision: (await versions()).expectedAccessRevision,
+      administratorCookie: freshCookie,
+    });
     const counts = await owned(
       async (db) =>
         (
@@ -1459,7 +1486,7 @@ describe('restricted invitation recipient HTTP and atomic PostgreSQL acceptance'
           )
         ).rows[0].n,
     );
-    expect(counts).toBe(2);
+    expect(counts).toBe(4);
   }, 45000);
 
   it('restores an actual archive, rejects the old epoch and quarantines mail without changing accepted grants', async () => {

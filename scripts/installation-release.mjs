@@ -18,6 +18,15 @@ import {
 import { run } from './module-artifacts.mjs';
 import { verifyBundle } from './module-delivery.mjs';
 
+// The signed README carries the canonical procedure. Repository-only references
+// stay explicit text instead of becoming broken relative links in the bundle.
+export function installationGuide() {
+  return readFileSync('docs/deployment/customer_deployment_guide.md', 'utf8').replace(
+    /\[([^\]\n]+)\]\((?!#|https?:)([^)\s]+)\)/g,
+    '$1 (repository reference: $2)',
+  );
+}
+
 /** External release pipeline only. Customer launcher performs no build or mutable pull. */
 export async function buildInstallationRelease(input) {
   const allowed = [
@@ -74,7 +83,7 @@ export async function buildInstallationRelease(input) {
   );
   writeFileSync(
     join(bundle, 'README.md'),
-    `Engine ${ENGINE_VERSION}. Module release ${installed.releaseId}.\n\n${readFileSync('docs/runbooks/installation-handover.md', 'utf8').replace(/\[architecture\.md\]\([^)]+\)/g, 'the reviewed release architecture supplied separately')}`,
+    `Engine ${ENGINE_VERSION}. Module release ${installed.releaseId}.\n\n${installationGuide()}`,
     { mode: 0o644 },
   );
   run('docker', ['save', '--output', join(bundle, 'images.tar'), ...images.map((i) => i.id)]);

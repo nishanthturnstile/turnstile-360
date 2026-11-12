@@ -6,7 +6,7 @@ integration run passed. Production deployment and target acceptance remain pendi
 
 The accepted design is maintained in [architecture.md](../../../architecture.md#mod-i09-artifact-only-local-installation-and-staff-handover).
 Supported operator commands and private custody are in the
-[installation handover runbook](../../runbooks/installation-handover.md).
+[installation handover runbook](../../deployment/customer_deployment_guide.md#customer).
 
 ## Frozen customer release
 

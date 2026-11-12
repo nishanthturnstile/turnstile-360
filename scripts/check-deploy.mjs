@@ -344,3 +344,20 @@ for (const service of Object.values(turnstileControl.services)) assert.ok(!servi
 console.log(
   'Turnstile activation has a separate private reporter, public-only API trust and protected setup mounts',
 );
+
+// The separate customer entry point includes a privately generated runtime file.
+// Validate its static routing container without resolving customer-specific secrets.
+const customerFile = 'deploy/customer/compose.yaml';
+const customerDocument = parseDocument(readFileSync(customerFile, 'utf8'), { uniqueKeys: true });
+assert.equal(customerDocument.errors.length, 0);
+const customer = customerDocument.toJS();
+assert.equal(customer.include.length, 1);
+assert.ok(customer.include[0].path.startsWith('${CUSTOMER_RUNTIME_COMPOSE:?'));
+const gateway = customer.services['customer-gateway'];
+assert.equal(gateway.read_only, true);
+assert.equal(gateway.user, 'nginx');
+assert.equal(gateway.ports, undefined);
+assert.equal(gateway.volumes, undefined);
+assert.deepEqual(gateway.tmpfs, ['/tmp:size=32m,noexec,nosuid,nodev']);
+assert.ok(existsSync('deploy/customer/Dockerfile'));
+console.log('Separate customer Compose gateway and private runtime include valid');

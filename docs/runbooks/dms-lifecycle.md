@@ -3,7 +3,7 @@
 I13 implements FR-14.01–08. [Architecture](../../architecture.md#soft-deletion-and-logical-restore-i13)
 owns limits, states and authority. Migrate the owning DMS schema through 0036 before
 running this code. Follow the private migration procedure in the
-[standalone runbook](dms-standalone.md). No auth migration is required; this implementation
+[standalone runbook](../deployment/customer_deployment_guide.md#standalone-dms). No auth migration is required; this implementation
 has not migrated or deployed an installed service.
 
 Only the owning application or a freshly authenticated currently authorized DMS operator

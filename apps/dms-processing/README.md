@@ -29,4 +29,4 @@ I15 English OCR, mixed pages and qualification: [OCR runbook](../../docs/runbook
 
 I16 results, reprocessing and optional offline structure: [results runbook](../../docs/runbooks/dms-results.md).
 
-I18 adds role-bound presence and the `service-check` process health command. Complete distribution, shutdown and recovery procedures: [distribution runbook](../../docs/runbooks/dms-distribution.md).
+I18 adds role-bound presence and the `service-check` process health command. Complete distribution, shutdown and recovery procedures: [distribution runbook](../../docs/deployment/customer_deployment_guide.md#standalone-dms).

@@ -63,7 +63,7 @@ The fresh installation's real-file upload through scan, extraction/OCR, retrieva
 download hash comparison remains an acceptance task. A clean second Linux/Dokploy target,
 resume under injected failures, production email/TLS and off-host recovery also require
 their own evidence. Dated private scripts used for this setup are prototypes, not a
-distributable installer. See [fresh manual testing](../runbooks/fresh-manual-testing.md)
+distributable installer. See [fresh manual testing](customer_deployment_guide.md#validation)
 and the current progress handoff.
 
 ## Requirements and acceptance

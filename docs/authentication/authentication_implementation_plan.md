@@ -39,7 +39,7 @@ foundation, not an authentication implementation.
 | DMS client        | [Package entry point](../../packages/dms-client/src/index.ts)                                                                                               | Empty export; no token acquisition/cache or authenticated HTTP operations                                                      |
 | Contracts         | [DMS](../../packages/dms-contracts/src/index.ts), [Turnstile](../../packages/turnstile-contracts/src/index.ts)                                              | Empty exports; no auth/integration DTOs or generated contract evidence                                                         |
 | Database          | Reserved auth/DMS/Turnstile schema and migration folders                                                                                                    | No tables, migrations, roles or application database connections                                                               |
-| Deployment        | [Compose](../../deploy/compose.dokploy.yaml), [runbook](../runbooks/dokploy.md)                                                                             | Three application containers; identity discovery, cookies, secrets, production persistence and auth routing are not configured |
+| Deployment        | [Compose](../../deploy/compose.dokploy.yaml), [runbook](../deployment/customer_deployment_guide.md#ingress)                                                 | Three application containers; identity discovery, cookies, secrets, production persistence and auth routing are not configured |
 
 Consequently, **Better Auth configuration and the complete authentication mechanism do
 not exist yet**. Both APIs currently expose identity and liveness only.

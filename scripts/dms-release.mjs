@@ -191,6 +191,9 @@ for (const file of assets) {
 }
 mkdirSync(join(bundle, 'docs'), { recursive: true });
 mkdirSync(join(bundle, 'docs/runbooks'), { recursive: true });
+mkdirSync(join(bundle, 'docs/deployment'), { recursive: true });
+for (const name of ['customer_deployment_guide.md', 'thaarei_ecosystem_guide.md'])
+  cpSync(join('docs/deployment', name), join(bundle, 'docs/deployment', name));
 cpSync('docs/runbooks/authentication.md', join(bundle, 'docs/runbooks/authentication.md'));
 mkdirSync(join(bundle, 'docs/api'), { recursive: true });
 for (const name of readdirSync('docs/api').filter(

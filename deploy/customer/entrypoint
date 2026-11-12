@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+for upstream in "${TURNSTILE_API_UPSTREAM:?}" "${TURNSTILE_WEB_UPSTREAM:?}" "${DMS_API_UPSTREAM:?}"; do
+  case "$upstream" in ''|*[!a-zA-Z0-9.-]*) exit 1;; esac
+done
+envsubst '${TURNSTILE_API_UPSTREAM} ${TURNSTILE_WEB_UPSTREAM} ${DMS_API_UPSTREAM}' < /opt/customer/nginx.conf.template > /tmp/nginx.conf
+exec nginx -c /tmp/nginx.conf -g 'daemon off;'

@@ -124,7 +124,7 @@
       },
       "evidence": [
         "apps/dms-api/test/standalone.database-spec.ts",
-        "docs/runbooks/dms-standalone.md"
+        "docs/deployment/customer_deployment_guide.md"
       ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
@@ -142,7 +142,7 @@
       },
       "evidence": [
         "apps/dms-api/test/standalone.database-spec.ts",
-        "docs/runbooks/dms-standalone.md"
+        "docs/deployment/customer_deployment_guide.md"
       ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
@@ -160,7 +160,7 @@
       },
       "evidence": [
         "apps/dms-api/test/standalone.database-spec.ts",
-        "docs/runbooks/dms-standalone.md"
+        "docs/deployment/customer_deployment_guide.md"
       ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
@@ -178,7 +178,7 @@
       },
       "evidence": [
         "apps/dms-api/test/standalone.database-spec.ts",
-        "docs/runbooks/dms-standalone.md"
+        "docs/deployment/customer_deployment_guide.md"
       ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
@@ -196,7 +196,7 @@
       },
       "evidence": [
         "apps/dms-api/test/standalone.database-spec.ts",
-        "docs/runbooks/dms-standalone.md"
+        "docs/deployment/customer_deployment_guide.md"
       ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
@@ -214,7 +214,7 @@
       },
       "evidence": [
         "apps/dms-api/test/standalone.database-spec.ts",
-        "docs/runbooks/dms-standalone.md"
+        "docs/deployment/customer_deployment_guide.md"
       ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
@@ -232,7 +232,7 @@
       },
       "evidence": [
         "apps/dms-api/test/standalone.database-spec.ts",
-        "docs/runbooks/dms-standalone.md"
+        "docs/deployment/customer_deployment_guide.md"
       ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
@@ -250,7 +250,7 @@
       },
       "evidence": [
         "apps/dms-api/test/standalone.database-spec.ts",
-        "docs/runbooks/dms-standalone.md"
+        "docs/deployment/customer_deployment_guide.md"
       ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
@@ -268,7 +268,7 @@
       },
       "evidence": [
         "apps/dms-api/test/standalone.database-spec.ts",
-        "docs/runbooks/dms-standalone.md"
+        "docs/deployment/customer_deployment_guide.md"
       ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
@@ -2924,7 +2924,10 @@
         "deployed": false,
         "targetAccepted": false
       },
-      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "evidence": [
+        "scripts/test-dms-distribution.mjs",
+        "docs/deployment/customer_deployment_guide.md"
+      ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
     },
@@ -2939,7 +2942,10 @@
         "deployed": false,
         "targetAccepted": false
       },
-      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "evidence": [
+        "scripts/test-dms-distribution.mjs",
+        "docs/deployment/customer_deployment_guide.md"
+      ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
     },
@@ -2954,7 +2960,10 @@
         "deployed": false,
         "targetAccepted": false
       },
-      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "evidence": [
+        "scripts/test-dms-distribution.mjs",
+        "docs/deployment/customer_deployment_guide.md"
+      ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
     },
@@ -2969,7 +2978,10 @@
         "deployed": false,
         "targetAccepted": false
       },
-      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "evidence": [
+        "scripts/test-dms-distribution.mjs",
+        "docs/deployment/customer_deployment_guide.md"
+      ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
     },
@@ -2984,7 +2996,10 @@
         "deployed": false,
         "targetAccepted": false
       },
-      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "evidence": [
+        "scripts/test-dms-distribution.mjs",
+        "docs/deployment/customer_deployment_guide.md"
+      ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
     },
@@ -2999,7 +3014,10 @@
         "deployed": false,
         "targetAccepted": false
       },
-      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "evidence": [
+        "scripts/test-dms-distribution.mjs",
+        "docs/deployment/customer_deployment_guide.md"
+      ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
     },
@@ -3014,7 +3032,10 @@
         "deployed": false,
         "targetAccepted": false
       },
-      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "evidence": [
+        "scripts/test-dms-distribution.mjs",
+        "docs/deployment/customer_deployment_guide.md"
+      ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
     },
@@ -3029,7 +3050,10 @@
         "deployed": false,
         "targetAccepted": false
       },
-      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "evidence": [
+        "scripts/test-dms-distribution.mjs",
+        "docs/deployment/customer_deployment_guide.md"
+      ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
     },
@@ -3044,7 +3068,10 @@
         "deployed": false,
         "targetAccepted": false
       },
-      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "evidence": [
+        "scripts/test-dms-distribution.mjs",
+        "docs/deployment/customer_deployment_guide.md"
+      ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
     },
@@ -3059,7 +3086,10 @@
         "deployed": false,
         "targetAccepted": false
       },
-      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "evidence": [
+        "scripts/test-dms-distribution.mjs",
+        "docs/deployment/customer_deployment_guide.md"
+      ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
     },
@@ -3074,7 +3104,10 @@
         "deployed": false,
         "targetAccepted": false
       },
-      "evidence": ["scripts/test-dms-distribution.mjs", "docs/runbooks/dms-distribution.md"],
+      "evidence": [
+        "scripts/test-dms-distribution.mjs",
+        "docs/deployment/customer_deployment_guide.md"
+      ],
       "execution": "docs/qualification/dms-i20-release.json",
       "condition": null
     },

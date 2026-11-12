@@ -8,7 +8,7 @@ This runbook describes operator commands; it does not onboard a customer automat
 
 Use Node 24.21.0 and pnpm 12.16.1. Run commands from the repository root after
 `pnpm install --frozen-lockfile` and `pnpm build`. Production ingress and TLS remain
-Dokploy responsibilities; see the [deployment runbook](dokploy.md).
+Dokploy responsibilities; see the [deployment runbook](../deployment/customer_deployment_guide.md#ingress).
 
 ## Onboarding release boundary
 
@@ -326,7 +326,7 @@ login IDs must have an exact server-owned `AUTH_LOGIN_CLIENTS` entry. Each entry
 `resetUrl`; URL validation and credential-screen origin rules are maintained in
 [architecture](../../architecture.md#standalone-dms-delivery-target).
 Standalone database provisioning selects `DATABASE_PROFILE=dms` to require only auth/DMS
-roles. Follow the [standalone runbook](dms-standalone.md) for private network commands,
+roles. Follow the [standalone runbook](../deployment/customer_deployment_guide.md#standalone-dms) for private network commands,
 configuration, consumer integration and changing a consumer's registered destinations.
 
 | Action               | Additional fields                                                              | When to use                                                                                                 |

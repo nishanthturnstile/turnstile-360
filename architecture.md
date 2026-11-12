@@ -28,7 +28,7 @@ feature implementation.
 | [User-management specification](docs/turnstile/user-management/user_management_specification.md) | Accepted UM-R01–22 product requirements and D01–03 decisions; the proposal preserves discovery and the linked plan sequences delivery                                                    |
 | [Workspace standards](docs/standards/workspace.md)                                               | Coding, formatting, configuration, and verification conventions                                                                                                                          |
 | [Workspace implementation plan](docs/workspace/workspace_implementation_plan.md)                 | Workspace setup sequence, CLI provenance, and original validation                                                                                                                        |
-| [Dokploy runbook](docs/runbooks/dokploy.md)                                                      | Deployment commands and operator steps                                                                                                                                                   |
+| [Dokploy runbook](docs/deployment/customer_deployment_guide.md#ingress)                          | Deployment commands and operator steps                                                                                                                                                   |
 | [IN_PROGRESS.md](IN_PROGRESS.md)                                                                 | Actual implementation, verification, active work, gaps, and agent handoffs                                                                                                               |
 
 Keep technical design changes here and link from other documents. Update affected
@@ -1202,7 +1202,7 @@ provide the browser evidence. Actual target backup/migration/administrator hando
 separate operator actions and evidence; this baseline does not execute them.
 
 Operator procedures are linked from the [authentication runbook](docs/runbooks/authentication.md#onboarding-release-boundary)
-and [deployment runbook](docs/runbooks/dokploy.md#onboarding-release-boundary). The
+and [deployment runbook](docs/deployment/customer_deployment_guide.md#ingress). The
 [I08 release procedure](docs/runbooks/onboarding-release.md) supplies executable local
 and one-off production-image commands and phase-specific recovery. Local-only helpers
 capture a protected coherent backup outside the checkout, rehearse restore/migration and
@@ -2946,6 +2946,15 @@ limits remain selected delivery policy for their owning increments.
 | Staff session            | At most 8 hours absolute, 30 minutes idle; recent MFA within 10 minutes for sensitive changes                                                                                                                |
 | Central machine rotation | Product-owned lock plus generation compare-and-swap; durable candidate/operation journal; recover by candidate-authenticated sync before atomic local promotion; old secret denied after central replacement |
 
+Central `CONTROL_PLANE_DECISION_SECONDS` defaults to 604800 and may only shorten issuance
+within 60–604800 seconds for an explicit deployment policy or isolated expiry rehearsal.
+Renewal uses the lesser of six days and six-sevenths of that lifetime. Cached decisions
+longer than a newly selected lifetime are not reused on the next sync; existing offline
+grants retain their signed expiry until a new decision is applied. Reporter cadence is
+unchanged: a rehearsal lifetime below fifteen minutes intentionally expires between
+ordinary renewals. Restore the default after the rehearsal. No test clock or auth bypass
+is involved.
+
 Missing approval blocks initial business use. During a central outage, previously approved
 products keep normal operation until their signed grant expires, including ordinary
 restarts. An outage is not a signed suspension. The following read/recovery exception is owner-adopted for implementation.
@@ -3123,7 +3132,7 @@ in build/CI/production images. Ingress must strip sensitive query/body/cookie lo
 own TLS. Proxy-derived client IP is used only with explicit trusted ingress that overwrites
 a single address; otherwise rate limits use a shared bucket. Canonical origin and secure
 cookies never depend on forwarded host/proto. Central deployment steps and qualified limits
-are in the [staff operator runbook](docs/runbooks/control-plane.md); actual source/container/
+are in the [staff operator runbook](docs/deployment/thaarei_ecosystem_guide.md#central); actual source/container/
 target evidence remains in IN_PROGRESS.md.
 
 ### Central registry and policy records (TCP-I03)
@@ -3181,7 +3190,7 @@ and update editable client/policy columns, but cannot change codes/bindings,
 hard-delete identities, rewrite receipts or rewrite/delete audit. Readiness checks registry
 persistence too. Existing custom privilege migrations are tracked in the Drizzle journal
 without changing their SQL, preserving CLI sequence ordering. The operator workflow is in
-the [central runbook](docs/runbooks/control-plane.md#client-and-deployment-registry); actual
+the [central runbook](docs/deployment/thaarei_ecosystem_guide.md#central-client-and-deployment-registry); actual
 implementation/verification and any unavailable runtime checks stay in IN_PROGRESS.md.
 
 ### Machine protocol implementation (TCP-I04)
@@ -5712,7 +5721,7 @@ The foundation Compose is `deploy/compose.dms.yaml`: DMS production image, isola
 PostgreSQL volume/network and external TLS mail transport; Dokploy owns all ingress/TLS.
 No product schema/container/runtime dependency or document capability is introduced.
 Operator instructions and consumer integration are in the
-[standalone runbook](docs/runbooks/dms-standalone.md).
+[standalone runbook](docs/deployment/customer_deployment_guide.md#standalone-dms).
 
 `AUTH_LOGIN_CLIENTS` is a bounded server-owned array (maximum 32) of exact per-client
 login/consent/callback/logout/verification/reset URLs. Production requires HTTPS;
@@ -5889,7 +5898,7 @@ There is no automatic root AUTH_SECRET replacement. Offline ClamAV imports requi
 exact three-file SHA-256 manifest plus real CVD signature validation, then an atomic active
 set switch preserving the previous set; freshness gates still apply.
 
-See the [distribution runbook](docs/runbooks/dms-distribution.md) for assembly, installation,
+See the [distribution runbook](docs/deployment/customer_deployment_guide.md#standalone-dms) for assembly, installation,
 upgrade, operational commands, source-offer material and isolated qualification. Actual
 completion/evidence is tracked in IN_PROGRESS.md; target acceptance remains separate.
 
@@ -6020,7 +6029,7 @@ The application Compose exposes container ports without publishing host ports or
 another Traefik. Configure Dokploy domains/networks, secrets and environment mapping
 explicitly. Keep databases, brokers, scanner/parser endpoints and internal SeaweedFS
 interfaces private. Persistent data and off-host backups must survive app redeployment.
-See the [Dokploy runbook](docs/runbooks/dokploy.md) for operator steps; the complete target
+See the [Dokploy runbook](docs/deployment/customer_deployment_guide.md#ingress) for operator steps; the complete target
 profile, sizing, upgrades and health semantics are defined above.
 
 ## Proposed centrally managed Turnstile modules
@@ -6089,7 +6098,7 @@ expired token; they convey historical outcome only, with canonical readback rema
 separate. Reused IDs with changed bodies conflict. Lists use independent 50-row cursors;
 request JSON is bounded to 256 KiB, stored documents 128 KiB, and public trust 32 KiB/eight
 keys. Raw signed tokens are not persisted; proof digests/key IDs and category/digest audit
-summaries retain safe provenance. See the [runbook](docs/runbooks/module-catalogues.md)
+summaries retain safe provenance. See the [runbook](docs/deployment/thaarei_ecosystem_guide.md#catalogue)
 for exact wire payloads, custody, failure recovery and source/target verification limits.
 This increment does not seed a production catalogue, assign customer modules, issue v2
 module grants or change customer runtimes.
@@ -6134,7 +6143,7 @@ staff input cannot assert these facts. Desired targets can be prepared for a leg
 product, but delivering/activating module authority waits for its reviewed compatible
 upgrade. Commands asserting active policy/removal remain closed until MOD-I06/08; this
 increment does not implement active transitions or grant modules from desired approval.
-See the [assignment runbook](docs/runbooks/module-assignments.md) for workflow/recovery.
+See the [assignment runbook](docs/deployment/thaarei_ecosystem_guide.md#assignment) for workflow/recovery.
 
 ### MOD-I04 selected artifacts and local-bundle delivery
 
@@ -6190,7 +6199,7 @@ This filesystem reference index is the explicit POC persistence adapter; no new 
 staff arbitrary upload/build endpoint, central Docker socket or artifact proxy is added.
 Production private registry/HTTPS distribution and target rollout require their configured
 adapter/acceptance; no URL fetching is implemented by this local adapter. See the
-[delivery runbook](docs/runbooks/module-delivery.md) for custody, commands and recovery.
+[delivery runbook](docs/deployment/thaarei_ecosystem_guide.md#delivery) for custody, commands and recovery.
 
 ### Catalogue ownership and staff responsibilities
 
@@ -6409,7 +6418,7 @@ Source/local qualification uses actual initializer Docker images, real central H
 handlers, a separate disposable customer database and the owning bootstrap/pairing commands.
 Production registry/host rollout and whole-installer journals stay with their IA and
 MOD-I09–10 owners. Module activation/cutover follows MOD-I08 below. See the
-[intent runbook](docs/runbooks/installation-intents.md) for exact inputs, commands, WSL paths,
+[intent runbook](docs/deployment/thaarei_ecosystem_guide.md#registration) for exact inputs, commands, WSL paths,
 secret custody and qualification scope.
 
 ### Signed module decisions and compatibility
@@ -6806,7 +6815,7 @@ Ingress/TLS remain operator/Dokploy owned; generated Nginx routing uses actual c
 names and canonical origins and exposes only public product/identity routes.
 
 Actions are `plan`, `install`, `resume`, `status`, `verify`, `pair`, `sync`, `owner` and
-`identity`. JSON results use 0 complete, 10 waiting for a named actor, 20 conflict/owning
+`identity` and explicit `retry-open`. JSON results use 0 complete, 10 waiting for a named actor, 20 conflict/owning
 reconciliation and 30 retryable unavailability. Read-only status verifies retained signed
 metadata at issuance time with current key revocation policy; write actions require current
 unexpired intent and recheck desired state before each affected owning command/opening.
@@ -6827,6 +6836,27 @@ it invokes the existing owning recovery protocol and never resets floors or data
 A private HMAC binds each owner command file to its retained payload without publishing
 low-entropy secret hashes. Transient proof payloads are removed on settlement; original
 operator input files remain in operator custody and must be removed after use.
+
+Explicit `retry-open` accepts only a retained `release.open` job and a fresh normal
+administrator cookie. It preserves every non-proof input, including operation key,
+subject, release and expected revision. The owning release receipt handles lost success
+without reopening a subsequently closed release. No account, key or role issuance is
+made automatically replayable. Current intent, artifacts, process inventory and
+installation locking still apply. New bundles include the command; older signed bundles
+require a separately reviewed tools update, never edits to their signed inventories.
+
+The customer can transfer the six provisioned module-POC runtime services to a separate
+Compose project using `scripts/export-customer-compose.mjs`. This operator-only export
+requires a private outside-checkout destination; it preserves exact image IDs, environments,
+mounts and external database/network resources. `deploy/customer/compose.yaml` includes
+that exported runtime and a separately built nonroot gateway from
+`deploy/customer/Dockerfile`. The gateway lives only on the operator ingress network,
+publishes no host port, forwards Turnstile/identity routes to the installation-specific
+service names and denies `/internal/`. Dokploy still owns TLS and the independent DMS
+resource origin. The gateway gets neither credentials nor Docker access. Lifecycle
+transfer stops/removes only reviewed container IDs, retains all volumes/state, and is
+serialized with installer maintenance. This does not add full DMS storage/processing to
+the module POC or claim a second clean-host/production acceptance.
 
 The optional exact same-origin `/setup-preparation` verification destination solves email
 verification before real client issuance. It grants no session or access. Private identity

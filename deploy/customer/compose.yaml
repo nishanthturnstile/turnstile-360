@@ -1,0 +1,31 @@
+# Separate customer project. TLS and the distinct DMS resource origin stay at Dokploy/ingress.
+name: ${CUSTOMER_PROJECT:?Set the reviewed customer project name}
+include:
+  - path: ${CUSTOMER_RUNTIME_COMPOSE:?Set the generated absolute runtime Compose path}
+services:
+  customer-gateway:
+    image: ${CUSTOMER_GATEWAY_IMAGE:?Pin the reviewed gateway image content ID}
+    pull_policy: never
+    read_only: true
+    user: nginx
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:size=32m,noexec,nosuid,nodev"]
+    mem_limit: 64m
+    cpus: 0.5
+    pids_limit: 32
+    restart: unless-stopped
+    environment:
+      TURNSTILE_API_UPSTREAM: thaarei-${CUSTOMER_INSTALLATION_ID:?}-turnstile-api
+      TURNSTILE_WEB_UPSTREAM: thaarei-${CUSTOMER_INSTALLATION_ID:?}-turnstile-web
+      DMS_API_UPSTREAM: thaarei-${CUSTOMER_INSTALLATION_ID:?}-dms-api
+    networks:
+      customer-gateway-ingress:
+        aliases: ["${CUSTOMER_GATEWAY_ALIAS:?Set a unique customer gateway DNS alias}"]
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: "3" }
+networks:
+  customer-gateway-ingress:
+    external: true
+    name: ${CUSTOMER_INGRESS_NETWORK:?Set the installation ingress network}

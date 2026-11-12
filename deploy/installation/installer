@@ -3,7 +3,7 @@ set -eu
 umask 077
 trap 'launcher_status=$?; case "$launcher_status" in 0|10|20|30) ;; *) printf "%s\n" "{\"version\":1,\"state\":\"conflict\",\"nextActor\":\"operator\",\"conditions\":[\"launcher-preflight-or-private-runtime-reconciliation-required\"]}"; exit 20;; esac' 0
 test "$(id -u)" -ne 0
-case "${1:-}" in plan|install|resume|status|verify|pair|sync|owner|identity) ;; *) printf '%s\n' 'Usage: installer plan|install|resume|status|verify|pair|sync|owner|identity /absolute/private/input.json [/absolute/private/command.json]' >&2; exit 20;; esac
+case "${1:-}" in plan|install|resume|status|verify|pair|sync|owner|retry-open|identity) ;; *) printf '%s\n' 'Usage: installer plan|install|resume|status|verify|pair|sync|owner|retry-open|identity /absolute/private/input.json [/absolute/private/command.json]' >&2; exit 20;; esac
 case "${THAAREI_INSTALLER_IMAGE:-}" in sha256:*) ;; *) printf '%s\n' 'Provision THAAREI_INSTALLER_IMAGE with the independently pinned engine content identity.' >&2; exit 20;; esac
 engine_hex=${THAAREI_INSTALLER_IMAGE#sha256:}
 test "${#engine_hex}" -eq 64

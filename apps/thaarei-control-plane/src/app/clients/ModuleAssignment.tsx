@@ -435,7 +435,8 @@ export function ModuleAssignment({
           {removedDesired.length > 0 && (
             <p>
               Removed from the desired package: {removedDesired.join(', ')}. This is a desired-state
-              change; no active module authority has been reported.
+              change. Active removals listed above take effect at the customer after signed sync; an
+              offline customer's previous grant remains bounded by its expiry.
             </p>
           )}
           <label className="module-check">

@@ -123,8 +123,13 @@ export const action = z.enum([
   'pair',
   'sync',
   'owner',
+  'retry-open',
   'identity',
 ]);
+export const retryOpenInput = z.strictObject({
+  stage: z.string().regex(/^owner-[0-9a-f-]{36}$/),
+  administratorCookie: z.string().min(1).max(8192),
+});
 export const ownerCommand = z
   .object({
     operation: z.enum([

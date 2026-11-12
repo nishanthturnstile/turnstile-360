@@ -37,7 +37,7 @@ Do not decode, edit or reuse a cursor for another principal/filter. Each page ch
 registration and scopes. Retries can observe newer committed state.
 
 Operators use the existing private bootstrap/assign/revoke/recover commands documented in
-[standalone setup](dms-standalone.md). Inspection additionally needs a separate protected
+[standalone setup](../deployment/customer_deployment_guide.md#standalone-dms). Inspection additionally needs a separate protected
 operator database environment file and fresh account credentials in protected JSON stdin:
 
 ```sh
