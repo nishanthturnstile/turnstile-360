@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import {
   type AssignmentScopeDto,
   COMPANY_ONLY_PERMISSIONS,
+  PEOPLE_CATALOG_VERSION,
   PEOPLE_PERMISSIONS,
   type PeoplePermission,
   type UserAccessContextDto,
@@ -180,7 +181,12 @@ export async function readAccess(
     workspaceComplete: row.workspace_complete,
     status: row.status,
     protectedAdministrator: row.status === 'active' && row.protected_administrator,
-    context: { catalogVersion: 1, accessRevision: row.revision, fingerprint, grants },
+    context: {
+      catalogVersion: PEOPLE_CATALOG_VERSION,
+      accessRevision: row.revision,
+      fingerprint,
+      grants,
+    },
     units,
   };
 }

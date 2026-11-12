@@ -21,7 +21,7 @@ import { parseProductEnvironment } from '../src/infrastructure/auth-environment.
 import { INVITATION_TABLES } from '../src/infrastructure/database/invitation-safety.js';
 import { withTenant } from '../src/infrastructure/database/postgres.js';
 import { IdentityClientService } from '../src/integrations/identity/identity-client.service.js';
-import { readAccess } from '../src/modules/access/access-evaluator.js';
+import { covers, readAccess } from '../src/modules/access/access-evaluator.js';
 import { canonicalAccessReady } from '../src/modules/access/access-safety.js';
 import { releaseOperator } from '../src/modules/access/release-operator.js';
 import { BrowserAuthService } from '../src/modules/auth/browser-auth/browser-auth.service.js';
@@ -372,6 +372,7 @@ describe('restricted invitation recipient HTTP and atomic PostgreSQL acceptance'
       const invitation = await owned(async (db) => {
         await db.query('SELECT turnstile.lock_access_context($1)', [tenant]);
         const selectedRole = randomUUID();
+        const access = await readAccess(db, tenant, actor().userId);
         await db.query(
           'INSERT INTO turnstile.access_role(tenant_id,id,name,name_key) VALUES($1,$2,$3,$3)',
           [tenant, selectedRole, 'incomplete recipient'],
@@ -382,11 +383,12 @@ describe('restricted invitation recipient HTTP and atomic PostgreSQL acceptance'
             tenant,
             selectedRole,
             PEOPLE_PERMISSIONS.filter(
-              (p) => canManageConfiguration || p !== 'turnstile:configuration:manage',
+              (p) =>
+                covers(access, p, { kind: 'company' }) &&
+                (canManageConfiguration || p !== 'turnstile:configuration:manage'),
             ),
           ],
         );
-        const access = await readAccess(db, tenant, actor().userId);
         const assignments = await resolveAssignments(
           db,
           tenant,

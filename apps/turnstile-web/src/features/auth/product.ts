@@ -12,6 +12,8 @@ import {
 } from '@thaarei/turnstile-contracts';
 
 type ProductErrorCode =
+  | 'MODULE_ACCESS_DENIED'
+  | 'MODULE_UNAVAILABLE'
   | AuthErrorCode
   | DmsIntegrationErrorDto['code']
   | ConfigurationErrorDto['code'];
@@ -66,6 +68,8 @@ export async function productRequest<T>(
       if (domain.success && CONFIGURATION_ERROR_STATUS[domain.data.code] === response.status)
         throw new ProductError(response.status, domain.data.code, domain.data);
       const known: ProductErrorCode[] = [
+        'MODULE_ACCESS_DENIED',
+        'MODULE_UNAVAILABLE',
         'DEPLOYMENT_RESTRICTED',
         'IDENTITY_REQUIRED',
         'LOGIN_REQUIRED',

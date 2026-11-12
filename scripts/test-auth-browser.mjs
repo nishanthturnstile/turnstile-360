@@ -9,10 +9,14 @@ import { lstat, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { request as httpRequest, createServer as httpServer } from 'node:http';
 import { createServer } from 'node:https';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { chromium } from '@playwright/test';
 import { parse } from 'yaml';
+import { prepareModuleAccess } from './fixtures/module-access.mjs';
+import { prepareCutoverBrowser } from './fixtures/module-cutover-browser-setup.mjs';
+import { testModuleCutover } from './test-module-cutover-browser.mjs';
+import { testModuleAccess } from './test-modules-browser.mjs';
 import { testOnboarding } from './test-onboarding-browser.mjs';
 import { testPeople } from './test-people-browser.mjs';
 import { testSettings } from './test-settings-browser.mjs';
@@ -26,6 +30,8 @@ let mailCreated = false;
 let webCreated = false;
 const runtimeContainers = [];
 let productMaintenanceArgs;
+let cutoverPreparation;
+let productRuntimeArguments;
 const fullImages = process.env.AUTH_BROWSER_FULL_IMAGES === 'true';
 assert.ok(
   !fullImages ||
@@ -210,7 +216,14 @@ dns.lookup = function(host, options, callback) {
   );
   const image = parse(await readFile('deploy/compose.local.yaml', 'utf8')).services.mailpit.image;
   if (fullImages) {
-    run('docker', ['network', 'create', browserNetwork]);
+    run('docker', [
+      'network',
+      'create',
+      ...(process.env.AUTH_BROWSER_PRIVATE_SUBNET
+        ? ['--subnet', process.env.AUTH_BROWSER_PRIVATE_SUBNET]
+        : []),
+      browserNetwork,
+    ]);
     networkCreated = true;
     run('docker', ['network', 'connect', browserNetwork, process.env.ONBOARDING_ARCHIVE_CONTAINER]);
   }
@@ -269,10 +282,22 @@ dns.lookup = function(host, options, callback) {
     AUTH_SMTP_PORT: smtpPort,
     AUTH_SMTP_MODE: 'starttls',
     AUTH_BROWSER_MAILPIT_URL: mailUrl,
+    ...(process.argv.includes('--modules')
+      ? {
+          AUTH_BROWSER_DIAGNOSTIC_FILE: join(
+            dirname(process.env.MOD_I07_MODULE_FIXTURE),
+            'authority-error.json',
+          ),
+        }
+      : {}),
     AUTH_LOGIN_CLIENT_ID: 'bff-fixture-login',
     DMS_MACHINE_CLIENT_ID: 'bff-fixture-machine',
   };
-  if (process.argv.includes('--people-ui')) {
+  if (
+    process.argv.includes('--people-ui') ||
+    process.argv.includes('--modules') ||
+    process.argv.includes('--module-cutover')
+  ) {
     environment.IDENTITY_SERVICE_CLIENT_ID = 'bff-fixture-service';
     environment.IDENTITY_SERVICE_RESOURCE_URL = `${origin}/identity/services/accounts`;
   }
@@ -353,7 +378,11 @@ dns.lookup = function(host, options, callback) {
       }),
     });
   }
-  if (process.argv.includes('--people-ui')) {
+  if (
+    process.argv.includes('--people-ui') ||
+    process.argv.includes('--modules') ||
+    process.argv.includes('--module-cutover')
+  ) {
     environment.IDENTITY_SERVICE_CLIENT_SECRET = fixture.identitySecret;
     environment.IDENTITY_SERVICE_API_URL = `${origin}`;
     environment.TURNSTILE_INVITATION_ENCRYPTION_KEY = randomBytes(32).toString('hex');
@@ -367,6 +396,11 @@ dns.lookup = function(host, options, callback) {
       input: JSON.stringify(fixture.users),
     });
   }
+  const moduleFixture = process.argv.includes('--modules')
+    ? await prepareModuleAccess(environment)
+    : undefined;
+  if (process.argv.includes('--module-cutover'))
+    cutoverPreparation = await prepareCutoverBrowser(environment, browserNetwork);
   const reservation = httpServer();
   await new Promise((done) => reservation.listen(0, '127.0.0.1', done));
   productPort = reservation.address().port;
@@ -382,6 +416,7 @@ dns.lookup = function(host, options, callback) {
         'PROVISION_DATABASE_URL',
         'AUTH_SECRET',
         'AUTH_BROWSER_MAILPIT_URL',
+        'TURNSTILE_REPORTER_DATABASE_URL',
       ].includes(name)
     )
       delete productEnvironment[name];
@@ -404,7 +439,12 @@ dns.lookup = function(host, options, callback) {
         continue;
       if (
         kind === 'product' &&
-        ['AUTH_DATABASE_URL', 'DMS_DATABASE_URL', 'AUTH_SECRET'].includes(key)
+        [
+          'AUTH_DATABASE_URL',
+          'DMS_DATABASE_URL',
+          'AUTH_SECRET',
+          'TURNSTILE_REPORTER_DATABASE_URL',
+        ].includes(key)
       )
         continue;
       if (
@@ -478,6 +518,7 @@ dns.lookup = function(host, options, callback) {
         'dist/modules/access/release-operator.js',
       ];
     }
+    if (kind === 'product') productRuntimeArguments = { runtime, mounts: [...mounts], image };
     const name = `${web}-${kind}`;
     run('docker', [
       'run',
@@ -515,6 +556,82 @@ dns.lookup = function(host, options, callback) {
     );
     await waitFor(async () => (await fetch(`http://127.0.0.1:${exposed}/health/live`)).ok);
     return exposed;
+  }
+  let cutoverOwnerFile;
+  if (cutoverPreparation) {
+    environment.TURNSTILE_BUILD_VERSION = 'tcp-i06';
+    productEnvironment.TURNSTILE_BUILD_VERSION = 'tcp-i06';
+    const owner = { ...environment };
+    for (const key of Object.keys(owner))
+      if (key.endsWith('DATABASE_URL') && key.startsWith('TURNSTILE_')) {
+        const url = new URL(owner[key]);
+        url.hostname = process.env.ONBOARDING_ARCHIVE_CONTAINER;
+        url.port = '5432';
+        owner[key] = url.href;
+      }
+    owner.TURNSTILE_SMTP_HOST = 'mailpit';
+    owner.TURNSTILE_SMTP_PORT = '1025';
+    cutoverOwnerFile = join(cutoverPreparation.directory, 'owner.env');
+    await writeFile(
+      cutoverOwnerFile,
+      Object.entries(owner)
+        .filter(
+          ([key]) =>
+            /^(AUTH_|DMS_|IDENTITY_|TURNSTILE_|INSTALLATION_|NODE_ENV$|NODE_EXTRA_CA_CERTS$)/.test(
+              key,
+            ) &&
+            ![
+              'PROVISION_DATABASE_URL',
+              'AUTH_DATABASE_URL',
+              'DMS_DATABASE_URL',
+              'AUTH_SECRET',
+            ].includes(key) &&
+            (!key.endsWith('DATABASE_URL') || key.startsWith('TURNSTILE_')),
+        )
+        .map(([k, v]) => `${k}=${v}`)
+        .join('\n'),
+      { mode: 0o600 },
+    );
+    const publicPaths = [
+      'TURNSTILE_CONTROL_PLANE_RECOVERY_MARKER_FILE',
+      'TURNSTILE_CONTROL_PLANE_VERIFICATION_KEYS_FILE',
+      'TURNSTILE_MODULE_RELEASE_FILE',
+      'TURNSTILE_MODULE_RELEASE_TRUST_FILE',
+      'NODE_EXTRA_CA_CERTS',
+    ].map((k) => owner[k]);
+    const args = [
+      'run',
+      '--rm',
+      '-i',
+      '--network',
+      browserNetwork,
+      '--env-file',
+      cutoverOwnerFile,
+      ...publicPaths.flatMap((p) => ['--mount', `type=bind,source=${p},target=${p},readonly`]),
+      '--mount',
+      `type=bind,source=${cutoverPreparation.privateDirectory},target=${cutoverPreparation.privateDirectory}`,
+      process.env.AUTH_BROWSER_API_IMAGE,
+      'node',
+      'dist/modules/deployment/operator.js',
+    ];
+    const own = (action) =>
+      run('docker', args, {
+        input: JSON.stringify({
+          action,
+          ...(action === 'setup' ? { pairingFile: cutoverPreparation.pairingFile } : {}),
+        }),
+      });
+    args.splice(
+      args.indexOf(process.env.AUTH_BROWSER_API_IMAGE),
+      0,
+      '--mount',
+      `type=bind,source=${cutoverPreparation.pairingFile},target=${cutoverPreparation.pairingFile},readonly`,
+    );
+    own('setup');
+    await cutoverPreparation.rpc({ action: 'approve-product' });
+    own('sync');
+    await cutoverPreparation.rpc({ action: 'activate' });
+    own('sync');
   }
   if (fullImages) {
     authorityPort = await imageRuntime(
@@ -592,6 +709,7 @@ dns.lookup = function(host, options, callback) {
       '--rm',
       '--name',
       web,
+      ...(fullImages ? ['--network', browserNetwork] : []),
       '-p',
       '127.0.0.1::8080',
       process.env.AUTH_BROWSER_WEB_IMAGE,
@@ -720,7 +838,114 @@ dns.lookup = function(host, options, callback) {
       });
     await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
   }
-  if (process.argv.includes('--people-ui')) {
+  if (process.argv.includes('--module-cutover')) {
+    stage = 'actual selected module cutover';
+    await testModuleCutover({
+      page,
+      context,
+      origin,
+      fixture,
+      login,
+      environment,
+      preparation: cutoverPreparation,
+      ownerFile: cutoverOwnerFile,
+      network: browserNetwork,
+      web,
+      temporary,
+      productImage: process.env.AUTH_BROWSER_API_IMAGE,
+      runtime: () => productRuntimeArguments,
+      replace: async (bundle) => {
+        for (const kind of ['product', 'reporter']) {
+          const index = runtimeContainers.indexOf(`${web}-${kind}`);
+          if (index !== -1) runtimeContainers.splice(index, 1);
+        }
+        const image = `sha256:${bundle.inventory.images.find((i) => i.role === 'turnstile-api').digest}`;
+        productPort = await imageRuntime('product', image, productEnvironment, 3002);
+        run('docker', [
+          'run',
+          '--detach',
+          '--rm',
+          '--name',
+          web,
+          ...(fullImages ? ['--network', browserNetwork] : []),
+          '-p',
+          '127.0.0.1::8080',
+          `sha256:${bundle.inventory.images.find((i) => i.role === 'turnstile-web').digest}`,
+        ]);
+        webPort = Number(port(web, 8080));
+        await waitFor(async () => (await fetch(`http://127.0.0.1:${webPort}/health/live`)).ok);
+      },
+      trackReporter: () => {
+        if (!runtimeContainers.includes(`${web}-reporter`))
+          runtimeContainers.push(`${web}-reporter`);
+      },
+    });
+  } else if (process.argv.includes('--modules')) {
+    assert.ok(fullImages, 'Module acceptance requires actual selected images');
+    stage = 'Selected module ordinary-login journeys';
+    await testModuleAccess({
+      page,
+      context,
+      origin,
+      fixture,
+      moduleFixture,
+      command,
+      login,
+      invoke: (code, input) =>
+        new Promise((resolve, reject) => {
+          const child = spawn(
+            'docker',
+            [...productMaintenanceArgs.slice(0, -1), '--input-type=module', '-e', code],
+            { stdio: ['pipe', 'pipe', 'pipe'] },
+          );
+          let output = '',
+            error = '';
+          child.stdout.on('data', (c) => {
+            output += c;
+            if (output.length > 16384) child.kill();
+          });
+          child.stderr.on('data', (c) => {
+            error = `${error}${c}`.slice(-32768);
+          });
+          const timer = setTimeout(() => child.kill(), 30000);
+          child.once('error', reject);
+          child.once('exit', (code) => {
+            clearTimeout(timer);
+            if (code === 0) {
+              try {
+                resolve(JSON.parse(output));
+              } catch {
+                reject(new Error('Invalid private module command result'));
+              }
+            } else {
+              writeFile(
+                join(dirname(process.env.MOD_I07_MODULE_FIXTURE), 'module-command-error.log'),
+                error,
+                { mode: 0o600 },
+              ).then(() =>
+                reject(
+                  new Error(
+                    `Private module command failed; inspect ${join(dirname(process.env.MOD_I07_MODULE_FIXTURE), 'module-command-error.log')}`,
+                  ),
+                ),
+              );
+            }
+          });
+          child.stdin.end(JSON.stringify(input));
+        }),
+      disable: async (ids) => {
+        productEnvironment.TURNSTILE_DISABLED_MODULES = JSON.stringify(ids);
+        run('docker', ['rm', '--force', `${web}-product`]);
+        runtimeContainers.splice(runtimeContainers.indexOf(`${web}-product`), 1);
+        productPort = await imageRuntime(
+          'product',
+          process.env.AUTH_BROWSER_API_IMAGE,
+          productEnvironment,
+          3002,
+        );
+      },
+    });
+  } else if (process.argv.includes('--people-ui')) {
     stage = 'People administration browser journeys';
     const result = await testPeople({
       page,
@@ -1306,6 +1531,11 @@ dns.lookup = function(host, options, callback) {
     )
       console.error(`Safe response code: ${code}`);
   }
+  if (
+    (process.argv.includes('--modules') || process.argv.includes('--module-cutover')) &&
+    error instanceof Error
+  )
+    console.error(error.message.replace(/[A-Za-z0-9_-]{40,}/g, '[redacted]'));
   console.error(
     `Auth browser verification failed during ${stage} (${error instanceof Error ? error.name : 'Error'}).`,
   );
@@ -1324,6 +1554,11 @@ dns.lookup = function(host, options, callback) {
         }),
       ]);
     }
+  for (const [created, name] of [
+    [mailCreated, mailpit],
+    [webCreated, web],
+  ])
+    if (created) spawnSync('docker', ['rm', '-f', '-v', name], { stdio: 'ignore' });
   if (networkCreated) {
     spawnSync(
       'docker',
@@ -1331,14 +1566,15 @@ dns.lookup = function(host, options, callback) {
       { stdio: 'ignore' },
     );
     spawnSync('docker', ['network', 'disconnect', browserNetwork, mailpit], { stdio: 'ignore' });
+    if (cutoverPreparation?.centralIngress)
+      spawnSync(
+        'docker',
+        ['network', 'disconnect', browserNetwork, cutoverPreparation.centralIngress],
+        { stdio: 'ignore' },
+      );
     spawnSync('docker', ['network', 'rm', browserNetwork], { stdio: 'ignore' });
   }
   gateway.closeAllConnections();
   await new Promise((done) => gateway.close(() => done()));
-  for (const [created, name] of [
-    [mailCreated, mailpit],
-    [webCreated, web],
-  ])
-    if (created) spawnSync('docker', ['rm', '-f', '-v', name], { stdio: 'ignore' });
   await rm(temporary, { recursive: true, force: true });
 }

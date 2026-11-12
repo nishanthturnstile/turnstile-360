@@ -143,6 +143,25 @@ not a claim that a particular customer network has already been tested. Air-gapp
 activation, billing, price plans, automatic upgrades, SMS/email alerting and remote support
 access remain separate future scope.
 
+## Turnstile module extension
+
+The owner requested centrally managed module catalogue/classification, per-installation
+assignment/dependency visualization and selected artifact/activation flow on 2026-11-09.
+The [module specification](../turnstile/modules/module_delivery_specification.md) owns
+MOD-R01–20; the [module plan](../turnstile/modules/module_delivery_implementation_plan.md)
+sequences it. MOD-I01–08 now implement catalogue/assignment, selected delivery, signed v2
+enforcement and reviewed transitions, independently of legacy v1 product-business approval.
+Installer/status integration and wider acceptance remain MOD-I09/10. Actual completion
+and qualification belong in IN_PROGRESS.md. TCP-R01–15 and independent DMS authorization remain in force.
+
+Central owns staff policy/records, while a trusted external pipeline builds and the
+customer operator installs; TCP-R13 gains no remote shell/automatic deployment. New
+module removal policy explicitly denies removed-module business access, while existing
+whole-product expiry/suspension read behavior remains unchanged. Fresh central-first
+identity reservation is nonsecret metadata, not customer account/database provisioning;
+existing local-export adoption remains supported. See architecture for the new signed
+version, identity/profile binding and compatibility/recovery requirements.
+
 ## Relationship to accepted DMS scope
 
 The existing [DMS requirements](../dms/headless_dms_functionality_requirements_v1.md)

@@ -7,6 +7,8 @@ export default defineConfig({
     './src/server/registry.schema.ts',
     './src/server/machine.schema.ts',
     './src/server/report.schema.ts',
+    './src/server/module.schema.ts',
+    './src/server/module-assignment.schema.ts',
   ],
   out: './database',
 });

@@ -90,7 +90,7 @@ export function policyFixtureAccess(permissions: readonly PeoplePermission[]): E
     protectedAdministrator: false,
     units: new Map(),
     context: {
-      catalogVersion: 1,
+      catalogVersion: 2,
       accessRevision: 1,
       fingerprint: '0'.repeat(64),
       grants: [

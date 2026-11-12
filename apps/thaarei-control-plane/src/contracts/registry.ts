@@ -56,6 +56,10 @@ export const installationCreate = z
     reason,
   })
   .strict();
+export const installationReserve = installationCreate
+  .omit({ localInstallationId: true, tenantId: true, type: true })
+  .extend({ type: z.literal('installation.reserve') })
+  .strict();
 export const productCreate = z
   .object({
     type: z.literal('product.create'),
@@ -83,6 +87,7 @@ export const registryCommand = z.discriminatedUnion('type', [
   clientCreate,
   clientUpdate,
   installationCreate,
+  installationReserve,
   productCreate,
   productPolicy,
 ]);

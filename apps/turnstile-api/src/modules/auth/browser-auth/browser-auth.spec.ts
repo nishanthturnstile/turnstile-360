@@ -88,7 +88,7 @@ async function recipientFixture(
     protectedAdministrator: false,
     units: new Map(),
     context: {
-      catalogVersion: 1,
+      catalogVersion: 2,
       accessRevision: 1,
       fingerprint: 'a'.repeat(64),
       grants: [

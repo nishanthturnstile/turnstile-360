@@ -8,29 +8,17 @@ import {
   MAX_DECISION_SECONDS,
   sameBinding,
 } from '@thaarei/control-plane-contracts';
+import {
+  type ModuleDecision,
+  type VersionedDecision,
+  validateDecisionContext,
+  versionedDecision,
+} from '@thaarei/module-catalog';
 import { compactVerify, decodeProtectedHeader, importSPKI } from 'jose';
-import { z } from 'zod';
-export const trustBundle = z
-  .object({
-    version: z.literal(1),
-    revision: z.number().int().positive(),
-    issuer: z.string().url(),
-    keys: z
-      .array(
-        z
-          .object({
-            kid: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),
-            pem: z.string().min(100).max(8192),
-            status: z.enum(['active', 'retired', 'revoked']),
-            lastIssuedAt: z.number().int().positive().nullable(),
-          })
-          .strict(),
-      )
-      .min(1)
-      .max(20),
-  })
-  .strict();
-export type TrustBundle = z.infer<typeof trustBundle>;
+import { assertVerifiedModuleRelease, type VerifiedModuleRelease } from './module-release.js';
+import { type TrustBundle, trustBundle } from './trust.js';
+
+export { readProtectedTrust, type TrustBundle, trustBundle } from './trust.js';
 export type Accepted = { token: string; digest: string; appliedAt: number };
 export type DecisionState = {
   epoch: string;
@@ -39,6 +27,9 @@ export type DecisionState = {
   quarantined: boolean;
   accepted: Accepted | null;
   activation: Accepted | null;
+  // A durable floor survives missing runtime configuration and cannot be negotiated away.
+  minimumVersion?: 2 | undefined;
+  releaseTrustRevision?: number | undefined;
 };
 export function initialDecisionState(epoch: string): DecisionState {
   return {
@@ -53,14 +44,14 @@ export function initialDecisionState(epoch: string): DecisionState {
 export function tokenDigest(token: string) {
   return createHash('sha256').update(token).digest('hex');
 }
-export async function verifyDecision(
+async function verifyEnvelope(
   token: string,
   expected: Binding,
   epoch: string,
   rawTrust: TrustBundle,
   now: number,
   cached = false,
-): Promise<Decision> {
+): Promise<VersionedDecision> {
   if (token.length > 8192) throw new Error('Decision too large');
   const trust = trustBundle.parse(rawTrust);
   const header = decodeProtectedHeader(token);
@@ -77,7 +68,7 @@ export async function verifyDecision(
     throw new Error('Untrusted deployment key');
   const key = await importSPKI(trusted.pem, 'RS256');
   const verified = await compactVerify(token, key, { algorithms: ['RS256'] });
-  const value = decision.parse(JSON.parse(new TextDecoder().decode(verified.payload)));
+  const value = versionedDecision.parse(JSON.parse(new TextDecoder().decode(verified.payload)));
   if (
     value.iss !== trust.issuer ||
     value.aud !== audience(expected) ||
@@ -100,6 +91,70 @@ export async function verifyDecision(
     throw new Error('Retired signing key');
   return value;
 }
+
+/** Legacy callers accept only the strict v1 product envelope. */
+export async function verifyDecision(
+  token: string,
+  expected: Binding,
+  epoch: string,
+  trust: TrustBundle,
+  now: number,
+  cached = false,
+): Promise<Decision> {
+  return decision.parse(await verifyEnvelope(token, expected, epoch, trust, now, cached));
+}
+export async function verifyModuleDecision(
+  token: string,
+  expected: Binding,
+  epoch: string,
+  trust: TrustBundle,
+  now: number,
+  release: VerifiedModuleRelease,
+  cached = false,
+): Promise<ModuleDecision> {
+  assertVerifiedModuleRelease(release);
+  return validateDecisionContext(
+    await verifyEnvelope(token, expected, epoch, trust, now, cached),
+    release.request.catalogue,
+    release.request.profile,
+    release.releaseId,
+  );
+}
+export async function verifyInstalledDecision(
+  token: string,
+  expected: Binding,
+  epoch: string,
+  trust: TrustBundle,
+  now: number,
+  release?: VerifiedModuleRelease,
+  cached = false,
+): Promise<VersionedDecision> {
+  return release
+    ? verifyModuleDecision(token, expected, epoch, trust, now, release, cached)
+    : verifyDecision(token, expected, epoch, trust, now, cached);
+}
+// Renewal content is independent of object/ID ordering. Time, sequence and ID may renew;
+// authority, active/desired context and the assignment that produced it may not.
+function policyContent(value: VersionedDecision): string {
+  if (value.version === 1 || value.state !== 'approved')
+    return JSON.stringify({ version: value.version, state: value.state });
+  const p = value.modulePolicy;
+  return JSON.stringify({
+    version: 2,
+    state: value.state,
+    active: [
+      p.active.catalogueDigest,
+      p.active.profileDigest,
+      p.active.releaseId,
+      p.active.assignmentRevision,
+      p.active.policyRevision,
+    ],
+    change: p.changeAssignmentRevision,
+    desired: [p.desired.catalogueDigest, p.desired.profileDigest, p.desired.assignmentRevision],
+    allowed: [...p.allowedModuleIds].sort(),
+  });
+}
+
 async function retained(
   proof: Accepted,
   expected: Binding,
@@ -108,7 +163,7 @@ async function retained(
   now: number,
 ) {
   if (proof.digest !== tokenDigest(proof.token)) throw new Error('Stored proof corrupt');
-  const claims = await verifyDecision(proof.token, expected, state.epoch, trust, now, true);
+  const claims = await verifyEnvelope(proof.token, expected, state.epoch, trust, now, true);
   if (proof.appliedAt < claims.nbf || proof.appliedAt >= claims.exp || proof.appliedAt > now)
     throw new Error('Invalid application evidence');
   return claims;
@@ -119,10 +174,15 @@ export async function applyDecision(
   expected: Binding,
   trust: TrustBundle,
   now: number,
+  release?: VerifiedModuleRelease,
 ): Promise<DecisionState> {
   if (state.quarantined || now < state.lastTime || trust.revision < state.trustRevision)
     throw new Error('Deployment reconciliation required');
-  const incoming = await verifyDecision(token, expected, state.epoch, trust, now);
+  if (state.minimumVersion === 2 && !release)
+    throw new Error('Verified v2 release required; downgrade forbidden');
+  if (release && release.trustRevision < (state.releaseTrustRevision ?? 0))
+    throw new Error('Release trust downgrade requires reconciliation');
+  const incoming = await verifyInstalledDecision(token, expected, state.epoch, trust, now, release);
   if (state.accepted) {
     const old = await retained(state.accepted, expected, state, trust, now);
     if (
@@ -136,17 +196,31 @@ export async function applyDecision(
       incoming.policyRevision > old.policyRevision
     )
       throw new Error('Decision sequence regressed');
-    if (incoming.policyRevision === old.policyRevision && incoming.state !== old.state)
-      throw new Error('Policy state conflicts at equal revision');
+    if (old.version > incoming.version) throw new Error('Decision downgrade forbidden');
+    if (
+      incoming.policyRevision === old.policyRevision &&
+      policyContent(incoming) !== policyContent(old)
+    )
+      throw new Error('Policy content conflicts at equal revision');
     if (incoming.decisionSequence === old.decisionSequence) {
       if (tokenDigest(token) !== state.accepted.digest)
         throw new Error('Decision sequence conflict');
-      return { ...state, lastTime: now, trustRevision: trust.revision };
+      return {
+        ...state,
+        ...(incoming.version === 2
+          ? { minimumVersion: 2 as const, releaseTrustRevision: release?.trustRevision }
+          : {}),
+        lastTime: now,
+        trustRevision: trust.revision,
+      };
     }
   }
   const accepted = { token, digest: tokenDigest(token), appliedAt: now };
   return {
     ...state,
+    ...(incoming.version === 2
+      ? { minimumVersion: 2 as const, releaseTrustRevision: release?.trustRevision }
+      : {}),
     accepted,
     activation: incoming.state === 'approved' ? accepted : state.activation,
     lastTime: now,
@@ -159,16 +233,39 @@ export async function evaluateDecision(
   expected: Binding,
   trust: TrustBundle,
   now: number,
+  release?: VerifiedModuleRelease,
 ): Promise<{ access: BusinessAccess; state: string }> {
   try {
     if (state.quarantined || now < state.lastTime || trust.revision < state.trustRevision)
       throw new Error('Recovery or clock quarantine');
+    if (state.minimumVersion === 2 && !release) throw new Error('Verified v2 release missing');
+    if (release && release.trustRevision < (state.releaseTrustRevision ?? 0))
+      throw new Error('Release trust downgrade requires reconciliation');
     if (!state.accepted) return { access: 'closed', state: 'unapproved' };
     const current = await retained(state.accepted, expected, state, trust, now);
+    // Context validation applies before any foundation read exception, including denial.
+    await verifyInstalledDecision(
+      state.accepted.token,
+      expected,
+      state.epoch,
+      trust,
+      now,
+      release,
+      true,
+    );
     let activated = false;
-    if (state.activation)
-      activated =
-        (await retained(state.activation, expected, state, trust, now)).state === 'approved';
+    if (state.activation) {
+      const activation = await retained(state.activation, expected, state, trust, now);
+      // A historical v1 foundation activation is allowed; it never authorizes a module.
+      if (activation.version === 2 && release)
+        await validateDecisionContext(
+          activation,
+          release.request.catalogue,
+          release.request.profile,
+          release.releaseId,
+        );
+      activated = activation.state === 'approved';
+    }
     if (current.state === 'approved' && current.exp > now)
       return { access: 'full', state: 'approved' };
     const expired = current.state === 'approved';
@@ -181,18 +278,32 @@ export async function evaluateDecision(
   }
 }
 
-// Trust is delivered by an independent operator/release channel; tokens cannot edit it.
-export async function readProtectedTrust(path: string): Promise<TrustBundle> {
-  const { lstat, readFile } = await import('node:fs/promises');
-  const { isAbsolute } = await import('node:path');
-  const file = await lstat(path);
-  if (
-    !isAbsolute(path) ||
-    !file.isFile() ||
-    file.mode & 0o022 ||
-    file.size > 200000 ||
-    ![0, process.getuid?.()].includes(file.uid)
-  )
-    throw new Error('Protected operator trust file required');
-  return trustBundle.parse(JSON.parse(await readFile(path, 'utf8')));
+/** Business modules have no prior-activation read exception. Owning user/resource/local
+ * enablement and product operation checks must still run after this deployment check. */
+export async function evaluateModuleDecision(
+  state: DecisionState,
+  expected: Binding,
+  trust: TrustBundle,
+  now: number,
+  release: VerifiedModuleRelease,
+): Promise<{ allowedModuleIds: string[]; state: string }> {
+  const product = await evaluateDecision(state, expected, trust, now, release);
+  if (product.access !== 'full' || !state.accepted)
+    return { allowedModuleIds: [], state: product.state };
+  try {
+    const current = await verifyModuleDecision(
+      state.accepted.token,
+      expected,
+      state.epoch,
+      trust,
+      now,
+      release,
+    );
+    return {
+      allowedModuleIds: current.state === 'approved' ? current.modulePolicy.allowedModuleIds : [],
+      state: current.state,
+    };
+  } catch {
+    return { allowedModuleIds: [], state: 'reconciliation-required' };
+  }
 }

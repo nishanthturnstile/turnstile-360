@@ -180,7 +180,7 @@ export const permissionCatalogSchema = z
     organizationRevision: accessRevisionSchema.optional(),
     grantableCompanyPermissions: z
       .array(peoplePermissionSchema)
-      .max(7)
+      .max(PEOPLE_PERMISSIONS.length)
       .refine(uniqueValues)
       .optional(),
     catalogVersion: z.literal(PEOPLE_CATALOG_VERSION),
@@ -301,7 +301,7 @@ export const scopedUnitDetailSchema = scopedUnitContextSchema.safeExtend({
 
 export const userAccessContextSchema = z
   .strictObject({
-    catalogVersion: z.literal(1),
+    catalogVersion: z.literal(PEOPLE_CATALOG_VERSION),
     accessRevision: accessRevisionSchema,
     fingerprint: peopleDigestSchema,
     grants: z
@@ -309,7 +309,10 @@ export const userAccessContextSchema = z
         z
           .strictObject({
             sourceId: canonicalPeopleIdSchema,
-            permissions: z.array(peoplePermissionSchema).max(7).refine(uniqueValues),
+            permissions: z
+              .array(peoplePermissionSchema)
+              .max(PEOPLE_PERMISSIONS.length)
+              .refine(uniqueValues),
             scope: assignmentScopeSchema,
           })
           .refine(
@@ -338,7 +341,10 @@ export const accessAwareUserSessionSchema = z
       name: z.string().max(200),
       email: z.email().max(254),
     }),
-    permissions: z.array(peoplePermissionSchema).max(7).refine(uniqueValues),
+    permissions: z
+      .array(peoplePermissionSchema)
+      .max(PEOPLE_PERMISSIONS.length)
+      .refine(uniqueValues),
     session: z.strictObject({ expiresAt: peopleInstantSchema, idleExpiresAt: peopleInstantSchema }),
     csrfToken: peopleSecretSchema,
     access: userAccessContextSchema,

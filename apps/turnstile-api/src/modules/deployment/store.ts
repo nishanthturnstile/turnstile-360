@@ -2,15 +2,18 @@ import { binding, sameBinding } from '@thaarei/control-plane-contracts';
 import {
   applyDecision,
   type DecisionState,
+  evaluateDecision,
   initialDecisionState,
   nextSyncDelay,
   ProtectedFileStore,
   readProtectedTrust,
   type StoredProduct,
+  type VerifiedModuleRelease,
 } from '@thaarei/deployment-control';
 import type { Pool, PoolClient } from 'pg';
 import { withTenant } from '../../infrastructure/database/postgres.js';
 import { markerDigest } from './access.js';
+import { installedModuleRelease } from './module-release.js';
 export class TurnstileDeploymentStore extends ProtectedFileStore {
   constructor(
     directory: string,
@@ -115,6 +118,9 @@ export class TurnstileDeploymentStore extends ProtectedFileStore {
   private fence: (db: PoolClient) => Promise<void> = async () => {
     throw new Error('Shared operation lock required');
   };
+  moduleRelease(): Promise<VerifiedModuleRelease | null> {
+    return installedModuleRelease();
+  }
   override async load() {
     const value = await super.load();
     if (!value) return null;
@@ -212,17 +218,28 @@ export class TurnstileDeploymentStore extends ProtectedFileStore {
         const base = old ?? {
           ...initialDecisionState(value.decision.epoch),
           trustRevision: Number(row.decision?.trustRevision ?? 0),
+          ...(row.decision?.minimumVersion === 2 ? { minimumVersion: 2 as const } : {}),
+          ...(row.decision?.releaseTrustRevision !== undefined
+            ? { releaseTrustRevision: Number(row.decision.releaseTrustRevision) }
+            : {}),
         };
-        const applied =
-          old?.accepted?.digest === value.decision.accepted.digest
-            ? old
-            : await applyDecision(
-                base,
-                value.decision.accepted.token,
-                expected,
-                trust,
-                Math.floor(Date.now() / 1000),
-              );
+        const release = (await this.moduleRelease()) ?? undefined;
+        const now = Math.floor(Date.now() / 1000);
+        const unchanged = old?.accepted?.digest === value.decision.accepted.digest;
+        if (
+          unchanged &&
+          (await evaluateDecision(base, expected, trust, now, release)).state ===
+            'reconciliation-required'
+        )
+          throw new Error('Stored decision requires reconciliation');
+        const applied = unchanged
+          ? {
+              ...base,
+              lastTime: Math.max(base.lastTime, now),
+              trustRevision: Math.max(base.trustRevision, trust.revision),
+              ...(release ? { releaseTrustRevision: release.trustRevision } : {}),
+            }
+          : await applyDecision(base, value.decision.accepted.token, expected, trust, now, release);
         value.decision = applied;
         await db.query(
           "UPDATE turnstile.deployment_control SET binding=$1,decision=$2,marker_digest=$3,quarantined=false,credential_metadata=(coalesce(credential_metadata,'{}'::jsonb)-'pendingSetupRequestId'-'pendingRebind')||$4::jsonb",

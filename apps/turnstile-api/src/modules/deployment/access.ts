@@ -9,6 +9,7 @@ import {
 } from '@thaarei/deployment-control';
 import type { Pool, PoolClient } from 'pg';
 import { withTenant } from '../../infrastructure/database/postgres.js';
+import { installedModuleRelease } from './module-release.js';
 
 const deploymentError = (status: number, code: string): never => {
   throw new HttpException({ code }, status);
@@ -60,6 +61,7 @@ export async function evaluateStored(row: Record<string, unknown> | undefined) {
       expected,
       trust,
       Math.floor(Date.now() / 1000),
+      (await installedModuleRelease()) ?? undefined,
     );
   } catch {
     return { access: 'closed' as const, state: 'reconciliation-required' };

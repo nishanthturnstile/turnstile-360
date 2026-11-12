@@ -331,6 +331,9 @@ importers:
       '@thaarei/deployment-control':
         specifier: workspace:*
         version: link:../../packages/deployment-control
+      '@thaarei/module-catalog':
+        specifier: workspace:*
+        version: link:../../packages/module-catalog
       better-auth:
         specifier: 1.7.14
         version: 1.7.14(patch_hash=e4a60c60895be01e1850787e8e45b9c64a5d2ff8a695a9668650f45b19ad4504)(drizzle-kit@0.31.11)(drizzle-orm@0.45.4(@types/pg@8.20.0)(kysely@0.29.7)(pg@8.23.1))(next@16.4.5(@babel/core@7.29.7(supports-color@7.2.0))(@playwright/test@1.64.1)(@types/node@24.19.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(vitest@4.1.2(@types/node@24.19.2)(vite@8.3.5(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))
@@ -566,6 +569,9 @@ importers:
       '@thaarei/control-plane-contracts':
         specifier: workspace:*
         version: link:../control-plane-contracts
+      '@thaarei/module-catalog':
+        specifier: workspace:*
+        version: link:../module-catalog
       jose:
         specifier: 6.2.14
         version: 6.2.14
@@ -595,6 +601,50 @@ importers:
 
   packages/dms-contracts:
     dependencies:
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  packages/installation-engine:
+    dependencies:
+      '@thaarei/control-plane-contracts':
+        specifier: workspace:*
+        version: link:../control-plane-contracts
+      '@thaarei/deployment-control':
+        specifier: workspace:*
+        version: link:../deployment-control
+      '@thaarei/dms-client':
+        specifier: workspace:*
+        version: link:../dms-client
+      '@thaarei/dms-contracts':
+        specifier: workspace:*
+        version: link:../dms-contracts
+      '@thaarei/module-catalog':
+        specifier: workspace:*
+        version: link:../module-catalog
+      jose:
+        specifier: 6.2.14
+        version: 6.2.14
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  packages/module-catalog:
+    dependencies:
+      '@thaarei/control-plane-contracts':
+        specifier: workspace:*
+        version: link:../control-plane-contracts
       zod:
         specifier: 4.6.7
         version: 4.6.7

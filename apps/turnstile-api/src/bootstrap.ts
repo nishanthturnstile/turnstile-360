@@ -4,6 +4,7 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import { LogController } from 'fastify';
 import { AppModule } from './app.module.js';
 import { registerConfigurationHttp } from './infrastructure/configuration-http.js';
+import { registerModuleHttp } from './infrastructure/module-http.js';
 import { registerPeopleHttp } from './infrastructure/people-http.js';
 import { registerRecipientHttp } from './infrastructure/recipient-http.js';
 import { SecurityTelemetryService } from './infrastructure/security-telemetry.service.js';
@@ -29,6 +30,7 @@ export async function createApplication(logging = true): Promise<NestFastifyAppl
   registerConfigurationHttp(server);
   registerRecipientHttp(server);
   registerPeopleHttp(server);
+  registerModuleHttp(server);
   registerStructureHttp(server);
   const telemetry = app.get(SecurityTelemetryService);
   telemetry.enable(logging);

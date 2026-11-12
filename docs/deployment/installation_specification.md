@@ -17,6 +17,14 @@ explicit actions with a named actor.
 components, input/state contracts and deployment adapters. This specification owns
 IA-R01–18; [progress](../../IN_PROGRESS.md) owns actual delivery and verification.
 
+**Module extension, 2026-11-09:** The
+[central module specification](../turnstile/modules/module_delivery_specification.md)
+adds centrally reviewed catalogue/assignment, selected artifacts and signed Turnstile
+module authority. Fresh central-first setup consumes verified reserved identities and
+the selected immutable profile; existing/local-first adoption retains actual identities.
+Module prerequisites apply before freezing combined release packaging and the installer
+intent adapter. Host/TLS/owning-provisioning groundwork remains reusable.
+
 ## Release scope
 
 The first delivery supports fresh Linux installations of the combined Turnstile/DMS

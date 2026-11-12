@@ -13,6 +13,8 @@ export async function verifyContainerReporter({
   postgres,
   run,
   completed,
+  privateDirectory,
+  diagnostic,
 }) {
   const prefix = product === 'dms' ? 'CONTROL_PLANE' : 'TURNSTILE_CONTROL_PLANE';
   const runtime = Object.fromEntries(
@@ -33,6 +35,17 @@ export async function verifyContainerReporter({
   runtime[`${prefix}_RECOVERY_MARKER_FILE`] = '/run/recovery-marker';
   runtime[`${prefix}_VERIFICATION_KEYS_FILE`] = '/run/public-trust.json';
   runtime.NODE_EXTRA_CA_CERTS = '/run/ca.pem';
+  const moduleMounts = [];
+  if (product === 'turnstile' && config.TURNSTILE_MODULE_RELEASE_FILE) {
+    for (const [key, target] of [
+      ['TURNSTILE_MODULE_RELEASE_FILE', '/run/module-release.json'],
+      ['TURNSTILE_MODULE_RELEASE_TRUST_FILE', '/run/module-release-trust.json'],
+    ]) {
+      runtime[key] = target;
+      moduleMounts.push('--mount', `type=bind,source=${config[key]},target=${target},readonly`);
+    }
+  }
+
   if (product === 'dms')
     Object.assign(runtime, {
       DMS_WORK_ISSUER_URL: 'https://customer.fixture.test/identity',
@@ -67,13 +80,14 @@ export async function verifyContainerReporter({
       '--env-file',
       file,
       '--mount',
-      `type=bind,source=${join(temporary, `${product}-private`)},target=/run/private,readonly`,
+      `type=bind,source=${privateDirectory ?? join(temporary, `${product}-private`)},target=/run/private,readonly`,
       '--mount',
       `type=bind,source=${config[`${prefix}_RECOVERY_MARKER_FILE`]},target=/run/recovery-marker,readonly`,
       '--mount',
       `type=bind,source=${config[`${prefix}_VERIFICATION_KEYS_FILE`]},target=/run/public-trust.json,readonly`,
       '--mount',
       `type=bind,source=${join(temporary, 'cert.pem')},target=/run/ca.pem,readonly`,
+      ...moduleMounts,
       image,
       'node',
       product === 'dms' ? 'dist/main.coordinator.js' : 'dist/main.reporter.js',
@@ -87,6 +101,7 @@ export async function verifyContainerReporter({
       }
       await setTimeout(100);
     }
+    if (!complete && diagnostic) await diagnostic(await run('docker', ['logs', name]));
     assert.ok(complete, `${product} shipped reporter did not complete its HTTPS/SQL attempt`);
     await run('docker', ['stop', '--time', '15', name]);
     const state = JSON.parse(await run('docker', ['inspect', '--format', '{{json .State}}', name]));

@@ -5,10 +5,13 @@ import {
   DeploymentClient,
   exportLocalManifest,
   httpsTransport,
+  moduleCutoverIntent,
   readProtectedTrust,
+  verifyModuleDecision,
 } from '@thaarei/deployment-control';
 import { z } from 'zod';
 import { createPool, withTenant } from '../../infrastructure/database/postgres.js';
+import { deploymentPreflight } from './access.js';
 import { TurnstileDeploymentStore } from './store.js';
 
 async function main() {
@@ -19,7 +22,17 @@ async function main() {
   }
   const command = z
     .object({
-      action: z.enum(['manifest', 'setup', 'rebind', 'sync', 'rotate']),
+      action: z.enum([
+        'manifest',
+        'setup',
+        'rebind',
+        'sync',
+        'rotate',
+        'prepare-cutover',
+        'quarantine-cutover',
+        'verify-cutover',
+      ]),
+      cutover: moduleCutoverIntent.optional(),
       pairingFile: z.string().optional(),
       outputFile: z.string().optional(),
       environment: z.string().default('production'),
@@ -87,6 +100,83 @@ async function main() {
     const client = new DeploymentClient(store, httpsTransport(origin), () =>
       readProtectedTrust(keys),
     );
+    if (['prepare-cutover', 'quarantine-cutover', 'verify-cutover'].includes(command.action)) {
+      const intent = command.cutover;
+      if (!intent) throw new Error('Reviewed cutover context required');
+      if (command.action === 'verify-cutover') await deploymentPreflight(pool, tenantId, 'full');
+      await store.locked(async () => {
+        const value = await store.load(),
+          release = await store.moduleRelease();
+        const pending = await withTenant(
+          pool,
+          tenantId,
+          async (db) =>
+            (await db.query('SELECT credential_metadata FROM turnstile.deployment_control')).rows[0]
+              ?.credential_metadata?.report,
+        );
+        if (pending) throw new Error('Reconcile the scheduled report journal before cutover');
+        if (
+          !value?.decision?.accepted ||
+          !value.current ||
+          !release ||
+          value.operation ||
+          value.report
+        )
+          throw new Error('Reconcile pending deployment operations before cutover');
+        const claims = await verifyModuleDecision(
+          value.decision.accepted.token,
+          value.binding,
+          value.current.epoch,
+          await readProtectedTrust(keys),
+          Math.floor(Date.now() / 1000),
+          release,
+        );
+        if (
+          claims.state !== 'approved' ||
+          claims.modulePolicy.desired.catalogueDigest !== intent.target.catalogueDigest ||
+          claims.modulePolicy.desired.profileDigest !== intent.target.profileDigest ||
+          claims.modulePolicy.desired.assignmentRevision !== intent.desiredRevision
+        )
+          throw new Error('Current desired profile changed or lacks authority');
+        if (command.action === 'verify-cutover') {
+          if (
+            value.decision.quarantined ||
+            claims.policyRevision <= intent.policyRevision ||
+            claims.modulePolicy.active.assignmentRevision !== intent.desiredRevision ||
+            Object.entries(intent.target).some(
+              ([key, id]) =>
+                claims.modulePolicy.active[key as keyof typeof claims.modulePolicy.active] !== id,
+            ) ||
+            claims.modulePolicy.allowedModuleIds.length !==
+              release.request.profile.modules.length ||
+            release.request.profile.modules.some(
+              (m) => !claims.modulePolicy.allowedModuleIds.includes(m.id),
+            )
+          )
+            throw new Error('Current reviewed target activation required');
+        } else {
+          if (claims.policyRevision !== intent.policyRevision)
+            throw new Error('Cutover policy basis changed');
+          if (command.action === 'quarantine-cutover') {
+            value.decision.quarantined = true;
+            await store.save(value);
+          } else if (value.decision.quarantined)
+            throw new Error('Existing recovery quarantine requires reviewed reconciliation');
+        }
+        console.log(
+          JSON.stringify({
+            version: 1,
+            requestId: intent.requestId,
+            binding: value.binding,
+            epoch: value.current.epoch,
+            active: claims.modulePolicy.active,
+            desired: claims.modulePolicy.desired,
+            quarantined: command.action === 'quarantine-cutover' || value.decision.quarantined,
+          }),
+        );
+      });
+      return;
+    }
     if (command.action === 'setup' || command.action === 'rebind') {
       if (!command.pairingFile) throw new Error('Private pairing file required');
       const info = await lstat(command.pairingFile);

@@ -71,6 +71,76 @@
       "when": 1794020163677,
       "tag": "0009_report_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794230460395,
+      "tag": "0010_module_catalogues",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794230532029,
+      "tag": "0011_module_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794233584842,
+      "tag": "0012_module_assignments",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794233654137,
+      "tag": "0013_module_assignment_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794375652099,
+      "tag": "0014_module_authority",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1794375653181,
+      "tag": "0015_module_authority_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1794384987741,
+      "tag": "0016_module_observation",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794384988477,
+      "tag": "0017_module_transition_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794397455856,
+      "tag": "0018_machine_application",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794397470506,
+      "tag": "0019_machine_application_privileges",
+      "breakpoints": true
     }
   ]
 }

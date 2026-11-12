@@ -198,3 +198,26 @@ svg {
   width: 100%;
   height: auto;
 }
+
+.module-graph {
+  overflow: auto;
+  max-height: 540px;
+  border: 1px solid #dce1e3;
+  border-radius: 8px;
+  color: #215b64;
+}
+.module-graph svg {
+  display: block;
+}
+.module-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+.module-check input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex-shrink: 0;
+}

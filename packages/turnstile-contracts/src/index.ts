@@ -76,3 +76,5 @@ export const deploymentStatusSchema = z
   })
   .strict();
 export type DeploymentStatusDto = z.infer<typeof deploymentStatusSchema>;
+
+export * from './modules.js';

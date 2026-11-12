@@ -9,14 +9,20 @@ import {
   type Decision,
   MAX_DECISION_SECONDS,
   machineReceipt,
+  machineStatusRequest,
+  machineStatusResponse,
   pairingCommand,
   RENEW_BELOW_SECONDS,
   rotateRequest,
   sameBinding,
-  syncRequest,
-  syncResponse,
 } from '@thaarei/control-plane-contracts';
-import { decodeProtectedHeader } from 'jose';
+import {
+  type VersionedDecision,
+  versionedDecision,
+  versionedSyncRequest,
+  versionedSyncResponse,
+} from '@thaarei/module-catalog';
+import { decodeJwt, decodeProtectedHeader } from 'jose';
 import type { PoolClient } from 'pg';
 import {
   AccessError,
@@ -27,6 +33,8 @@ import {
   staffContext,
 } from './access.ts';
 import { assertAuthority, digest, signDecision, signingKeyId } from './machine-signing.ts';
+import { moduleDecisionPolicy } from './module-decision-policy.ts';
+import { moduleHandover } from './module-handover-service.ts';
 import { runtime } from './runtime.ts';
 
 async function transaction<T>(fn: (db: PoolClient) => Promise<T>): Promise<T> {
@@ -38,7 +46,7 @@ async function transaction<T>(fn: (db: PoolClient) => Promise<T>): Promise<T> {
     throw error;
   }
 }
-const productSelect = `SELECT p.*,i.local_installation_id,i.tenant_id FROM control_plane.registry_product p JOIN control_plane.registry_installation i ON i.id=p.installation_id AND i.client_id=p.client_id`;
+const productSelect = `SELECT p.*,i.local_installation_id,i.tenant_id,a.minimum_version,a.document AS module_authority FROM control_plane.registry_product p JOIN control_plane.registry_installation i ON i.id=p.installation_id AND i.client_id=p.client_id LEFT JOIN control_plane.module_authority a ON a.product_id=p.id`;
 async function product(db: PoolClient, id: string) {
   const row = (await db.query(`${productSelect} WHERE p.id=$1 FOR UPDATE OF p`, [id])).rows[0];
   if (!row) throw new AccessError(404, 'Product not found');
@@ -56,6 +64,8 @@ async function product(db: PoolClient, id: string) {
     policyState: row.policy_state as Decision['state'],
     revision: Number(row.revision),
     paired: !!row.pairing_verified_at,
+    minimumVersion: Number(row.minimum_version ?? 1),
+    moduleAuthority: row.module_authority ?? null,
   };
 }
 function exact(expected: Binding, submitted: Binding) {
@@ -302,14 +312,48 @@ export async function rotate(headers: Headers, raw: unknown) {
 }
 export async function sync(headers: Headers, raw: unknown) {
   const keyDigest = credential(headers);
-  const input = syncRequest.parse(raw);
+  const input = versionedSyncRequest.parse(raw);
   const hash = digest(JSON.stringify(input));
   const kid = signingKeyId();
+  // Record authenticated candidate inventory independently. A wrong active-profile sync
+  // stays a conflict (never a different policy at the same revision), while staff can
+  // review the candidate observation for an explicit, newer activation.
+  if (input.version === 2)
+    await transaction(async (db) => {
+      await assertAuthority(db);
+      const p = await product(db, await credentialProduct(db, keyDigest));
+      exact(p.expected, input.binding);
+      const current = await authenticate(db, p.expected.productId, keyDigest);
+      if (p.minimumVersion !== 2 || (input.epoch !== null && input.epoch !== current.epoch))
+        throw new AccessError(409, 'Current v2 pairing required');
+      await db.query(
+        `INSERT INTO control_plane.module_observation(product_id,epoch,installed) VALUES($1,$2,$3)
+      ON CONFLICT(product_id) DO UPDATE SET epoch=EXCLUDED.epoch,installed=EXCLUDED.installed,observed_at=clock_timestamp()`,
+        [p.expected.productId, current.epoch, JSON.stringify(input.installed)],
+      );
+    });
   const reserved = await transaction(async (db) => {
     await assertAuthority(db);
     const p = await product(db, await credentialProduct(db, keyDigest));
     exact(p.expected, input.binding);
     const current = await authenticate(db, p.expected.productId, keyDigest);
+    if (input.version < p.minimumVersion)
+      throw new AccessError(409, 'Product permanently requires v2 module decisions');
+    if (input.version === 2 && p.minimumVersion !== 2)
+      throw new AccessError(409, 'Reviewed v2 enforcement is required before module sync');
+    const policy =
+      input.version === 2
+        ? await moduleDecisionPolicy(
+            { binding: p.expected, epoch: current.epoch, policyRevision: p.revision },
+            p.policyState,
+            p.moduleAuthority,
+            input.installed,
+          ).catch(() => {
+            throw new AccessError(409, 'Module authority context requires reconciliation');
+          })
+        : p.policyState === 'approved'
+          ? { state: 'approved' as const, entitlement: 'product-business' as const }
+          : { state: p.policyState };
     if (input.epoch !== null && current.epoch !== input.epoch)
       throw new AccessError(409, 'Binding epoch changed; reviewed rebind required');
     const previous = (
@@ -369,11 +413,23 @@ export async function sync(headers: Headers, raw: unknown) {
         input.applied.appliedAt >= new Date(proof.issued_at).getTime() / 1000 &&
         input.applied.appliedAt < new Date(proof.expires_at).getTime() / 1000 &&
         input.applied.appliedAt <= Date.now() / 1000
-      )
+      ) {
+        await db.query(
+          `INSERT INTO control_plane.machine_application(product_id,epoch,decision_id,applied_at)
+           VALUES($1,$2,$3,to_timestamp($4))
+           ON CONFLICT(product_id) DO UPDATE SET epoch=EXCLUDED.epoch,decision_id=EXCLUDED.decision_id,
+             applied_at=EXCLUDED.applied_at,received_at=clock_timestamp()
+           WHERE machine_application.epoch<>EXCLUDED.epoch OR EXISTS(
+             SELECT 1 FROM control_plane.machine_decision incoming,control_plane.machine_decision prior
+             WHERE incoming.id=EXCLUDED.decision_id AND prior.id=machine_application.decision_id
+               AND (incoming.revision,incoming.sequence)>(prior.revision,prior.sequence))`,
+          [p.expected.productId, current.epoch, input.applied.decisionId, input.applied.appliedAt],
+        );
         await db.query(
           'UPDATE control_plane.machine SET first_acknowledged_at=COALESCE(first_acknowledged_at,clock_timestamp()),current_acknowledged_at=COALESCE(current_acknowledged_at,clock_timestamp()) WHERE product_id=$1',
           [p.expected.productId],
         );
+      }
     }
     await db.query(
       'UPDATE control_plane.machine SET last_contact_at=clock_timestamp() WHERE product_id=$1',
@@ -388,6 +444,7 @@ export async function sync(headers: Headers, raw: unknown) {
     const now = Math.floor(Date.now() / 1000);
     if (
       cached &&
+      decodeJwt(cached.token).version === input.version &&
       decodeProtectedHeader(cached.token).kid === kid &&
       new Date(cached.expires_at).getTime() / 1000 - now >= RENEW_BELOW_SECONDS
     )
@@ -397,8 +454,8 @@ export async function sync(headers: Headers, raw: unknown) {
       p.expected.productId,
       seq,
     ]);
-    const claims = {
-      version: 1 as const,
+    const claims = versionedDecision.parse({
+      version: input.version,
       iss: runtime().config.origin,
       aud: audience(p.expected),
       binding: p.expected,
@@ -409,15 +466,13 @@ export async function sync(headers: Headers, raw: unknown) {
       iat: now,
       nbf: now,
       exp: now + MAX_DECISION_SECONDS,
-      ...(p.policyState === 'approved'
-        ? { state: 'approved' as const, entitlement: 'product-business' as const }
-        : { state: p.policyState }),
-    } as Decision;
+      ...policy,
+    });
     return { p, current, cached: null, claims };
   });
   // Signing/network work never runs inside a transaction. Recheck policy/epoch/generation
   // after signing so a concurrent suspension/replacement fences this response.
-  const token = reserved.cached ?? (await signDecision(reserved.claims as Decision));
+  const token = reserved.cached ?? (await signDecision(reserved.claims as VersionedDecision));
   return transaction(async (db) => {
     await assertAuthority(db);
     const p = await product(db, await credentialProduct(db, keyDigest));
@@ -426,6 +481,8 @@ export async function sync(headers: Headers, raw: unknown) {
       signingKeyId() !== kid ||
       decodeProtectedHeader(token).kid !== kid ||
       p.revision !== reserved.p.revision ||
+      p.minimumVersion !== reserved.p.minimumVersion ||
+      JSON.stringify(p.moduleAuthority) !== JSON.stringify(reserved.p.moduleAuthority) ||
       p.policyState !== reserved.p.policyState ||
       current.epoch !== reserved.current.epoch ||
       current.generation !== reserved.current.generation ||
@@ -454,14 +511,58 @@ export async function sync(headers: Headers, raw: unknown) {
           [p.expected.productId],
         );
     }
-    return syncResponse.parse({
-      version: 1,
+    return versionedSyncResponse.parse({
+      version: input.version,
       receiptId: input.reportId,
       binding: p.expected,
       epoch: current.epoch,
       generation: current.generation,
       operationId: current.operationId,
       decision: token,
+    });
+  });
+}
+
+/** Authenticated own-product readback; never issues credentials, decisions or grants. */
+export async function machineStatus(headers: Headers, raw: unknown) {
+  const input = machineStatusRequest.parse(raw),
+    keyDigest = credential(headers);
+  return transaction(async (db) => {
+    await assertAuthority(db);
+    const p = await product(db, await credentialProduct(db, keyDigest));
+    exact(p.expected, input.binding);
+    const current = await authenticate(db, p.expected.productId, keyDigest);
+    if (current.epoch !== input.epoch) throw new AccessError(409, 'Current pairing epoch required');
+    const projection = await moduleHandover(db, p.expected.installationId);
+    const own = projection.handover.products.find((v) => v.productId === p.expected.productId);
+    if (!own) throw new AccessError(409, 'Current product unavailable');
+    const desired =
+      p.expected.product === 'turnstile'
+        ? (
+            await db.query(
+              `SELECT e.revision,e.document FROM control_plane.module_assignment_state s JOIN control_plane.module_assignment_entry e ON e.id=s.desired_id AND e.product_id=s.product_id WHERE s.product_id=$1`,
+              [p.expected.productId],
+            )
+          ).rows[0]
+        : null;
+    return machineStatusResponse.parse({
+      version: 1,
+      binding: p.expected,
+      epoch: current.epoch,
+      policyRevision: own.revision,
+      policyState: own.policyState,
+      paired: own.paired,
+      activationAcknowledged: own.acknowledged,
+      moduleDesired: desired
+        ? {
+            catalogueDigest: desired.document.profile.catalogueDigest,
+            profileDigest: desired.document.profileDigest,
+            assignmentRevision: desired.revision,
+          }
+        : null,
+      lastContactAt: own.lastContactAt,
+      reportReceivedAt: own.reportReceivedAt,
+      reportFreshness: own.reportFreshness,
     });
   });
 }

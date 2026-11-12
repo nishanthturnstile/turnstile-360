@@ -9,6 +9,7 @@ import { date, nullable, readClient, sendCommand } from './registry-client.ts';
 const titles: Record<RegistryCommand['type'], string> = {
   'client.create': 'Register client',
   'client.update': 'Update client',
+  'installation.reserve': 'Reserve fresh installation',
   'installation.create': 'Register installation',
   'product.create': 'Register product',
   'product.policy': 'Change product policy',
@@ -338,6 +339,13 @@ export function ClientWorkspace({ initial, role }: { initial: ClientDetail; role
                     role={role}
                     reload={reload}
                   />
+                  {product.product === 'turnstile' && (
+                    <p>
+                      <a href={`/clients/${client.id}/products/${product.id}/modules`}>
+                        Modules and dependencies →
+                      </a>
+                    </p>
+                  )}
                   {product.policyReason && <p>Latest policy reason: {product.policyReason}</p>}
                   {canWrite && choices.length > 0 && (
                     <form
@@ -381,58 +389,101 @@ export function ClientWorkspace({ initial, role }: { initial: ClientDetail; role
         </section>
       ))}
       {canWrite && !client.archived && (
-        <details>
-          <summary>Register an installation</summary>
-          <p>
-            Use the durable installation and tenant identifiers supplied by the customer operator.
-            These bindings are permanent.
-          </p>
-          <form
-            key={detail.installations.length}
-            onSubmit={(event) =>
-              propose(event, (fields) => ({
-                type: 'installation.create',
-                requestId: crypto.randomUUID(),
-                clientId: client.id,
-                environment: fields.get('environment'),
-                label: fields.get('label'),
-                localInstallationId: fields.get('localInstallationId'),
-                tenantId: fields.get('tenantId'),
-                reason: fields.get('reason'),
-              }))
-            }
-          >
-            <fieldset disabled={locked}>
-              <label>
-                Environment code
-                <input
-                  name="environment"
-                  required
-                  maxLength={32}
-                  pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,31}"
-                  placeholder="production"
-                />
-              </label>
-              <label>
-                Installation label
-                <input name="label" required maxLength={100} />
-              </label>
-              <label>
-                Local installation ID
-                <input name="localInstallationId" required />
-              </label>
-              <label>
-                Tenant ID
-                <input name="tenantId" required />
-              </label>
-              <label>
-                Reason
-                <input name="reason" required maxLength={300} />
-              </label>
-              <button type="submit">Review installation</button>
-            </fieldset>
-          </form>
-        </details>
+        <>
+          <details>
+            <summary>Reserve a fresh installation</summary>
+            <p>
+              Central generates permanent installation, tenant and application IDs and registers
+              both pending products. Current MFA is required.
+            </p>
+            <form
+              key={`fresh-${detail.installations.length}`}
+              onSubmit={(event) =>
+                propose(event, (fields) => ({
+                  type: 'installation.reserve',
+                  requestId: crypto.randomUUID(),
+                  clientId: client.id,
+                  environment: fields.get('environment'),
+                  label: fields.get('label'),
+                  reason: fields.get('reason'),
+                }))
+              }
+            >
+              <fieldset disabled={locked}>
+                <label>
+                  Environment code
+                  <input
+                    name="environment"
+                    required
+                    maxLength={32}
+                    pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,31}"
+                  />
+                </label>
+                <label>
+                  Installation label
+                  <input name="label" required maxLength={100} />
+                </label>
+                <label>
+                  Reason
+                  <input name="reason" required maxLength={300} />
+                </label>
+                <button type="submit">Review fresh reservation</button>
+              </fieldset>
+            </form>
+          </details>
+          <details>
+            <summary>Register an installation</summary>
+            <p>
+              Use the durable installation and tenant identifiers supplied by the customer operator.
+              These bindings are permanent.
+            </p>
+            <form
+              key={detail.installations.length}
+              onSubmit={(event) =>
+                propose(event, (fields) => ({
+                  type: 'installation.create',
+                  requestId: crypto.randomUUID(),
+                  clientId: client.id,
+                  environment: fields.get('environment'),
+                  label: fields.get('label'),
+                  localInstallationId: fields.get('localInstallationId'),
+                  tenantId: fields.get('tenantId'),
+                  reason: fields.get('reason'),
+                }))
+              }
+            >
+              <fieldset disabled={locked}>
+                <label>
+                  Environment code
+                  <input
+                    name="environment"
+                    required
+                    maxLength={32}
+                    pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,31}"
+                    placeholder="production"
+                  />
+                </label>
+                <label>
+                  Installation label
+                  <input name="label" required maxLength={100} />
+                </label>
+                <label>
+                  Local installation ID
+                  <input name="localInstallationId" required />
+                </label>
+                <label>
+                  Tenant ID
+                  <input name="tenantId" required />
+                </label>
+                <label>
+                  Reason
+                  <input name="reason" required maxLength={300} />
+                </label>
+                <button type="submit">Review installation</button>
+              </fieldset>
+            </form>
+          </details>
+        </>
       )}
       {canWrite && !client.archived && detail.installations.length > 0 && (
         <details>

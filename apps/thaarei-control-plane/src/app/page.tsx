@@ -23,6 +23,9 @@ export default async function Home() {
         <a href="/clients">Clients and deployments →</a>
       </p>
       <p>
+        <a href="/modules">Module catalogues →</a>
+      </p>
+      <p>
         <a href="/reports">Usage and health →</a>
       </p>
       {staff.role === 'admin' && (

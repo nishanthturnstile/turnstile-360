@@ -18,3 +18,14 @@ node_modules
 # Private standalone backup/recovery configuration, proofs, archives and fences.
 **/.dms-*
 **/.next
+
+# Never accept host-generated selected-build input/output.
+apps/turnstile-web/module-build-inputs.json
+apps/*/module-selection.json
+# Private configuration plans and interrupted atomic writes never enter a build context.
+**/.installation-preparation.json
+**/.turnstile-preparation.json
+**/preparation-receipt.json
+**/.configuration-*.tmp
+**/.turnstile-*.tmp
+**/.installation-*.tmp

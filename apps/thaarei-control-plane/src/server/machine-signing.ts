@@ -1,7 +1,8 @@
 import 'server-only';
-import { createHash } from 'node:crypto';
-import { DECISION_TYPE, type Decision, decision } from '@thaarei/control-plane-contracts';
-import { importPKCS8, SignJWT } from 'jose';
+import { createHash, createPublicKey } from 'node:crypto';
+import { DECISION_TYPE } from '@thaarei/control-plane-contracts';
+import { INTENT_TYPE, installationIntent, versionedDecision } from '@thaarei/module-catalog';
+import { importPKCS8, importSPKI, jwtVerify, SignJWT } from 'jose';
 import type { PoolClient } from 'pg';
 import { z } from 'zod';
 import { AccessError } from './access.ts';
@@ -30,10 +31,45 @@ function signingMaterial() {
   const config = signingFile.parse(JSON.parse(protectedSecret(path)));
   return config;
 }
-export async function signDecision(raw: Decision) {
+export async function signDecision(raw: unknown) {
   const config = signingMaterial();
   const key = await importPKCS8(config.privateKey, 'RS256');
-  return new SignJWT(decision.parse(raw))
+  return new SignJWT(versionedDecision.parse(raw))
     .setProtectedHeader({ alg: 'RS256', typ: DECISION_TYPE, kid: config.kid })
     .sign(key);
+}
+
+export async function signInstallationIntent(raw: unknown) {
+  const config = signingMaterial(),
+    key = await importPKCS8(config.privateKey, 'RS256');
+  return new SignJWT(installationIntent.parse(raw))
+    .setProtectedHeader({ alg: 'RS256', typ: INTENT_TYPE, kid: config.kid })
+    .sign(key);
+}
+
+export async function verifyOwnInstallationIntent(token: string) {
+  const material = signingMaterial();
+  const pem = createPublicKey(material.privateKey)
+    .export({ type: 'spki', format: 'pem' })
+    .toString();
+  const value = await jwtVerify(
+    token,
+    async (header) => {
+      if (
+        header.kid !== material.kid ||
+        Object.keys(header).some((k) => !['alg', 'typ', 'kid'].includes(k))
+      )
+        throw new Error('Untrusted intent header');
+      return importSPKI(pem, 'RS256');
+    },
+    {
+      algorithms: ['RS256'],
+      issuer: runtime().config.origin,
+      audience: 'urn:thaarei:installer',
+      typ: INTENT_TYPE,
+      requiredClaims: ['iat', 'nbf', 'exp'],
+      maxTokenAge: '24h',
+    },
+  );
+  return installationIntent.parse(value.payload);
 }

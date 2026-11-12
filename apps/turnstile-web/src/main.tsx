@@ -19,6 +19,7 @@ const router = createBrowserRouter([
       ...[
         'invitations/join',
         'sign-in',
+        'setup-preparation',
         'forgot-password',
         'reset-password',
         'unauthorized',

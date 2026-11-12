@@ -5,7 +5,7 @@ import {
   SidebarLeftIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import type { UserSessionDto } from '@thaarei/turnstile-contracts';
+import type { ModuleCapabilitiesDto, UserSessionDto } from '@thaarei/turnstile-contracts';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
@@ -34,9 +34,17 @@ export function workspaceDestinations(
   path: string,
   canManage: boolean,
   session?: UserSessionDto,
+  modules: ModuleCapabilitiesDto['modules'] = [],
 ): WorkspaceDestination[] {
   return [
     { label: 'Home', href: '/', active: path === '/', icon: Home01Icon },
+    ...modules.map((module) => ({
+      label: module.title,
+      href: module.path,
+      active: path === module.path,
+      icon: Home01Icon,
+      group: 'Modules',
+    })),
     ...(session
       ? [
           ...(company(session, 'turnstile:people:manage')

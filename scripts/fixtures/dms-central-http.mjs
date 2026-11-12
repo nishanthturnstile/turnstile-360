@@ -265,6 +265,28 @@ export async function verifyDmsCentralHttp({
     await policy('approve');
     await cli({ action: 'sync' });
     const approved = await status();
+    if (approved.access !== 'full' && container) {
+      const diagnostic = await run('docker', [
+        'exec',
+        container,
+        'node',
+        '--input-type=module',
+        '-e',
+        `
+        import {createPool,withTenant} from './dist/infrastructure/database/postgres.js';
+        import {markerDigest} from './dist/modules/deployment/access.js';
+        import {readProtectedTrust,verifyDecision,evaluateDecision} from '@thaarei/deployment-control';
+        const pool=createPool(process.env.DMS_DATABASE_URL,1);let result={};
+        try {await withTenant(pool,process.env.INSTALLATION_TENANT_ID,async db=>{
+          const row=(await db.query('SELECT dms.deployment_read() AS snapshot')).rows[0]?.snapshot;
+          const trust=await readProtectedTrust(process.env.CONTROL_PLANE_VERIFICATION_KEYS_FILE);
+          result={row:!!row,quarantined:row?.quarantined,markerMatches:row?.marker_digest===await markerDigest(),issuerMatches:trust.issuer===process.env.CONTROL_PLANE_ORIGIN,now:Math.floor(Date.now()/1000),lastTime:row?.decision?.lastTime};
+          try {await verifyDecision(row.decision.accepted.token,row.binding,row.decision.epoch,trust,Math.floor(Date.now()/1000),true);result.signatureValid=true;}catch(error){result.verificationError=String(error.message).split('\\n')[0];}
+        });}catch(error){result.error=String(error.message).split('\\n')[0];}finally{await pool.end();}process.stdout.write(JSON.stringify(result));
+      `,
+      ]);
+      assert.equal(approved.access, 'full', diagnostic);
+    }
     assert.equal(approved.access, 'full', JSON.stringify(approved));
     await cli({ action: 'sync' });
     const secret = JSON.parse(await readFile(config.CONTROL_PLANE_MACHINE_SECRET_FILE, 'utf8'))

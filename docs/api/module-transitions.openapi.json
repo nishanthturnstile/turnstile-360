@@ -1,0 +1,159 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Central module activation", "version": "1.0.0" },
+  "paths": {
+    "/api/registry/products/{id}/modules/activate": {
+      "post": {
+        "description": "Current Admin/Operator MFA, exact same-origin JSON, current product/desired/active basis and pairing epoch, fresh matching authenticated inventory, independently verified selected delivery. Does not assign customer user permissions. Retries recover historical receipts and never reapply authority.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "security": [{ "StaffSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "expectedRevision": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "desiredRevision": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "epoch": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "installed": {
+                    "type": "object",
+                    "properties": {
+                      "catalogueDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                      "profileDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                      "releaseId": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+                    },
+                    "required": ["catalogueDigest", "profileDigest", "releaseId"],
+                    "additionalProperties": false
+                  },
+                  "activeBasis": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "catalogueDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                          "profileDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                          "releaseId": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                          "assignmentRevision": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 2147483647
+                          },
+                          "policyRevision": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 2147483647
+                          }
+                        },
+                        "required": [
+                          "catalogueDigest",
+                          "profileDigest",
+                          "releaseId",
+                          "assignmentRevision",
+                          "policyRevision"
+                        ],
+                        "additionalProperties": false
+                      },
+                      { "type": "null" }
+                    ]
+                  },
+                  "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+                },
+                "required": [
+                  "operationId",
+                  "expectedRevision",
+                  "desiredRevision",
+                  "epoch",
+                  "installed",
+                  "activeBasis",
+                  "reason"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Atomic activation receipt; signed sync/application remains required",
+            "headers": {
+              "Cache-Control": { "schema": { "const": "no-store", "type": "string" } },
+              "Referrer-Policy": { "schema": { "const": "no-referrer", "type": "string" } }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "headers": {
+              "Cache-Control": { "schema": { "const": "no-store", "type": "string" } },
+              "Referrer-Policy": { "schema": { "const": "no-referrer", "type": "string" } }
+            }
+          },
+          "401": {
+            "description": "Staff session required",
+            "headers": {
+              "Cache-Control": { "schema": { "const": "no-store", "type": "string" } },
+              "Referrer-Policy": { "schema": { "const": "no-referrer", "type": "string" } }
+            }
+          },
+          "403": {
+            "description": "Current writer/MFA or origin denied",
+            "headers": {
+              "Cache-Control": { "schema": { "const": "no-store", "type": "string" } },
+              "Referrer-Policy": { "schema": { "const": "no-referrer", "type": "string" } }
+            }
+          },
+          "409": {
+            "description": "Current binding, revision, desired, basis, pairing or installed package changed",
+            "headers": {
+              "Cache-Control": { "schema": { "const": "no-store", "type": "string" } },
+              "Referrer-Policy": { "schema": { "const": "no-referrer", "type": "string" } }
+            }
+          },
+          "503": {
+            "description": "Recovery quarantine or required service unavailable",
+            "headers": {
+              "Cache-Control": { "schema": { "const": "no-store", "type": "string" } },
+              "Referrer-Policy": { "schema": { "const": "no-referrer", "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "StaffSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Secure-thaarei-control-plane.session_token",
+        "description": "Admitted verified employee with current live staff MFA; never customer/machine credentials."
+      }
+    }
+  }
+}

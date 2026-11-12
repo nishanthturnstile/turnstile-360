@@ -8,6 +8,8 @@ import { authOptions } from './auth-options.ts';
 export const auth = betterAuth({
   ...authOptions({
     supportedVersions: { dms: [], turnstile: [] },
+    moduleReferenceDirectory: undefined,
+    moduleReleaseTrustFile: undefined,
     signingKeyFile: undefined,
     recoveryMarkerFile: undefined,
     origin: 'https://schema.invalid',

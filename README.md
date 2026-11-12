@@ -88,7 +88,7 @@ checks built production packaging/non-root runtime. See the runbook for Nginx im
 recipient acceptance. The [user-management release runbook](docs/runbooks/user-management-release.md)
 describes exact three-image verification, archive rehearsal and explicit gated cutover/recovery.
 
-Builds cover seven projects: four application projects and three shared packages.
+Builds cover twelve projects: five application projects and seven shared packages.
 TypeScript 6.0.3 is pinned for Nest generator/compiler compatibility. Three focused browser authentication journeys use real APIs and Mailpit through HTTPS.
 Processor and business end-to-end tests remain future feature work. The database suite
 verifies AUTH-01–07 authority, isolation, persistence, product BFF, machine enrollment and
@@ -100,6 +100,11 @@ onboarding a real customer.
 
 The [repository layout and package dependencies](architecture.md#repository-and-package-dependencies)
 define application, contract/client, tooling, and deployment ownership.
+
+The artifact-only module installation launcher and private handover workflow are described in
+[the installation handover runbook](docs/runbooks/installation-handover.md).
+The [module release handoff](docs/turnstile/modules/module_release_handover.md) links
+requirements to frozen local evidence, inventories and the remaining target gates.
 
 ## Documentation
 
@@ -128,3 +133,12 @@ Third-party components retain their own licenses and notices. Required product p
 retain the accepted no-mandatory-paid-license dependency policy.
 
 See the [documentation index](docs/README.md) for plans, specifications and runbooks by area.
+
+Selected Turnstile module artifacts and private local-bundle qualification follow the
+[module delivery runbook](docs/runbooks/module-delivery.md). Signed runtime authority and
+explicit user permissions follow the [module access runbook](docs/runbooks/module-access.md).
+Staff activation and private profile changes follow the
+[transition runbook](docs/runbooks/module-transitions.md); package availability alone grants no access.
+
+Central-first combined private configuration preparation and its explicit owning bootstrap
+sequence are documented in the [installation intent runbook](docs/runbooks/installation-intents.md).

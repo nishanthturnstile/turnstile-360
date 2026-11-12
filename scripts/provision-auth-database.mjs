@@ -152,8 +152,30 @@ export async function provisionDatabase(
       /^[A-Z0-9]{5}$/.test(String(error.code))
         ? String(error.code)
         : 'unknown';
-    throw new Error(
-      `Database role provisioning failed (${stage}, ${code}); use a dedicated database and fresh roles`,
+    throw Object.assign(
+      new Error(
+        `Database role provisioning failed (${stage}, ${code}); use a dedicated database and fresh roles`,
+      ),
+      {
+        retryableBeforeEffects:
+          stage === 'connect' &&
+          !!error &&
+          typeof error === 'object' &&
+          'code' in error &&
+          [
+            '57P03',
+            '53300',
+            '08000',
+            '08001',
+            '08006',
+            'ECONNREFUSED',
+            'ETIMEDOUT',
+            'ENETUNREACH',
+            'EHOSTUNREACH',
+            'ENOTFOUND',
+            'EAI_AGAIN',
+          ].includes(String(error.code)),
+      },
     );
   } finally {
     await client.end();
@@ -172,6 +194,12 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
     );
   } catch (error) {
     console.error(error instanceof Error ? error.message : 'Database provisioning failed');
-    process.exitCode = 1;
+    process.exitCode =
+      error &&
+      typeof error === 'object' &&
+      'retryableBeforeEffects' in error &&
+      error.retryableBeforeEffects === true
+        ? 75
+        : 1;
   }
 }

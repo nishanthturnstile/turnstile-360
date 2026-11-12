@@ -20,7 +20,9 @@ function run(command, args, env = process.env, input) {
     // runner budget does not alter application/request deadlines.
     timeout:
       args[0] === 'scripts/test-auth-browser.mjs'
-        ? 240000
+        ? process.argv.includes('--module-cutover')
+          ? 900000
+          : 240000
         : args.includes('test:database')
           ? env.DMS_TEST_NATIVE_STRUCTURE === 'true'
             ? 900000
@@ -402,6 +404,8 @@ try {
           ...(process.argv.includes('--structured-onboarding') ? ['--structured-onboarding'] : []),
           ...(process.argv.includes('--structure-editor') ? ['--structure-editor'] : []),
           ...(process.argv.includes('--people-ui') ? ['--people-ui'] : []),
+          ...(process.argv.includes('--modules') ? ['--modules'] : []),
+          ...(process.argv.includes('--module-cutover') ? ['--module-cutover'] : []),
         ],
         env,
       ),
