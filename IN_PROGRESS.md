@@ -300,6 +300,20 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
+PR16-CI — **Completed** (test fix/local verification; owner: Codex, 2026-11-12).
+Fixed the CI redirect test's 100 ms deadline racing cold HTTP connections: ordinary
+redirect/body checks use 5 seconds, while the stalled response retains a separate
+1-second deadline and an assertion that its request reached the real server. Production
+transport settings and runtime code are unchanged. Five consecutive focused transport
+runs and `pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` pass; six existing
+conditional non-module integration skips remain. Initial integration under a /tmp worktree
+failed three processor cases because the sandbox's private /tmp hid the Python venv;
+moving the isolated checkout/venv under home resolved those cases without processor edits.
+The historical MOD-I10 frozen record remains immutable and identifies the pre-fix test
+snapshot; this test-only correction has separate verification logs at /tmp/pr16-*.log,
+including the successful /tmp/pr16-integration-home.log. Fix publication uses PR #16;
+GitHub validation of the new commit remains pending. Concurrent UI work was preserved.
+
 MOD-PR — **Completed** (owner: Codex, 2026-11-12). Committed all 253 accumulated
 MOD-I01–10 paths on feat/centrally-managed-module-delivery and opened
 [PR #16](https://github.com/nishanthturnstile/turnstile-360/pull/16) against development.
