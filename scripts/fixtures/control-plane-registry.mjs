@@ -44,7 +44,10 @@ export async function verifyCentralRegistry({
   await command(viewer, original, 403);
   const viewerList = await viewer.call('/clients');
   assert.equal(viewerList.status, 200);
-  assert.ok(!viewerList.text.includes('Register a client'));
+  assert.ok(
+    !viewerList.text.includes('id="register-client"'),
+    'Viewer has no registration controls',
+  );
   const auditBefore = await count('registry_audit');
   const [first, repeat] = await Promise.all([command(admin, original), command(admin, original)]);
   assert.deepEqual(first, repeat, 'Concurrent identical retries preserve one receipt');
@@ -257,9 +260,7 @@ export async function verifyCentralRegistry({
   assert.equal(product.firstActivationAcknowledgedAt, null);
   assert.equal(product.lastContactAt, null);
   const firstApprovedAt = product.firstApprovedAt;
-  assert.ok(
-    (await admin.call(`/clients/${clientId}`)).text.includes('awaiting activation acknowledgement'),
-  );
+  assert.ok((await admin.call(`/clients/${clientId}`)).text.includes('Waiting for customer sync'));
   const beforeRepeat = await count('registry_audit');
   await command(admin, policy(dms.resourceId, 2, 'approve'), 409);
   assert.equal(await count('registry_audit'), beforeRepeat);

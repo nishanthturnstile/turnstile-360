@@ -22,6 +22,7 @@ import { verifyModuleTransitions } from './fixtures/control-plane-module-transit
 import { verifyCentralCatalogues } from './fixtures/control-plane-modules.mjs';
 import { verifyOfflineImage } from './fixtures/control-plane-offline.mjs';
 import { verifyCentralRegistry } from './fixtures/control-plane-registry.mjs';
+import { verifyControlPlaneUi } from './fixtures/control-plane-ui.mjs';
 import { verifyDmsCentralHttp } from './fixtures/dms-central-http.mjs';
 import { verifyInstallationHandover } from './fixtures/installation-handover.mjs';
 import { verifyCombinedPreparation } from './fixtures/installation-preparation.mjs';
@@ -851,6 +852,13 @@ try {
       const checked = await verifyTotp(admin, adminCodes.totpURI);
       assert.equal(checked.status, 200, checked.text);
     },
+  });
+  await verifyControlPlaneUi({
+    admin,
+    viewer,
+    origin,
+    reauthenticateAdmin: async () =>
+      assert.equal((await verifyTotp(admin, adminCodes.totpURI)).status, 200),
   });
   const moduleReleaseTrust = JSON.parse(
     await readFile(env.CONTROL_PLANE_MODULE_RELEASE_TRUST_FILE, 'utf8'),

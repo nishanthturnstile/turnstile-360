@@ -2,6 +2,8 @@ import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { AccessError, requireStaff } from '../../../server/access.ts';
 import { readCatalogue } from '../../../server/module-service.ts';
+import { PageHeader } from '../../ui/Primitives.tsx';
+import { Workspace } from '../../ui/Workspace.tsx';
 import { CatalogueEditor } from '../CatalogueEditor.tsx';
 export const dynamic = 'force-dynamic';
 export default async function Catalogue({ params }: { params: Promise<{ id: string }> }) {
@@ -15,12 +17,20 @@ export default async function Catalogue({ params }: { params: Promise<{ id: stri
     throw error;
   });
   return (
-    <main>
-      <p>
-        <a href="/modules">← Module catalogues</a>
-      </p>
-      <h1>Catalogue classification</h1>
-      <CatalogueEditor role={staff.role} record={record} />
-    </main>
+    <Workspace staff={staff}>
+      <main>
+        <nav className="breadcrumbs" aria-label="Breadcrumb">
+          <a href="/modules">Module catalogues</a>
+          <span>/</span>
+          <span>Classification</span>
+        </nav>
+        <PageHeader
+          eyebrow="CATALOGUE VERSION"
+          title="Catalogue classification"
+          description="Review module categories and dependencies before publishing an immutable release."
+        />
+        <CatalogueEditor role={staff.role} record={record} />
+      </main>
+    </Workspace>
   );
 }

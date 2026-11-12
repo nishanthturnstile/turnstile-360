@@ -2,6 +2,8 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AccessError, requireStaff } from '../../server/access.ts';
 import { listClients } from '../../server/registry-service.ts';
+import { PageHeader } from '../ui/Primitives.tsx';
+import { Workspace } from '../ui/Workspace.tsx';
 import { ClientRegistry } from './ClientRegistry.tsx';
 export const dynamic = 'force-dynamic';
 export default async function Clients() {
@@ -12,13 +14,15 @@ export default async function Clients() {
   });
   const initial = await listClients(input, {});
   return (
-    <main>
-      <p>
-        <a href="/">← Workspace</a>
-      </p>
-      <h1>Clients</h1>
-      <p>Register customers and review their installations and deployed products.</p>
-      <ClientRegistry initial={initial} role={context.role} />
-    </main>
+    <Workspace staff={context}>
+      <main>
+        <PageHeader
+          eyebrow="CLIENT REGISTRY"
+          title="Clients & installations"
+          description="Register a client, prepare an installation and guide each application through setup."
+        />
+        <ClientRegistry initial={initial} role={context.role} />
+      </main>
+    </Workspace>
   );
 }

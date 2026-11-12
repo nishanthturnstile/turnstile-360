@@ -17,6 +17,9 @@ import {
 import { catalogueReceipt, catalogueRecord } from '../../contracts/module-catalogues.ts';
 import { enforcementCommand, moduleActivationCommand } from '../../contracts/module-transitions.ts';
 import { request } from '../access/client.ts';
+import { Badge, NextAction, Workflow } from '../ui/Primitives.tsx';
+import { ReviewHeading } from '../ui/ReviewHeading.tsx';
+import { moduleGuidance } from '../ui/workflow.ts';
 import { ModuleDependencyGraph } from './ModuleDependencyGraph.tsx';
 
 const titles = {
@@ -69,7 +72,19 @@ export function ModuleAssignment({
     if (pending) reviewHeading.current?.focus();
   }, [pending]);
   const canWrite = ['admin', 'operator'].includes(role) && !view.archived;
-  const locked = busy || pending !== null;
+  const locked =
+    busy ||
+    pending !== null ||
+    activation !== null ||
+    enforcement !== null ||
+    intentOperation !== null;
+  const guidance = moduleGuidance(view);
+  const activationBlocked =
+    view.policyState !== 'approved' ||
+    view.minimumDecisionVersion !== 2 ||
+    !view.handover.authorityReady ||
+    view.statuses.includes('inventory-mismatch') ||
+    view.statuses.includes('upgrade-required');
   const resolution = source
     ? resolveSelection(source, { requestedIndividualIds: requested })
     : null;
@@ -227,6 +242,9 @@ export function ModuleAssignment({
     }
     setView(current);
     setActivation(null);
+    setEnforcement(null);
+    setIntentOperation(null);
+    setIntentFile(null);
     setPending(null);
     setAttempted(false);
     setConfirmed(false);
@@ -254,8 +272,7 @@ export function ModuleAssignment({
   }
   async function reload() {
     if (
-      pending &&
-      attempted &&
+      (pending || activation || enforcement || intentOperation) &&
       !window.confirm(
         'The last request may have committed. Discard this pending request and load current state?',
       )
@@ -279,14 +296,100 @@ export function ModuleAssignment({
   );
   return (
     <>
-      <p>
-        Installation <code>{view.binding.localInstallationId}</code> · Product{' '}
-        <code>{view.binding.productId}</code>
-      </p>
-      <p>
-        Product policy: {view.policyState} · Revision {view.productRevision}
-      </p>
-      <p>
+      <nav className="local-nav" aria-label="Module setup sections">
+        <a href="#module-selection">Module selection</a>
+        <a href="#module-delivery">Package & activation</a>
+        <a href="#module-handover">Handover</a>
+      </nav>
+      <NextAction title={guidance.title} href={guidance.href} label={guidance.label}>
+        {guidance.description}
+      </NextAction>
+      {(!canWrite || role !== 'admin') && (
+        <p className="muted">
+          {!canWrite
+            ? view.archived
+              ? 'Archived client · Module changes are read-only.'
+              : 'Viewer access · An Operator or Administrator must complete setup changes.'
+            : 'Operator access · An Administrator must perform permanent v2 enforcement.'}
+        </p>
+      )}
+      <details className="stage-details">
+        <summary>View the full setup workflow</summary>
+        <section aria-label="Module setup workflow">
+          <h2>From selection to activation</h2>
+          <Workflow
+            label="Module lifecycle progress"
+            steps={[
+              {
+                title: 'Choose & approve modules',
+                description: view.desired
+                  ? 'An approved desired profile is saved.'
+                  : 'Select a published version, save a draft and approve it.',
+                state: view.desired ? 'complete' : 'current',
+                href: '#module-selection',
+              },
+              {
+                title: 'Prepare the verified package',
+                description: view.delivery
+                  ? 'A matching verified package is available.'
+                  : 'The release operator builds and verifies the approved profile.',
+                state: view.delivery ? 'complete' : view.desired ? 'current' : 'waiting',
+                href: '#module-delivery',
+              },
+              {
+                title: 'Install at the customer',
+                description: view.inventory
+                  ? 'Module-aware installation inventory has been reported; review its exact version.'
+                  : 'Customer operator prepares the private configuration and installs the bundle.',
+                state:
+                  view.inventory &&
+                  !view.statuses.includes('inventory-mismatch') &&
+                  !view.statuses.includes('upgrade-required')
+                    ? 'complete'
+                    : view.delivery
+                      ? 'current'
+                      : 'waiting',
+                href: '#module-intent',
+              },
+              {
+                title: 'Pair & approve each product',
+                description: 'DMS and Turnstile have independent pairing and product decisions.',
+                state:
+                  view.handover.products.length > 0 &&
+                  view.handover.products.every((p) => p.paired && p.policyState === 'approved')
+                    ? 'complete'
+                    : view.inventory
+                      ? 'current'
+                      : 'waiting',
+                href: `/clients/${view.binding.clientId}`,
+              },
+              {
+                title: 'Enforce & activate modules',
+                description:
+                  view.minimumDecisionVersion === 1
+                    ? 'Administrator reviews permanent v2 enforcement before activation.'
+                    : 'Review exact inventory, current MFA and explicit profile activation.',
+                state:
+                  view.statuses.includes('active') && !view.statuses.includes('restricted')
+                    ? 'complete'
+                    : view.inventory && view.policyState === 'approved'
+                      ? 'current'
+                      : 'waiting',
+                href:
+                  view.minimumDecisionVersion === 1 ? '#module-enforcement' : '#module-activation',
+              },
+              {
+                title: 'Confirm & hand over',
+                description:
+                  'Check signed acknowledgements, reporting and customer administrator handover.',
+                state: view.statuses.includes('active') ? 'current' : 'waiting',
+                href: '#module-handover',
+              },
+            ]}
+          />
+        </section>
+      </details>
+      <p className="muted">
         Module selection grants no customer role or action permission. Package delivery and signed
         customer activation are separate steps.
       </p>
@@ -296,339 +399,8 @@ export function ModuleAssignment({
       <button type="button" className="secondary" disabled={busy} onClick={() => void reload()}>
         Reload current assignment
       </button>
-      <section aria-label="Module assignment status">
-        <h2>Assignment and delivery</h2>
-        <ul>
-          {view.statuses.map((status) => (
-            <li key={status}>{titles[status]}</li>
-          ))}
-        </ul>
-        <dl>
-          <dt>Draft</dt>
-          <dd>
-            {view.draft
-              ? `Saved revision ${view.draft.revision}${view.draft.revision !== view.productRevision ? ' · Review again after the product changed' : ''}`
-              : 'None'}
-          </dd>
-          <dt>Approved desired assignment</dt>
-          <dd>
-            {view.desired ? (
-              <>
-                Revision {view.desired.revision} ·{' '}
-                {view.desired.document.profile.modules.map((m) => m.id).join(', ')}
-                <br />
-                Profile <code>{view.desired.document.profileDigest}</code>
-              </>
-            ) : (
-              'None'
-            )}
-          </dd>
-          <dt>Verified delivery</dt>
-          <dd>
-            {view.delivery ? (
-              <>
-                Local bundle reference <code>{view.delivery.key}</code>
-                <br />
-                Release <code>{view.delivery.inventory.releaseId}</code>
-              </>
-            ) : (
-              'No matching verified package available.'
-            )}
-          </dd>
-          <dt>Observed installation</dt>
-          <dd>
-            {view.inventory ? (
-              <>
-                Reported profile <code>{view.inventory.installed.profileDigest}</code> ·{' '}
-                {view.inventory.observedAt}. This is an installation claim.
-              </>
-            ) : (
-              'No current module-aware inventory received.'
-            )}
-          </dd>
-          <dt>Central module authority</dt>
-          <dd>
-            {view.authority ? (
-              <>
-                Central allowed IDs: {view.authority.allowedIds.join(', ')}. Local signed
-                application and user permissions still apply.
-              </>
-            ) : (
-              'No active module authority. Product approval remains separate.'
-            )}
-          </dd>
-          <dt>Last acknowledged module grant</dt>
-          <dd>
-            {view.effective ? (
-              <>
-                Profile <code>{view.effective.profileDigest}</code>; allowed IDs:{' '}
-                {view.effective.allowedIds.join(', ')}. Applied {view.effective.appliedAt}; expires{' '}
-                {view.effective.expiresAt}. This is product-reported application evidence. Current
-                local trust, enablement and user permissions still apply.
-              </>
-            ) : (
-              'No valid acknowledgement for the current policy and pairing epoch.'
-            )}
-          </dd>
-        </dl>
-        <section aria-label="Installation handover">
-          <h3>Installation handover</h3>
-          {!view.handover.authorityReady && (
-            <p role="status">Central recovery reconciliation is required.</p>
-          )}
-          <ul>
-            {view.handover.products.map((p) => (
-              <li key={p.productId}>
-                {p.product === 'dms' ? 'DMS' : 'Turnstile'}:{' '}
-                {p.paired ? 'Paired' : 'Awaiting pairing'}; policy {p.policyState};{' '}
-                {p.acknowledged
-                  ? 'Current approval acknowledged'
-                  : 'Awaiting current approval acknowledgement'}
-                ; report {p.reportFreshness}
-                {p.reportReceivedAt ? ` (${p.reportReceivedAt})` : ''}.
-              </li>
-            ))}
-          </ul>
-          <p>
-            Staff must approve each product independently. Reports describe installation claims;
-            they do not prove customer user access. The customer operator completes private setup
-            and handover using the verified installation bundle.
-          </p>
-          <ol>
-            <li>Confirm the published catalogue, approved selection and verified package.</li>
-            <li>
-              Deliver the signed fresh installation intent and independently provisioned public
-              trust to the customer operator.
-            </li>
-            <li>
-              Deliver each protected pairing file separately. Approve DMS and Turnstile with current
-              MFA.
-            </li>
-            <li>
-              Require v2 enforcement, review the reported exact installed inventory, then activate
-              the selected module profile.
-            </li>
-            <li>
-              Wait for both products to acknowledge current decisions and report independently.
-            </li>
-            <li>
-              The customer verifies email, provisions purpose-separated clients, completes private
-              administrator handover and grants module permissions explicitly.
-            </li>
-          </ol>
-          <p>
-            A changed assignment or incompatible package requires reconciliation or a reviewed
-            upgrade. Never reset local identities to bypass it. Central staff do not receive
-            customer database or Docker credentials.
-          </p>
-        </section>
-        {role === 'admin' && !view.archived && view.minimumDecisionVersion === 1 && (
-          <details>
-            <summary>Require signed module decisions</summary>
-            <p>
-              This permanently requires module-aware v2 decisions. It grants no module access and
-              prevents legacy protocol fallback.
-            </p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const f = new FormData(e.currentTarget);
-                setEnforcement(
-                  enforcementCommand.parse({
-                    operationId: crypto.randomUUID(),
-                    expectedRevision: view.productRevision,
-                    reason: f.get('reason'),
-                  }),
-                );
-              }}
-            >
-              <fieldset disabled={busy || enforcement !== null}>
-                <label>
-                  Reason
-                  <input name="reason" required maxLength={300} />
-                </label>
-                <button type="submit">Review module enforcement</button>
-              </fieldset>
-            </form>
-            {enforcement && (
-              <section aria-label="Confirm module enforcement">
-                <p>{enforcement.reason}</p>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={async () => {
-                    setBusy(true);
-                    try {
-                      await request(
-                        `/api/registry/products/${view.binding.productId}/modules/enforce`,
-                        enforcement,
-                      );
-                      setEnforcement(null);
-                      await readback();
-                      setMessage(
-                        'Module-aware v2 enforcement is required. Pairing, approval and activation remain separate.',
-                      );
-                    } catch {
-                      setMessage(
-                        'Unable to confirm enforcement. Reauthenticate if required, then retry this exact operation.',
-                      );
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                >
-                  Confirm permanent module enforcement
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  disabled={busy}
-                  onClick={() => setEnforcement(null)}
-                >
-                  Close enforcement review
-                </button>
-              </section>
-            )}
-          </details>
-        )}
-        {canWrite && view.desired && view.inventory && view.delivery && (
-          <details>
-            <summary>Activate installed modules</summary>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                setActivation(
-                  moduleActivationCommand.parse({
-                    operationId: crypto.randomUUID(),
-                    expectedRevision: view.productRevision,
-                    desiredRevision: view.desired?.revision,
-                    epoch: view.inventory?.epoch,
-                    installed: view.inventory?.installed,
-                    activeBasis: view.authority?.active ?? null,
-                    reason: new FormData(event.currentTarget).get('reason'),
-                  }),
-                );
-              }}
-            >
-              <fieldset disabled={busy || activation !== null}>
-                {reason}
-                <button type="submit">Review module activation</button>
-              </fieldset>
-            </form>
-            {activation && (
-              <section aria-label="Review module activation">
-                <p>
-                  Activate the approved desired profile for the currently reported installation. The
-                  server verifies the package, current assignment, pairing and MFA again. Customer
-                  permissions remain separate.
-                </p>
-                <p>Reason: {activation.reason}</p>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setBusy(true);
-                    void request(
-                      `/api/registry/products/${view.binding.productId}/modules/activate`,
-                      activation,
-                    )
-                      .then(() => readback())
-                      .then(() =>
-                        setMessage(
-                          'Activation approved. Sync the customer installation to apply the signed decision.',
-                        ),
-                      )
-                      .catch(() =>
-                        setMessage(
-                          'Activation did not complete. Retry the same operation to recover its receipt, or reload and review current state.',
-                        ),
-                      )
-                      .finally(() => setBusy(false));
-                  }}
-                >
-                  Confirm module activation
-                </button>
-                <button type="button" disabled={busy} onClick={() => setActivation(null)}>
-                  Close activation review
-                </button>
-              </section>
-            )}
-          </details>
-        )}
-        {view.desired && (
-          <p>
-            <a href={`/api/registry/products/${view.binding.productId}/modules/build-request`}>
-              Download approved profile build request
-            </a>
-          </p>
-        )}
-        {canWrite && view.desired && view.delivery && (
-          <details>
-            <summary>Prepare installation intent</summary>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                const reason = String(new FormData(event.currentTarget).get('reason') ?? '').trim();
-                if (reason) {
-                  setIntentOperation({
-                    operationId: crypto.randomUUID(),
-                    expectedRevision: view.productRevision,
-                    reason,
-                  });
-                  setIntentFile(null);
-                }
-              }}
-            >
-              <fieldset disabled={busy || intentOperation !== null}>
-                <label>
-                  Reason
-                  <input name="reason" required maxLength={300} />
-                </label>
-                <button type="submit">Review installation intent</button>
-              </fieldset>
-            </form>
-            {intentOperation && (
-              <section aria-label="Review installation intent">
-                <p>
-                  Issue public setup metadata for the current approved profile. It contains no
-                  pairing credential and grants no access.
-                </p>
-                <button
-                  type="button"
-                  disabled={busy || intentFile !== null}
-                  onClick={() => void issueIntent()}
-                >
-                  Confirm and download intent
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setIntentOperation(null);
-                    setIntentFile(null);
-                  }}
-                >
-                  Close intent review
-                </button>
-              </section>
-            )}
-            {intentFile && (
-              <button type="button" onClick={() => downloadIntent(intentFile)}>
-                Download issued intent again
-              </button>
-            )}
-          </details>
-        )}
-        {view.legacy && (
-          <p>
-            This product uses the legacy activation protocol. A reviewed module-aware upgrade is
-            required before selected modules can activate.
-          </p>
-        )}
-        {view.archived && <p>This client is archived. Assignments are read-only.</p>}
-      </section>
       {pending && (
-        <section aria-label="Review module assignment">
+        <section className="review-panel" aria-label="Review module assignment">
           <h2 ref={reviewHeading} tabIndex={-1}>
             {pending.type === 'assignment.approve'
               ? 'Approve desired assignment'
@@ -696,135 +468,591 @@ export function ModuleAssignment({
           </p>
         </section>
       )}
-      <section aria-label="Module selection">
-        <h2>Choose a published catalogue</h2>
-        {!list.catalogues.length && !source ? (
-          <p>
-            No published catalogue is available. An Administrator must publish verified module
-            metadata first.
+      <details id="module-selection" className="stage-details" open={!view.desired || !!view.draft}>
+        <summary>
+          01 · Choose & approve modules{' '}
+          <Badge tone={view.draft ? 'warning' : view.desired ? 'success' : 'neutral'}>
+            {view.draft ? 'Draft saved' : view.desired ? 'Profile approved' : 'Selection needed'}
+          </Badge>
+        </summary>
+        <section aria-label="Module selection">
+          <p className="eyebrow">SELECTION & APPROVAL</p>
+          <h2>Choose a published catalogue</h2>
+          <p className="muted">
+            Select the Individual modules you need. Core modules and required dependencies are
+            included in the full set you review before saving.
           </p>
-        ) : (
-          <>
-            <label>
-              Catalogue version
-              <select
-                disabled={!canWrite || locked}
-                value={source?.id ?? ''}
-                onChange={(e) => void choose(e.target.value)}
-              >
-                {source && !list.catalogues.some((c) => c.id === source.id) && (
-                  <option value={source.id}>{source.id} · Saved assignment version</option>
-                )}
-                {list.catalogues.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.id} · {c.platform} · {c.moduleCount} modules
-                  </option>
-                ))}
-              </select>
-            </label>
-            {list.nextCursor && (
-              <button
-                type="button"
-                className="secondary"
-                disabled={locked}
-                onClick={() => void more()}
-              >
-                Load more published catalogues
-              </button>
-            )}
-          </>
-        )}
-        {source && resolution && (
-          <>
+          {!list.catalogues.length && !source ? (
             <p>
-              <a href={`/modules/${source.id}`}>View immutable catalogue and classification →</a>
+              No published catalogue is available. An Administrator must publish verified module
+              metadata first.
             </p>
-            <ModuleDependencyGraph
-              catalogue={source}
-              requested={requested}
-              resolved={resolution.resolvedIds}
-            />
-            <fieldset disabled={!canWrite || locked}>
-              <legend>Core and Individual modules</legend>
-              {source.modules.map((m) => (
-                <article id={`selection-${m.id}`} key={m.id}>
-                  <label className="module-check">
-                    <input
-                      type="checkbox"
-                      checked={m.category === 'core' || requested.includes(m.id)}
-                      disabled={m.category === 'core'}
-                      onChange={(e) =>
-                        setRequested(
-                          e.target.checked
-                            ? [...requested, m.id]
-                            : requested.filter((id) => id !== m.id),
-                        )
-                      }
-                    />
-                    {m.label} · {m.category === 'core' ? 'Core (required)' : 'Individual'}
-                  </label>
-                  <p>
-                    Requires:{' '}
-                    {m.requires.length
-                      ? m.requires.map((id) => (
-                          <a key={id} href={`#selection-${id}`}>
-                            {source.modules.find((m) => m.id === id)?.label ?? id}{' '}
-                          </a>
-                        ))
-                      : 'None'}
-                    . Optional integrations:{' '}
-                    {m.optionalIntegrations.length ? m.optionalIntegrations.join(', ') : 'None'}.
-                  </p>
-                  {resolution.additionalRequiredIds.includes(m.id) && (
+          ) : (
+            <>
+              <label>
+                Catalogue version
+                <select
+                  disabled={!canWrite || locked}
+                  value={source?.id ?? ''}
+                  onChange={(e) => void choose(e.target.value)}
+                >
+                  {source && !list.catalogues.some((c) => c.id === source.id) && (
+                    <option value={source.id}>{source.id} · Saved assignment version</option>
+                  )}
+                  {list.catalogues.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.id} · {c.platform} · {c.moduleCount} modules
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {list.nextCursor && (
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={locked}
+                  onClick={() => void more()}
+                >
+                  Load more published catalogues
+                </button>
+              )}
+            </>
+          )}
+          {source && resolution && (
+            <>
+              <p>
+                <a href={`/modules/${source.id}`}>View immutable catalogue and classification →</a>
+              </p>
+              <details>
+                <summary>Explore module dependencies</summary>
+                <ModuleDependencyGraph
+                  catalogue={source}
+                  requested={requested}
+                  resolved={resolution.resolvedIds}
+                />
+              </details>
+              <fieldset disabled={!canWrite || locked}>
+                <legend>Core and Individual modules</legend>
+                {source.modules.map((m) => (
+                  <article className="module-card" id={`selection-${m.id}`} key={m.id}>
+                    <label className="module-check">
+                      <input
+                        type="checkbox"
+                        checked={m.category === 'core' || requested.includes(m.id)}
+                        disabled={m.category === 'core'}
+                        onChange={(e) =>
+                          setRequested(
+                            e.target.checked
+                              ? [...requested, m.id]
+                              : requested.filter((id) => id !== m.id),
+                          )
+                        }
+                      />
+                      {m.label} · {m.category === 'core' ? 'Core (required)' : 'Individual'}
+                    </label>
+                    <p>
+                      Requires:{' '}
+                      {m.requires.length
+                        ? m.requires.map((id) => (
+                            <a key={id} href={`#selection-${id}`}>
+                              {source.modules.find((m) => m.id === id)?.label ?? id}{' '}
+                            </a>
+                          ))
+                        : 'None'}
+                      . Optional integrations:{' '}
+                      {m.optionalIntegrations.length ? m.optionalIntegrations.join(', ') : 'None'}.
+                    </p>
+                    {resolution.additionalRequiredIds.includes(m.id) && (
+                      <p className="notice">
+                        Required by your selection. Included in the proposed set; confirmation is
+                        required.
+                      </p>
+                    )}
+                    {requested.includes(m.id) &&
+                      m.requires.some((id) => resolution.additionalRequiredIds.includes(id)) && (
+                        <p>Additional requirements must be reviewed before saving.</p>
+                      )}
+                    {!resolution.resolvedIds.includes(m.id) && (
+                      <p>Not included in the proposed package.</p>
+                    )}
+                  </article>
+                ))}
+              </fieldset>
+              <p aria-live="polite">
+                Proposed package: {resolution.resolvedIds.join(', ')}
+                {resolution.additionalRequiredIds.length
+                  ? `. Additional requirements: ${resolution.additionalRequiredIds.join(', ')}`
+                  : '. No additional Individual dependencies.'}
+              </p>
+              {removedDesired.length > 0 && (
+                <p>
+                  Previous desired modules removed by this selection: {removedDesired.join(', ')}.
+                </p>
+              )}
+              {canWrite && (
+                <>
+                  <form onSubmit={(e) => void prepare(e, 'assignment.draft')}>
+                    <fieldset disabled={locked}>
+                      {reason}
+                      <button type="submit">Review and save draft</button>
+                    </fieldset>
+                  </form>
+                  {!sameDraft && (
                     <p className="notice">
-                      Required by your selection. Included in the proposed set; confirmation is
-                      required.
+                      Save the current selection as a draft before approving. If the product or
+                      catalogue changed, review and save a new draft first.
                     </p>
                   )}
-                  {requested.includes(m.id) &&
-                    m.requires.some((id) => resolution.additionalRequiredIds.includes(id)) && (
-                      <p>Additional requirements must be reviewed before saving.</p>
-                    )}
-                  {!resolution.resolvedIds.includes(m.id) && (
-                    <p>Not included in the proposed package.</p>
-                  )}
-                </article>
-              ))}
-            </fieldset>
-            <p aria-live="polite">
-              Proposed package: {resolution.resolvedIds.join(', ')}
-              {resolution.additionalRequiredIds.length
-                ? `. Additional requirements: ${resolution.additionalRequiredIds.join(', ')}`
-                : '. No additional Individual dependencies.'}
+                  <form onSubmit={(e) => void prepare(e, 'assignment.approve')}>
+                    <fieldset disabled={locked || !sameDraft}>
+                      <h3>Approve the saved selection</h3>
+                      <p>
+                        Approve the saved draft as the desired assignment. This does not approve
+                        customer activation.
+                      </p>
+                      {reason}
+                      <button type="submit">Review desired approval</button>
+                    </fieldset>
+                  </form>
+                </>
+              )}
+            </>
+          )}
+        </section>
+      </details>
+      <details id="module-delivery" className="stage-details" open={!!view.desired || !!view.draft}>
+        <summary>
+          02 · Package, installation & activation{' '}
+          <Badge
+            tone={
+              view.statuses.includes('active') && !view.statuses.includes('restricted')
+                ? 'success'
+                : 'neutral'
+            }
+          >
+            {view.desired
+              ? view.delivery
+                ? 'Package available'
+                : 'Awaiting package'
+              : 'Awaiting selection'}
+          </Badge>
+        </summary>
+        <section aria-label="Module assignment status">
+          <p className="eyebrow">DELIVERY & ACTIVATION</p>
+          <h2>Assignment and delivery</h2>
+          <p className="muted">
+            Approved profiles, built packages and customer acknowledgements are separate evidence.
+            Refresh after each external step.
+          </p>
+          {view.desired && (
+            <p>
+              <a href={`/api/registry/products/${view.binding.productId}/modules/build-request`}>
+                Download approved profile build request
+              </a>
             </p>
-            {removedDesired.length > 0 && (
+          )}
+          <ul>
+            {view.statuses.map((status) => (
+              <li key={status}>
+                <Badge
+                  tone={
+                    status === 'active'
+                      ? 'success'
+                      : ['restricted', 'inventory-mismatch'].includes(status)
+                        ? 'danger'
+                        : 'warning'
+                  }
+                >
+                  {titles[status]}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+          <dl>
+            <dt>Draft</dt>
+            <dd>
+              {view.draft
+                ? `Saved revision ${view.draft.revision}${view.draft.revision !== view.productRevision ? ' · Review again after the product changed' : ''}`
+                : 'None'}
+            </dd>
+            <dt>Approved desired assignment</dt>
+            <dd>
+              {view.desired ? (
+                <>
+                  Revision {view.desired.revision} ·{' '}
+                  {view.desired.document.profile.modules.map((m) => m.id).join(', ')}
+                  <br />
+                  Profile <code>{view.desired.document.profileDigest}</code>
+                </>
+              ) : (
+                'None'
+              )}
+            </dd>
+          </dl>
+          <details>
+            <summary>Package, installation & authority evidence</summary>
+            <dl>
+              <dt>Installation ID</dt>
+              <dd>
+                <code>{view.binding.localInstallationId}</code>
+              </dd>
+              <dt>Product ID</dt>
+              <dd>
+                <code>{view.binding.productId}</code>
+              </dd>
+              <dt>Product policy</dt>
+              <dd>
+                {view.policyState} · revision {view.productRevision}
+              </dd>
+              <dt>Verified delivery</dt>
+              <dd>
+                {view.delivery ? (
+                  <>
+                    Local bundle reference <code>{view.delivery.key}</code>
+                    <br />
+                    Release <code>{view.delivery.inventory.releaseId}</code>
+                  </>
+                ) : (
+                  'No matching verified package available.'
+                )}
+              </dd>
+              <dt>Observed installation</dt>
+              <dd>
+                {view.inventory ? (
+                  <>
+                    Reported profile <code>{view.inventory.installed.profileDigest}</code> ·{' '}
+                    {view.inventory.observedAt}. This is an installation claim.
+                  </>
+                ) : (
+                  'No current module-aware inventory received.'
+                )}
+              </dd>
+              <dt>Central module authority</dt>
+              <dd>
+                {view.authority ? (
+                  <>
+                    Central allowed IDs: {view.authority.allowedIds.join(', ')}. Local signed
+                    application and user permissions still apply.
+                  </>
+                ) : (
+                  'No active module authority. Product approval remains separate.'
+                )}
+              </dd>
+              <dt>Last acknowledged module grant</dt>
+              <dd>
+                {view.effective ? (
+                  <>
+                    Profile <code>{view.effective.profileDigest}</code>; allowed IDs:{' '}
+                    {view.effective.allowedIds.join(', ')}. Applied {view.effective.appliedAt}.
+                    expires {view.effective.expiresAt}. This is product-reported application
+                    evidence. Current local trust, enablement and user permissions still apply.
+                  </>
+                ) : (
+                  'No valid acknowledgement for the current policy and pairing epoch.'
+                )}
+              </dd>
+            </dl>
+          </details>
+          <section id="module-handover" aria-label="Installation handover">
+            <h3>Installation handover</h3>
+            {!view.handover.authorityReady && (
+              <p role="status">Central recovery reconciliation is required.</p>
+            )}
+            <ul>
+              {view.handover.products.map((p) => (
+                <li key={p.productId}>
+                  {p.product === 'dms' ? 'DMS' : 'Turnstile'}:{' '}
+                  {p.paired ? 'Paired' : 'Awaiting pairing'}; policy {p.policyState};{' '}
+                  {p.acknowledged
+                    ? 'Current approval acknowledged'
+                    : 'Awaiting current approval acknowledgement'}
+                  ; report {p.reportFreshness}
+                  {p.reportReceivedAt ? ` (${p.reportReceivedAt})` : ''}.
+                </li>
+              ))}
+            </ul>
+            <details>
+              <summary>Handover checklist & responsibilities</summary>{' '}
               <p>
-                Previous desired modules removed by this selection: {removedDesired.join(', ')}.
+                Staff must approve each product independently. Reports describe installation claims;
+                they do not prove customer user access. The customer operator completes private
+                setup and handover using the verified installation bundle.
+              </p>
+              <ol>
+                <li>Confirm the published catalogue, approved selection and verified package.</li>
+                <li>
+                  Deliver the signed fresh installation intent and independently provisioned public
+                  trust to the customer operator.
+                </li>
+                <li>
+                  Deliver each protected pairing file separately. Approve DMS and Turnstile with
+                  current MFA.
+                </li>
+                <li>
+                  Require v2 enforcement, review the reported exact installed inventory, then
+                  activate the selected module profile.
+                </li>
+                <li>
+                  Wait for both products to acknowledge current decisions and report independently.
+                </li>
+                <li>
+                  The customer verifies email, provisions purpose-separated clients, completes
+                  private administrator handover and grants module permissions explicitly.
+                </li>
+              </ol>
+              <p>
+                A changed assignment or incompatible package requires reconciliation or a reviewed
+                upgrade. Never reset local identities to bypass it. Central staff do not receive
+                customer database or Docker credentials.
+              </p>
+            </details>
+          </section>
+          <div id="module-enforcement">
+            <h3>Signed module decisions</h3>
+            <p className="muted">
+              {view.minimumDecisionVersion === 2
+                ? 'Permanent v2 enforcement is enabled for this product. It does not grant module access.'
+                : 'An Administrator must enable permanent v2 enforcement before module activation. This prevents legacy fallback.'}
+            </p>
+            {role === 'admin' && !view.archived && view.minimumDecisionVersion === 1 && (
+              <details>
+                <summary>Require signed module decisions</summary>
+                <p>
+                  This permanently requires module-aware v2 decisions. It grants no module access
+                  and prevents legacy protocol fallback.
+                </p>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const f = new FormData(e.currentTarget);
+                    setEnforcement(
+                      enforcementCommand.parse({
+                        operationId: crypto.randomUUID(),
+                        expectedRevision: view.productRevision,
+                        reason: f.get('reason'),
+                      }),
+                    );
+                  }}
+                >
+                  <fieldset disabled={locked}>
+                    <label>
+                      Reason
+                      <input name="reason" required maxLength={300} />
+                    </label>
+                    <button type="submit">Review module enforcement</button>
+                  </fieldset>
+                </form>
+                {enforcement && (
+                  <section className="review-panel" aria-label="Confirm module enforcement">
+                    <ReviewHeading>Confirm permanent enforcement</ReviewHeading>
+                    <p>{enforcement.reason}</p>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={async () => {
+                        setBusy(true);
+                        try {
+                          await request(
+                            `/api/registry/products/${view.binding.productId}/modules/enforce`,
+                            enforcement,
+                          );
+                          await readback();
+                          setMessage(
+                            'Module-aware v2 enforcement is required. Pairing, approval and activation remain separate.',
+                          );
+                        } catch {
+                          setMessage(
+                            'Unable to confirm enforcement. Reauthenticate if required, then retry this exact operation.',
+                          );
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      Confirm permanent module enforcement
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={busy}
+                      onClick={() => setEnforcement(null)}
+                    >
+                      Close enforcement review
+                    </button>
+                  </section>
+                )}
+              </details>
+            )}
+          </div>
+          <div id="module-activation">
+            <h3>Module activation</h3>
+            <p className="muted">
+              Requires an approved desired profile, matching verified package, current product
+              approval and pairing, v2 enforcement, fresh exact installed inventory (within 15
+              minutes) and current MFA. The server rechecks these requirements on confirmation.
+            </p>
+            {activationBlocked && (
+              <p className="notice notice-warning">
+                Complete the product approval, enforcement or package reconciliation steps before
+                activating. Refresh after customer sync.
               </p>
             )}
-            {canWrite && (
-              <>
-                <form onSubmit={(e) => void prepare(e, 'assignment.draft')}>
-                  <fieldset disabled={locked}>
-                    {reason}
-                    <button type="submit">Review and save draft</button>
-                  </fieldset>
-                </form>
-                <form onSubmit={(e) => void prepare(e, 'assignment.approve')}>
-                  <fieldset disabled={locked || !sameDraft}>
-                    <p>
-                      Approve the saved draft as the desired assignment. This does not approve
-                      customer activation.
-                    </p>
-                    {reason}
-                    <button type="submit">Review desired approval</button>
-                  </fieldset>
-                </form>
-              </>
+            {(!view.desired || !view.inventory || !view.delivery) && (
+              <p className="notice">
+                Activation becomes available after selection approval, verified package delivery and
+                reported installed inventory.
+              </p>
             )}
-          </>
-        )}
-      </section>
+            {canWrite && view.desired && view.inventory && view.delivery && (
+              <details>
+                <summary>Activate installed modules</summary>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    setActivation(
+                      moduleActivationCommand.parse({
+                        operationId: crypto.randomUUID(),
+                        expectedRevision: view.productRevision,
+                        desiredRevision: view.desired?.revision,
+                        epoch: view.inventory?.epoch,
+                        installed: view.inventory?.installed,
+                        activeBasis: view.authority?.active ?? null,
+                        reason: new FormData(event.currentTarget).get('reason'),
+                      }),
+                    );
+                  }}
+                >
+                  <fieldset disabled={locked || activationBlocked}>
+                    {reason}
+                    <button type="submit">Review module activation</button>
+                  </fieldset>
+                </form>
+                {activation && (
+                  <section className="review-panel" aria-label="Review module activation">
+                    <ReviewHeading>Review module activation</ReviewHeading>
+                    <p>
+                      Activate the approved desired profile for the currently reported installation.
+                      The server verifies the package, current assignment, pairing and MFA again.
+                      Customer permissions remain separate.
+                    </p>
+                    <p>Reason: {activation.reason}</p>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => {
+                        setBusy(true);
+                        void request(
+                          `/api/registry/products/${view.binding.productId}/modules/activate`,
+                          activation,
+                        )
+                          .then(() => readback())
+                          .then(() =>
+                            setMessage(
+                              'Activation approved. Sync the customer installation to apply the signed decision.',
+                            ),
+                          )
+                          .catch(() =>
+                            setMessage(
+                              'Activation did not complete. Retry the same operation to recover its receipt, or reload and review current state.',
+                            ),
+                          )
+                          .finally(() => setBusy(false));
+                      }}
+                    >
+                      Confirm module activation
+                    </button>
+                    <button type="button" disabled={busy} onClick={() => setActivation(null)}>
+                      Close activation review
+                    </button>
+                  </section>
+                )}
+              </details>
+            )}
+          </div>{' '}
+          <div id="module-intent">
+            <h3>Customer installation setup</h3>
+            <p className="muted">
+              Fresh central reservations use a signed installation intent. Existing deployments use
+              their owning adoption or upgrade procedure. The customer operator handles private
+              configuration and installation; central staff do not receive infrastructure
+              credentials.
+            </p>
+            {(!view.desired || !view.delivery) && (
+              <p className="notice">
+                Approve a desired profile and wait for its matching verified package before
+                preparing setup metadata.
+              </p>
+            )}
+            {canWrite && view.desired && view.delivery && (
+              <details>
+                <summary>Prepare installation intent</summary>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const reason = String(
+                      new FormData(event.currentTarget).get('reason') ?? '',
+                    ).trim();
+                    if (reason) {
+                      setIntentOperation({
+                        operationId: crypto.randomUUID(),
+                        expectedRevision: view.productRevision,
+                        reason,
+                      });
+                      setIntentFile(null);
+                    }
+                  }}
+                >
+                  <fieldset disabled={locked}>
+                    <label>
+                      Reason
+                      <input name="reason" required maxLength={300} />
+                    </label>
+                    <button type="submit">Review installation intent</button>
+                  </fieldset>
+                </form>
+                {intentOperation && (
+                  <section className="review-panel" aria-label="Review installation intent">
+                    <ReviewHeading>Review installation intent</ReviewHeading>
+                    <p>
+                      Issue public setup metadata for the current approved profile. It contains no
+                      pairing credential and grants no access.
+                    </p>
+                    <button
+                      type="button"
+                      disabled={busy || intentFile !== null}
+                      onClick={() => void issueIntent()}
+                    >
+                      Confirm and download intent
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => {
+                        setIntentOperation(null);
+                        setIntentFile(null);
+                      }}
+                    >
+                      Close intent review
+                    </button>
+                  </section>
+                )}
+                {intentFile && (
+                  <button type="button" onClick={() => downloadIntent(intentFile)}>
+                    Download issued intent again
+                  </button>
+                )}
+              </details>
+            )}
+          </div>
+          {view.legacy && (
+            <p>
+              This product uses the legacy activation protocol. A reviewed module-aware upgrade is
+              required before selected modules can activate.
+            </p>
+          )}
+          {view.archived && <p>This client is archived. Assignments are read-only.</p>}
+        </section>
+      </details>
     </>
   );
 }

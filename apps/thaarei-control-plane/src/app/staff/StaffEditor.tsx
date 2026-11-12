@@ -2,6 +2,8 @@
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { request } from '../access/client.ts';
+import { ActionLink } from '../ui/ActionLink.tsx';
+import { Badge } from '../ui/Primitives.tsx';
 
 type Member = {
   id: string;
@@ -66,72 +68,107 @@ export function StaffEditor({ initial }: { initial: Member[] }) {
   }
   return (
     <>
-      <p>
-        <a href="/access">Verify MFA again</a> before sensitive changes.
+      <p className="notice">
+        <a href="/access" target="_blank" rel="noreferrer">
+          Verify MFA in another tab
+        </a>{' '}
+        before sensitive changes. <strong>Viewer</strong> reads the workspace;{' '}
+        <strong>Operator</strong> manages deployments; <strong>Administrator</strong> also manages
+        staff, enforcement and recovery.
       </p>
+      <div className="section-heading">
+        <div>
+          <h2>Your team</h2>
+          <p>{members.length} staff accounts</p>
+        </div>
+        <ActionLink href="#admit-employee">Admit an employee</ActionLink>
+      </div>
       <p role="status" className={message ? 'notice' : ''}>
         {message}
       </p>
-      <h2>Admit an employee</h2>
-      <form onSubmit={admit}>
-        <label>
-          Name
-          <input name="name" required maxLength={100} />
-        </label>
-        <label>
-          Email
-          <input name="email" type="email" required maxLength={254} />
-        </label>
-        <label>
-          Role
-          <select name="role" defaultValue="viewer">
-            <option value="viewer">Viewer</option>
-            <option value="operator">Operator</option>
-            <option value="admin">Admin</option>
-          </select>
-        </label>
-        <label>
-          Reason
-          <input name="reason" required maxLength={300} />
-        </label>
-        <button disabled={busy} type="submit">
-          Admit employee
-        </button>
-      </form>
-      <h2>Staff access</h2>
-      {members.map((member) => (
-        <form key={`${member.id}:${member.revision}`} onSubmit={(event) => update(event, member)}>
-          <h3>{member.name}</h3>
-          <p>
-            {member.email}
-            <br />
-            {member.verified ? 'Email verified' : 'Email verification pending'} ·{' '}
-            {member.mfaEnabled ? 'MFA enrolled' : 'MFA enrollment pending'}
-          </p>
-          <label>
-            Role
-            <select name="role" defaultValue={member.role}>
-              <option value="viewer">Viewer</option>
-              <option value="operator">Operator</option>
-              <option value="admin">Admin</option>
-            </select>
-          </label>
-          <label>
-            Access
-            <select name="active" defaultValue={String(member.active)}>
-              <option value="true">Active</option>
-              <option value="false">Disabled</option>
-            </select>
-          </label>
-          <label>
-            Reason
-            <input name="reason" required maxLength={300} />
-          </label>
-          <button disabled={busy} type="submit">
-            Save access
-          </button>
+      <details id="admit-employee">
+        <summary>Admit an employee</summary>
+        <p className="muted">
+          The employee verifies their email, chooses a password and enrolls an authenticator before
+          entering the workspace.
+        </p>
+        <form onSubmit={admit}>
+          <fieldset disabled={busy}>
+            <label>
+              Name
+              <input name="name" required maxLength={100} />
+            </label>
+            <label>
+              Email
+              <input name="email" type="email" required maxLength={254} />
+            </label>
+            <label>
+              Role
+              <select name="role" defaultValue="viewer">
+                <option value="viewer">Viewer</option>
+                <option value="operator">Operator</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+            <label>
+              Reason
+              <input name="reason" required maxLength={300} />
+            </label>
+            <button disabled={busy} type="submit">
+              Admit employee
+            </button>
+          </fieldset>
         </form>
-      ))}
+      </details>
+      <div className="staff-grid">
+        {members.map((member) => (
+          <form key={`${member.id}:${member.revision}`} onSubmit={(event) => update(event, member)}>
+            <div className="split-heading">
+              <h3>{member.name}</h3>
+              <Badge tone={member.active ? 'success' : 'neutral'}>
+                {member.active ? 'Active' : 'Disabled'}
+              </Badge>
+            </div>
+            <Badge>{member.role}</Badge>
+            <p>
+              {member.email}
+              <br />
+              {member.verified ? 'Email verified' : 'Email verification pending'} ·{' '}
+              {member.mfaEnabled ? 'MFA enrolled' : 'MFA enrollment pending'}
+            </p>
+            <details>
+              <summary>Change role or access</summary>
+              <fieldset disabled={busy}>
+                <label>
+                  Role
+                  <select name="role" defaultValue={member.role}>
+                    <option value="viewer">Viewer</option>
+                    <option value="operator">Operator</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </label>
+                <label>
+                  Access
+                  <select name="active" defaultValue={String(member.active)}>
+                    <option value="true">Active</option>
+                    <option value="false">Disabled</option>
+                  </select>
+                </label>
+                <label>
+                  Reason
+                  <input name="reason" required maxLength={300} />
+                </label>
+                <button disabled={busy} type="submit">
+                  Save access
+                </button>
+                <p className="muted">
+                  Saving revokes existing sessions. At least one eligible Administrator must remain.
+                </p>
+              </fieldset>
+            </details>
+          </form>
+        ))}
+      </div>
     </>
   );
 }

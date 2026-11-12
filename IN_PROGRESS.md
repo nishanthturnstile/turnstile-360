@@ -300,6 +300,55 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
+TCP-UX-RUN-01 — **In progress** (owner: Codex, 2026-11-12). Owner authorized publishing
+the redesign PR, merging into development and starting all existing local applications
+for hands-on control-plane testing. Checking branch dependencies, retained manual-testing
+configuration and Docker resources before publication/startup. Preserve existing data and
+credentials. Next: publish/merge the reviewed UI change and verify persistent endpoints.
+
+TCP-UX-01 — **Completed** (source/local UI qualification; owner: Codex, 2026-11-12).
+Owner requested the complete control-plane UX audit, reviewed plan and redesign. Worked
+on feat/control-plane-ui-redesign, created from fetched development and fast-forwarded
+to the required existing module delivery implementation. The
+[research and reviewed plan](docs/thaarei/control-plane-ui-redesign.md) inventories every
+screen, role, conditional control and workflow state. Used the Emil design engineering
+skill; the plan was self-reviewed, not an external usability study.
+
+Implemented responsive workspace navigation, Overview/account, client search/registration,
+guided fresh/existing installation paths, independent product/pairing/policy progress,
+explicit pairing review and conditional revocation input, catalogue release/classification,
+module selection/delivery/activation stages, dependency graph/text, reports/history,
+staff and every access/recovery mode. Next-action guidance separates product approval,
+module authority, inventory and current acknowledgement; technical evidence remains
+available in disclosures. Archived/Viewer restrictions and Admin-only actions are
+explained. Pending module reviews lock competing changes and retain retry identity.
+Publication is blocked while classification changes are unsaved. Mobile navigation
+supports keyboard entry and Escape/focus return; authenticator setup/recovery has
+explicit actions, manual setup/copy controls and contextual assistance. Architecture,
+app README and docs index reference the redesign. No backend authority, database schema,
+API endpoint, package dependency or customer deployment configuration changed.
+
+2026-11-12 verification: `pnpm check`, `pnpm build`, `pnpm test` and full
+`pnpm test:integration` pass. All 11 central unit tests pass, including guidance precedence
+regressions. Full integration exercised real central HTTPS/PostgreSQL/browser flows,
+DMS/Turnstile HTTP, owning migrations/auth/isolation and authenticated SeaweedFS transfers.
+The existing six conditional database cases remain skipped; no new UI regression is skipped.
+After the final keyboard change, reran workspace check/build/test and the central integration
+suite successfully. New browser coverage exercises the actual production handlers through
+lost committed responses for registration and pairing, same-operation recovery, fresh
+reservation review without premature writes, conditional pairing fields, Viewer/Admin
+boundaries, invalid reset recovery, mobile pointer/keyboard navigation, expanded dependency
+graph overflow and 390px layouts across catalogues/reports/history/staff/account/access.
+Actual nonsecret screenshots were visually reviewed and retained in
+`/tmp/thaarei-control-plane-ui-mPrUNm`; a review gallery is at
+`/tmp/thaarei-control-plane-redesign.html`. Final Biome/whitespace checks pass.
+
+Handoff: implementation and local verification are complete; changes remain uncommitted
+for owner review. No central Docker image rebuild, Dokploy rollout, customer mutation or
+production acceptance was performed. Existing module-release frozen artifacts remain
+historical; deploying the redesigned central UI requires its normal new-image qualification.
+Existing installations, reserved ports and preexisting Docker volumes were preserved.
+
 MOD-PR — **Completed** (owner: Codex, 2026-11-12). Committed all 253 accumulated
 MOD-I01–10 paths on feat/centrally-managed-module-delivery and opened
 [PR #16](https://github.com/nishanthturnstile/turnstile-360/pull/16) against development.

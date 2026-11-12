@@ -558,6 +558,7 @@ export async function verifyModuleAssignments({
     const page = await context.newPage();
     page.setDefaultTimeout(15000);
     await page.goto(`${origin}${viewerPage}`);
+    await page.locator('#module-selection > summary').click();
     const foundation = page.getByRole('checkbox', {
       name: 'Foundation · Core (required)',
       exact: true,
@@ -570,6 +571,7 @@ export async function verifyModuleAssignments({
     await risk.focus();
     await page.keyboard.press('Space');
     assert.equal(await risk.isChecked(), true, 'Keyboard selection updates the real resolver');
+    await page.getByText('Explore module dependencies', { exact: true }).click();
     await page.getByRole('img', { name: /Module dependencies/ }).waitFor();
     const saveForm = page
       .locator('form')

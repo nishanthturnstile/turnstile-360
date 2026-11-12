@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { ZodError } from 'zod';
 import { AccessError, requireStaff } from '../../../server/access.ts';
 import { getClient } from '../../../server/registry-service.ts';
+import { Workspace } from '../../ui/Workspace.tsx';
 import { ClientWorkspace } from '../ClientWorkspace.tsx';
 export const dynamic = 'force-dynamic';
 export default async function Client({ params }: { params: Promise<{ id: string }> }) {
@@ -17,14 +18,15 @@ export default async function Client({ params }: { params: Promise<{ id: string 
     throw error;
   });
   return (
-    <main>
-      <p>
-        <a href="/clients">← Clients</a>
-      </p>
-      <p>
-        <a href={`/reports?clientId=${(await params).id}`}>Usage and health reports →</a>
-      </p>
-      <ClientWorkspace initial={initial} role={context.role} />
-    </main>
+    <Workspace staff={context}>
+      <main>
+        <nav className="breadcrumbs" aria-label="Breadcrumb">
+          <a href="/clients">Clients & installations</a>
+          <span>/</span>
+          <span>{initial.client.name}</span>
+        </nav>
+        <ClientWorkspace initial={initial} role={context.role} />
+      </main>
+    </Workspace>
   );
 }

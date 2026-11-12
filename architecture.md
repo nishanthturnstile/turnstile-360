@@ -3061,6 +3061,26 @@ proxy handling apply at the auth/Next boundary. Customer identity is never admit
 
 ### Central foundation implementation (TCP-I02)
 
+#### Staff workspace presentation (TCP-UX-01)
+
+The central staff UI uses a shared responsive workspace shell with persistent Overview,
+Clients & installations, Module catalogues and Usage & health navigation; Staff access
+is visible to Administrators. `/account` owns staff session/security actions. Each owning
+page still performs live server-side staff/role authorization before rendering; navigation
+visibility and presentation guidance are not authorization. `/access` has a separate
+staff sign-in, enrollment, MFA and recovery presentation with unchanged auth endpoints.
+
+Client and Turnstile module pages project their existing registry/assignment/handover
+facts into visible task progress, next-action guidance and explicit prerequisites.
+Pairing, product policy, desired modules, package availability, installed inventory,
+central module authority and current signed acknowledgement remain distinct facts.
+No persisted wizard state, new backend authority or central remote installer is added.
+Anchored sections and native disclosures retain both fresh-reservation and existing
+registration/adoption paths, exact evidence and protected transient file downloads.
+Competing module reviews lock mutation inputs; retry operations retain their payload
+identity in page memory. Research, screen/state inventory and reviewed implementation
+plan: [control-plane UI redesign](docs/thaarei/control-plane-ui-redesign.md).
+
 The central app uses Next Route Handlers and server-rendered protected pages, with no
 Server Actions or separate API service. `src/server` is marked server-only; browser
 components use relative authenticated HTTP and never import database/auth runtime code.

@@ -233,6 +233,11 @@ export async function verifyCentralCatalogues({
     page.setDefaultTimeout(15000);
     await page.goto(`${origin}/modules/${uiDraft.id}`);
     await page.getByLabel('Classification for Incident Management').selectOption('core');
+    assert.equal(
+      await page.getByRole('button', { name: 'Review publication', exact: true }).isDisabled(),
+      true,
+      'Unsaved categories cannot publish a different saved digest',
+    );
     const form = page.locator('form').filter({
       has: page.getByRole('button', { name: 'Review classification change', exact: true }),
     });
