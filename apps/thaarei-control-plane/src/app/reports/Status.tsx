@@ -1,10 +1,31 @@
 import type { ReportView } from '../../server/report-service.ts';
+import { Badge } from '../ui/Primitives.tsx';
 export const date = (value: string | Date | null) =>
   value ? new Date(value).toISOString() : 'Unknown';
 export function Status({ item }: { item: ReportView }) {
   const report = item.report;
   return (
     <>
+      <div className="report-statuses">
+        <Badge
+          tone={
+            item.policyState === 'approved'
+              ? 'success'
+              : item.policyState === 'pending'
+                ? 'warning'
+                : 'danger'
+          }
+        >
+          Policy {item.policyState}
+        </Badge>{' '}
+        <Badge tone={item.freshness === 'current' ? 'success' : 'warning'}>
+          {item.freshness === 'current'
+            ? 'Reporting current'
+            : item.freshness === 'never'
+              ? 'No reports yet'
+              : 'Not recently seen'}
+        </Badge>
+      </div>
       <dl>
         <dt>Central policy</dt>
         <dd>

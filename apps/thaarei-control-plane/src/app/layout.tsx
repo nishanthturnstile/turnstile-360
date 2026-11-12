@@ -8,14 +8,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <header>
-          <a href="/">
-            Thaarei <span>Control Plane</span>
-          </a>
-        </header>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

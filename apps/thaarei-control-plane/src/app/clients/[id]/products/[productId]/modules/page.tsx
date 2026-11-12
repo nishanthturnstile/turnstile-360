@@ -7,6 +7,8 @@ import {
   readAssignment,
 } from '../../../../../../server/module-assignment-service.ts';
 import { readCatalogue } from '../../../../../../server/module-service.ts';
+import { PageHeader } from '../../../../../ui/Primitives.tsx';
+import { Workspace } from '../../../../../ui/Workspace.tsx';
 import { ModuleAssignment } from '../../../../ModuleAssignment.tsx';
 export const dynamic = 'force-dynamic';
 export default async function ProductModules({
@@ -35,17 +37,27 @@ export default async function ProductModules({
     catalogues.catalogues[0]?.id;
   const selected = selectedId ? await readCatalogue(input, selectedId) : null;
   return (
-    <main>
-      <p>
-        <a href={`/clients/${id}`}>← Client and installation</a>
-      </p>
-      <h1>Turnstile modules</h1>
-      <ModuleAssignment
-        initial={initial}
-        role={staff.role}
-        initialCatalogues={catalogues}
-        initialCatalogue={selected?.catalogue ?? null}
-      />
-    </main>
+    <Workspace staff={staff}>
+      <main>
+        <nav className="breadcrumbs" aria-label="Breadcrumb">
+          <a href="/clients">Clients</a>
+          <span>/</span>
+          <a href={`/clients/${id}`}>Client & installation</a>
+          <span>/</span>
+          <span>Modules</span>
+        </nav>
+        <PageHeader
+          eyebrow="APPLICATION SETUP"
+          title="Turnstile modules"
+          description="Choose the desired profile, prepare its package and follow the installation through activation."
+        />
+        <ModuleAssignment
+          initial={initial}
+          role={staff.role}
+          initialCatalogues={catalogues}
+          initialCatalogue={selected?.catalogue ?? null}
+        />
+      </main>
+    </Workspace>
   );
 }

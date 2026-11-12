@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { ZodError } from 'zod';
 import type { ClientList, RegistryCommand } from '../../contracts/registry.ts';
 import { clientCreate } from '../../contracts/registry.ts';
+import { ActionLink } from '../ui/ActionLink.tsx';
+import { Icon } from '../ui/Icon.tsx';
+import { Badge, EmptyState } from '../ui/Primitives.tsx';
 import { nullable, readClients, sendCommand } from './registry-client.ts';
 
 export function ClientRegistry({ initial, role }: { initial: ClientList; role: string }) {
@@ -75,7 +78,26 @@ export function ClientRegistry({ initial, role }: { initial: ClientList; role: s
   }
   return (
     <>
+      <div className="section-heading">
+        <div>
+          <h2>Client directory</h2>
+          <p>Open a client to continue its installation workflow.</p>
+        </div>
+        {role !== 'viewer' && (
+          <ActionLink href="#register-client">
+            <Icon name="plus" />
+            Register client
+          </ActionLink>
+        )}
+      </div>
+      {role === 'viewer' && (
+        <p className="notice">
+          You have read-only access. An Operator or Administrator can register clients and manage
+          setup.
+        </p>
+      )}
       <form
+        className="list-toolbar"
         onSubmit={(event) => {
           event.preventDefault();
           void load(false);
@@ -108,32 +130,59 @@ export function ClientRegistry({ initial, role }: { initial: ClientList; role: s
         {message}
       </p>
       {list.clients.length === 0 ? (
-        <section>
-          <p>No clients match this search.</p>
-        </section>
+        <EmptyState
+          title={
+            appliedQuery.q || appliedQuery.archived !== 'active'
+              ? 'No matching clients'
+              : 'No active clients yet'
+          }
+        >
+          {appliedQuery.q || appliedQuery.archived !== 'active'
+            ? 'Try a different name, code or client status.'
+            : 'Register your first client to create an installation. You can also search archived clients.'}
+        </EmptyState>
       ) : (
-        <ul className="registry-list">
-          {list.clients.map((client) => (
-            <li key={client.id}>
-              <a href={`/clients/${client.id}`}>
-                <strong>{client.name}</strong>
-                <span>
-                  {client.code}
-                  {client.archived ? ' · Archived' : ''}
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
+        <section className="registry-surface" aria-label="Client results">
+          <ul className="registry-list">
+            {list.clients.map((client) => (
+              <li key={client.id}>
+                <a href={`/clients/${client.id}`}>
+                  <div className="client-identity">
+                    <span className="avatar">{client.name.slice(0, 1).toUpperCase()}</span>
+                    <div>
+                      <strong>{client.name}</strong>
+                      <small>{client.code}</small>
+                    </div>
+                  </div>
+                  <span>
+                    <Badge tone={client.archived ? 'neutral' : 'success'}>
+                      {client.archived ? 'Archived' : 'Active'}
+                    </Badge>{' '}
+                    <Icon name="arrow" />
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
+      <p className="muted" role="status">
+        {busy
+          ? 'Loading client records…'
+          : `${list.clients.length} client${list.clients.length === 1 ? '' : 's'} on this page`}
+      </p>
       {list.nextCursor && (
         <button type="button" disabled={busy} onClick={() => void load(true)}>
           Next page
         </button>
       )}
       {role !== 'viewer' && (
-        <section>
-          <h2>Register a client</h2>
+        <details id="register-client">
+          <summary>Register a client</summary>
+          <p className="muted">
+            Step 1 of setup. Add the client first; you’ll prepare its installation on the next
+            screen.
+          </p>
           {retry ? (
             <>
               <p>
@@ -155,43 +204,45 @@ export function ClientRegistry({ initial, role }: { initial: ClientList; role: s
             </>
           ) : null}
           <form onSubmit={create}>
-            <label>
-              Client code
-              <input
-                name="code"
-                required
-                maxLength={32}
-                pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,31}"
-                disabled={busy || retry !== null}
-              />
-            </label>
-            <label>
-              Client name
-              <input name="name" required maxLength={160} disabled={busy || retry !== null} />
-            </label>
-            <label>
-              Contact name (optional)
-              <input name="contactName" maxLength={100} disabled={busy || retry !== null} />
-            </label>
-            <label>
-              Contact email (optional)
-              <input
-                name="contactEmail"
-                type="email"
-                maxLength={254}
-                disabled={busy || retry !== null}
-              />
-            </label>
-            <label>
-              Reason
-              <input name="reason" required maxLength={300} disabled={busy || retry !== null} />
-            </label>
+            <div className="form-grid">
+              <label>
+                Client code
+                <input
+                  name="code"
+                  required
+                  maxLength={32}
+                  pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,31}"
+                  disabled={busy || retry !== null}
+                />
+              </label>
+              <label>
+                Client name
+                <input name="name" required maxLength={160} disabled={busy || retry !== null} />
+              </label>
+              <label>
+                Contact name (optional)
+                <input name="contactName" maxLength={100} disabled={busy || retry !== null} />
+              </label>
+              <label>
+                Contact email (optional)
+                <input
+                  name="contactEmail"
+                  type="email"
+                  maxLength={254}
+                  disabled={busy || retry !== null}
+                />
+              </label>
+              <label>
+                Reason
+                <input name="reason" required maxLength={300} disabled={busy || retry !== null} />
+              </label>
+            </div>
             <button disabled={busy || retry !== null} type="submit">
               Register client
             </button>
           </form>
           <p>The code is permanent. Keep it stable when contact details change.</p>
-        </section>
+        </details>
       )}
     </>
   );
