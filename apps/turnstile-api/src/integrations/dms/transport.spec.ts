@@ -162,10 +162,11 @@ describe('DMS machine transport security and retry boundary', () => {
     try {
       const address = server.address();
       if (!address || typeof address === 'string') throw new Error('Missing HTTP fixture');
-      const client = new DmsClient({
+      const options = {
         baseUrl: `http://127.0.0.1:${address.port}/v1`,
         allowInsecureHttp: true,
-        timeoutMs: 100,
+        // Redirect/body assertions must not race cold connections on a loaded CI runner.
+        timeoutMs: 5000,
         tokenProvider: {
           getToken: async () => ({
             accessToken: token().access_token,
@@ -173,11 +174,14 @@ describe('DMS machine transport security and retry boundary', () => {
           }),
           invalidate: () => {},
         },
-      });
+      };
+      const client = new DmsClient(options);
       await expect(client.capabilities()).rejects.toMatchObject({ code: 'DMS_UNAVAILABLE' });
       expect(calls).toBe(1);
       mode = 'stall';
-      await expect(client.capabilities()).rejects.toMatchObject({ code: 'DMS_UNAVAILABLE' });
+      const stalledClient = new DmsClient({ ...options, timeoutMs: 1000 });
+      await expect(stalledClient.capabilities()).rejects.toMatchObject({ code: 'DMS_UNAVAILABLE' });
+      expect(calls).toBe(2);
       for (mode of ['large', 'invalid'])
         await expect(client.capabilities()).rejects.toMatchObject({ code: 'DMS_INVALID_RESPONSE' });
     } finally {

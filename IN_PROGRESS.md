@@ -300,6 +300,21 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
+PR16-CI — **Completed** (test fix/local verification; owner: Codex, 2026-11-12).
+Fixed the CI redirect test's 100 ms deadline racing cold HTTP connections: ordinary
+redirect/body checks use 5 seconds, while the stalled response retains a separate
+1-second deadline and an assertion that its request reached the real server. Production
+transport settings and runtime code are unchanged. Five consecutive focused transport
+runs and `pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` pass; six existing
+conditional non-module integration skips remain. Initial integration under a /tmp worktree
+failed three processor cases because the sandbox's private /tmp hid the Python venv;
+moving the isolated checkout/venv under home resolved those cases without processor edits.
+The historical MOD-I10 frozen record remains immutable and identifies the pre-fix test
+snapshot; this test-only correction has separate verification logs at /tmp/pr16-*.log,
+including the successful /tmp/pr16-integration-home.log. PR #16 merged during validation; fix publication uses a follow-up PR;
+GitHub validation of the new commit remains pending. Concurrent UI work was preserved.
+
+
 TCP-UX-RUN-01 — **In progress** (owner: Codex, 2026-11-12). Owner authorized publishing
 the redesign PR, merging into development and starting all existing local applications
 for hands-on control-plane testing. Checking branch dependencies, retained manual-testing
