@@ -140,3 +140,101 @@ six-service profile does not install DMS processing/storage. Full documents/OCR,
 clean-host rehearsal, independent Dokploy/TLS and production handover remain separate gates.
 The [implementation plan](installation_implementation_plan.md#titan-rehearsal-follow-up--2026-11-12)
 records the resulting work and optimizations rather than treating those gaps as passing tests.
+
+
+## Foundation review — 2026-11-12 (baseline before scoped fixes)
+
+Independent source review and fresh focused tests support the local module control
+foundation. This is not full customer/production acceptance. The reviewer independently
+passed 23 catalogue/retry tests; the main verification passed 40 catalogue, deployment
+policy and installer tests. Fresh real-image/browser runs passed Core-only, Incident-only and Risk-only. The combined
+profile first failed with `403 DEPLOYMENT_RESTRICTED` from `/api/modules`, then passed an
+isolated recheck against the same images. Added phase-specific diagnostics; the initial
+intermittent failure remains unexplained and blocks a clean all-profile sign-off. These
+fixtures use ordinary browser login and real guards, with fixture-seeded authority; they
+do not replace central-to-customer assignment/cutover acceptance. Logs are retained in
+`/tmp/thaarei-foundation-verification/` (profiles.log and both-recheck.log).
+
+Confirmed issue: the installer omitted PostgreSQL's restart policy and customer Compose
+preserved `restart: no`. APIs could restart without their database after a host/Docker
+restart. Corrected the owning installer default and added a real-launcher fixture assertion.
+Titan's retained Compose and live Docker policy now use `unless-stopped`; container ID
+and start time were unchanged. No host reboot or fresh-launcher run was performed for
+this fix; the new launcher assertion remains to be executed in that qualification.
+
+At the review baseline, commercial licence expiry was unimplemented: approved online customers renew signed
+grants without a contractual end date. The previous 120-second expiry test proves offline
+lease expiry only. A licence end-date feature needs central entitlement dates, issuance
+bounded by that date, customer enforcement and online/offline boundary tests before this
+requirement can pass.
+
+Core/Individual classification is versioned catalogue metadata. Foundation must remain
+Core; other supported modules can change classification only via a new verified catalogue
+and deliberate release cutover. Core means required in that catalogue, not exemption from
+signed authority, membership or user permissions. Individual selections require explicit
+dependency closure. Assigning desired modules does not install or activate them.
+
+At the review baseline, adding a third module required coordinated code changes: owned backend/web
+feature entries, `scripts/module-source-map.mjs`, shared business-module IDs/capability
+limits, permissions, local-disable validation, selected-build registration and tests.
+Publish its signed code catalogue, review classification/dependencies, approve the customer
+assignment, deliver/install the matching profile, explicitly activate and sync, then grant
+user permissions. Central staff cannot create executable module code in the catalogue UI.
+
+Before implementing real business workflows, establish each module's mutation and
+background-job authorization contract. Existing Incident/Risk tests prove guarded landing
+pages. They do not prove CRUD, long-running jobs or document operations. Check authority
+at actual execution/commit, test revocation and expiry during work, tenant/application
+isolation, stale retries and coherent recovery; a hidden menu is insufficient.
+
+The outstanding Titan M01–M19 journeys listed above remain open until executed through
+that customer workflow. Automated isolated profile/transition evidence is recorded
+separately and must not silently replace customer acceptance. Prioritize literal licence
+expiry, third-module extensibility, repeatable private administrator handoff, activation-aware
+full-DMS packaging, coherent restore and clean-host/Dokploy acceptance before production.
+
+Final workspace verification after the restart fix: `pnpm check`, `pnpm build`,
+`pnpm test` and `pnpm test:integration` passed, including PostgreSQL and SeaweedFS.
+This does not erase the initial combined-profile failure or execute the newly added
+fresh-installer restart assertion. Changes from this review remain local and uncommitted.
+
+
+## Scoped foundation fixes — 2026-11-12
+
+The three requested implementation changes supersede the baseline findings above:
+
+- Contractual expiry is now a reviewed UTC date per product. Approval/renewal requires a
+  future date; central clips approved signed grants to that end and refuses renewal after
+  it. Customer verification closes business access at the end, including retained reads,
+  and rejects removal of an established licence bound. Newer reviewed renewal can restore
+  otherwise permitted access. Existing offline tokens retain their previously signed bound.
+- New installer-owned PostgreSQL containers use `unless-stopped`. Titan's retained Compose
+  and live policy were already corrected without restarting its database. Qualification
+  now exercises an actual disposable database crash and checks committed data after recovery.
+- A shared module registry drives IDs, permissions, contracts, labels, build selection and
+  validation limits. `pnpm modules:sync` generates the owning permission migration and API
+  references. Retirement uses `enabled: false`, preserving historical permission identities
+  and customer records. Customer assignment/restriction still uses reviewed signed authority,
+  explicit user permissions and the matching package/activation workflow.
+
+Final qualification passed after recovering Docker and reclaiming workstation storage.
+The actual signed installer passed PostgreSQL automatic restart with committed data retained,
+then complete central/customer HTTPS/browser handover. Central HTTP tests passed licence
+shortening, bounded issuance, offline closure, online renewal refusal and staff renewal.
+The disposable Permit fixture passed migration/API generation, selected-image ordinary login,
+permissions, SQL scope, local disablement and signed revocation/expiry. Configuration-only
+retirement passed type checks, image/route exclusion and retained permission validation;
+zero-active-module contracts and API generation also passed. Required workspace check,
+build, test and integration gates passed earlier on this implementation.
+
+The first fresh handover retry encountered Titan ingress on reserved port 23600; the passing
+run temporarily isolated that port and restored Titan ingress afterward. Evidence is retained
+privately outside Git under `/home/dev/.local/state/thaarei-qualification/` in
+`restart-final.log`, `restart-20261112/qualification.log`, and `modules-20261112.log`.
+
+These are disposable qualification results. Titan's application images and signed bundle
+remain on the previous release. Roll out upgraded customer verifiers before the central
+issuer, run owning migrations, and enter real contractual dates; do not rewrite a signed
+bundle in place. No real contract date was invented, existing volume deleted or host reboot
+performed. Broader customer/production acceptance and the earlier intermittent profile
+failure remain separately recorded above.

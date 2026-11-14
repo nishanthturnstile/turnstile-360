@@ -1,0 +1,1148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Structure — proposed interaction design</title>
+    <style>
+    :root {
+      color-scheme: light dark;
+      font-family: var(--font-sans, system-ui, sans-serif);
+      color: var(--foreground, #201c22);
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+    }
+    button,
+    input,
+    select {
+      font: inherit;
+      color: inherit;
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border, #e4dfe5);
+      border-radius: 8px;
+      background: var(--card, #fff);
+      padding: 8px 11px;
+      font-size: 12px;
+      font-weight: 550;
+    }
+    button:disabled {
+      cursor: default;
+      opacity: 0.5;
+    }
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    summary:focus-visible {
+      outline: 2px solid var(--ring, #008563);
+      outline-offset: 3px;
+    }
+    button[aria-pressed="true"],
+    .primary {
+      background: var(--primary, #008563);
+      color: var(--primary-foreground, #fff);
+      border-color: var(--primary, #008563);
+    }
+    .quiet {
+      background: transparent;
+      border-color: transparent;
+    }
+    .muted {
+      color: var(--muted-foreground, #7d7482);
+    }
+    .eyebrow {
+      color: var(--primary, #008563);
+      font-size: 10px;
+      letter-spacing: 0.13em;
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      margin: 4px 0 4px;
+      font-size: 25px;
+      letter-spacing: -0.7px;
+      font-weight: 650;
+    }
+    header p,
+    .intro {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted-foreground, #7d7482);
+      line-height: 1.6;
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 0;
+    }
+    .search {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 150px;
+      background: var(--card, #fff);
+      border: 1px solid var(--border, #e4dfe5);
+      border-radius: 8px;
+      padding: 0 10px;
+    }
+    .search input {
+      width: 100%;
+      border: 0;
+      outline-offset: 1px;
+      background: transparent;
+      padding: 9px 0;
+      font-size: 12px;
+    }
+    .switch {
+      border: 0;
+      margin: 0;
+      min-width: 0;
+      display: flex;
+      gap: 3px;
+      background: var(--muted, #f4f1f5);
+      padding: 3px;
+      border-radius: 9px;
+    }
+    .switch button {
+      padding: 6px 10px;
+      border-color: transparent;
+      background: transparent;
+      color: var(--muted-foreground, #7d7482);
+    }
+    .switch button[aria-pressed="true"] {
+      color: var(--foreground, #201c22);
+      background: var(--card, #fff);
+      box-shadow: 0 1px 3px #00000012;
+    }
+    .workspace {
+      position: relative;
+      border: 1px solid var(--border, #e4dfe5);
+      border-radius: var(--radius, 12px);
+      overflow: hidden;
+      background: var(--card, #fff);
+    }
+    .context {
+      min-height: 43px;
+      padding: 11px 16px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      font-size: 11px;
+      border-bottom: 1px solid var(--border, #e4dfe5);
+    }
+    .context button {
+      padding: 0;
+      font-size: 11px;
+    }
+    .context .scope {
+      margin-left: auto;
+      color: var(--muted-foreground, #7d7482);
+    }
+    .canvas {
+      height: 410px;
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+      background-color: var(--secondary, #faf8fb);
+      background-image: radial-gradient(var(--border, #dfdae3) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+    .world {
+      position: absolute;
+      transform-origin: 0 0;
+    }
+    .links {
+      position: absolute;
+      inset: 0;
+      overflow: visible;
+      pointer-events: none;
+    }
+    .links path {
+      fill: none;
+      stroke: var(--muted-foreground, #a49aa9);
+      stroke-opacity: 0.5;
+      stroke-width: 1.5;
+    }
+    .node {
+      position: absolute;
+      width: 160px;
+      height: 88px;
+      padding: 12px;
+      text-align: left;
+      border: 1px solid var(--border, #e4dfe5);
+      border-radius: 10px;
+      background: var(--card, #fff);
+      color: var(--foreground, #201c22);
+      box-shadow: 0 2px 6px #00000006;
+    }
+    .node[data-selected="true"] {
+      border: 2px solid var(--primary, #008563);
+      padding: 11px;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary, #008563) 12%, transparent);
+    }
+    .node[data-context="true"] {
+      border-style: dashed;
+    }
+    .node .type {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 9px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--muted-foreground, #7d7482);
+    }
+    .node strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .node small {
+      display: block;
+      margin-top: 7px;
+      font-size: 10px;
+      color: var(--muted-foreground, #7d7482);
+    }
+    .node[data-type="site"] .type {
+      color: var(--primary, #008563);
+    }
+    .controls {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      display: flex;
+      gap: 3px;
+      padding: 4px;
+      background: var(--card, #fff);
+      border: 1px solid var(--border, #e4dfe5);
+      border-radius: 10px;
+      box-shadow: 0 2px 6px #00000006;
+    }
+    .controls button {
+      padding: 5px 9px;
+      border: 0;
+      background: transparent;
+    }
+    .controls .separator {
+      width: 1px;
+      margin: 3px;
+      background: var(--border, #e4dfe5);
+    }
+    .canvas-note {
+      position: absolute;
+      right: 14px;
+      bottom: 20px;
+      font-size: 10px;
+      color: var(--muted-foreground, #7d7482);
+      pointer-events: none;
+    }
+    .legend {
+      padding: 11px 16px;
+      border-top: 1px solid var(--border, #e4dfe5);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      font-size: 10px;
+      color: var(--muted-foreground, #7d7482);
+    }
+    .legend .dot {
+      width: 6px;
+      height: 6px;
+      display: inline-block;
+      border-radius: 2px;
+      margin-right: 5px;
+      background: var(--primary, #008563);
+    }
+    .legend .dept {
+      background: var(--muted-foreground, #7d7482);
+    }
+    .legend .tip {
+      margin-left: auto;
+    }
+    .outline {
+      height: 410px;
+      overflow: auto;
+      padding: 10px 16px;
+      background: var(--card, #fff);
+    }
+    .outline-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 48px;
+      border-bottom: 1px solid var(--border, #e4dfe5);
+    }
+    .outline-row > button {
+      flex: 1;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      min-width: 0;
+    }
+    .outline-row span {
+      font-size: 10px;
+      color: var(--muted-foreground, #7d7482);
+    }
+    .outline-row strong {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+    .outline-row > .disclosure {
+      width: 28px;
+      flex: none;
+      padding: 4px;
+    }
+    .inspector {
+      position: absolute;
+      top: 43px;
+      right: 0;
+      width: min(292px, 100%);
+      bottom: 0;
+      background: var(--card, #fff);
+      border-left: 1px solid var(--border, #e4dfe5);
+      box-shadow: -7px 0 18px #00000008;
+      display: flex;
+      flex-direction: column;
+    }
+    .inspector[hidden],
+    .canvas[hidden],
+    .outline[hidden],
+    .empty[hidden] {
+      display: none;
+    }
+    .panel-head {
+      padding: 16px;
+      border-bottom: 1px solid var(--border, #e4dfe5);
+      display: flex;
+      gap: 8px;
+      align-items: start;
+    }
+    .panel-head > div {
+      flex: 1;
+      min-width: 0;
+    }
+    h2 {
+      font-size: 17px;
+      margin: 6px 0;
+      letter-spacing: -0.3px;
+    }
+    .panel-head p {
+      font-size: 10px;
+      line-height: 1.6;
+      margin: 0;
+      color: var(--muted-foreground, #7d7482);
+      overflow-wrap: anywhere;
+    }
+    .panel-body {
+      padding: 16px;
+      overflow: auto;
+      flex: 1;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+    .panel-body p {
+      margin: 0 0 14px;
+    }
+    .definition {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border, #e4dfe5);
+      gap: 10px;
+      font-size: 11px;
+    }
+    .definition span {
+      color: var(--muted-foreground, #7d7482);
+    }
+    .action-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 14px 0;
+    }
+    .action-grid button {
+      font-size: 11px;
+    }
+    .panel-foot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border, #e4dfe5);
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-weight: 550;
+      font-size: 11px;
+      margin-bottom: 15px;
+    }
+    .panel-body label input,
+    .panel-body label select {
+      width: 100%;
+      border-radius: 7px;
+      border: 1px solid var(--border, #e4dfe5);
+      background: var(--background, #fff);
+      padding: 8px;
+      font-size: 12px;
+    }
+    .callout {
+      padding: 12px;
+      border-radius: 8px;
+      background: var(--muted, #f5f1f6);
+      font-size: 11px;
+      margin-bottom: 14px;
+    }
+    .callout strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+    .status {
+      font-size: 11px;
+      color: var(--muted-foreground, #7d7482);
+      line-height: 1.6;
+      min-height: 18px;
+      margin: 10px 0;
+    }
+    .empty {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      text-align: center;
+      font-size: 13px;
+      pointer-events: none;
+    }
+    .empty p {
+      font-size: 11px;
+      color: var(--muted-foreground, #7d7482);
+    }
+    details {
+      margin-top: 20px;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .review {
+      padding-top: 10px;
+    }
+    h3 {
+      font-size: 14px;
+      margin: 22px 0 8px;
+    }
+    .review table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 11px;
+    }
+    td,
+    th {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border, #e4dfe5);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted-foreground, #7d7482);
+    }
+    .review li {
+      padding: 4px 0;
+    }
+    .review a {
+      color: var(--primary, #008563);
+    }
+    @media (max-width: 480px) {
+      header {
+        align-items: start;
+      }
+      h1 {
+        font-size: 23px;
+      }
+      .toolbar {
+        gap: 7px;
+      }
+      .search {
+        flex-basis: 100%;
+      }
+      .canvas-note,
+      .legend .tip {
+        display: none;
+      }
+      .context .scope {
+        width: 100%;
+        margin-left: 0;
+      }
+      .inspector {
+        top: 0;
+        width: 100%;
+      }
+      .legend {
+        gap: 10px;
+      }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      button {
+        transition:
+          border-color 120ms ease-out,
+          box-shadow 120ms ease-out;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <div class="eyebrow">Workspace</div>
+          <h1>Structure</h1>
+          <p>Your organization, connected.</p>
+        </div>
+        <button type="button" class="primary" id="add-site">＋ Add site</button>
+      </header>
+      <div class="toolbar">
+        <label class="search" style="margin:0;font-weight:400"
+          ><span aria-hidden="true">⌕</span>
+          <input
+            id="search"
+            type="search"
+            placeholder="Find a site or department…"
+            aria-label="Find a site or department"
+          ></label
+        >
+        <fieldset class="switch" aria-label="Structure view">
+          <button type="button" id="chart-view" aria-pressed="true">Chart</button
+          ><button type="button" id="outline-view" aria-pressed="false">Outline</button>
+        </fieldset>
+        <button type="button" id="collapse-all" title="Collapse or expand all branches">
+          Collapse
+        </button>
+      </div>
+      <section class="workspace" aria-label="Structure concept">
+        <div class="context">
+          <button type="button" id="all-structure" class="quiet">Example Manufacturing</button
+          ><span id="crumb" class="muted"></span><span class="scope" id="scope-label"></span>
+        </div>
+        <div
+          class="canvas"
+          id="canvas"
+          role="application"
+          aria-label="Organization chart. Drag empty space to pan; use plus and minus to zoom; Home to fit."
+        >
+          <div class="world" id="world"></div>
+          <div class="empty" id="no-results" hidden>
+            <strong>No matching units</strong>
+            <p>Try a different name or clear your search.</p>
+          </div>
+          <nav class="controls" aria-label="Chart navigation">
+            <button type="button" id="zoom-out" aria-label="Zoom out">−</button
+            ><button type="button" id="zoom-reset" aria-label="Reset zoom to 100%">100%</button
+            ><button type="button" id="zoom-in" aria-label="Zoom in">＋</button
+            ><span class="separator"></span><button type="button" id="fit">Fit chart</button>
+          </nav>
+          <span class="canvas-note">Drag to explore · Select a unit for details</span>
+        </div>
+        <section class="outline" id="outline" hidden aria-label="Organization outline"></section>
+        <div class="legend">
+          <span><i class="dot"></i>Site / Plant</span><span><i class="dot dept"></i>Department</span
+          ><span>┄ Ancestor context</span><span class="tip">Only units within your access</span>
+        </div>
+        <aside class="inspector" id="inspector" aria-label="Unit details" hidden></aside>
+      </section>
+      <p class="status" id="status" role="status">
+        Interactive concept · Sample data only. Try search, a unit card, Outline or Add site.
+      </p>
+      <details>
+        <summary>Review findings and implementation sequence</summary>
+        <div class="review">
+          <p>
+            Design review · 14 November 2026. Live Structure inspected at 1280 × 800 and 390 × 844.
+            Chart, outline, rename, creation, move and deletion subforms inspected without
+            submitting business mutations. This concept is a proposal, not a deployed application
+            change.
+          </p>
+          <h3>What should change</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Before</th>
+                <th>After</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Outline is the default. Chart is the same nested list rearranged with CSS.</td>
+                <td>
+                  Chart first on desktop; connected cards, pan, zoom, Fit, branch focus and a dense
+                  outline alternative.
+                </td>
+                <td>
+                  Relationships become immediately legible; large hierarchies remain navigable.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Large page header, repeated hierarchy heading and pagination consume the viewport.
+                </td>
+                <td>One compact header and toolbar above a bounded canvas.</td>
+                <td>More working space without extra page scrolling.</td>
+              </tr>
+              <tr>
+                <td>
+                  Manage opens rename immediately and narrows/reflows the chart; the panel stacks
+                  above it on phones.
+                </td>
+                <td>
+                  Selection opens an overview overlay. Explicit Add department, Rename and Move
+                  actions open one task. Full-screen task sheet on phones.
+                </td>
+                <td>
+                  Browsing stays separate from editing; the selected context and camera survive.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Parent/type selectors offer invalid combinations, self/descendant moves and
+                  deletion of known non-leaves.
+                </td>
+                <td>
+                  Infer legal types and known parent relationships, preserve the full destination
+                  path and show unavailable actions with reasons. Confirm availability server-side.
+                </td>
+                <td>Explain predictable restrictions before a rejected submission.</td>
+              </tr>
+              <tr>
+                <td>Switching editing actions or using Cancel can discard typed unit input.</td>
+                <td>
+                  One dirty-draft guard covers action changes, Close, Cancel and navigation.
+                  Read-only browsing does not mark the page dirty; pending and uncertain commands
+                  remain guarded.
+                </td>
+                <td>Protect work consistently and avoid unnecessary discard prompts.</td>
+              </tr>
+              <tr>
+                <td>One page contains at most 100 authorized units with contextual ancestors.</td>
+                <td>
+                  Assemble authorized pages only when organization revision, access revision and
+                  scope match. Show loading completeness; retry from a clean revision on conflict.
+                </td>
+                <td>
+                  A partial chart must never imply a complete organization or disclose hidden
+                  branches.
+                </td>
+              </tr>
+              <tr>
+                <td>Move review shows aggregate counts but little visual context.</td>
+                <td>
+                  Before/after paths, destination preview, subtree and server-reported affected
+                  member/invitation counts.
+                </td>
+                <td>Make inherited-access effects understandable before confirmation.</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Implement in this order</h3>
+          <ol>
+            <li>
+              <strong>Scoped data and state.</strong>
+              Define a normalized presentation model that separates actionable units from ancestor
+              context. Aggregate cursor pages at consistent revisions within the current 500-unit /
+              8-level limit. Reuse subject/access-scoped React Query caching and invalidation; never
+              fetch onboarding's unrestricted snapshot. Cancel obsolete loads; keep selection/camera
+              on background refresh.
+            </li>
+            <li>
+              <strong>Chart workspace.</strong>
+              Reuse the tested layout/camera helpers behind a scoped adapter. Support a forest for
+              disjoint visible branches, clear connectors, readable cards, branch collapse, Fit and
+              reset. Preserve canonical order; no persisted coordinates. Show Chart/Outline as a
+              visible segmented control. Use one compact header and internally bounded scrolling.
+            </li>
+            <li>
+              <strong>Find and navigate.</strong>
+              Search full authorized results, retain ancestry, reveal a selected match, display
+              breadcrumbs and offer Focus branch / Back to organization. Keep branch collapse and
+              selection synchronized across views. Add a collapsible navigator only for larger
+              desktop workspaces; no permanent extra column.
+            </li>
+            <li>
+              <strong>Details and creation.</strong>
+              Open a read-only overview first. Expose explicit task actions and a contextual +
+              shortcut. Infer site-under-organization and department-under-legal-parent choices.
+              Preserve drafts across collapse, refresh and rejected navigation. Guard action
+              changes, Close and Cancel consistently; mark only real edits dirty. Root name links to
+              General settings only for authorized managers.
+            </li>
+            <li>
+              <strong>Rename, move and delete.</strong>
+              Use one guarded task sheet with the existing review/command state machine. Explain
+              restrictions on known invalid destinations and non-leaf removal. Final server
+              authorization remains decisive. Show old/new paths and real move-impact counts;
+              preserve uncertain command readback and command keys. Add drag-to-move only after the
+              click/keyboard path passes the same review flow.
+            </li>
+            <li>
+              <strong>Access context.</strong>
+              Add a permission-gated shortcut to Members filtered by coverage. Label it “Members
+              with access” rather than employee/headcount. Reuse the existing unit-filtered Members
+              directory and per-member access inspection for drilldowns. Efficient unit-wide
+              assignment summaries, authoritative deletion blockers and structure-specific activity
+              need explicit server projections; the present unit-detail and People audit APIs do not
+              provide those summaries. Label suspended assignments separately from active coverage.
+              Negotiate additive contracts so older strict clients remain compatible.
+            </li>
+            <li>
+              <strong>Responsive, recovery and performance validation.</strong>
+              Test root-only, empty scoped access, duplicate/long names, disjoint scopes,
+              100/101/500 units, 8 levels, revision changes during pagination, grant loss and
+              cancelled reads, stale edits, lost acknowledgements, keyboard/touch and reduced
+              motion. Test 1440/1280 desktop, tablet and 390/320 phone layouts. Show node/loading
+              errors locally; retain existing rows during background refresh and never replay writes
+              automatically.
+            </li>
+            <li>
+              <strong>Release.</strong>
+              Run all four workspace gates plus actual HTTPS/PostgreSQL/browser journeys, update
+              gallery/docs, build the signed source-matched release, use the existing supported
+              cutover, and compare retained units/access before and after. No implementation or
+              deployment is claimed by this proposal.
+            </li>
+          </ol>
+          <h3>Reference patterns</h3>
+          <p>
+            <a
+              href="https://help.sap.com/docs/successfactors-employee-central/implementing-and-managing-company-structure-overview/navigating-in-company-structure-overview"
+              >SAP Company Structure Overview</a
+            >
+            informs branch navigation and direct/substructure detail.
+            <a
+              href="https://help.sap.com/docs/SAPUI5/7d0efeaa9ccd4731afb386284cfdc3a9/b5649c8de7f74739b66747dcc9356d0b.html"
+              >SAP Network Graph</a
+            >
+            informs collapse and zoom-to-fit.
+            <a
+              href="https://docs.cloud.google.com/resource-manager/docs/manage-projects-within-folder"
+              >Google Resource Manager</a
+            >
+            explains how moving hierarchy nodes changes inherited policies.
+            <a
+              href="https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/administrative-units"
+              >Microsoft Entra administrative units</a
+            >
+            informs explicit delegated scope; its non-nested unit model is not our hierarchy model.
+            These are interaction references, not a recommendation to change Turnstile's domain
+            rules.
+          </p>
+          <p>
+            <strong>Implementation boundary:</strong>
+            keep scoped reads, permissions and command ownership in the completed-workspace
+            Structure feature. Extract a presentation adapter for the existing layout/camera
+            helpers, with ancestor-only cards explicitly non-actionable; do not reuse onboarding's
+            unrestricted editor or make every rendered card manageable. Keep the configured
+            shadcn/Base UI components, Hugeicons, fonts and semantic tokens. Extend the development
+            gallery with scoped, partial-loading, draft, conflict, empty, deep and narrow examples.
+            This isolated HTML uses sample data to demonstrate the proposal and does not add a new
+            application UI framework or interaction dependency.
+          </p>
+          <p>
+            <strong>Priorities:</strong>
+            first deliver scoped chart/navigation and form corrections (steps 1–5); then scoped
+            access insights (step 6). Image/CSV export, minimap, saved views, hierarchy imports,
+            multiple hierarchies, new unit types and employee reporting lines are separately scoped
+            follow-ups, not necessary for the first redesign. Avoid implying that module access
+            assignments are employment records.
+          </p>
+        </div>
+      </details>
+    </main>
+    <script>
+    // Isolated interaction prototype: no network calls, storage, credentials or backend writes.
+    const units = [
+      {
+        id: 'org',
+        name: 'Example Manufacturing',
+        type: 'organization',
+        parent: null,
+        context: true,
+      },
+      { id: 'hq', name: 'Headquarters', type: 'site', parent: 'org' },
+      { id: 'plant', name: 'Manufacturing Plant', type: 'site', parent: 'org' },
+      { id: 'eng', name: 'Engineering', type: 'department', parent: 'hq' },
+      { id: 'finance', name: 'Finance', type: 'department', parent: 'hq' },
+      { id: 'quality', name: 'Quality & Safety', type: 'department', parent: 'plant' },
+      { id: 'ops', name: 'Operations', type: 'department', parent: 'plant' },
+      { id: 'product', name: 'Product Design', type: 'department', parent: 'eng' },
+    ];
+    const $ = (id) => document.getElementById(id);
+    const esc = (value) =>
+      String(value).replace(
+        /[&<>"']/g,
+        (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+      );
+    const byId = (id) => units.find((u) => u.id === id);
+    const children = (id) => units.filter((u) => u.parent === id);
+    const path = (id) => {
+      const u = byId(id);
+      return u ? (u.parent ? `${path(u.parent)} / ` : '') + u.name : '';
+    };
+    const below = (id, ancestor) => {
+      const u = byId(id);
+      return !!u && (u.parent === ancestor || (u.parent && below(u.parent, ancestor)));
+    };
+    const descendants = (id) => units.filter((u) => below(u.id, id));
+    const typeName = (type) =>
+      type === 'site' ? 'Site / Plant' : type === 'organization' ? 'Organization' : 'Department';
+    let selected,
+      focus = 'org',
+      view = 'chart',
+      collapsed = new Set(['eng']),
+      scale = 1,
+      offset = { x: 0, y: 0 },
+      layout = { width: 0, height: 0 },
+      gesture,
+      returnFocus;
+    const say = (text) => ($('status').textContent = text);
+    function rows() {
+      const query = $('search').value.trim().toLowerCase();
+      const allowed = new Set();
+      for (const u of units)
+        if (
+          (!query || u.name.toLowerCase().includes(query)) &&
+          (u.id === focus || below(u.id, focus))
+        ) {
+          let item = u;
+          while (item) {
+            allowed.add(item.id);
+            if (item.id === focus) break;
+            item = byId(item.parent);
+          }
+        }
+      const result = [];
+      function visit(id, depth) {
+        if (!allowed.has(id)) return;
+        result.push({ ...byId(id), depth });
+        if (query || !collapsed.has(id)) for (const c of children(id)) visit(c.id, depth + 1);
+      }
+      visit(focus, 0);
+      return result;
+    }
+    function transform() {
+      $('world').style.transform = `translate(${offset.x}px,${offset.y}px) scale(${scale})`;
+      $('zoom-reset').textContent = `${Math.round(scale * 100)}%`;
+    }
+    function fit() {
+      const w = $('canvas').clientWidth,
+        h = $('canvas').clientHeight;
+      scale = Math.min(
+        1,
+        (w - 40) / Math.max(1, layout.width),
+        (h - 70) / Math.max(1, layout.height),
+      );
+      offset = {
+        x: (w - layout.width * scale) / 2,
+        y: Math.max(18, (h - 36 - layout.height * scale) / 2),
+      };
+      transform();
+    }
+    function zoom(delta) {
+      const old = scale;
+      scale = Math.max(0.2, Math.min(2, scale + delta));
+      const cx = $('canvas').clientWidth / 2,
+        cy = $('canvas').clientHeight / 2;
+      offset = { x: cx - ((cx - offset.x) * scale) / old, y: cy - ((cy - offset.y) * scale) / old };
+      transform();
+    }
+    function render(autoFit = true) {
+      const list = rows(),
+        positions = new Map(),
+        sizes = new Map(),
+        ids = new Set(list.map((u) => u.id));
+      function measure(id) {
+        const value = Math.max(
+          1,
+          children(id)
+            .filter((u) => ids.has(u.id))
+            .reduce((n, u) => n + measure(u.id), 0),
+        );
+        sizes.set(id, value);
+        return value;
+      }
+      function place(id, start, depth) {
+        positions.set(id, { x: (start + sizes.get(id) / 2) * 184 - 80, y: depth * 126 });
+        let next = start;
+        for (const c of children(id).filter((u) => ids.has(u.id))) {
+          place(c.id, next, depth + 1);
+          next += sizes.get(c.id);
+        }
+      }
+      if (list.length) {
+        measure(focus);
+        place(focus, 0, 0);
+      }
+      layout = {
+        width: (sizes.get(focus) || 1) * 184,
+        height: Math.max(0, ...list.map((u) => u.depth)) * 126 + 88,
+      };
+      const links = list
+        .filter((u) => positions.has(u.parent))
+        .map((u) => {
+          const p = positions.get(u.parent),
+            c = positions.get(u.id),
+            y = (p.y + 88 + c.y) / 2;
+          return `<path d="M${p.x + 80},${p.y + 88} V${y} H${c.x + 80} V${c.y}"/>`;
+        })
+        .join('');
+      $('world').style.width = `${layout.width}px`;
+      $('world').style.height = `${layout.height}px`;
+      $('world').innerHTML =
+        `<svg class="links" width="${layout.width}" height="${layout.height}" aria-hidden="true">${links}</svg>${list
+          .map((u) => {
+            const p = positions.get(u.id),
+              count = descendants(u.id).length;
+            return `<button type="button" class="node" data-id="${u.id}" data-type="${u.type}" data-selected="${selected === u.id}" data-context="${!!u.context}" style="left:${p.x}px;top:${p.y}px" aria-label="${esc(path(u.id))}, ${typeName(u.type)}${u.context ? ', ancestor context' : ''}"><span class="type">${u.type === 'site' ? '▣ ' : u.type === 'department' ? '◇ ' : ''}${typeName(u.type)}</span><strong>${esc(u.name)}</strong><small>${u.context ? 'Ancestor context' : count ? `${count} unit${count === 1 ? '' : 's'} below` : 'No units below'}</small></button>`;
+          })
+          .join('')}`;
+      $('outline').innerHTML = list
+        .map(
+          (u) =>
+            `<div class="outline-row" style="padding-left:${u.depth * 16}px">${children(u.id).length ? `<button type="button" class="disclosure" data-toggle="${u.id}" aria-label="${collapsed.has(u.id) ? 'Expand' : 'Collapse'} ${esc(u.name)}" aria-expanded="${!collapsed.has(u.id)}">${collapsed.has(u.id) ? '›' : '⌄'}</button>` : '<span style="width:28px;flex:none"></span>'}<button type="button" data-id="${u.id}" aria-label="View ${esc(path(u.id))}"><strong>${esc(u.name)}</strong><span>${typeName(u.type)}${u.context ? ' · Ancestor context' : ''}</span></button><span>${children(u.id).length ? `${children(u.id).length} below` : ''}</span></div>`,
+        )
+        .join('');
+      if (!list.length) {
+        $('outline').innerHTML =
+          '<p class="muted">No matching units. Try a different name or clear your search.</p>';
+      }
+      $('no-results').hidden = !!list.length;
+      $('scope-label').textContent =
+        `${units.filter((u) => !u.context).length} loaded · ${list.filter((u) => !u.context).length} visible · within your access`;
+      $('crumb').textContent = focus === 'org' ? '' : ` / ${byId(focus).name}`;
+      $('collapse-all').textContent = collapsed.has(focus) ? 'Expand' : 'Collapse';
+      document.querySelectorAll('[data-id]').forEach((b) => {
+        b.onclick = () => select(b.dataset.id, b);
+      });
+      document.querySelectorAll('[data-toggle]').forEach((b) => {
+        b.onclick = () => {
+          const id = b.dataset.toggle;
+          collapsed.has(id) ? collapsed.delete(id) : collapsed.add(id);
+          render();
+        };
+      });
+      if (autoFit) fit();
+    }
+    function panel(title, body, footer, subtitle) {
+      $('inspector').hidden = false;
+      $('inspector').innerHTML =
+        `<div class="panel-head"><div><div class="eyebrow">${esc(subtitle || 'Unit overview')}</div><h2>${esc(title)}</h2><p>${esc(selected ? path(selected) : 'Example Manufacturing')}</p></div><button type="button" class="quiet" id="close-panel" aria-label="Close unit details">×</button></div><div class="panel-body">${body}</div><div class="panel-foot">${footer}</div>`;
+      $('close-panel').onclick = closePanel;
+    }
+    function closePanel() {
+      $('inspector').hidden = true;
+      returnFocus?.focus();
+    }
+    function select(id, trigger) {
+      selected = id;
+      returnFocus = trigger;
+      render(false);
+      const u = byId(id);
+      panel(
+        u.name,
+        `<div class="definition"><span>Type</span><strong>${typeName(u.type)}</strong></div><div class="definition"><span>Units directly below</span><strong>${children(id).length}</strong></div><div class="definition"><span>Units in this branch</span><strong>${descendants(id).length}</strong></div>${u.context ? '<p class="callout" style="margin-top:14px">This ancestor provides path context. Unit actions require separate management permission.</p>' : `<div class="action-grid"><button type="button" id="add-child">＋ Add department</button><button type="button" id="rename">Rename</button><button type="button" id="move" ${u.type === 'site' ? 'disabled title="Sites remain directly under the organization"' : ''}>Move to…</button></div><p class="muted">${u.type === 'site' ? 'Sites belong directly to the organization. Departments can be nested below a legal parent.' : 'Structure determines where scoped access applies. Moving this unit can change inherited access.'}</p>`}<button type="button" class="quiet" id="focus-branch">Focus this branch →</button>`,
+        `<button type="button" id="collapse-branch">${collapsed.has(id) ? 'Expand' : 'Collapse'} branch</button>`,
+      );
+      $('focus-branch').onclick = () => {
+        focus = id;
+        closePanel();
+        render();
+        say('Showing this branch. Use Example Manufacturing to return to the organization.');
+      };
+      $('collapse-branch').onclick = () => {
+        collapsed.has(id) ? collapsed.delete(id) : collapsed.add(id);
+        closePanel();
+        render();
+      };
+      if (!u.context) {
+        $('add-child').onclick = () => edit('create', id);
+        $('rename').onclick = () => edit('rename', id);
+        $('move').onclick = () => edit('move', id);
+      }
+    }
+    function edit(kind, id) {
+      const u = byId(id),
+        site = kind === 'site';
+      selected = id;
+      const options = units
+        .filter((t) => !t.context && t.id !== id && t.id !== u.parent && !below(t.id, id))
+        .map((t) => `<option value="${t.id}">${esc(path(t.id))}</option>`)
+        .join('');
+      const title = site
+        ? 'Add a site'
+        : kind === 'create'
+          ? 'Add a department'
+          : kind === 'rename'
+            ? 'Rename unit'
+            : 'Move unit';
+      panel(
+        title,
+        kind === 'move'
+          ? `<label>New parent<select id="draft-parent">${options}</select></label><p class="muted">The current parent, this unit and its descendants are excluded. The server must verify access and remaining restrictions.</p>`
+          : `<label>${site ? 'Site name' : kind === 'create' ? 'Department name' : 'Unit name'}<input id="draft-name" maxlength="120" value="${kind === 'rename' ? esc(u.name) : ''}" placeholder="${site ? 'e.g. Regional Office' : 'e.g. Quality Assurance'}"></label><div class="definition"><span>${kind === 'rename' ? 'Type' : 'Parent'}</span><strong>${kind === 'rename' ? typeName(u.type) : esc(u.name)}</strong></div><p class="muted" style="margin-top:12px">${kind === 'rename' ? 'The unit identity and saved assignments stay the same.' : site ? 'A site is created directly below the organization.' : 'A department is created below the selected unit.'}</p>`,
+        `<button type="button" class="primary" id="review">Review ${kind === 'move' ? 'move' : kind === 'rename' ? 'rename' : 'new unit'}</button><button type="button" id="cancel-draft">Cancel</button>`,
+        'Draft',
+      );
+      const input = $('draft-name');
+      if (input) {
+        $('review').disabled = !input.value.trim();
+        input.oninput = () => ($('review').disabled = !input.value.trim());
+        input.focus();
+      }
+      $('cancel-draft').onclick = () => select(id);
+      $('review').onclick = () => {
+        const name = input?.value.trim(),
+          destination = $('draft-parent')?.value;
+        const newPath =
+          kind === 'move'
+            ? `${path(destination)} / ${u.name}`
+            : kind === 'rename'
+              ? `${path(u.parent)} / ${name}`
+              : `${path(id)} / ${name}`;
+        panel(
+          kind === 'move' ? 'Review move' : kind === 'rename' ? 'Review rename' : 'Review new unit',
+          `${kind === 'move' || kind === 'rename' ? `<div class="callout"><strong>Current path</strong>${esc(path(id))}</div>` : ''}<div class="callout"><strong>${kind === 'rename' ? 'Updated path' : 'New path'}</strong>${esc(newPath)}</div><p class="muted">${kind === 'move' ? 'The application will show server-calculated affected member and invitation counts here. No impact result is fabricated in this concept.' : 'Review the name, type and parent before saving.'}</p><p class="muted">Prototype only. Confirmation below demonstrates the interaction without changing any data.</p>`,
+          `<button type="button" class="primary" id="demo-confirm">Finish preview</button><button type="button" id="back-draft">Back</button>`,
+          'Review',
+        );
+        $('demo-confirm').onclick = () => {
+          closePanel();
+          say('Preview completed. No unit, membership or access data was changed.');
+        };
+        $('back-draft').onclick = () => {
+          edit(kind, id);
+          if ($('draft-name')) {
+            $('draft-name').value = name;
+            $('draft-name').dispatchEvent(new Event('input'));
+          }
+          if ($('draft-parent')) $('draft-parent').value = destination;
+        };
+      };
+    }
+    $('add-site').onclick = () => {
+      returnFocus = $('add-site');
+      edit('site', 'org');
+    };
+    $('all-structure').onclick = () => {
+      focus = 'org';
+      $('search').value = '';
+      closePanel();
+      render();
+    };
+    $('search').oninput = () => {
+      closePanel();
+      render();
+      say(
+        $('search').value
+          ? 'Matching units retain their ancestor paths.'
+          : 'Interactive concept · Sample data only.',
+      );
+    };
+    function setView(next) {
+      view = next;
+      $('canvas').hidden = next !== 'chart';
+      $('outline').hidden = next !== 'outline';
+      $('chart-view').setAttribute('aria-pressed', String(next === 'chart'));
+      $('outline-view').setAttribute('aria-pressed', String(next === 'outline'));
+      closePanel();
+      render();
+    }
+    $('chart-view').onclick = () => setView('chart');
+    $('outline-view').onclick = () => setView('outline');
+    $('collapse-all').onclick = () => {
+      if (collapsed.has(focus)) {
+        collapsed.clear();
+        $('collapse-all').textContent = 'Collapse';
+      } else {
+        units.forEach((u) => {
+          if (children(u.id).length) collapsed.add(u.id);
+        });
+        $('collapse-all').textContent = 'Expand';
+      }
+      closePanel();
+      render();
+    };
+    $('zoom-in').onclick = () => zoom(0.1);
+    $('zoom-out').onclick = () => zoom(-0.1);
+    $('zoom-reset').onclick = () => {
+      scale = 1;
+      transform();
+    };
+    $('fit').onclick = fit;
+    $('canvas').onkeydown = (e) => {
+      if (e.target !== $('canvas')) return;
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        zoom(0.1);
+      }
+      if (e.key === '-') {
+        e.preventDefault();
+        zoom(-0.1);
+      }
+      if (e.key === 'Home') {
+        e.preventDefault();
+        fit();
+      }
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        e.preventDefault();
+        offset.x += e.key === 'ArrowLeft' ? 30 : e.key === 'ArrowRight' ? -30 : 0;
+        offset.y += e.key === 'ArrowUp' ? 30 : e.key === 'ArrowDown' ? -30 : 0;
+        transform();
+      }
+    };
+    $('canvas').onpointerdown = (e) => {
+      if (e.target.closest('button') || !e.isPrimary) return;
+      gesture = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
+      $('canvas').setPointerCapture(e.pointerId);
+    };
+    $('canvas').onpointermove = (e) => {
+      if (gesture?.id !== e.pointerId) return;
+      offset = { x: gesture.ox + e.clientX - gesture.x, y: gesture.oy + e.clientY - gesture.y };
+      transform();
+    };
+    $('canvas').onpointerup = $('canvas').onpointercancel = () => (gesture = undefined);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        gesture = undefined;
+        closePanel();
+      }
+    });
+    new ResizeObserver(() => {
+      if (view === 'chart') fit();
+    }).observe($('canvas'));
+    if (matchMedia('(max-width: 480px)').matches) setView('outline');
+    else render();
+    </script>
+  </body>
+</html>

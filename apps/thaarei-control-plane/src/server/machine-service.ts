@@ -61,6 +61,10 @@ async function product(db: PoolClient, id: string) {
   return {
     expected,
     policyState: row.policy_state as Decision['state'],
+    licenceExpiresAt:
+      row.licence_expires_at == null
+        ? null
+        : Math.floor(new Date(row.licence_expires_at).getTime() / 1000),
     revision: Number(row.revision),
     paired: !!row.pairing_verified_at,
     minimumVersion: Number(row.minimum_version ?? 1),
@@ -340,6 +344,11 @@ export async function sync(headers: Headers, raw: unknown) {
       throw new AccessError(409, 'Product permanently requires v2 module decisions');
     if (input.version === 2 && p.minimumVersion !== 2)
       throw new AccessError(409, 'Reviewed v2 enforcement is required before module sync');
+    if (
+      p.policyState === 'approved' &&
+      (p.licenceExpiresAt === null || p.licenceExpiresAt <= Math.floor(Date.now() / 1000))
+    )
+      throw new AccessError(403, 'Licence expired or unconfigured; staff renewal required');
     const policy =
       input.version === 2
         ? await moduleDecisionPolicy(
@@ -446,9 +455,11 @@ export async function sync(headers: Headers, raw: unknown) {
     if (
       cached &&
       cachedClaims?.version === input.version &&
+      cachedClaims.licenceExpiresAt === (p.licenceExpiresAt ?? undefined) &&
       decodeProtectedHeader(cached.token).kid === kid &&
       typeof cachedClaims.exp === 'number' &&
       typeof cachedClaims.iat === 'number' &&
+      (policy.state !== 'approved' || cachedClaims.exp <= (p.licenceExpiresAt ?? 0)) &&
       cachedClaims.exp - cachedClaims.iat <= lifetime &&
       new Date(cached.expires_at).getTime() / 1000 - now >=
         Math.min(RENEW_BELOW_SECONDS, Math.floor((lifetime * 6) / 7))
@@ -470,7 +481,11 @@ export async function sync(headers: Headers, raw: unknown) {
       decisionId: randomUUID(),
       iat: now,
       nbf: now,
-      exp: now + lifetime,
+      exp:
+        policy.state === 'approved'
+          ? Math.min(now + lifetime, p.licenceExpiresAt as number)
+          : now + lifetime,
+      ...(p.licenceExpiresAt !== null ? { licenceExpiresAt: p.licenceExpiresAt } : {}),
       ...policy,
     });
     return { p, current, cached: null, claims };
@@ -486,6 +501,9 @@ export async function sync(headers: Headers, raw: unknown) {
       signingKeyId() !== kid ||
       decodeProtectedHeader(token).kid !== kid ||
       p.revision !== reserved.p.revision ||
+      p.licenceExpiresAt !== reserved.p.licenceExpiresAt ||
+      (reserved.p.policyState === 'approved' &&
+        (p.licenceExpiresAt ?? 0) <= Math.floor(Date.now() / 1000)) ||
       p.minimumVersion !== reserved.p.minimumVersion ||
       JSON.stringify(p.moduleAuthority) !== JSON.stringify(reserved.p.moduleAuthority) ||
       p.policyState !== reserved.p.policyState ||

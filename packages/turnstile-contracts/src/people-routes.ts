@@ -26,6 +26,48 @@ export interface PeopleRouteContract {
 // This is a contract catalog, not Nest metadata or a list of implemented endpoints.
 export const PEOPLE_ROUTES = [
   {
+    method: 'POST',
+    path: '/api/people/imports',
+    policy: 'normal_people',
+    request: 'ImportCreate',
+    response: 'ImportDetail',
+  },
+  { method: 'GET', path: '/api/people/imports', policy: 'normal_people', response: 'ImportList' },
+  {
+    method: 'GET',
+    path: '/api/people/imports/{id}',
+    policy: 'normal_people',
+    query: 'ImportRowsQuery',
+    response: 'ImportDetail',
+  },
+  {
+    method: 'POST',
+    path: '/api/people/imports/{id}/actions',
+    policy: 'normal_people',
+    request: 'ImportAction',
+    response: 'ImportDetail',
+  },
+  {
+    method: 'GET',
+    path: '/api/people/imports/{id}/errors',
+    policy: 'normal_people',
+    response: 'ImportErrors',
+  },
+  {
+    method: 'GET',
+    path: '/api/people/audit',
+    policy: 'normal_people',
+    query: 'PeopleAuditQuery',
+    response: 'PeopleAuditResponse',
+  },
+  {
+    method: 'GET',
+    path: '/api/people/members/{id}/access',
+    policy: 'normal_people',
+    query: 'AccessInspectionQuery',
+    response: 'AccessInspection',
+  },
+  {
     method: 'GET',
     path: '/api/people/catalog',
     policy: 'normal_catalog',

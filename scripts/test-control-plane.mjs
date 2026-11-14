@@ -31,6 +31,8 @@ import { verifyTurnstileCentralHttp } from './fixtures/turnstile-central-http.mj
 import { verifyInstalledModuleDecisions } from './fixtures/turnstile-module-decisions.mjs';
 import { verifyInstallationIntent } from './installation-intent.mjs';
 
+const fixtureLicenceEnd = new Date(Date.now() + 365 * 86400000).toISOString();
+
 const exec = promisify(execFile);
 const root = resolve(import.meta.dirname, '..');
 const app = join(root, 'apps/thaarei-control-plane');
@@ -1272,6 +1274,7 @@ try {
               id: other.binding.productId,
               revision: 1,
               decision: 'approve',
+              licenceExpiresAt: fixtureLicenceEnd,
             },
             machineHeaders,
           )

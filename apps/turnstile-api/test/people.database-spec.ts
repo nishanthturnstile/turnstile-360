@@ -3,17 +3,26 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { HttpException } from '@nestjs/common';
-import type { PeoplePermission } from '@thaarei/turnstile-contracts';
+import {
+  PEOPLE_FEATURES_HEADER,
+  PEOPLE_IMPORT_FEATURE,
+  type PeoplePermission,
+  permissionCatalogSchema,
+} from '@thaarei/turnstile-contracts';
 import type { FastifyRequest } from 'fastify';
 import { Pool, type PoolClient } from 'pg';
+import { z } from 'zod';
 import { createApplication } from '../src/bootstrap.js';
 import { INVITATION_TABLES } from '../src/infrastructure/database/invitation-safety.js';
 import { withTenant } from '../src/infrastructure/database/postgres.js';
+import { ProductPersistenceService } from '../src/infrastructure/database/product-persistence.service.js';
 import { IdentityClientService } from '../src/integrations/identity/identity-client.service.js';
 import { readAccess } from '../src/modules/access/access-evaluator.js';
 import { BrowserAuthService } from '../src/modules/auth/browser-auth/browser-auth.service.js';
 import { OrganizationService } from '../src/modules/organization/organization.service.js';
 import { AdministrationService } from '../src/modules/people/administration.service.js';
+import { BulkImportWorkerService } from '../src/modules/people/bulk-import-worker.service.js';
+import { InvitationService } from '../src/modules/people/invitation.service.js';
 import { InvitationDeliveryService } from '../src/modules/people/invitation-delivery.service.js';
 import { openAccessFixture, resetAccessFixture } from './access-fixture.js';
 
@@ -258,6 +267,7 @@ describe('People administration HTTP with real PostgreSQL and linked authority p
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
     await app.get(InvitationDeliveryService).beforeApplicationShutdown();
+    await app.get(BulkImportWorkerService).beforeApplicationShutdown();
     vi.spyOn(app.get(BrowserAuthService), 'authenticate').mockImplementation(
       async (request: FastifyRequest) => {
         const id = request.headers['x-test-user'];
@@ -281,6 +291,9 @@ describe('People administration HTTP with real PostgreSQL and linked authority p
   }, 35000);
   beforeEach(async () => {
     databaseFailures.length = 0;
+    await owned((db) =>
+      db.query('DELETE FROM turnstile.people_import_job WHERE tenant_id=$1', [tenant]),
+    );
     await rpc('clear-limits');
     await rpc('reset-member-projections');
     await owned((db) =>
@@ -359,6 +372,197 @@ describe('People administration HTTP with real PostgreSQL and linked authority p
     vi.unstubAllEnvs();
   });
 
+  it('reads retained audit events through a narrow authorized SQL function with precise cursor order', async () => {
+    await app.get(AdministrationService).refresh(actor());
+    const ids = [randomUUID(), randomUUID(), randomUUID()];
+    await owned(async (db) => {
+      for (const [index, id] of ids.entries())
+        await db.query(
+          `INSERT INTO turnstile.access_audit(tenant_id,id,actor_kind,actor_id,request_id,action,subject_id,revision_before,revision_after,occurred_at)
+          VALUES($1,$2,'user',$3,$4,'member_suspended',$5,0,1,date_trunc('second',transaction_timestamp())-interval '1 second'+$6::integer*interval '1 microsecond')`,
+          [tenant, id, uid(), randomUUID(), members.verified, index + 1],
+        );
+      await db.query(
+        `INSERT INTO turnstile.access_audit(tenant_id,id,actor_kind,actor_id,request_id,action,subject_id,revision_before,revision_after,occurred_at)
+        VALUES($1,$2,'user',$3,$4,'member_suspended',$5,0,1,statement_timestamp()-interval '91 days')`,
+        [tenant, randomUUID(), uid(), randomUUID(), members.verified],
+      );
+    });
+    const base = `audit?source=access&action=member_suspended&subjectId=${members.verified}&limit=1`;
+    const first = await get(base);
+    expect(first.statusCode).toBe(200);
+    expect(first.headers['cache-control']).toBe('private, no-store');
+    expect(first.json().items.map((r: { id: string }) => r.id)).toEqual([ids[2]]);
+    expect(first.json().items[0]).toHaveProperty('actorName');
+    expect(first.json().items[0]).toHaveProperty('subjectLabel');
+    const second = (await get(`${base}&cursor=${first.json().nextCursor}`)).json();
+    expect(second.items.map((r: { id: string }) => r.id)).toEqual([ids[1]]);
+    const third = (await get(`${base}&cursor=${second.nextCursor}`)).json();
+    expect(third.items.map((r: { id: string }) => r.id)).toEqual([ids[0]]);
+    expect(third.nextCursor).toBeNull();
+    expect(
+      (await get(`audit?source=invitations&cursor=${first.json().nextCursor}`)).statusCode,
+    ).toBe(409);
+    expect((await get('audit', 'verified')).statusCode).toBe(403);
+    const roleOnly = await seedRole('Audit role editor', [
+      'turnstile:access',
+      'turnstile:roles:manage',
+    ]);
+    await grant('verified', roleOnly);
+    expect((await get('audit', 'verified')).statusCode).toBe(403);
+    const peopleOnly = await seedRole('People audit reader', [
+      'turnstile:access',
+      'turnstile:people:manage',
+    ]);
+    await grant('passwordless', peopleOnly);
+    await owned((db) =>
+      db.query(
+        `INSERT INTO turnstile.access_audit(tenant_id,id,actor_kind,actor_id,request_id,action,subject_id,revision_before,revision_after)
+      VALUES($1,$2,'user',$3,$4,'role_created',$5,0,1)`,
+        [tenant, randomUUID(), uid(), randomUUID(), roleOnly],
+      ),
+    );
+    const privateRole = await get('audit?source=access&action=role_created', 'passwordless');
+    expect(privateRole.statusCode).toBe(200);
+    expect(privateRole.json().items[0]).not.toHaveProperty('subjectLabel');
+    const runtime = new Pool({ connectionString: process.env.TURNSTILE_DATABASE_URL });
+    try {
+      await expect(
+        withTenant(runtime, tenant, (db) => db.query('SELECT * FROM turnstile.access_audit')),
+      ).rejects.toMatchObject({ code: '42501' });
+      await expect(
+        withTenant(runtime, tenant, (db) =>
+          db.query(
+            'SELECT * FROM turnstile.read_people_audit($1,$2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,25)',
+            [tenant, uid('verified')],
+          ),
+        ),
+      ).rejects.toMatchObject({ code: '42501' });
+      await expect(
+        withTenant(runtime, tenant, (db) =>
+          db.query(
+            'SELECT * FROM turnstile.read_people_audit($1,$2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,25)',
+            [randomUUID(), uid()],
+          ),
+        ),
+      ).rejects.toMatchObject({ code: '42501' });
+    } finally {
+      await runtime.end();
+    }
+  });
+  it('explains contextual access using the owning evaluator and denies unauthorized unit inspection', async () => {
+    const manager = await seedRole('Inspector manager', [
+      'turnstile:access',
+      'turnstile:units:manage',
+    ]);
+    await grant('verified', manager, { kind: 'units', unitIds: [unit], includeChildren: true });
+    const exact = await get(
+      `members/${members.verified}/access?permission=turnstile:units:read&unitId=${unit}`,
+    );
+    expect(exact.statusCode).toBe(200);
+    expect(exact.json().allowed).toBe(true);
+    expect(exact.json().sources.map((s: { name: string }) => s.name)).toEqual([
+      'Inspector manager',
+    ]);
+    expect(
+      (
+        await get(
+          `members/${members.verified}/access?permission=turnstile:units:read&unitId=${other}`,
+        )
+      ).json().allowed,
+    ).toBe(false);
+    expect(
+      (await get(`members/${members.verified}/access?permission=turnstile:units:read`)).json()
+        .allowed,
+    ).toBe(false);
+    const companyOnly = (
+      await get(
+        `members/${members.operator}/access?permission=turnstile:people:manage&unitId=${unit}`,
+      )
+    ).json();
+    expect(companyOnly).toMatchObject({ allowed: false, reason: 'company_only' });
+    const peopleOnly = await seedRole('People inspector', [
+      'turnstile:access',
+      'turnstile:people:manage',
+    ]);
+    await grant('passwordless', peopleOnly);
+    expect(
+      (
+        await get(
+          `members/${members.verified}/access?permission=turnstile:units:read&unitId=${unit}`,
+          'passwordless',
+        )
+      ).statusCode,
+    ).toBe(403);
+    await owned((db) =>
+      db.query(
+        "UPDATE turnstile.access_member SET status='suspended',version=version+1 WHERE tenant_id=$1 AND id=$2",
+        [tenant, members.verified],
+      ),
+    );
+    expect(
+      (
+        await get(
+          `members/${members.verified}/access?permission=turnstile:units:read&unitId=${unit}`,
+        )
+      ).json(),
+    ).toMatchObject({ allowed: false, reason: 'suspended', sources: [] });
+  });
+  it('sorts member names with captured cursor values and binds cursors to the selected sort', async () => {
+    await app.get(AdministrationService).refresh(actor());
+    const first = await get('members?limit=1&sort=name_desc');
+    expect(first.statusCode).toBe(200);
+    const cursor = first.json().nextCursor;
+    expect(cursor).toBeTruthy();
+    const second = await get(`members?limit=1&sort=name_desc&cursor=${cursor}`);
+    expect(second.statusCode).toBe(200);
+    expect(second.json().items[0].id).not.toBe(first.json().items[0].id);
+    expect((await get(`members?limit=1&sort=name&cursor=${cursor}`)).statusCode).toBe(409);
+    const asc = (await get('members?limit=100&sort=name')).json().items;
+    const desc = (await get('members?limit=100&sort=name_desc')).json().items;
+    expect(desc.map((m: { id: string }) => m.id)).toEqual(
+      asc.map((m: { id: string }) => m.id).reverse(),
+    );
+  });
+  it('filters actionable role invitations and effective delivery before counts and pagination', async () => {
+    const command = {
+      operation: 'invitation.issue',
+      email: 'filtered-one@example.test',
+      assignments: [
+        { roleId: templates.member, expectedRoleVersion: 1, scope: { kind: 'company' } },
+      ],
+      ...(await versions()),
+    };
+    const first = await mutate('invitations', command, await confirm(command));
+    expect(first.statusCode).toBe(201);
+    const secondCommand = { ...command, email: 'filtered-two@example.test', ...(await versions()) };
+    const second = await mutate('invitations', secondCommand, await confirm(secondCommand));
+    expect(second.statusCode).toBe(201);
+    const base = `invitations?roleId=${templates.member}&actionable=true&delivery=queued&sort=created_desc&limit=1`;
+    const page = await get(base);
+    expect(page.statusCode).toBe(200);
+    expect(page.json().total).toBe(2);
+    expect(page.json().items[0].id).toBe(second.json().current.id);
+    const next = await get(`${base}&cursor=${page.json().nextCursor}`);
+    expect(next.json().items[0].id).toBe(first.json().current.id);
+    expect(
+      (await get(`invitations?delivery=failed&cursor=${page.json().nextCursor}`)).statusCode,
+    ).toBe(409);
+    await owned((db) =>
+      db.query(
+        "UPDATE turnstile.invitation SET created_at=statement_timestamp()-interval '8 days',expires_at=statement_timestamp()-interval '1 day' WHERE tenant_id=$1 AND id=$2",
+        [tenant, first.json().current.id],
+      ),
+    );
+    const failed = await get('invitations?delivery=failed');
+    expect(failed.statusCode).toBe(200);
+    expect(failed.json().total).toBe(1);
+    expect(failed.json().items[0].delivery).toMatchObject({ state: 'failed', reason: 'expired' });
+    expect((await get(`invitations?roleId=${templates.member}&actionable=true`)).json().total).toBe(
+      1,
+    );
+    expect((await get(`invitations?roleId=${templates.unit_manager}`)).json().total).toBe(0);
+  });
   it('enforces real guards, separate policies, CSRF, strict bodies and the installed release gate', async () => {
     expect((await app.inject({ method: 'GET', url: '/api/people/members' })).statusCode).toBe(401);
     expect((await get('members', 'verified')).statusCode).toBe(403);
@@ -455,6 +659,50 @@ describe('People administration HTTP with real PostgreSQL and linked authority p
     await custom();
     expect((await get(`members?limit=2&cursor=${list.json().nextCursor}`)).statusCode).toBe(409);
     expect((await get('members?userIds=unrelated')).statusCode).toBe(400);
+  });
+  it('filters the complete member set by a paired role and coverage, binds cursors and restricts usage counts', async () => {
+    const reader = await seedRole('site reader', ['turnstile:access', 'turnstile:units:read']);
+    const manager = await seedRole('site manager', [
+      'turnstile:access',
+      'turnstile:units:read',
+      'turnstile:units:manage',
+    ]);
+    await grant('verified', reader, { kind: 'units', unitIds: [unit], includeChildren: true });
+    await grant('verified', manager, { kind: 'units', unitIds: [other], includeChildren: false });
+    await grant('unverified', reader, { kind: 'company' });
+    const matched = await get(`members?roleId=${reader}&unitId=${unit}&limit=1`);
+    expect(matched.statusCode).toBe(200);
+    expect(matched.json().total).toBe(2);
+    expect(matched.json().items).toHaveLength(1);
+    expect(
+      (await get(`members?roleId=${reader}&unitId=${other}`))
+        .json()
+        .items.map((m: { id: string }) => m.id),
+    ).toEqual([members.unverified]);
+    expect(
+      (
+        await get(
+          `members?roleId=${reader}&unitId=${other}&limit=1&cursor=${matched.json().nextCursor}`,
+        )
+      ).statusCode,
+    ).toBe(409);
+    const counts = (await get('roles'))
+      .json()
+      .usage.find((r: { roleId: string }) => r.roleId === reader);
+    expect(counts.memberCount).toBe(2);
+    expect(counts.invitationCount).toBe(0);
+    const roleOnly = await seedRole('role only reader', [
+      'turnstile:access',
+      'turnstile:roles:manage',
+    ]);
+    await grant('passwordless', roleOnly);
+    expect((await get('roles', 'passwordless')).json()).not.toHaveProperty('usage');
+    const peopleOnly = await seedRole('people only reader', [
+      'turnstile:access',
+      'turnstile:people:manage',
+    ]);
+    await grant('passwordless', peopleOnly);
+    expect((await get(`members?unitId=${unit}`, 'passwordless')).statusCode).toBe(403);
   });
   it('keeps role-only and people-only administration independent and impact identities private', async () => {
     const roleOnly = await seedRole('role editor', ['turnstile:access', 'turnstile:roles:manage']);
@@ -1339,5 +1587,318 @@ describe('People administration HTTP with real PostgreSQL and linked authority p
     } finally {
       await rpc('resume');
     }
+  });
+  const importPost = (path: string, payload: object, label = 'operator', token = csrf) =>
+    app.inject({
+      method: 'POST',
+      url: `/api/people/${path}`,
+      headers: { origin, 'x-test-user': uid(label), 'x-csrf-token': token },
+      payload,
+    });
+  async function newImport(
+    csv = `email\nnew-${randomUUID()}@example.test\n`,
+    roleId = templates.member,
+  ) {
+    const body = {
+      id: randomUUID(),
+      filename: 'recipients.csv',
+      csv,
+      assignments: [{ roleId, expectedRoleVersion: 1, scope: { kind: 'company' } }],
+    };
+    const result = await importPost('imports', body);
+    expect(result.statusCode, JSON.stringify(databaseFailures)).toBe(200);
+    return { body, ...result.json() };
+  }
+  async function startImport(id: string, version = 1) {
+    const result = await importPost(`imports/${id}/actions`, {
+      action: 'start',
+      expectedVersion: version,
+    });
+    expect(result.statusCode, JSON.stringify(databaseFailures)).toBe(200);
+    return result.json();
+  }
+  it('validates CSV with durable duplicate-safe drafts, permission/CSRF fences and a bounded large preview', async () => {
+    const preview = await newImport(
+      `email\n${fixture.users.verified?.email}\nfirst@example.test\nFIRST@example.test\nbad\nextra@example.test,extra\n`,
+    );
+    expect(preview.job.counts).toMatchObject({ pending: 1, skipped: 2, failed: 2 });
+    const repeated = await importPost('imports', preview.body);
+    expect(repeated.statusCode).toBe(200);
+    expect(repeated.json().job.id).toBe(preview.job.id);
+    const runtime = app.get(ProductPersistenceService).pool;
+    if (!runtime) throw new Error('Missing runtime database');
+    const isolated = await withTenant(runtime, randomUUID(), (db) =>
+      db.query('SELECT * FROM turnstile.people_import_job'),
+    );
+    expect(isolated.rowCount).toBe(0);
+
+    expect(
+      (await importPost('imports', { ...preview.body, csv: 'email\nother@example.test' }))
+        .statusCode,
+    ).toBe(409);
+    expect((await importPost('imports', preview.body, 'verified')).statusCode).toBe(403);
+    expect((await importPost('imports', preview.body, 'operator', 'bad')).statusCode).toBe(403);
+    expect((await get('imports', 'verified')).statusCode).toBe(403);
+    const large = await newImport(
+      'email\n' +
+        Array.from(
+          { length: 500 },
+          (_, i) => `recipient-number-${i}-long-address@example.test`,
+        ).join('\n'),
+    );
+    expect(large.rows).toHaveLength(25);
+    expect(large.job.counts.pending).toBe(500);
+    expect(large.nextAfter).toBe(26);
+    expect((await get(`imports/${large.job.id}?after=26`)).json().rows[0].number).toBe(27);
+    expect(
+      (
+        await importPost('imports', {
+          ...preview.body,
+          id: randomUUID(),
+          csv: 'email\n"unterminated',
+        })
+      ).statusCode,
+    ).toBe(400);
+  }, 20000);
+  it('recovers a crashed claim after lease expiry with the same row key and never reissues after a lost commit acknowledgement', async () => {
+    const preview = await newImport();
+    await startImport(preview.job.id);
+    const worker = app.get(BulkImportWorkerService),
+      first = await worker.claim();
+    expect(first).toBeDefined();
+    await owned((db) =>
+      db.query(
+        `UPDATE turnstile.people_import_job SET lease_expires_at=statement_timestamp()-interval '1 second' WHERE tenant_id=$1 AND id=$2`,
+        [tenant, preview.job.id],
+      ),
+    );
+    const replacement = await worker.claim();
+    expect(replacement?.row.command_key).toBe(first?.row.command_key);
+    if (!first || !replacement) throw new Error('Missing recovery claims');
+    await worker.process(first); // fenced stale worker cannot issue anything
+    const invitations = app.get(InvitationService),
+      original = invitations.execute.bind(invitations);
+    const spy = vi.spyOn(invitations, 'execute').mockImplementation(async (...args) => {
+      await original(...args);
+      throw new HttpException({ code: 'PEOPLE_UNAVAILABLE' }, 503);
+    });
+    try {
+      await worker.process(replacement);
+    } finally {
+      spy.mockRestore();
+    }
+    const result = (await get(`imports/${preview.job.id}`)).json();
+    expect(result.job.state).toBe('completed');
+    expect(result.job.counts.succeeded).toBe(1);
+    expect(await worker.claim()).toBeUndefined();
+    const saved = (await get(`invitations/${result.rows[0].invitationId}`)).json();
+    const cancel = {
+      operation: 'invitation.cancel',
+      id: saved.id,
+      expectedVersion: saved.version,
+      expectedGeneration: saved.generation,
+      expectedAccessRevision: (await versions()).expectedAccessRevision,
+    };
+    expect((await mutate(`invitations/${saved.id}/cancel`, cancel)).statusCode).toBe(200);
+    await worker.process(replacement);
+    expect((await get(`invitations/${saved.id}`)).json().state).toBe('cancelled');
+    const count = await owned((db) =>
+      db.query(
+        'SELECT count(*)::int AS count FROM turnstile.invitation WHERE tenant_id=$1 AND email=$2',
+        [tenant, preview.rows[0].email],
+      ),
+    );
+    expect(count.rows[0]?.count).toBe(1);
+  });
+  it('cancels during real identity preparation and fences the final invitation commit', async () => {
+    const preview = await newImport();
+    await startImport(preview.job.id);
+    const worker = app.get(BulkImportWorkerService),
+      claim = await worker.claim();
+    const client = app.get(IdentityClientService),
+      original = client.prepare.bind(client);
+    const spy = vi.spyOn(client, 'prepare').mockImplementation(async (...args) => {
+      const prepared = await original(...args);
+      const current = (await get(`imports/${preview.job.id}`)).json();
+      const cancelled = await importPost(`imports/${preview.job.id}/actions`, {
+        action: 'cancel',
+        expectedVersion: current.job.version,
+      });
+      expect(cancelled.statusCode).toBe(200);
+      return prepared;
+    });
+    try {
+      if (!claim) throw new Error('Missing import claim');
+      await worker.process(claim);
+    } finally {
+      spy.mockRestore();
+    }
+    const current = (await get(`imports/${preview.job.id}`)).json();
+    expect(current.job.state).toBe('cancelled');
+    expect(current.job.counts.cancelled).toBe(1);
+    expect((await get('invitations')).json().total).toBe(0);
+  });
+  it('pauses for revoked creator authority and resumes only with restored current authority', async () => {
+    const preview = await newImport();
+    await startImport(preview.job.id);
+    const worker = app.get(BulkImportWorkerService),
+      claim = await worker.claim();
+    await grant('verified', templates.workspace_administrator as string);
+    const suspend = await targetCommand('member.suspend', 'operator');
+    expect(
+      (
+        await mutate(
+          `members/${members.operator}/suspend`,
+          suspend,
+          await confirm(suspend, 'verified'),
+          'verified',
+        )
+      ).statusCode,
+    ).toBe(200);
+    if (!claim) throw new Error('Missing import claim');
+    await worker.process(claim);
+    const paused = await owned((db) =>
+      db.query(
+        'SELECT state,reason FROM turnstile.people_import_job WHERE tenant_id=$1 AND id=$2',
+        [tenant, preview.job.id],
+      ),
+    );
+    expect(paused.rows[0]).toEqual({ state: 'paused', reason: 'permission_changed' });
+    const target = (await get(`members/${members.operator}`, 'verified')).json();
+    const reactivate = {
+      operation: 'member.reactivate',
+      ...(await versions()),
+      id: target.id,
+      expectedVersion: target.version,
+    };
+    expect(
+      (
+        await mutate(
+          `members/${members.operator}/reactivate`,
+          reactivate,
+          await confirm(reactivate, 'verified'),
+          'verified',
+        )
+      ).statusCode,
+    ).toBe(200);
+    const detail = (await get(`imports/${preview.job.id}`)).json();
+    expect(
+      (
+        await importPost(`imports/${preview.job.id}/actions`, {
+          action: 'resume',
+          expectedVersion: detail.job.version,
+        })
+      ).statusCode,
+    ).toBe(200);
+    await worker.drain();
+    expect((await get(`imports/${preview.job.id}`)).json().job.counts.succeeded).toBe(1);
+  });
+  it('waits for existing invitation rate budgets without consuming a row command or attempt', async () => {
+    const preview = await newImport();
+    await startImport(preview.job.id);
+    await owned((db) =>
+      db.query(
+        `INSERT INTO turnstile.invitation_rate(tenant_id,actor,"window",count) VALUES($1,'installation',to_timestamp(floor(extract(epoch FROM statement_timestamp())/3600)*3600),100) ON CONFLICT(tenant_id,actor,"window") DO UPDATE SET count=100`,
+        [tenant],
+      ),
+    );
+    expect(await app.get(BulkImportWorkerService).claim()).toBeUndefined();
+    const detail = (await get(`imports/${preview.job.id}`)).json();
+    expect(detail.job.state).toBe('queued');
+    expect(detail.job.reason).toBe('rate_limit');
+    const row = await owned((db) =>
+      db.query(
+        'SELECT attempts,command FROM turnstile.people_import_row WHERE tenant_id=$1 AND job_id=$2',
+        [tenant, preview.job.id],
+      ),
+    );
+    expect(row.rows[0]).toEqual({ attempts: 0, command: null });
+  });
+  it('pauses changed reviewed roles and keeps all row errors available for download', async () => {
+    const role = await custom('Import role', ['turnstile:access']);
+    const preview = await newImport('email\nnew@example.test\nbad\nnew@example.test', role.id);
+    await startImport(preview.job.id);
+    const patch = {
+      operation: 'role.patch',
+      change: 'details',
+      id: role.id,
+      expectedVersion: role.version,
+      expectedAccessRevision: (await versions()).expectedAccessRevision,
+      name: 'Updated import role',
+    };
+    expect(
+      (await mutate(`roles/${role.id}`, patch, null, 'operator', randomUUID(), 'PATCH')).statusCode,
+    ).toBe(200);
+    await app.get(BulkImportWorkerService).drain();
+    const detail = (await get(`imports/${preview.job.id}`)).json();
+    expect(detail.job.state).toBe('paused');
+    expect(detail.job.reason).toBe('context_changed');
+    const errors = await get(`imports/${preview.job.id}/errors`);
+    expect(errors.statusCode).toBe(200);
+    expect(errors.json().rows).toHaveLength(2);
+    expect((await get('invitations')).json().total).toBe(0);
+  });
+  it('rolls back invitation creation when the durable row receipt cannot commit, then retries the same reservation', async () => {
+    const preview = await newImport();
+    await startImport(preview.job.id);
+    const worker = app.get(BulkImportWorkerService),
+      first = await worker.claim();
+    if (!first) throw new Error('Missing claim');
+    await owned(async (db) => {
+      await db.query(
+        `CREATE FUNCTION turnstile.test_import_receipt_failure() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog,pg_temp AS $$ BEGIN IF NEW.state='succeeded' THEN RAISE EXCEPTION 'fixture_receipt_failure'; END IF; RETURN NEW; END $$`,
+      );
+      await db.query(
+        'CREATE TRIGGER test_import_receipt_failure BEFORE UPDATE ON turnstile.people_import_row FOR EACH ROW EXECUTE FUNCTION turnstile.test_import_receipt_failure()',
+      );
+    });
+    try {
+      await worker.process(first);
+    } finally {
+      await owned(async (db) => {
+        await db.query('DROP TRIGGER test_import_receipt_failure ON turnstile.people_import_row');
+        await db.query('DROP FUNCTION turnstile.test_import_receipt_failure()');
+      });
+    }
+    expect((await get('invitations')).json().total).toBe(0);
+    expect((await get(`imports/${preview.job.id}`)).json().job.counts.succeeded).toBe(0);
+    await owned((db) =>
+      db.query(
+        'UPDATE turnstile.people_import_job SET next_attempt_at=statement_timestamp() WHERE tenant_id=$1 AND id=$2',
+        [tenant, preview.job.id],
+      ),
+    );
+    const retry = await worker.claim();
+    if (!retry) throw new Error('Missing retry claim');
+    expect(retry.row.command_key).toBe(first.row.command_key);
+    await worker.process(retry);
+    expect((await get(`imports/${preview.job.id}`)).json().job.counts.succeeded).toBe(1);
+    expect((await get('invitations')).json().total).toBe(1);
+  });
+  it('keeps the catalog readable by an open pre-import client while new clients opt in', async () => {
+    // Freeze the pre-import key set, rather than silently loosening strict readers.
+    const shape = permissionCatalogSchema.shape;
+    const legacy = z.strictObject({
+      catalogVersion: shape.catalogVersion,
+      usersInsights: shape.usersInsights,
+      memberAssignmentFilters: shape.memberAssignmentFilters,
+      organizationRevision: shape.organizationRevision,
+      grantableCompanyPermissions: shape.grantableCompanyPermissions,
+      permissions: shape.permissions,
+      starters: shape.starters,
+    });
+    const oldPage = await get('catalog');
+    expect(oldPage.statusCode).toBe(200);
+    expect(legacy.safeParse(oldPage.json()).success).toBe(true);
+    expect(oldPage.json()).not.toHaveProperty('durableImports');
+    const newPage = await app.inject({
+      method: 'GET',
+      url: '/api/people/catalog',
+      headers: { 'x-test-user': uid(), [PEOPLE_FEATURES_HEADER]: PEOPLE_IMPORT_FEATURE },
+    });
+    expect(newPage.statusCode).toBe(200);
+    expect(permissionCatalogSchema.parse(newPage.json()).durableImports).toBe(1);
+    expect(legacy.safeParse(newPage.json()).success).toBe(false);
+    expect((await get(`members/${members.operator}`)).statusCode).toBe(200);
   });
 });

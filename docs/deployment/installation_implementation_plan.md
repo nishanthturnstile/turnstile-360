@@ -335,3 +335,25 @@ configured deployment trust/pairing. Its fixture installs test policy separately
 customer guide now requires the activated overlay, the retained project/volumes and exact
 image overrides before business access; packaging that full activation-aware lifecycle
 remains IA-I04/09 work. Do not describe base `./dms up` as sufficient customer activation.
+
+
+Foundation review follow-up (2026-11-12):
+
+- Implemented installer PostgreSQL `unless-stopped` and reconciled Titan's retained Compose
+  and live policy without a database restart. The disposable fresh-launcher crash
+  and committed-data recovery qualification passed, as did full HTTPS/browser handover.
+- Implemented contractual product end dates, staff renewal, bounded signed issuance and
+  hard customer expiry. Actual central HTTP expiry/renewal and customer-verifier tests pass.
+  Existing customer verifiers must be upgraded before central issuance, followed by owning
+  migrations and explicit real end dates for existing approvals.
+- Consolidated module contracts, capability limits, permission metadata, company-scope SQL
+  and source ownership in the shared registry/catalogue workflow. Registration sync generates
+  permission migrations and API references; retirement preserves historical grants. The final
+  disposable Permit registration/retirement qualification passed, including actual images,
+  authorization, retired route exclusion and zero-active-module contracts.
+- Real module CRUD and background work still need owning transactional authorization and
+  revocation/expiry/retry tests. Existing guarded landing-page tests are not this evidence.
+
+See the [ecosystem guide](thaarei_ecosystem_guide.md#registering-and-retiring-module-implementations)
+for registration and customer assignment steps and the
+[scoped results](titan_acceptance_results.md#scoped-foundation-fixes--2026-11-12) for actual evidence.

@@ -15,6 +15,8 @@ import {
 } from '../../packages/module-catalog/dist/index.js';
 import { codeModules } from '../module-source-map.mjs';
 
+const fixtureLicenceEnd = new Date(Date.now() + 365 * 86400000).toISOString();
+
 /** Actual HTTPS handler and PostgreSQL path; synthetic metadata is explicit fixture seed. */
 export async function verifyModuleMachines({
   admin,
@@ -189,7 +191,13 @@ export async function verifyModuleMachines({
       release,
     );
   assert.equal((await verify((await sync()).decision)).state, 'pending');
-  await command({ type: 'product.policy', id, revision: await revision(), decision: 'approve' });
+  await command({
+    type: 'product.policy',
+    id,
+    revision: await revision(),
+    decision: 'approve',
+    licenceExpiresAt: fixtureLicenceEnd,
+  });
   assert.equal(
     (await verify((await sync()).decision)).state,
     'pending',
@@ -284,7 +292,13 @@ export async function verifyModuleMachines({
   );
   machine = await pair('replace');
   assert.equal((await verify((await sync()).decision)).state, 'suspended');
-  await command({ type: 'product.policy', id, revision: await revision(), decision: 'approve' });
+  await command({
+    type: 'product.policy',
+    id,
+    revision: await revision(),
+    decision: 'approve',
+    licenceExpiresAt: fixtureLicenceEnd,
+  });
   assert.equal((await verify((await sync()).decision)).state, 'pending');
   console.log(
     'Actual module machine HTTPS/PostgreSQL fixture passed: MFA enforcement receipt recovery, strict versions, pending activation, exact approved context, lost sync, removal/stale replay and replacement epoch. Selected installed-image qualification is separate.',

@@ -25,7 +25,7 @@ export async function moduleHandover(
   }
   const rows = (
     await db.query(
-      `SELECT p.id,p.product,p.policy_state,p.revision,m.epoch,m.revoked_at,m.last_contact_at,c.archived,
+      `SELECT p.id,p.product,p.policy_state,p.licence_expires_at,p.revision,m.epoch,m.revoked_at,m.last_contact_at,c.archived,
       a.applied_at,a.received_at,d.id AS decision_id,d.token,d.expires_at,d.revision AS decision_revision,
       l.received_at AS report_received_at
     FROM control_plane.registry_product p JOIN control_plane.registry_client c ON c.id=p.client_id
@@ -44,6 +44,8 @@ export async function moduleHandover(
       !r.archived &&
       !r.revoked_at &&
       r.policy_state === 'approved' &&
+      r.licence_expires_at &&
+      new Date(r.licence_expires_at).getTime() > Date.now() &&
       r.decision_revision === r.revision &&
       new Date(r.expires_at).getTime() > Date.now();
     if (acknowledged && r.product === 'turnstile') {

@@ -15,6 +15,8 @@ import {
 } from '../../packages/module-catalog/dist/index.js';
 import { codeModules } from '../module-source-map.mjs';
 
+const fixtureLicenceEnd = new Date(Date.now() + 365 * 86400000).toISOString();
+
 export async function verifyModuleTransitions({
   admin,
   viewer,
@@ -235,6 +237,7 @@ export async function verifyModuleTransitions({
     id,
     revision: (await read()).productRevision,
     decision: 'approve',
+    licenceExpiresAt: fixtureLicenceEnd,
   });
   assert.equal((await sync(incident)).state, 'pending');
   let approved = await activation();
@@ -420,6 +423,7 @@ export async function verifyModuleTransitions({
     id,
     revision: (await read()).productRevision,
     decision: 'approve',
+    licenceExpiresAt: fixtureLicenceEnd,
   });
   const core = await deliver(c, []);
   assert.equal((await sync(core)).state, 'pending');

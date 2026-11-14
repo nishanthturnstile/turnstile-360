@@ -66,6 +66,7 @@ export * from './access.js';
 export * from './onboarding.js';
 export * from './people.js';
 export * from './people-common.js';
+export * from './people-insights.js';
 export * from './people-routes.js';
 export { SUPPORTED_TIME_ZONES, TIME_ZONE_PROVENANCE } from './time-zones.js';
 
@@ -77,4 +78,7 @@ export const deploymentStatusSchema = z
   .strict();
 export type DeploymentStatusDto = z.infer<typeof deploymentStatusSchema>;
 
+export * from './module-registry.js';
 export * from './modules.js';
+
+export * from './people-imports.js';

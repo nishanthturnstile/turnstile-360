@@ -34,6 +34,8 @@ import {
   rolePermissionsSchema,
   uniqueValues,
 } from './people-common.js';
+import { peopleImportSchemas } from './people-imports.js';
+import { peopleInsightSchemas } from './people-insights.js';
 
 export const invitationStateSchema = z.enum([
   'pending',
@@ -664,6 +666,8 @@ export const peopleErrorSchema = z.union([
 
 export const peopleSchemas = {
   ...accessSchemas,
+  ...peopleInsightSchemas,
+  ...peopleImportSchemas,
   PeoplePath: peoplePathSchema,
   PeopleMutationHeaders: peopleMutationHeadersSchema,
   PeopleEmpty: peopleEmptySchema,

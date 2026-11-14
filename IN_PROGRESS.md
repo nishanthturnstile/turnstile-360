@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-11-12
+Last updated: 2026-11-14
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -9,6 +9,75 @@ requirements remain in their linked specifications. This file records what has a
 been completed, verified, or left pending.
 
 ## Current position
+
+2026-11-14 Structure redesign is implemented and deployed in signed release
+40aaf5da986cb49b572cb3daf3a95c46b704fc3c34a50d7ded57ba8476cb5a98. The scoped
+chart/outline workspace includes search, branch focus, camera controls, responsive unit
+overviews and guarded create/rename/move/delete sheets. Complete authorized paging,
+reviewed drag moves and receipt recovery preserve the existing server authority. All four
+workspace gates, expanded People/auth/onboarding browser journeys, supported cutover,
+retained-data comparison and direct live desktop/phone checks pass. See
+STRUCTURE-IMPLEMENT-11; optional advanced projections and export/import remain follow-ups.
+
+2026-11-14 Users navigation/query caching is completed and deployed in signed release
+92a15a98033100ad2eba051a2c1fd16af6f7d9d3605f11667fd6f67d1a5e76b6. Users keeps
+its common header/tabs visible, reuses fresh tab reads and updates stale data in place.
+Scoped TanStack Query caching, write/revision invalidation and late-response cancellation
+pass all four gates, nine focused cases, full People browser journeys and direct live
+navigation/delayed-refresh/retained-data checks. See USERS-QUERY-CACHE-09.
+
+2026-11-14 the administrator View access false service-unavailable error is corrected in
+signed release fe5ee2938288eac13d13bc76a36d93949a5eb421dc3b16b19234b93a6380da5f.
+An older open client rejected the new CSV capability in a successful catalog response.
+Catalog opt-in now preserves pre-import readers; current response-validation failures have
+accurate refresh guidance. All four gates, 34 People database cases, real browser and
+old-image/deployed compatibility checks pass. Saved access is preserved. See USERS-UNAVAILABLE-08.
+
+2026-11-14 UE-08 CSV invitation imports/durable jobs are implemented and deployed in
+signed release 8a2fce9f5def383ac68f7ceccd4e126ad7dfa76d791335e3ffcd870391d25c29.
+Server validation, duplicate handling, shared reviewed access, durable row receipts,
+saved progress, restart recovery, resume/cancel and complete error CSV are available
+through Users → Import CSV. All workspace gates, 33 focused People database cases,
+expanded real browser journeys and final live responsive/retained-data/cutover checks
+pass. Existing identity authority and invitation limits are preserved. See USERS-BULK-IMPORT-07.
+
+2026-11-14 Members filter layout correction is deployed in signed release
+6779ef6515a0ffb01b72fc447b025cddd88144d35f44e7c66ea25f76bfa62e49.
+Expanded role/coverage filters are compact, aligned on desktop and stacked on smaller
+screens. Required gates, focused real-browser regression, direct live visual checks,
+retained-access comparison and supported cutover checks pass. See USERS-FILTER-LAYOUT-06.
+
+2026-11-14 Users enhancement core increment UE-01–07 is completed and deployed in
+source-matched signed release c8fe03f2650c062806ea72c3d9131d55dfdb4bc3379c41b9534d0ca0d5cc0456.
+Recovery fixes, Activity/CSV, contextual access/offboarding inspection, role-reference
+drilldowns, invitation troubleshooting and shareable/sorted directories are live. Final
+workspace gates, real browser regression, supported cutover fingerprints and direct live
+desktop/tablet/phone checks pass. Existing identity authority remains the selected scope;
+durable imports/governance are sequenced follow-ups and enterprise SSO/SCIM is deferred.
+See USERS-ENHANCE-05 and the enhancement sequence for exact scope and evidence.
+
+2026-11-14 activation recovery is complete. A false durable clock quarantine after the
+Users rollout was reproduced and corrected by migration 0034, which samples time after
+locking the clock row. Corrective signed release a4a1d070ab1c022256316c89107b7f2bb6b71789d54a8bf8ec359c68ce464ceb
+is active; the actual live queued-HTTP failure scenario and concurrent checks remain
+approved. All workspace gates and SQL/HTTPS/browser regressions pass. See
+USERS-ACTIVATION-RECOVERY-04 for recovery and verification evidence.
+
+2026-11-14 Users redesign and audit corrections are implemented and deployed in the
+source-matched signed API/web release e8774a7a055e51b6892035499eebc47c25eab8d98e6de441e59a1b294902997d.
+Members, Invitations and Roles use accessible task sheets, clearer composition/reviews
+and responsive directories. Role/coverage filters and authorized role usage are now live.
+All four workspace gates, the expanded real browser journey and direct live desktop/
+tablet/mobile checks pass; preserved installation/setup/access fingerprints were verified
+through the supported upgrade. See USERS-UX-REWORK-03 for exact verification/handoff.
+
+2026-11-13 owner demo is running the current source-built central/DMS and a new signed
+both-module Turnstile release. All four workspace gates and post-upgrade HTTPS login,
+role boundaries and cross-service capabilities pass. Both owner-authorized demo licences
+end 2027-11-13 at 23:59:59 UTC. All 11 deployed module-POC services run with retained data;
+private credentials/URLs and recovery evidence are recorded by LOCAL-READY-20261113 below.
+Broader target/document-processing acceptance remains open; older live-state notes are
+historical snapshots.
 
 2026-11-11 MOD-I09 and MOD-I10 are **completed for the locally qualified module POC**.
 The artifact-only fresh installer/staff handover, all four selected profiles, restrictive
@@ -299,6 +368,801 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+WORKSPACE-PUBLISH-12 — **In progress** (owner: Codex, 2026-11-14).
+Owner requests committing all pending workspace changes and pushing to GitHub. The
+current `development` branch is synchronized with `origin/development`; preserve all
+authorized source, migration, contract, fixture and documentation changes. Review the
+complete staged set, exclude ignored local credentials/runtime evidence, verify the
+previously tested source digest, then commit and push without touching `main`.
+
+STRUCTURE-IMPLEMENT-11 — **Completed** (owner: Codex, 2026-11-14).
+Owner authorizes implementation of STRUCTURE-DESIGN-10. Deliver the scoped hierarchy
+loading/cache adapter, chart-first workspace with outline/search/focus/breadcrumbs,
+overview plus guarded unit task sheets, legal creation/move/deletion affordances,
+existing permission-gated Members access drilldowns, gallery/docs and real validation.
+Preserve scoped server authority, command revisions/keys, lost-acknowledgement recovery,
+draft and access-change protections; do not reuse unrestricted onboarding data. New
+unit-wide insights/audit projections and export/import/saved views remain separately
+sequenced enhancements unless required to complete the core UI correctly.
+Milestone: complete scoped hierarchy query/model, chart/outline/search/focus workbench,
+responsive overview and explicit unit task forms are implemented and type-check. The
+loader publishes only complete same-revision/access-revision batches; five focused tests
+pass, including the actual request transport at the 101-unit boundary, cancellation,
+context promotion, mixed revisions and malformed pagination. Forms preserve captured
+commands/proofs/receipt readback, use the shared task discard guard, constrain creation
+and move choices and provide explicit stale-context reconciliation. Root-create uncertain
+recovery now reads the scoped hierarchy instead of an unsupported root detail route.
+Browser milestone: the complete People HTTPS/PostgreSQL/OIDC journey passes with the new
+Structure UI (`/tmp/turnstile-structure-browser4.log`), including actual committed-response
+loss, before-forward transport failure/review of the same command, creation/rename/delete,
+scoped child creation, reviewed moves, dirty cancellation and phone navigation. Review
+found unit names clipped by the shared Button's default height; card/row variants now
+preserve readable names. Recovery itself correctly refreshed the cache. The native camera
+supports the new scoped presentation without changing onboarding authority. Added optional
+pointer/touch move handles after the click path passed; drops open the same draft/review
+and cancel/invalid drops never write. The fixture gallery and architecture/design guidance
+are updated. Twenty-one focused hierarchy/affordance/camera/layout/model cases pass,
+including the maximum 500-node read boundary. Expanded final browser validation covers
+drag and actual HTTP paging across 100 units. All four workspace gates pass: `pnpm check`
+(`/tmp/turnstile-structure-check-final.log`, plus the final test-harness check in
+`/tmp/turnstile-structure-check-handoff.log`), `pnpm build`
+(`/tmp/turnstile-structure-build-final.log`), `pnpm test`
+(`/tmp/turnstile-structure-test-final.log`) and `pnpm test:integration`
+(`/tmp/turnstile-structure-integration.log`, real PostgreSQL/HTTP and storage).
+Final People (`/tmp/turnstile-structure-browser-handoff.log`), auth
+(`/tmp/turnstile-structure-auth-browser.log`) and structured onboarding
+(`/tmp/turnstile-structure-onboarding-browser3.log`) browser suites pass. The extra
+onboarding check exposed stale ongoing-Settings assertions and missing identity setup in
+its fixture; it now exercises the canonical Structure UI and owning administrator handover
+without pre-seeding the fresh onboarding organization. Production authorization is unchanged.
+Deployment: source digest `61506f2e664e27e49a3f39bdeeb2f7c822872e682b9650fa9a2fd4ff932a3b32`,
+profile `ea1bc121de9dc52697e02a160c777d760efccadf553c75eb9e2696fdbc3a739a`, signed release
+`40aaf5da986cb49b572cb3daf3a95c46b704fc3c34a50d7ded57ba8476cb5a98` is live.
+API/reporter image `sha256:8b6748f8c75f887f6943bb0c1466c3722ea5203a20ee64a7bc3c71a6e0ade481`;
+web image `sha256:a3e1a9fc81b12e4173ad0deb5c4cb1afff127da6e575bd4be45730ab33278b66`.
+The supported cutover completed with unchanged identity/setup/local-grant fingerprints;
+normal administrator login and deployment `full`/`approved` pass. Private release evidence
+is under ignored `.dms-titan-20261112/structure-redesign-20261114`; cutover backups/journal
+remain outside the checkout at `/home/dev/.local/state/thaarei-structure-redesign-20261114-cutover`.
+Retained comparison passes for two members, six roles, one invitation, two non-root units,
+organization context and no import jobs. Only volatile identity verification times are
+excluded, with exactly the two expected release close/open Access revisions verified
+(32 → 34); saved permissions and business records are equal. Deployed ingress SPA/cache/
+missing-chunk/security-header checks pass. Direct shared-browser checks at 1440×900,
+1280×800 and 390×844 cover chart/outline/search, branch focus/reset, overview, legal action
+states, rename keep-editing/discard, phone full-height creation/overview sheets and the
+filtered Members link. Local view/search controls add no hierarchy reads; no horizontal
+overflow or visible errors remain after loading. No live business writes were performed;
+retained comparison passes again after review. The owned preview tab is closed.
+Handoff: the accepted core redesign is complete and deployed. Optional unit-wide access
+insights/audit projections, export/import and saved views are separate future enhancements;
+they require their own scoped contracts and server authorization rather than inferred metrics.
+
+STRUCTURE-DESIGN-10 — **Completed** (owner: Codex, 2026-11-14).
+Owner requests a full review and redesign recommendation for Structure, emphasizing
+visual hierarchy/chart presentation and the quality established in Users. Scope:
+inspect the live scoped Structure page and its subforms, reconcile existing chart and
+command capabilities, research relevant hierarchy patterns, and prepare a reviewable
+interactive concept plus an ordered implementation/validation plan. This task is design
+and review; product implementation/deployment is not yet claimed. Preserve canonical
+organization/site/department rules, scoped authorization and reviewed command recovery.
+Live review covered Chart/Outline and rename/create/move/delete subforms at 1280×800
+and 390×844, without submitting business mutations. The completed-workspace route uses
+the separate CSS scoped outline/chart renderer rather than onboarding's full pan/zoom
+chart. Repeated headings consume canvas height; opening the editor narrows/reflows the
+chart and stacks above it on phones. Site creation offers invalid types below a site;
+move choices include self/descendants; known non-leaf deletion still offers review.
+The server remains authoritative and rejects invalid changes; these are affordance gaps.
+Scoped list reads are capped at 100, organization at 500 nodes/8 levels. A complete chart
+must assemble revision-consistent authorized pages and identify ancestor-only context;
+never reuse the unrestricted onboarding snapshot or infer hidden units. Research covers
+SAP company structure/network-graph navigation, Google Resource Manager move inheritance
+and Entra delegated scopes. The current editor also resets typed input on action switches
+and Cancel bypasses the Close guard; draft protection is part of the core recommendation.
+The [interactive concept and full review](docs/turnstile/structure/structure-redesign-concept.html)
+contain seven Before/After findings, reference links, component boundaries, eight delivery
+steps and acceptance scenarios. Scope the first increment to consistent authorized data,
+chart/camera/navigation and guarded forms; reuse existing Members coverage filters/access
+inspection before adding unit-wide insights/deletion capabilities/structure audit contracts.
+No new domain types, employee reporting lines or extra UI framework are proposed.
+Concept navigation/search/ancestry/overview/move review/draft back/collapse/empty/width checks
+pass (18 checks each at 728, 390 and 320 pixels), with light/dark visual review. A discovered
+prototype collapse/expand label mismatch was corrected and the interaction checks rerun.
+Required `pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` all pass;
+unchanged build and unit tasks reuse valid Turbo outputs. Integration exercised real
+disposable HTTP/PostgreSQL suites (including 34 People cases) and authenticated SeaweedFS
+transfer boundaries. Logs: `/tmp/turnstile-structure-design-check-final.log`,
+`/tmp/turnstile-structure-design-build.log`, `/tmp/turnstile-structure-design-test.log`,
+`/tmp/turnstile-structure-design-integration.log`. Final artifact Biome and `git diff --check`
+pass. Owned live-review tab closed; no customer data, product source, contracts, database,
+accepted architecture or deployment changed. The concept was rendered inline in the thread.
+Handoff: proceed with the proposed scoped data/chart/form increment when implementation
+is requested, then insights and release validation; this review does not mark those features
+implemented. No review blockers remain. Existing dirty work and the signed release are
+preserved.
+
+USERS-QUERY-CACHE-09 — **Completed and deployed** (owner: Codex, 2026-11-14).
+Owner reports full-page loading when switching Users subtabs and asks for proper React
+Query caching/invalidation. Scope: trace route/loading boundaries, keep the Users shell
+stable, adopt authorization-scoped data caching and targeted invalidation, preserve live
+authority/draft/security behavior, and validate navigation/network behavior and mutations.
+Implemented: TanStack React Query 5.107.1 memory cache for People/Structure reads, keyed
+by subject/live grants/caller revision/full canonical query URL; 30-second freshness,
+five-minute unobserved retention and no retries/persistence. Users shell stays visible;
+cold content and background updates have separate local feedback. Live session/deployment
+checks remain uncached; setup/modules alone can be reused for rapid verified Users switches.
+Owning writes/global Access revisions/import progress invalidate related reads and cancel
+preceding transports to reject late old replies. Draft and uncertain-write recovery stay
+under their existing owners. Nine focused cache/navigation cases pass, including aborted
+transport after permission loss and late replies after an intervening write. Files: App,
+WorkspaceLayout, People query scope/cache/events/shared loaders and tab/activity/import
+consumers; pinned dependency/lock/notices, pure regression tests, real browser journey,
+architecture and fixture-only gallery/design guidance.
+Verification milestone: final pnpm check/build/test and pnpm test:integration pass; all
+required container/runtime checks are available. Expanded real HTTPS/PostgreSQL browser
+journey passes: delayed live session preserves header/nav/table, fresh tab revisits add no
+People requests, explicit Reload fetches, edits/role references/activity/import jobs update,
+and independent permissions, lost acknowledgements, session loss, identity switches and
+draft recovery pass. The required integration run includes all 34 People database cases.
+Signed release 92a15a98033100ad2eba051a2c1fd16af6f7d9d3605f11667fd6f67d1a5e76b6 is
+built/published, backed up, cut over, rebound, approved, activated, verified and opened.
+Profile 72b1ea7f00c9217dd1d4fa757d16d6fc557189481cdce24a612493af5e904cec;
+source da878140178bb77080352657faff101ef7b89cc6e98f4d6bb0f18bef18178d2c matches the
+current inventory; API sha256:6c3e29880d0fb16145efa9d0fcaec261b31fa569bc45da9d2c6ea1af6a4a9b61
+and web sha256:e64de6b77ecca9e49c3d2f23ce9f23edcd536fb3dc4f53083251cf1890dbd4f6.
+Final live validation: eight switches across all four tabs preserve the identical visible
+header, no whole-page loader or alerts, one document navigation and zero additional
+People reads on the warm round. Live session/deployment reads still occur per switch.
+Delayed live session preserves header/nav/previous table; delayed manual refresh keeps
+both member rows visible with Updating members feedback and completes without alerts.
+Ingress no-store/immutable-asset/304/missing-chunk/security checks pass. Compared saved
+members/invitations/roles are identical apart from volatile identity verification time;
+live counts remain 2 members, 1 invitation, 6 roles, 2 units and 0 import jobs. Deployment
+access is full; headerless catalog compatibility remains intact. Private release and
+retention evidence is under the ignored users-query-cache-20261114 directory; owned
+preview tab closed. No outstanding work or blockers in this increment; no commit/push.
+
+USERS-UNAVAILABLE-08 — **Completed and deployed** (owner: Codex, 2026-11-14).
+Owner reports a generic service-unavailable alert on Members with a role filter.
+Scope: reproduce the actual browser/API failure, identify its owning request and reason,
+correct it without changing saved access, and validate the production failure path plus
+required checks/local release as needed. Preserve unrelated workspace changes.
+Diagnosis: owner confirmed View access for Titan Administrator. Fresh live sheet and
+all owning API reads return 200 without alerts; API telemetry has no service failures.
+The actual pre-import contract from signed image sha256:783769c54dea0ca79e97ad285b58372219cc9f282d8526056fcfca8df09831dc
+rejects today's catalog solely for unrecognized durableImports, and accepts the same
+response without that field. The owner's desktop tab predates the CSV rollout. An old
+strict browser parser is therefore misclassifying a successful catalog response as 503.
+Implemented explicit imports-v1 catalog opt-in for updated clients and legacy default
+projection, preserving strict DTOs/authorization. Current browser success-schema failures
+now give a separate safe refresh message and retain uncertain-write recovery semantics.
+Verification milestone: focused real PostgreSQL/HTTP suite passes 34/34, including the
+strict frozen pre-import catalog shape with no opt-in and current imports-v1 response.
+Current client unit tests cover scoped opt-in headers and response rejection guidance,
+including no automatic replay for uncertain mutations. pnpm check/build/test pass.
+Expanded real HTTPS/OIDC People browser journey passes the new View access/catalog-header
+regression and existing CSV, access/lifecycle and authorization flows. Full integration is
+running; source-matched signed artifacts are built and published. No user data mutation.
+Final verification 2026-11-14: pnpm check, build, test and test:integration pass, including
+all 34 People PostgreSQL cases and storage verification. The final real HTTPS/OIDC browser
+journey includes the access-sheet feature-header regression and prior CSV/lifecycle/
+authorization cases. Direct deployed Titan Administrator → View access on the reported
+role-filter URL opens with roles/coverage and no alerts. The actual pre-import contract
+from the old signed image accepts the deployed headerless response; the opted-in request
+still returns durableImports=1. No schema relaxation, automatic reload or write replay.
+
+Supported backup/cutover/re-pair/approval/activation/opening is complete for signed release
+fe5ee2938288eac13d13bc76a36d93949a5eb421dc3b16b19234b93a6380da5f,
+profile 57da2a43aa4c0562be118e678305d178b274ff14a9f4255afaf01f8896f39ccf,
+source 85c81419d4cfa9b0d045df4e22ecc3afa4cf56d7e06aa5ca90ff39c329907b5c.
+API image sha256:6ba72384eb21141b2cfea88640f666396befc55da8b224ffd42b5afd7057e1ed;
+web image sha256:885d87abc0e56c3d10a17df72ddf57602c580dd71ad87e01dae8ee3c62bf504c.
+Installed source matches the build; full/approved status, retained cutover fingerprints
+and deployed ingress/cache/security checks pass. Two members, one invitation and six roles
+compare unchanged except normal identity verification timestamps. No live mutation was
+used for diagnosis/inspection. Owned inspection tab closed; no commits/pushes created.
+Private operation/compatibility evidence is under ignored
+.dms-titan-20261112/users-catalog-compat-20261114; logs use /tmp/turnstile-unavailable-*.
+No remaining work for this reported access-sheet error. Older pages can close/reopen the
+sheet to fetch the compatible response; refreshing loads the latest UI/CSV features.
+
+USERS-BULK-IMPORT-07 — **Completed and deployed** (owner: Codex, 2026-11-14; UE-08).
+Owner authorized planning and implementing CSV imports/durable bulk operations.
+Scope: invitation-recipient CSV validation, duplicate handling, reviewed shared access,
+durable bounded jobs and row receipts, progress/resume/cancel and row-error downloads.
+Reuse current identity/invitation authority, approval and rate safeguards; preserve all
+other workspace changes and saved access. Next: document format/state/authorization/
+recovery contracts, then implement owning backend/UI and production-path regression tests.
+Implementation milestone: strict imports contracts/OpenAPI examples, bounded UTF-8 CSV
+parser, owning job/row tables (generated migrations 0037–38), tenant RLS/readiness checks,
+review/start/resume/cancel routes, a leased bounded worker and atomic invitation/row
+receipts are implemented. Worker checks live product and owning-authority creator access,
+frozen role/organization context, deployment/release opening and existing invitation
+budgets. UI now has template/upload, server review, shared assignment summary, saved jobs,
+paged progress, cancellation and complete safe error CSV, with a gallery progress example.
+Focused PostgreSQL now passes 33/33, including wrong-tenant runtime isolation, duplicate
+drafts, a 500-row preview above the ordinary body limit, lease takeover/stale workers,
+post-commit lost acknowledgement, replay after invitation cancellation, in-flight identity
+cancellation, revocation/resume, changed role context and rate waits. An actual SQL trigger
+failure verifies atomic invitation/row-receipt rollback and same-reservation retry.
+Corrected JSONB snapshot key ordering and CSV-cell surrounding whitespace handling.
+Expanded real HTTPS/OIDC browser journey passes CSV validation/error rows/download,
+1440/768/390px layouts, closed-panel background completion, reopening history and draft
+cancellation alongside prior People regressions. pnpm check, build and test pass for the
+final backend/source; full integration including PostgreSQL/SeaweedFS passes.
+Core signed release 84a3f0045eef728f1441ef14cea601594d87f6d63094c3ea18a702c3bfab99f6
+is deployed through the supported cutover/migrations/pairing/approval/activation/opening
+path, with protected fingerprints preserved, full/approved status, durableImports=1 and
+live import reads 200. Existing two members, one invitation and six roles compare unchanged
+except identity verification timestamps. Direct live panel review found the Validate action
+became enabled for an empty role row; corrected readiness to require selected roles and
+nonempty unit coverage. Final source-matched UI polish build and expanded browser checks
+are underway. No live job was submitted or invitation/member/role changed during inspection.
+
+Final UI polish is deployed in signed release
+8a2fce9f5def383ac68f7ceccd4e126ad7dfa76d791335e3ffcd870391d25c29,
+profile a97aa80c95807536f44316750beeaedfc0d4fa66f1bdbeccf19978a1fda73b0e,
+source 8a980bf9019f0f071b73803799535fda686dc3c29c356e46407acedba680ee91.
+API image sha256:a70ca5b9ca1f5256bf6eed33f07d68c67dc0114c32e0d501e9a85af49ad1819e;
+web image sha256:a8be2a65966fafea5f799abfb44ec3d0241dbd337bb14d549853ae02a9173e96.
+Repeated pnpm check/build/test pass after the frontend readiness correction; the expanded
+real HTTPS/OIDC browser journey passes again, including disabled empty role/empty unit
+validation, valid review/start, background completion/reopening, errors and cancellation.
+The full pnpm test:integration pass includes the final backend and 33 People tests;
+frontend-only readiness polish has separate repeated static/unit/browser verification.
+Direct deployed 1440px/768px/390px inspection confirms upload, actual eligible-role choices,
+company/unit coverage, 36px picker searches, readiness transitions, no horizontal overflow
+and protected draft dismissal. Inspection used an unsaved file only, discarded it and
+closed the owned tab; there are still zero live import jobs. Current source matches the
+installed build; full/approved status, durableImports capability, import reads, ingress
+cache/security checks and supported cutover fingerprints pass. The two members, one
+invitation and six roles remain unchanged except normal identity verification timestamps.
+No schema/permission relaxation or invitation rate increase. All requested UE-08 work for
+bounded CSV invitation jobs is complete. Bulk membership/role edits are outside this
+increment; UE-10 governance remains planned and UE-09 enterprise identity remains deferred.
+Private operation evidence is under ignored .dms-titan-20261112/users-bulk-import-20261114
+and users-bulk-import-polish-20261114; nonsecret logs use /tmp/turnstile-import-*. No commits,
+pushes or changes to other agents' work were made.
+
+
+USERS-FILTER-LAYOUT-06 — **Completed and deployed** (owner: Codex, 2026-11-14).
+Owner reported excessive vertical space and poor alignment in expanded Members role/
+coverage filters. The shared search form's 14rem toolbar flex basis became a 224px
+height inside vertical pickers. Scoped that sizing to direct horizontal-toolbar searches;
+vertical searches now fit their 36px controls. Role and coverage use equal aligned columns
+above a 42rem container width and stack below it. Available unit results scroll within
+12rem instead of extending the page. Added an inert design-system gallery example and
+recorded the responsive pattern in architecture.md.
+
+Verification: pnpm check, pnpm build, pnpm test, pnpm test:integration (including real
+PostgreSQL and SeaweedFS) and pnpm test:browser:people pass. The focused real HTTPS/OIDC
+regression measures compact search/filter geometry and absence of document overflow at
+1440/768/390px, desktop label alignment, bounded unit results, successful actual role/unit
+filter requests and clearing. Direct browser inspection of the deployed signed app also
+passes desktop/tablet/phone, selection, clearing and collapse. At 1280px the expanded
+panel fell from 762px to 266px with the same two units; both search forms fell from
+224px to 36px. Desktop labels align; phone/tablet stack without blank reserved height.
+The deployed ingress cache/security check passes; status is full/approved. Existing two
+members, one invitation and six roles compare unchanged except refreshed identity
+verification timestamps; supported cutover preservation fingerprints pass.
+
+Published and activated source-matched signed release
+6779ef6515a0ffb01b72fc447b025cddd88144d35f44e7c66ea25f76bfa62e49,
+profile 430b54c820768e580ba31828a1e84c0e08f6cd674518a7e815f5bf875a9a4a73,
+source 1c71c3e97bea63bae52324d8a2e4a9354988dbbefa6f0855ee238ea569b8ecf7.
+API image sha256:783769c54dea0ca79e97ad285b58372219cc9f282d8526056fcfca8df09831dc;
+web image sha256:bb921cd54ded9f7894e05d51cef8dcad2529d05b83161a16c9d25461a8957f5b.
+Used the existing reviewed private release/cutover/approval path; retained all data and
+other workspace changes. Private operation evidence stays under ignored
+.dms-titan-20261112/users-filter-layout-20261114; nonsecret gate/browser/cache logs use
+/tmp/turnstile-filter-*. No schema or permission change. No remaining work for this
+reported filter-layout issue; wider Users enhancement follow-ups remain separately tracked.
+
+USERS-ENHANCE-05 — **Completed** (core increment UE-01–07 and sequenced follow-up plan;
+owner: Codex, 2026-11-14).
+Owner requested a detailed, sequenced plan for the final-review findings and Users
+enhancements, followed by incremental implementation and validation. Preserve unrelated
+dirty workspace changes and the existing signed installation. Deliver the recovery fixes
+first, then authorized audit visibility, contextual access/lifecycle inspection, role-use
+drilldowns and directory/invitation improvements. Record enterprise identity/governance
+and durable large-batch prerequisites separately; do not imply provider configuration or
+policy decisions exist. See the enhancement sequence in the user-management implementation
+plan. UE-01 implemented and validated: a definite readiness rejection remains a failed
+row; an uncertain transport outcome offers readback plus explicit re-review/retry with
+the identical captured command and key. No automatic replay or continuation. Corrected
+deletion guidance to identify actionable references rather than retained history.
+2026-11-14 verification: web typecheck and expanded disposable production-handler HTTPS/
+Postgres People browser journey pass, including failure before forwarding/no receipt,
+explicit same-command recovery/exact key equality, lost acknowledgement after commit,
+intervening cancellation and a single resulting invitation. First run hit authority rate
+budgets during earlier navigation; fixture resets now occur at bounded stage boundaries,
+without changing production limits. Next: UE-02 authorized audit reader and UI, then
+contextual inspection and actionable directory improvements. New enterprise extensions
+remain gated as described in the plan. Owner subsequently confirmed existing identity
+authority first and enterprise integration later. UE-02–06 are implemented: narrow SQL
+audit reader/Activity/CSV, canonical contextual access inspection and offboarding guidance,
+role-use drilldowns, effective delivery/role invitation filters, lifecycle/provenance dates,
+recipient preflight errors/unsent-copy and URL filters/stable sorting. Migrations 0035–36
+add the reader and two supporting indexes, retaining direct audit SELECT denial. Updated
+strict schemas/examples/OpenAPI 1.2.0, development gallery and architecture/spec/plan.
+Focused Postgres: 26/26 pass, including microsecond cursor ordering, retention/authority/
+tenant isolation, suspension/permission implications, sorted cursors and effective expiry
+delivery filters. Expanded real HTTPS/OIDC/SMTP/browser journey passes audit-filtered CSV,
+access inspection, role drilldowns, reload/back/sort persistence, recovery and prior lifecycle
+regressions. Web tests 30/30 and contract tests 25/25 pass. All four workspace gates
+passed for the initial increment. Signed release
+24d7e4d9f693e432a06b63822b606ff521e5eb733a235fc447c98927e51b75fe is deployed and
+full/approved after supported backup/migration, fresh pairing/approval/activation and
+private release opening. Preflight initially stopped before changes until an ordinary
+sync accepted the newly approved desired profile. Protected identity/setup/grant table
+fingerprints were preserved. Live counts remain two members, one invitation and six roles.
+Direct 1440px/768px/390px browser checks confirm invitation dates, task/footer layout,
+role details and no horizontal overflow. Live audit review identified poor readability
+of raw IDs; source correction resolves linked cached actor/subject names, retains stable
+IDs in disclosure/CSV, keeps role-name lookup behind Roles authority and explains name
+provenance. The correction also uses compact audit cards and wraps inspector text.
+Final repeated pnpm check, pnpm build, pnpm test and pnpm test:integration all pass,
+including actual PostgreSQL/storage; final expanded real HTTPS/OIDC/SMTP/browser passes.
+Follow-up signed release c8fe03f2650c062806ea72c3d9131d55dfdb4bc3379c41b9534d0ca0d5cc0456
+is deployed and full/approved. Profile efee49006aee10a59dd1560010d99c5f013df292673574da8772bc848d567b3e;
+source a52b243705287e5e301717a25e53803485e037f427236a70b7126b1f7fe8c82f.
+API image f8b897d8f62b65592d7544f3fd5e4771eca74d6c617b3979ed583e548db3dc76;
+web image 5197cdb8bb4e5a0d550474497cc0b71bfaf618764a2dc6f5581ce85aee5e71e9.
+Supported cutover/backup/re-pair/approval/activation/opening verified retained protected
+installation/setup/access fingerprints. Direct live API reads remain 200 with two members,
+one invitation, six roles and seven audit events; six user events have linked actor names
+and all seven have recognized subject labels. Browser confirms readable Activity and IDs,
+1440px/768px/390px layouts, saved acceptance dates, contextual reader grant explanation,
+sheet/footer fit and no horizontal overflow. No live member/role/invitation data was
+mutated during UI inspection. Deployed ingress/cache/security checks and source-digest
+match pass. Inspection tab closed. No commits or pushes created; unrelated dirty changes
+were preserved. Logs: /tmp/turnstile-users-{check-final,build-final,test-final,
+integration-final,polish-browser,enhance-db,polish-cutover,polish-verify,cache-live}.log.
+Remaining planned work: UE-08 durable imports/bulk jobs and UE-10 governance after their
+requirements/capacity/policy gates. UE-09 enterprise SSO/SCIM remains deferred by owner
+choice; identity-wide session/credential management stays in the owning authority.
+
+USERS-ACTIVATION-RECOVERY-04 — **Completed** (corrective migration, signed recovery/
+deployment and live verification; owner: Codex, 2026-11-14).
+Owner sees Installation activation required after the signed Users rollout. Diagnose
+the live deployment gate, current central approval and periodic reporter behavior;
+recover through the owning signed flow and verify sustained access in the browser.
+Preserve customer data, grants, licences and trust. No bypass of activation guards.
+Delivered: reproduced the failure, restored access and deployed the correction below.
+Diagnosis: browser reproduced closed/reconciliation-required. Signed approval, installed
+release and recovery marker all validate; deployment_control itself is not quarantined,
+but the durable clock row is. Isolated production-SQL regression reproduces a false
+quarantine when deployment_clock samples time before waiting for a row lock and a
+legitimate writer advances the durable floor. The before-fix test fails true vs false.
+Generated custom migration 0034 with the pinned Drizzle CLI; clock sampling now occurs
+after the clock row lock. The focused real-Postgres test passes and still verifies that
+a genuine future durable clock floor quarantines access. Added an actual HTTPS browser
+preflight regression using a held real SQL row lock; no failing handler is replaced.
+Ordinary staff MFA/replacement pairing/reapproval/activation and signed sync restored
+the existing installation to full/approved without changing data, grants or licences.
+Next: finish browser/workspace verification, deploy the signed corrective release and
+verify sustained live access across concurrent checks and periodic reporter activity.
+Verification milestone: focused Postgres suite passes all three tests, including the
+negative future-clock case. The complete People HTTPS browser suite also passes with
+the new real-lock/actual-status-handler regression (queued deployment-clock preflight
+stays approved), plus existing UI/save/recovery/session journeys. Build/test pass;
+check passed after formatting the CLI-generated metadata; full integration continues.
+Current normal browser is back in Users with deployment full/approved and member reads
+200. Building a source-matched signed corrective API/web pair before supported cutover.
+Final verification 2026-11-14: migration 0034 is deployed in signed release
+a4a1d070ab1c022256316c89107b7f2bb6b71789d54a8bf8ec359c68ce464ceb, profile
+b3e3931da03e015c4a8441abb9d3b0a3106f81201295f56ff9a9b978934bf6f6.
+API image sha256:4d2821eaab50cdfc1096b307bccd062fc5be940979dddb4774c0320169f5cf61;
+web image sha256:637f45672113b78ec2455c020256cafe123b93c5407ab18d9005aa47534ef009.
+Supported archive/migrate, ordinary staff MFA/rebinding/reapproval/activation, signed
+sync, unchanged identity/setup/grant fingerprints and normal administrator opening pass.
+The actual live SQL function was held while the normal HTTPS deployment preflight
+queued, then invoked by the legitimate lock holder to advance the floor before commit.
+The queued HTTP returned 200/full/approved and the durable clock remained unquarantined.
+Twelve additional concurrent actual HTTP checks all returned approved. Repeated live
+probes stayed approved over several minutes; normal browser shows Users. Final reads
+return 200 with two members, one invitation and six roles. Background reporter runs with
+no failures or pending report; its existing 15-minute cadence was not shortened and a
+new natural scheduled acknowledgement was not claimed during this check. Ordinary
+signed sync was verified. Temporary probe was stopped and inspection tab closed.
+pnpm check, pnpm build, pnpm test, pnpm test:integration (actual Postgres/storage),
+focused deployment Postgres tests, expanded People HTTPS/browser regression, deployed
+cache/security check and git diff --check pass. Logs: /tmp/activation-{check-final,
+build,test,integration,clock-before-2,clock-after,clock-browser,clock-live-queue,
+live-monitor,cache-live}.log. Source still matches the installed signed request.
+Protected helpers are in ignored .dms-titan-20261112/activation-clock-fix-20261114;
+coherent upgrade evidence is outside Git in
+/home/dev/.local/state/thaarei-activation-clock-fix-20261114-cutover. No data reset,
+manual grant rewrite, clock-guard bypass, commit or push. Owner can click Check activation
+or refresh https://turnstile.localhost:23600/people/members; signing out is unnecessary.
+
+USERS-UX-REWORK-03 — **Completed** (implementation, signed local deployment and
+browser validation; owner: Codex, 2026-11-14).
+Owner authorized detailed planning, implementation, direct browser validation and
+fixing further UI/UX issues discovered during review. Scope is the complete audit-02
+correction set for Users, preserving backend authorization and durable recovery.
+Plan: (1) full-width directories and accessible modal task sheets with guarded close,
+Escape and focus return; (2) compact invitation composition with explicit initial role,
+recipient validation, coverage feedback and state-specific saved details; (3) role
+overview and intentional create/edit/duplicate/delete workflows; (4) added/removed
+access reviews and actionable reference conflicts; (5) responsive directory/action/tab
+fixes and truthful bulk dismissal; (6) focused browser regressions plus all workspace
+gates, local build/deployment and direct desktop/tablet/mobile review/fix iterations.
+Check installed filters/usage separately from source; use the owning release process
+for API changes and retain existing data/signed module authority. No commit/push requested.
+Delivered: the planned corrections and supporting API deployment, as verified below.
+Implementation milestone: Users uses Base UI modal task sheets over unchanged-width
+directories with keepMounted/activity gating, guarded dismissal and focus return.
+Role View opens an overview; duplicate is an editable new custom-role draft. Added
+permission/assignment differences, proof expiry feedback, initial unselected invitation
+role rows, associated email errors, persistent selected unit paths, state-specific saved
+invitation dates/close and responsive table/action/tab fixes. Bulk dismissal reports
+success only for actually saved items. Updated architecture/spec/design guide/gallery.
+Direct preview verified new bundle/tab underline, directory width, inline validation,
+dirty Escape/keep/discard and focus return, role overview and added-permission review.
+Expanded disposable browser regressions cover role details/permissions/duplicate/delete,
+modal behavior and mobile geometry. Initial runs exposed old-flow assumptions and
+post-refresh timing in tests; iteration continues. Build/test and initial pnpm check pass;
+full integration is running. Preparing the supported signed API/web update for filters/
+usage with retained data and ordinary staff MFA; no deployment trust bypass.
+Browser milestone: /tmp/users-rework-browser-7.log passes the complete real HTTPS/OIDC/
+SMTP/Postgres journey, including new role details/permissions/difference/duplicate/delete
+and modal validation, focus return, false-success and mobile geometry regressions, plus
+existing actual lost-acknowledgement recovery, independent powers, subject revocation/
+restoration, session recovery, identity change and recipient verification/acceptance.
+The test exposed a real portal transition issue on authorization loss; inactive task
+content now hides synchronously while retaining draft state. Final selected-tab geometry
+assertions and final source checks are running. One existing environment-serializer
+template-style lint was normalized without changing emitted bytes to unblock the global
+gate. Updated signed catalogue prepared; first artifact predates the transition fix and
+will not be installed. Building the corrected exact-source pair before supported cutover.
+Release milestone: supported prepare/archive/migrate, replacement pairing, ordinary
+staff MFA/reapproval/activation, signed sync, fingerprint verification and normal customer
+administrator opening succeeded for release ad0cc2c67d2c74dd74a88201db840a6aee3dd0d865c5b4758e1eb916ed1bc60a.
+Live API now advertises memberAssignmentFilters and returns all six role usage rows;
+actual administrator-role filtering returned the correct single member. Direct mobile
+member-assignment review shows removed/added role/coverage correctly at 390px, with a
+390px sheet, no document overflow and a visible footer. Directory width stays 975px
+behind a 672px desktop sheet. Live counts remain two members, one invitation, six roles;
+all direct review drafts were discarded. All four workspace gates pass including actual
+PostgreSQL and authenticated storage; final expanded browser suite also passed.
+Final live polish found singular usage/coverage wording and oversized nested-picker
+loading placeholders; corrected text, compact spinner states, error wrapping and
+invitation-action spacing. A final matching signed pair is being built and rechecked;
+no business logic or authoritative state semantics changed in this polish increment.
+Final handoff 2026-11-14: the corrected/polished exact-source API/web pair is installed,
+activated, fingerprint-verified and opened through normal staff MFA and customer admin
+flows. Final release e8774a7a055e51b6892035499eebc47c25eab8d98e6de441e59a1b294902997d;
+profile 8cdc8adc9968c23d942547b14c42789a9e679717ecab89f0986798d63759a5c7.
+API image sha256:e3c324f1e625fb5f95e2cc39d728a9500d45c032be9ad739f25e237dca69f4de;
+web image sha256:a25d8649977808ce38674d3981b25b7f219779ca0f549d809d1f93b061b5d181.
+Live ordinary navigation loads index-DnP2V4hl.js. Final source inventory still matches
+the installed signed request. Role counts use correct singular/plural text. At 390px,
+the invitation table is 333px with 333px scroll width, document width is 390px, invite
+actions have an 8px gap, the sheet is 390px wide and its body has no horizontal overflow.
+Both actual saved-detail and transient task reviews were inspected at 1280/960/390px.
+The final direct browser pass used existing data and discarded every draft; end reads
+still show two members, one invitation and six roles, all owning endpoints return 200,
+and no task dialog remains. Agent-owned inspection tabs were closed.
+Verification: final pnpm check, pnpm build, pnpm test, expanded
+MEMBERS_DESIGN_CAPTURE=1 pnpm test:browser:people, deployed-ingress cache/security check
+and git diff --check pass. Full pnpm test:integration passed actual Postgres and storage
+in this increment; the subsequent presentation-only copy/spinner/spacing refinements
+were rechecked by the final build/check/test/browser runs. Logs:
+/tmp/users-polish-{check-verified,build,test,browser,cache-live,signed-build,cutover-prepare,
+cutover-verify}.log and /tmp/users-rework-integration.log. The existing nonfatal browser
+chunk-size advisory remains; no failed gate or remaining blocker within this Users scope.
+Protected release helpers/state are under ignored .dms-titan-20261112/users-rework-final-20261114;
+coherent archives/configuration/identity/access evidence are outside Git under
+/home/dev/.local/state/thaarei-users-rework-final-20261114-cutover (earlier upgrade archive
+retained). Source API migrations and module-profile changes used the supported owning
+operators; no trust bypass, data reset, manual grant rewrite, commit or push occurred.
+Owner validation: https://turnstile.localhost:23600/people/members. This closes the earlier
+installed-API filter/usage gap and supersedes the cache task's historical Mailpit blocker.
+
+USERS-UX-AUDIT-02 — **Completed** (audit; corrections delivered by USERS-UX-REWORK-03;
+owner: Codex, 2026-11-14).
+Owner requested another comprehensive validation of all Users tabs and nested forms/
+panels against the WorkOS/Clerk research, because the redesign feels insufficient.
+Scope: live desktop/narrow inspection, transient form/review navigation, source and
+requirement coverage audit, severity-ranked findings and a concrete correction plan.
+No business mutations, invitations, role saves or deployment changes in this audit.
+Live inspection milestone: exercised all three directories at desktop and 390px;
+also checked a 960px scoped invitation. Opened member overview/edit, account/permission
+disclosures and suspension review; single/bulk invitation drafts, invalid recipients,
+single invitation review and saved accepted-invitation details; role create/template,
+built-in copy, custom details/duplicate/permissions and blocked deletion review. All
+drafts were discarded without confirming a business write. Confirmed the current
+bundle is loaded; this is an incomplete UX redesign, not the earlier HTML cache bug.
+Confirmed defects: pill styles override intended underlined tabs; desktop adjacent
+panels compress member/invitation tables; narrow invite CTAs overlap by 16px; closing
+an unsent bulk draft falsely reports Changes saved; invalid email has only generic
+notice/no field association; panel close loses keyboard focus and Escape does not
+dismiss; accepted invitation shows compose instructions and Cancel and discard draft;
+expiry is hidden on narrow list and absent from details; the narrow invitation table
+still overflows internally (444px content in 333px available); role View opens copy/edit
+directly, duplication cannot adjust permissions in the same task, and in-use deletion
+has a generic conflict with no reassignment guidance. Coverage search retains selected
+IDs but hides their names when filtered and has no loading/no-results feedback.
+Current API catalog explicitly lacks memberAssignmentFilters; filters and role usage
+remain source/tested capabilities awaiting the coordinated API release.
+Source/requirement mapping: UX-R01/02 are partially delivered; the old non-modal adjacent
+card architecture remains, with role tasks hiding their directory instead. UX-R03's
+automatic assessment and explicit confirmation work, but reviews lack added/removed
+permission/assignment/coverage differences. UX-R04/05 are implemented/tested in source
+and unavailable on the installed API. UX-R06's bounded durable send/recovery behavior
+has prior functional verification; its composition/validation/close UX needs revision.
+Pending/needs-review/cancelled/expired invitations, suspended-member reactivation and
+actual final saves/transport recovery were source-reviewed and compared with prior
+isolated test coverage, not freshly executed against live data. No new business saves
+were authorized or attempted by this audit. End-of-audit authorized reads still show
+two members, one invitation and six roles. Transient drafts were discarded and the
+agent-owned inspection tab was closed.
+The browser suite covers functional authorization, durable outcomes and document-level
+narrow overflow, but has no visual acceptance assertions for CTA overlap, internal table
+overflow, active-tab style, focus restoration, or complete role subtask presentation.
+Verification 2026-11-14: live 1280/960/390px preview inspection, source/spec/test review,
+and git diff --check. No application code, architecture, runtime configuration or
+deployment changed; no new application test/build gates run for this audit/document-only
+increment. Earlier implementation and integration-fixture results remain historical.
+Handoff: prioritize full-width directories with accessible detail sheets, compact shared
+single/bulk invitation composition with one explicit unselected role row and inline
+recipient errors, a clear role overview/editor, useful before/after impact review and
+state-specific details. Fix CTA/tab/focus/false-success defects and coverage picker
+feedback; preserve authorization, scoped assignments, protected roles and uncertain-write
+recovery. Then validate every subtask at desktop/tablet/mobile and deliver backend
+filters/usage through the coordinated signed release. The prior functional increment
+does not establish completion of the researched UX redesign.
+
+USERS-UX-VISIBILITY-01 — **Completed** (cache fix verified; full integration fixture
+gate subsequently passed in USERS-UX-REWORK-03; owner: Codex, 2026-11-14).
+Reproduced the owner's old UI after normal administrator login in the shared browser:
+cached /assets/index-BW_99bMN.js rendered old separate Members/Invitations/Roles
+navigation, while a cache-bypassed request returned new /assets/index-ySc4CcWy.js.
+No service worker was installed. Nginx HTML responses lacked Cache-Control.
+Updated deploy/nginx/nginx.conf to send no-store for entry documents/fallbacks and
+errors, immutable one-year caching for successful hashed assets and their 304s, and
+uncached 404s for missing chunks instead of SPA HTML. Server-level security-header
+inheritance is preserved. Architecture documents the accepted cache policy.
+Added scripts/test-web-cache.mjs, a read-only real-ingress regression check. It failed
+against the original cache headers and passes after deployment, checking all Users
+entry routes, asset/conditional responses, missing chunks and the combined identical
+security headers added by ingress and Nginx. Container nginx -t also passes.
+Built/deployed thaarei-turnstile-web:users-cache-20261114 at
+sha256:cc18984f228f23e0111797e883073875c0141a121020073f7e519b5898fa3393;
+private Compose backup is compose.yaml.before-users-cache-20261114. Recreated only
+the web service; existing API/data/authority are retained. Browser verification used
+the existing private administrator handoff without changing account/access data.
+After cache reload, the signed-in page shows Users heading/sidebar, Invite member,
+Invite multiple members and compact assignment summaries. A subsequent ordinary
+canonical /people/members navigation still loaded index-ySc4CcWy.js and the new UI.
+2026-11-14 pnpm check, pnpm build, pnpm test, targeted Biome, git diff --check and
+live nginx/cache/browser checks pass. pnpm test:integration passed all ten Turbo
+application tasks, then its disposable fixture stopped before database tests with
+'Disposable Mailpit did not become ready'. The preceding full database/storage gate
+passed in USERS-UX-IMPLEMENT-01. Logs: /tmp/users-cache-{build,check,workspace-build,
+test,integration,before,after}.log. Remaining: restore disposable Mailpit readiness
+and rerun the full integration fixture gate; no remaining UI-cache deployment work.
+Owner handoff: https://turnstile.localhost:23600/people/members?ui=users-20261114
+bypasses previously cached HTML once. Existing open tabs may require a full reload;
+subsequent entry documents now use no-store. Backend filter/count release remains
+separate as recorded below. No commit, push or database migration performed.
+
+USERS-UX-IMPLEMENT-01 — **Completed** (functional source increment and compatible
+local web deployment; UX acceptance incomplete, see USERS-UX-AUDIT-02;
+owner: Codex, 2026-11-14).
+Implemented functional portions of owner-adopted UX-R01–06 for mixed organization
+scale. Users has a shared header and section links, invitation rows with separate approval/
+delivery/expiry, summarized member assignments and role permissions, direct member
+invitation composition, built-in role starting points, explicit role task buttons and
+a wider role editor. Impact is fetched automatically on entering review; confirmation
+labels name the operation. Cancellable assessment, transient drafts, protected roles,
+independent authorization and uncertain-save receipt recovery are retained. Registered
+business permissions now appear in the grouped picker. Inert gallery examples and
+responsive member rows were updated using the existing component system.
+Added server-side member role/covered-unit filters, matching the same saved assignment,
+with authorized totals and filter-bound cursors. Unit filtering requires unit read
+power. Role usage aggregates distinct saved members and unexpired actionable invitations
+in one set-based projection; only actors with both Roles and People powers receive it.
+No new schema or migration. Updated executable contracts and generated People OpenAPI.
+The catalog advertises filter capability; newer web clients omit unsupported controls
+when an older API is installed. Counts are never fabricated when absent.
+Bulk invitation tasks accept at most ten distinct normalized recipients with a common
+assignment set. Every item uses an independent existing command, frozen role/scope/org
+versions and a stable key. Fresh access/impact precedes each explicit batch-authorized
+send. Failure/uncertainty stops subsequent recipients; receipt lookup never resends and
+shows the current invitation/delivery state after intervening changes. Busy/uncertain
+close is blocked and unsaved draft close requires explicit discard.
+Verification 2026-11-14: `pnpm check`, `pnpm build`, `pnpm test`,
+`pnpm test:integration` and `git diff --check` pass. Full integration includes real
+PostgreSQL and authenticated SeaweedFS browser/Node/Python transfer checks. Focused
+`node scripts/test-auth-database.mjs --people` passes all 22 HTTP/Postgres tests,
+including paired filtering, cursor changes and role-only usage privacy.
+`MEMBERS_DESIGN_CAPTURE=1 pnpm test:browser:people` passes real HTTPS/OIDC/SMTP,
+role creation, direct invitation, post-restart persistence, server role filtering,
+two-recipient success, lost bulk acknowledgement, receipt recovery after cancellation,
+independent powers, revocation/session draft recovery, subject change, narrow layouts,
+recipient acceptance and restricted-deployment regression checks. Initial runs exposed
+post-save navigation timing and disclosure-toggle test assumptions (fixed); one restart
+attempt failed transiently. The final complete browser run passed. Browser snapshots
+were inspected for the role task. Logs are /tmp/users-ux-{check-verified,build-verified,
+test-verified,integration,people-database,browser-5,image-final}.log.
+Built both-module compatible web image `thaarei-turnstile-web:users-ux-20261114`,
+`sha256:be9bfa6f8dc943455c7851a923398a44e07f94308695cbc8c333eb67d2987884`.
+Backed up private runtime Compose to compose.yaml.before-users-ux-20261114, pinned
+this image and recreated only turnstile-web. HTTPS /people/members and the new
+/assets/index-ySc4CcWy.js return 200 and contain the new workflows; Incident/Risk
+selection remains. API session is reachable (401 without login). Existing API,
+reporters, identity, data and signed module authority were not replaced.
+Handoff: refresh https://turnstile.localhost:23600/people/members to test the redesigned
+UI, including bulk invites. Backend role/coverage filtering and usage counts are
+implemented/tested but require the next coordinated signed API/web module release
+before becoming available on this installed demo. This web-only local testing update
+is not a new signed API/web release. No commit, push or database migration performed.
+
+USERS-UX-RESEARCH-01 — **Completed** (research/proposal; owner: Codex, 2026-11-14).
+Owner requested detailed WorkOS/Clerk analysis before redesigning Users; confirmed
+mixed scale from small teams to large organizations. Reviewed official WorkOS
+Widgets/User Management, dashboard members, RBAC configuration/custom roles and
+AuthKit invitations; Clerk OrganizationProfile, invitation and roles/role-set docs,
+member-search changelog and published 2025 invitation screenshots. Inspected four
+WorkOS screenshots and Clerk member/invitation examples. These are public documented
+flows and published visuals, not authenticated competitor-dashboard testing.
+Audited current People.tsx, Members.tsx, AccessViews.tsx, Review.tsx, shared controls,
+contracts and accepted UM-R01–22 requirements. Recommendation: consistent Users
+header/tabs; compact member/invitation/role directories; direct invitation task;
+role templates and grouped permission editing; integrated server-impact review;
+retain explicit role/coverage pairs, protected roles, approval/delivery separation,
+independent People/Roles authorization and uncertain-save recovery. New bulk flows,
+role/site filters, usage/global counts and activity columns require owning backend
+work; do not derive them from one paginated page or leak member identities to
+role-only administrators. No product code, scope specification, architecture decision
+or running deployment changed in this research task.
+A fictional-data interactive concept is retained outside Git at
+/home/dev/.local/state/turnstile-users-ux-research/users-direction.html. Inspected
+its initial render at 728px and 390px; corrected narrow member layout; no preview
+console errors. Source research evidence is linked in the conversation. Verification:
+`git diff --check`; no application gates rerun for this research-only increment.
+Prior application verification and integration-fixture blockers remain below.
+Handoff: owner review of the researched recommendation; next implementation should
+adopt the design in owning architecture/spec references, then deliver frontend
+workflows and separately scoped backend scale capabilities. Proposal is not a claim
+that the redesign or new capabilities have been implemented.
+
+USERS-NAV-REBUILD-01 — **Completed** (owner: Codex, 2026-11-14).
+Owner authorized rebuilding/updating the local UI for manual testing. Built the web
+Dockerfile from the monorepo root with the installed Incident/Risk selection and
+pinned Node/pnpm; image `thaarei-turnstile-web:users-nav-20261114` has digest
+`sha256:9bdca308be333716b0a77829ef2447bc9f0aa201ed3e2a896821257a82cf6447`.
+Backed up the private runtime Compose as `compose.yaml.before-users-nav-20261114`,
+pinned its web image and recreated only turnstile-web through the existing customer
+composition with --no-deps. Backend, database and other services were retained.
+HTTPS /people/members and the new index-BWzw8J29.js return 200; served JS contains
+Users with the permission-aware default and /people/ active state. The served module
+selection retains foundation/Incident/Risk; API session route responds 401 without
+login. Container is running. This is a local UI testing rebuild, not a new signed
+API/web module release. Prior full integration fixture blockers remain recorded below.
+Handoff: owner can refresh https://turnstile.localhost:23600/people/members and sign
+in if needed to test Users and its internal sections. Build log: /tmp/users-nav-rebuild.log.
+
+USERS-NAV-01 — **Completed** (owner: Codex, 2026-11-14).
+Consolidated Members/Invitations/Roles sidebar entries into one Users destination
+in `apps/turnstile-web/src/components/workspace-navigation.tsx`, shared by desktop,
+collapsed and mobile navigation. Existing internal sections/routes and authorization
+remain. Users defaults to Members for People managers or Roles for role-only managers,
+and stays active across People routes. Updated architecture/design guidance and
+`scripts/test-people-browser.mjs` for single-entry/internal-tab/role-only regression.
+2026-11-14 verification: `pnpm check`, `pnpm build`, `pnpm test`,
+`pnpm test:browser:people` and `git diff --check` pass. The real HTTPS/OIDC People
+journey verifies administration, permission boundaries, retained drafts and narrow UI.
+`pnpm test:integration` passed all ten Turbo tasks (including real central
+HTTPS/PostgreSQL/browser checks), then failed before its database checks with
+`Database role provisioning failed (connect, unknown)`. A standalone
+`pnpm test:database` retry failed at the same pre-provisioning connection stage.
+Separately attempted `pnpm test:storage`; it failed with `Storage fixture unavailable`
+before executing storage tests. These were the earlier runtime fixture failures; the later USERS-UX-IMPLEMENT-01
+passed the complete integration gate including database/storage. Navigation was
+deployed by USERS-NAV-REBUILD-01 and is retained by the redesigned local UI.
+Preview inspection originally reached an expired-session screen; subsequent focused
+HTTPS/OIDC browser journeys pass. No navigation-specific work remains.
+
+LOCAL-READY-20261113 — **Completed** (owner: Codex, 2026-11-13).
+Owner requested latest build, services and login handoff, then authorized one-year demo
+licences for both products. Latest origin/development equals local b9602eb; retained local
+foundation changes are included in the deployed source. All four required workspace gates
+pass: pnpm check, fresh pnpm build --force (12 uncached tasks), uncached pnpm test, and
+pnpm test:integration including actual PostgreSQL and SeaweedFS. One nonfatal frontend
+chunk-size warning remains; no failed build/check/test gate.
+Restored all 11 Titan services and set all central long-lived services to unless-stopped.
+Built current central/DMS images and a source-matched signed both-module API/web bundle;
+published the unchanged classifications and matching reference. Supported profile cutover
+completed its closed/quarantined product-schema archive, forward migrations, replacement
+pairing, normal staff-MFA approval/activation, sync, fingerprint verification and normal
+administrator release opening. Central then applied owning migrations; both independent
+licences are approved through 2027-11-13T23:59:59Z and both accepted signed policies carry
+that exact deadline. Current source inventory equals the deployed signed profile.
+Company setup, installation identity, memberships and local permission fingerprints were
+preserved. The temporary maintenance network connection was removed. No reset, data
+removal, service credential rotation outside supported pairing, commit or push occurred.
+Post-upgrade HTTPS checks pass central MFA/session, customer administrator/reader OIDC and
+logout/session closure, admin Incident/Risk, reader Incident with Risk denied, and real
+Turnstile-to-DMS capability integration. Central/DMS/auth readiness, both databases and
+Mailpit pass; all 11 retained containers run with unless-stopped. Current reporter logs
+have no new errors. Signed Turnstile release: 0b02d7a35774553332ffec8dc926f7d02f68198a3770815621c30bf567983c97.
+Protected backups/commands/build/gate/live logs are retained under ignored
+.dms-titan-20261112/upgrade-20261113; the coherent product cutover archive/plan is outside
+Git at /home/dev/.local/state/thaarei-ready-20261113-cutover. Private login handoff:
+.dms-titan-20261112/LOGIN-DETAILS.md. No credentials are recorded in this progress file.
+Owner validation URLs: https://central.localhost:23600/access,
+https://turnstile.localhost:23600/sign-in and http://localhost:23605.
+The signed local module POC still excludes storage/scanner/processing workers and DMS
+Swagger remains disabled. This does not close wider TITAN-EXEC-01 acceptance, clean-host/
+Dokploy rollout, document/OCR or production release gates. Next: owner manual validation
+using the private handoff; existing broader feature/target work remains under its owners.
+
+RESOURCE-CLEANUP-01 — **Completed** (owner: Codex, 2026-11-12).
+Recovered Docker after user WSL restart. Removed redundant setup installers and superseded
+test snapshots, 118 unused profile image tags, six obsolete fixture tags, dangling images
+and unused build cache. Preserved every database volume, container-referenced customer
+image, retained customer configuration, other-project images and T3 history/worktrees.
+Trimmed Docker filesystem and successfully compacted the detached data VHDX with Windows
+DiskPart (Exit 0). C: reached 94 GiB free after compaction and remains about 84 GiB free after
+fresh sequential qualifications (initial pre-cleanup measurement was 159 MiB). Restored Titan
+central services/ingress; customer PostgreSQL automatically restarted with unless-stopped.
+Both databases accept connections; configured central HTTPS redirects to sign-in (307).
+Released clean build filesystem caches after verification. Maintenance steps are in the
+canonical ecosystem guide. Final fixture/evidence directories are private and outside Git
+under /home/dev/.local/state/thaarei-qualification/. Earlier /tmp evidence was cleared by
+WSL restart; final fresh results supersede those interrupted runs.
+
+FOUNDATION-FIX-01 — **Completed for the three scoped source fixes and local qualification**
+(owner: Codex, 2026-11-12).
+Implemented reviewed UTC product licence expiry/renewal, bounded signed v1/v2 issuance,
+online renewal denial after contractual expiry, customer hard closure including retained
+reads, and rejection of licence-bound downgrade. Actual central HTTP shortening, expiry,
+offline closure, denial and staff renewal pass.
+Installer PostgreSQL defaults to unless-stopped. Actual fresh signed-installer qualification
+passes automatic restart after PostgreSQL immediate shutdown and committed-data retention,
+plus complete HTTPS/browser handover. Initial rerun met an occupied reserved port; the final
+run isolated that port and restored Titan ingress afterward.
+One module registry now drives active IDs, contracts, permissions, labels, source ownership
+and limits. Owning permission catalogue/FK and SQL company-scope guards replace fixed lists.
+modules:sync generates migrations and API references; enabled:false retires implementations
+while preserving historical metadata/grants. The final disposable Permit lifecycle passes
+actual-image ordinary login, explicit permissions, SQL scope, disablement/revocation/expiry,
+retirement type checks/route exclusion and zero-active-module contract/API generation.
+All four required workspace gates previously passed on the implementation; the fresh actual
+installer and module qualifications now pass after resource recovery. No source behavior was
+changed during this resumed cleanup; documentation/whitespace validation is clean.
+Evidence: /home/dev/.local/state/thaarei-qualification/restart-final.log,
+restart-20261112/qualification.log (private), and modules-20261112.log. Cleanup summaries
+are in the same parent directory. Do not publish private fixture inputs/keys.
+No live commercial end date was invented and no existing signed Titan application release
+was rewritten. Rollout remains customer verifier upgrade first, then central migrations/
+issuer, then reviewed real end dates. Broader production/customer acceptance remains under
+its existing tasks; this does not close the historical unexplained combined-profile failure.
+
+FOUNDATION-VERIFY-01 — **Completed** (owner: Codex, 2026-11-12).
+Final foundation assessment requested: onboarding, installation, Core/Individual modules,
+catalogue changes, assignment/activation, revocation and failure/recovery scenarios.
+Independent read-only review assigned to foundation_review; main agent maps requirements
+to current implementation and runs focused verification. Preserve the live Titan demo.
+Review completed: one confirmed defect (installer PostgreSQL restart policy), missing
+commercial licence end dates, fixed two-module registration and unfinished business-workflow
+qualification. Corrected new-install database restart policy and Titan's retained Compose/
+Docker policy without restarting its database; added a fresh-launcher fixture assertion
+(not executed in this review). Added browser-test phase diagnostics. Forty focused tests
+pass; reviewer independently passed 23 overlapping catalogue/retry tests. Fresh actual-image
+browser checks pass Core-only, Incident-only and Risk-only. Combined profile first failed
+with unexplained DEPLOYMENT_RESTRICTED 403, then passed using the same images. Preserve that
+intermittent failure as an open gate, not a clean suite result. Details and remaining
+customer/production gates: docs/deployment/titan_acceptance_results.md. Logs/artifacts are
+outside the checkout under /tmp/thaarei-foundation-verification/ and
+/tmp/thaarei-foundation-profiles-20261112/. All four required pnpm gates pass, including
+PostgreSQL and SeaweedFS integration. Scoped review is complete; full foundation acceptance
+is not. No fresh-installer/reboot qualification or production sign-off. Changes remain local
+and uncommitted; the previously published development commit is unchanged.
 
 ARTIFACT-CLEANUP-01 — **Completed** (owner: Codex, 2026-11-12).
 Inspect the three user-selected historical DMS verification directories, remove unused

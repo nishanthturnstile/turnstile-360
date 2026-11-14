@@ -7,6 +7,9 @@ import pg from 'pg';
 import { evaluateDecision } from '../../packages/deployment-control/dist/index.js';
 import { provisionDatabase } from '../provision-auth-database.mjs';
 import { verifyContainerReporter } from './control-plane-reporter.mjs';
+
+const fixtureLicenceEnd = new Date(Date.now() + 365 * 86400000).toISOString();
+
 export async function verifyTurnstileCentralHttp({
   installationBinding,
   admin,
@@ -176,6 +179,7 @@ export async function verifyTurnstileCentralHttp({
       id: product.resourceId,
       revision: 1,
       decision: 'approve',
+      licenceExpiresAt: fixtureLicenceEnd,
     });
     await cli({ action: 'sync' });
     assert.equal((await status()).access, 'full');
@@ -200,6 +204,7 @@ export async function verifyTurnstileCentralHttp({
       id: product.resourceId,
       revision: 3,
       decision: 'approve',
+      licenceExpiresAt: fixtureLicenceEnd,
     });
     await cli({ action: 'sync' });
     if (containerQualification) {
@@ -371,6 +376,7 @@ export async function verifyTurnstileCentralHttp({
         id: product.resourceId,
         revision: 6,
         decision: 'approve',
+        licenceExpiresAt: fixtureLicenceEnd,
       });
       await cli({ action: 'sync' });
       assert.equal((await preflight()).access, 'full');

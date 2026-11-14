@@ -154,6 +154,11 @@ export const accessRole = productSchema
   )
   .enableRLS();
 
+export const permissionCatalog = productSchema.table('permission_catalog', {
+  permission: text().primaryKey(),
+  companyOnly: boolean('company_only').notNull(),
+});
+
 export const accessRolePermission = productSchema
   .table(
     'access_role_permission',
@@ -169,10 +174,11 @@ export const accessRolePermission = productSchema
         columns: [t.tenantId, t.roleId],
         foreignColumns: [accessRole.tenantId, accessRole.id],
       }),
-      check(
-        'access_permission_catalog',
-        sql`${t.permission} IN ('turnstile:access','turnstile:dms:capabilities:read','turnstile:configuration:manage','turnstile:people:manage','turnstile:roles:manage','turnstile:units:read','turnstile:units:manage','turnstile:incidents:read','turnstile:risks:read')`,
-      ),
+      foreignKey({
+        name: 'access_permission_catalog',
+        columns: [t.permission],
+        foreignColumns: [permissionCatalog.permission],
+      }),
     ],
   )
   .enableRLS();

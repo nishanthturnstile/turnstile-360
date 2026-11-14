@@ -1,20 +1,12 @@
 import { z } from 'zod';
 
-export const BUSINESS_MODULES = [
-  {
-    id: 'incident-management',
-    title: 'Incident Management',
-    permission: 'turnstile:incidents:read',
-    path: '/modules/incident-management',
-  },
-  {
-    id: 'risk-management',
-    title: 'Risk Management',
-    permission: 'turnstile:risks:read',
-    path: '/modules/risk-management',
-  },
-] as const;
-export const businessModuleIdSchema = z.enum(['incident-management', 'risk-management']);
+import { ACTIVE_MODULE_REGISTRY } from './module-registry.js';
+export const BUSINESS_MODULES = ACTIVE_MODULE_REGISTRY.map((module) => ({
+  ...module,
+  path: `/modules/${module.id}` as const,
+}));
+const activeModuleIds = ACTIVE_MODULE_REGISTRY.map((module) => module.id);
+export const businessModuleIdSchema = activeModuleIds.length ? z.enum(activeModuleIds) : z.never();
 export type BusinessModuleId = z.infer<typeof businessModuleIdSchema>;
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 export const moduleLinkSchema = z
@@ -41,7 +33,7 @@ export const moduleCapabilitiesSchema = z
     version: z.literal(1),
     modules: z
       .array(moduleLinkSchema)
-      .max(2)
+      .max(ACTIVE_MODULE_REGISTRY.length)
       .refine((v) => new Set(v.map((m) => m.id)).size === v.length),
     context: moduleContextSchema.nullable(),
   })

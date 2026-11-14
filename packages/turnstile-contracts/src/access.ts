@@ -156,9 +156,23 @@ export const memberSchema = z.strictObject({
   identity: memberIdentityDisplaySchema,
   assignments: resolvedRoleAssignmentsSchema,
   legacySource: legacyGrantSourceSchema.nullable(),
+  acceptedAt: peopleInstantSchema.optional(),
+  importedAt: peopleInstantSchema.optional(),
 });
 export const memberListResponseSchema = peoplePageSchema(memberSchema);
-export const roleListResponseSchema = peoplePageSchema(roleDefinitionSchema);
+export const roleListResponseSchema = peoplePageSchema(roleDefinitionSchema).safeExtend({
+  // Only returned when the actor also has company People management.
+  usage: z
+    .array(
+      z.strictObject({
+        roleId: canonicalPeopleIdSchema,
+        memberCount: accessRevisionSchema,
+        invitationCount: accessRevisionSchema,
+      }),
+    )
+    .max(100)
+    .optional(),
+});
 export const eligibleRoleSchema = z
   .strictObject({
     role: roleDefinitionSchema,
@@ -177,6 +191,9 @@ export const eligibleRolesResponseSchema = peoplePageSchema(eligibleRoleSchema);
 
 export const permissionCatalogSchema = z
   .strictObject({
+    usersInsights: z.literal(1).optional(),
+    durableImports: z.literal(1).optional(),
+    memberAssignmentFilters: z.literal(true).optional(),
     organizationRevision: accessRevisionSchema.optional(),
     grantableCompanyPermissions: z
       .array(peoplePermissionSchema)

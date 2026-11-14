@@ -1,6 +1,7 @@
 import { ArrowRight01Icon, Shield01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import type { MemberDto, UserSessionDto } from '@thaarei/turnstile-contracts';
+import { AppLink } from '@/components/navigation';
 import { Notice } from '@/components/notice';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { AccessInspection } from './AccessInspection';
 import { permissionLabel, UnitPaths } from './shared';
 
 export const memberName = (member: MemberDto) =>
@@ -102,12 +104,17 @@ export function MemberTable({
             </TableCell>
             <TableCell>
               <div className="member-role-list">
-                {member.assignments.map((a) => (
+                {member.assignments.slice(0, 2).map((a) => (
                   <div key={a.id}>
                     <strong>{a.role.name}</strong>
                     <p>{coverage(a.scope)}</p>
                   </div>
                 ))}
+                {member.assignments.length > 2 && (
+                  <span className="member-meta">
+                    +{member.assignments.length - 2} more assignments
+                  </span>
+                )}
                 {member.legacySource && !member.legacySource.retired && (
                   <Badge variant="outline">Imported access retained</Badge>
                 )}
@@ -233,6 +240,10 @@ export function MemberOverview({
         )}
       </section>
       <section className="member-status-section" aria-label="Membership status">
+        <AccessInspection member={member} session={session} />
+        <AppLink href={`/people/activity?subjectId=${member.id}`}>
+          View activity for this member
+        </AppLink>
         <h3>
           {member.status === 'active' ? 'Pause workspace access' : 'Restore workspace access'}
         </h3>
@@ -241,6 +252,20 @@ export function MemberOverview({
             ? 'Suspension blocks all access to this workspace, including retained imported grants. It does not delete their identity account.'
             : 'Reactivation restores saved access only after current identity and permission checks.'}
         </p>
+        <ul className="list-disc pl-5 text-sm text-muted-foreground">
+          <li>Review all roles, unit coverage and retained imported access above.</li>
+          <li>
+            Suspension blocks this workspace immediately while preserving assignments and audit
+            history.
+          </li>
+          <li>
+            Before reactivation, review saved assignments; reactivation can restore their access.
+          </li>
+          <li>
+            Account-wide sessions, credentials and identity-provider deprovisioning belong to the
+            identity administrator.
+          </li>
+        </ul>
         <Button
           variant={member.status === 'active' ? 'destructive' : 'outline'}
           disabled={disabled}
@@ -260,7 +285,32 @@ export function MemberOverview({
             <dt>Contact display</dt>
             <dd>{member.identity.state === 'fresh' ? 'Current' : member.identity.state}</dd>
           </div>
+          {member.acceptedAt && (
+            <div>
+              <dt>Invitation accepted</dt>
+              <dd>
+                <time dateTime={member.acceptedAt}>
+                  {new Date(member.acceptedAt).toLocaleString()}
+                </time>
+              </dd>
+            </div>
+          )}
+          {member.importedAt && (
+            <div>
+              <dt>Access imported</dt>
+              <dd>
+                <time dateTime={member.importedAt}>
+                  {new Date(member.importedAt).toLocaleString()}
+                </time>
+              </dd>
+            </div>
+          )}
         </dl>
+        {!member.acceptedAt && (
+          <p className="member-meta">
+            An invitation acceptance date is not recorded for this membership.
+          </p>
+        )}
         {member.legacySource?.retired && (
           <p>Imported access was retired and grants no current permissions.</p>
         )}

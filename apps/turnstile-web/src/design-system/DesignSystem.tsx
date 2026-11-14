@@ -32,6 +32,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { WorkspaceNavigation, workspaceDestinations } from '@/components/workspace-navigation';
 import { cn } from '@/lib/utils';
 import { PeopleGallery } from './PeopleGallery';
+import { ScopedHierarchyGallery } from './ScopedHierarchyGallery';
 import { StructureGallery } from './StructureGallery';
 
 const swatches = [
@@ -81,6 +82,7 @@ export default function DesignSystem() {
           </Button>
         </header>
         <Separator />
+        <ScopedHierarchyGallery />
         <StructureGallery />
         <PeopleGallery />
         <Separator />

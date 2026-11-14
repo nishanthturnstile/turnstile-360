@@ -1,10 +1,15 @@
+import { isModuleEnabled, MODULE_REGISTRY } from '@thaarei/turnstile-contracts';
 export const permissionLabel = (id: string) =>
   ({
     'turnstile:access': 'Workspace entry',
     'turnstile:people:manage': 'Manage people',
     'turnstile:roles:manage': 'Manage roles',
-    'turnstile:incidents:read': 'Read Incident Management',
-    'turnstile:risks:read': 'Read Risk Management',
+    ...Object.fromEntries(
+      MODULE_REGISTRY.map((module) => [
+        module.permission,
+        `Read ${module.title}${isModuleEnabled(module) ? '' : ' (retired)'}`,
+      ]),
+    ),
     'turnstile:configuration:manage': 'Manage configuration',
     'turnstile:units:read': 'Read units',
     'turnstile:units:manage': 'Manage units',

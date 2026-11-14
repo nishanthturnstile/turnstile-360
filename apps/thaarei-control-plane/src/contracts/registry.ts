@@ -80,6 +80,7 @@ export const productPolicy = z
     id,
     revision: expectedRevision,
     decision: z.enum(['approve', 'reject', 'suspend']),
+    licenceExpiresAt: z.iso.datetime().optional(),
     reason,
   })
   .strict();
@@ -147,6 +148,7 @@ export const productRecord = z
     tenantId: id,
     environment: z.string(),
     policyState,
+    licenceExpiresAt: z.iso.datetime().nullable(),
     revision,
     registeredAt: z.iso.datetime(),
     policyChangedAt: z.iso.datetime(),

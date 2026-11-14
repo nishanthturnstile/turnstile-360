@@ -12,6 +12,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { chromium } from '@playwright/test';
+import { Pool } from 'pg';
 import { parse } from 'yaml';
 import { prepareModuleAccess } from './fixtures/module-access.mjs';
 import { prepareCutoverBrowser } from './fixtures/module-cutover-browser-setup.mjs';
@@ -122,6 +123,19 @@ const gateway = createServer({}, async (request, response) => {
           ? productPort
           : webPort;
     if (port) {
+      if (
+        (fault === 'bulk-invitation-before-forward' &&
+          path === '/api/people/invitations' &&
+          request.method === 'POST') ||
+        (fault === 'structure-before-forward' &&
+          path.startsWith('/api/structure/units') &&
+          ['POST', 'PATCH', 'DELETE'].includes(request.method))
+      ) {
+        setFault('none');
+        request.resume();
+        response.destroy();
+        return;
+      }
       const upstream = httpRequest(
         {
           hostname: '127.0.0.1',
@@ -137,8 +151,20 @@ const gateway = createServer({}, async (request, response) => {
               (introspectionStatuses.get(incoming.statusCode) ?? 0) + 1,
             );
           if (
-            fault === 'people-outcome' &&
-            path === '/api/people/roles' &&
+            fault === 'structure-outcome' &&
+            path.startsWith('/api/structure/units') &&
+            ['POST', 'PATCH', 'DELETE'].includes(request.method) &&
+            incoming.statusCode >= 200 &&
+            incoming.statusCode < 300
+          ) {
+            setFault('none');
+            incoming.resume();
+            incoming.once('end', () => response.destroy());
+            return;
+          }
+          if (
+            ((fault === 'people-outcome' && path === '/api/people/roles') ||
+              (fault === 'bulk-invitation-outcome' && path === '/api/people/invitations')) &&
             request.method === 'POST'
           ) {
             setFault('none');
@@ -296,7 +322,8 @@ dns.lookup = function(host, options, callback) {
   if (
     process.argv.includes('--people-ui') ||
     process.argv.includes('--modules') ||
-    process.argv.includes('--module-cutover')
+    process.argv.includes('--module-cutover') ||
+    process.argv.includes('--structured-onboarding')
   ) {
     environment.IDENTITY_SERVICE_CLIENT_ID = 'bff-fixture-service';
     environment.IDENTITY_SERVICE_RESOURCE_URL = `${origin}/identity/services/accounts`;
@@ -381,7 +408,8 @@ dns.lookup = function(host, options, callback) {
   if (
     process.argv.includes('--people-ui') ||
     process.argv.includes('--modules') ||
-    process.argv.includes('--module-cutover')
+    process.argv.includes('--module-cutover') ||
+    process.argv.includes('--structured-onboarding')
   ) {
     environment.IDENTITY_SERVICE_CLIENT_SECRET = fixture.identitySecret;
     environment.IDENTITY_SERVICE_API_URL = `${origin}`;
@@ -390,6 +418,12 @@ dns.lookup = function(host, options, callback) {
     environment.TURNSTILE_SMTP_HOST = '127.0.0.1';
     environment.TURNSTILE_SMTP_PORT = String(smtpPort);
     environment.TURNSTILE_MAIL_FROM = 'turnstile@example.test';
+  }
+  if (
+    process.argv.includes('--people-ui') ||
+    process.argv.includes('--modules') ||
+    process.argv.includes('--module-cutover')
+  ) {
     stage = 'People owning fixture setup';
     run(process.execPath, ['apps/turnstile-api/test/people-browser-fixture.mjs', '--setup'], {
       env: { ...environment, NODE_ENV: 'test' },
@@ -796,6 +830,64 @@ dns.lookup = function(host, options, callback) {
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   }
+  const activatePeopleFeature = async () => {
+    const rolesStatus = await page.evaluate(async () => (await fetch('/api/people/roles')).status);
+    assert.equal(rolesStatus, 403, 'Legacy grants do not promote a People administrator');
+    const invokeRelease = async (operation, input) => {
+      await new Promise((resolve, reject) => {
+        const child = spawn(
+          fullImages ? 'docker' : process.execPath,
+          fullImages
+            ? [...productMaintenanceArgs, operation]
+            : ['apps/turnstile-api/dist/modules/access/release-operator.js', operation],
+          {
+            env: environment,
+            stdio: ['pipe', 'pipe', 'pipe'],
+          },
+        );
+        let output = '';
+        child.stdout.on('data', (chunk) => {
+          output += chunk;
+          if (output.length > 16384) child.kill();
+        });
+        child.stderr.on('data', () => {});
+        const timer = setTimeout(() => child.kill(), 30000);
+        child.once('error', reject);
+        child.once('exit', (code) => {
+          clearTimeout(timer);
+          code === 0
+            ? resolve(JSON.parse(output))
+            : reject(new Error(`Private release command failed: ${operation}`));
+        });
+        child.stdin.end(JSON.stringify(input));
+      });
+    };
+    const proof = async () => {
+      const session = await page.evaluate(async () => (await fetch('/api/auth/session')).json());
+      const cookie = (await context.cookies()).find((value) => value.name === '__Host-turnstile');
+      assert.ok(cookie, 'A signed normal product login is required');
+      return {
+        operatorId: fixture.users.member.id,
+        administratorUserId: fixture.users.member.id,
+        administratorCookie: `${cookie.name}=${cookie.value}`,
+        key: randomUUID(),
+        expectedRevision: session.access.accessRevision,
+      };
+    };
+    await invokeRelease('bootstrap-administrator', await proof());
+    await invokeRelease('open', {
+      ...(await proof()),
+      releaseId: 'b'.repeat(64),
+      incompatibleProcessesStopped: true,
+    });
+    const verified = await proof();
+    await invokeRelease('verify-login', {
+      operatorId: verified.operatorId,
+      administratorUserId: verified.administratorUserId,
+      administratorCookie: verified.administratorCookie,
+    });
+    console.log('Real private administrator handover and versioned release opening passed.');
+  };
   const heading = (name) => page.getByRole('heading', { name, exact: true }).waitFor();
   async function mailLink(purpose, email) {
     const list = await (await fetch(`${mailUrl}/api/v1/messages`)).json();
@@ -956,71 +1048,63 @@ dns.lookup = function(host, options, callback) {
       mailLink,
       fixture,
       restartProduct,
-      clearRateLimits: () => command('clear-rate-limits'),
-      activateFeature: async () => {
-        const rolesStatus = await page.evaluate(
-          async () => (await fetch('/api/people/roles')).status,
-        );
-        assert.equal(rolesStatus, 403, 'Legacy grants do not promote a People administrator');
-        const invokeRelease = async (operation, input) => {
-          await new Promise((resolve, reject) => {
-            const child = spawn(
-              fullImages ? 'docker' : process.execPath,
-              fullImages
-                ? [...productMaintenanceArgs, operation]
-                : ['apps/turnstile-api/dist/modules/access/release-operator.js', operation],
-              {
-                env: environment,
-                stdio: ['pipe', 'pipe', 'pipe'],
-              },
-            );
-            let output = '';
-            child.stdout.on('data', (chunk) => {
-              output += chunk;
-              if (output.length > 16384) child.kill();
-            });
-            child.stderr.on('data', () => {});
-            const timer = setTimeout(() => child.kill(), 30000);
-            child.once('error', reject);
-            child.once('exit', (code) => {
-              clearTimeout(timer);
-              code === 0
-                ? resolve(JSON.parse(output))
-                : reject(new Error('Private release command failed'));
-            });
-            child.stdin.end(JSON.stringify(input));
+      verifyDeploymentClockQueue: async () => {
+        const pool = new Pool({
+          connectionString: process.env.TURNSTILE_MIGRATION_DATABASE_URL,
+          max: 2,
+        });
+        const held = await pool.connect();
+        let pending;
+        try {
+          await held.query('BEGIN');
+          await held.query("SELECT set_config('app.tenant_id',$1,true)", [
+            process.env.INSTALLATION_TENANT_ID,
+          ]);
+          await held.query('SELECT * FROM turnstile.deployment_clock_state FOR UPDATE');
+          const pid = (await held.query('SELECT pg_backend_pid() AS pid')).rows[0].pid;
+          pending = page.evaluate(async () => {
+            const response = await fetch('/api/deployment/status');
+            return { status: response.status, body: await response.json() };
           });
-        };
-        const proof = async () => {
-          const session = await page.evaluate(async () =>
-            (await fetch('/api/auth/session')).json(),
+          let blocked = false;
+          for (let attempt = 0; attempt < 50; attempt++) {
+            const result = await pool.query(
+              'SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE $1 = ANY(pg_blocking_pids(pid))) AS blocked',
+              [pid],
+            );
+            if (result.rows[0].blocked) {
+              blocked = true;
+              break;
+            }
+            await delay(20);
+          }
+          assert.equal(
+            blocked,
+            true,
+            'Actual HTTPS deployment preflight must reach the blocked SQL handler',
           );
-          const cookie = (await context.cookies()).find(
-            (value) => value.name === '__Host-turnstile',
+          await delay(1200);
+          await held.query(
+            'UPDATE turnstile.deployment_clock_state SET last_time=floor(extract(epoch FROM clock_timestamp()))',
           );
-          assert.ok(cookie, 'A signed normal product login is required');
-          return {
-            operatorId: fixture.users.member.id,
-            administratorUserId: fixture.users.member.id,
-            administratorCookie: `${cookie.name}=${cookie.value}`,
-            key: randomUUID(),
-            expectedRevision: session.access.accessRevision,
-          };
-        };
-        await invokeRelease('bootstrap-administrator', await proof());
-        await invokeRelease('open', {
-          ...(await proof()),
-          releaseId: 'b'.repeat(64),
-          incompatibleProcessesStopped: true,
-        });
-        const verified = await proof();
-        await invokeRelease('verify-login', {
-          operatorId: verified.operatorId,
-          administratorUserId: verified.administratorUserId,
-          administratorCookie: verified.administratorCookie,
-        });
-        console.log('Real private administrator handover and versioned release opening passed.');
+          await held.query('COMMIT');
+          const result = await pending;
+          assert.equal(result.status, 200);
+          assert.equal(
+            result.body.access,
+            'full',
+            'An ordinary queued request must not quarantine the installation',
+          );
+          assert.equal(result.body.state, 'approved');
+        } finally {
+          await held.query('ROLLBACK').catch(() => {});
+          await pending?.catch(() => {});
+          held.release();
+          await pool.end();
+        }
       },
+      clearRateLimits: () => command('clear-rate-limits'),
+      activateFeature: activatePeopleFeature,
       setFault: (value) => {
         setFault(value);
       },
@@ -1045,6 +1129,7 @@ dns.lookup = function(host, options, callback) {
   } else if (process.argv.includes('--structured-onboarding')) {
     stage = 'fresh required-Department onboarding web journey';
     await testStructuredOnboarding({
+      activateFeature: activatePeopleFeature,
       page,
       origin,
       login,

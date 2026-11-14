@@ -67,6 +67,7 @@ function productDto(row: Row) {
     tenantId: row.tenant_id,
     environment: row.environment,
     policyState: row.policy_state,
+    licenceExpiresAt: nullableIso(row.licence_expires_at),
     revision: row.revision,
     registeredAt: iso(row.registered_at),
     policyChangedAt: iso(row.policy_changed_at),
@@ -318,7 +319,23 @@ async function apply(
       const target = { approve: 'approved', reject: 'rejected', suspend: 'suspended' }[
         command.decision
       ];
-      if (before.policy_state === target)
+      const licenceExpiresAt =
+        command.decision === 'approve'
+          ? command.licenceExpiresAt
+            ? new Date(command.licenceExpiresAt).toISOString()
+            : nullableIso(before.licence_expires_at)
+          : nullableIso(before.licence_expires_at);
+      if (
+        command.decision === 'approve' &&
+        (!licenceExpiresAt || new Date(licenceExpiresAt).getTime() <= Date.now())
+      )
+        throw new AccessError(409, 'A future licence expiry is required for approval or renewal');
+      if (command.decision !== 'approve' && command.licenceExpiresAt !== undefined)
+        throw new AccessError(400, 'Licence changes require approval or renewal');
+      if (
+        before.policy_state === target &&
+        licenceExpiresAt === nullableIso(before.licence_expires_at)
+      )
         throw new AccessError(409, 'Product already has this policy state');
       if (command.decision === 'reject' && before.policy_state !== 'pending')
         throw new AccessError(
@@ -332,10 +349,10 @@ async function apply(
       kind = 'product';
       revision = command.revision + 1;
       await db.query(
-        `UPDATE control_plane.registry_product SET policy_state=$2,revision=revision+1,policy_reason=$3,policy_changed_by=$4,policy_changed_at=$5,
+        `UPDATE control_plane.registry_product SET policy_state=$2,revision=revision+1,policy_reason=$3,policy_changed_by=$4,policy_changed_at=$5,licence_expires_at=$6,
         first_approved_at=CASE WHEN $2='approved' THEN COALESCE(first_approved_at,$5::timestamptz) ELSE first_approved_at END,
         last_approved_at=CASE WHEN $2='approved' THEN $5::timestamptz ELSE last_approved_at END WHERE id=$1`,
-        [resourceId, target, command.reason, actor.id, committedAt],
+        [resourceId, target, command.reason, actor.id, committedAt, licenceExpiresAt],
       );
       const row = (await db.query(`${productSelect} WHERE p.id=$1`, [resourceId])).rows[0];
       const action =

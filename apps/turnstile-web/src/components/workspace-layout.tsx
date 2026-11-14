@@ -10,12 +10,16 @@ export function WorkspaceLayout({
   destinations,
   settings,
   pending,
+  nestedNavigation = false,
+  structure = false,
   children,
 }: {
   header: ReactNode;
   destinations: WorkspaceDestination[];
   settings: boolean;
   pending: boolean;
+  nestedNavigation?: boolean;
+  structure?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -26,9 +30,13 @@ export function WorkspaceLayout({
         <ScrollRegion
           label="Workspace content"
           resetOnNavigate={!settings}
-          className={cn('workspace-page', settings && 'workspace-page-settings')}
+          className={cn(
+            'workspace-page',
+            settings && 'workspace-page-settings',
+            structure && 'workspace-page-canvas',
+          )}
         >
-          <PendingContent pending={pending && !settings} label="Loading page…">
+          <PendingContent pending={pending && !settings && !nestedNavigation} label="Loading page…">
             {children}
           </PendingContent>
         </ScrollRegion>

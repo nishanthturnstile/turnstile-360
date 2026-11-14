@@ -1,6 +1,6 @@
 # Turnstile 360 and Thaarei DMS architecture
 
-**Updated:** 2026-11-11
+**Updated:** 2026-11-14
 
 **Status:** Accepted technical design with workspace foundations implemented. The explicitly
 marked Thaarei central control-plane proposal below awaits adoption.
@@ -2429,10 +2429,118 @@ or application transport/request deadlines. Rate-boundary fixtures seed current/
 or explicit future/expired metadata rather than relying on a slow scenario finishing within
 the same wall-clock minute.
 
+Catalog capability evolution preserves already-open strict browser clients. The catalog
+omits durableImports unless X-Turnstile-People-Features requests imports-v1. Current Users
+clients send this opt-in only to the catalog route; no authorization derives from it.
+All existing fields and strict response validation remain intact. A successful HTTP response
+rejected by a current browser schema is reported locally as PEOPLE_RESPONSE_INVALID with
+refresh/draft-preservation guidance, rather than being described as a service outage.
+Such mutation outcomes remain uncertain and never trigger automatic write replay.
+
+#### Durable CSV invitation jobs (UE-08)
+
+PeopleModule owns CSV invitation imports; no DMS queue or identity database is accessed.
+The API accepts one UTF-8 `email` column (BOM/quoted fields/CRLF/LF), at most 128 KiB and
+500 nonblank recipient records. Record numbers count nonblank CSV records with the
+header as record 1; quoted multiline fields stay in one record. Only the create route
+permits a 256 KiB JSON envelope;
+other People limits/deadlines are unchanged. Each job has one shared reviewed assignment
+snapshot, organization revision, creator, normalized rows and durable per-row command IDs.
+No raw CSV, browser session, authority token or invitation link is stored in job records.
+There are at most ten active jobs and 100 retained jobs per installation, retained up to
+90 days. Tenant-prefixed keys/RLS and runtime CRUD permissions apply to both owning tables.
+
+States are draft, queued, running, paused, completed and cancelled. Draft review expires
+in ten minutes. Start/resume requires the original creator's current normal session and
+People/grant coverage; any current company People manager can inspect or cancel a job.
+Starting authorizes bounded background continuation after the browser closes. The worker
+uses only the persisted creator ID, never a stored login credential; each row rechecks
+current Access, a present verified creator at the owning identity authority, assignment
+versions, organization context, deployment and release opening.
+Changed authority/context pauses the job; changed assignments require a new reviewed
+import, with completed rows retained. Existing members/actionable invitations are skipped.
+
+Each API process runs one nonoverlapping timer worker. Due jobs are claimed under the
+existing installation/access lock with a 60-second fenced lease and one row per drain;
+rows are paced at seven seconds and honor the unchanged actor ten/minute and installation
+100/hour invitation budgets. Rate waits use the budget boundary instead of consuming
+new attempts. Bounded transient retries reuse the exact persisted command/key, read
+existing operation receipts first and never generate a new key for an uncertain result.
+An uncommitted command invalidated by intervening Access changes fails explicitly; it
+cannot silently adopt revised authority. At most five transient attempts precede a pause.
+The invitation owner saves the success row receipt inside its commit transaction, so
+lost acknowledgements/restarts cannot reissue a completed row. Cancellation and final
+validation use the same locks; a committed invitation remains valid while uncommitted
+rows become cancelled. Existing SMTP delivery independently owns retries/uncertain mail.
+Graceful shutdown waits for one in-flight row. A later process reclaims expired leases.
+
 #### People and scoped structure UI (UM-I10)
 
+Users enhancements retain the existing authority boundaries. `GET /api/people/audit`
+requires company People management and uses the narrow SECURITY DEFINER
+`turnstile.read_people_audit` reader (migration 0035), with a pinned search_path, PUBLIC
+execution revoked, tenant-setting equality, live People coverage and bounded page size.
+Runtime access_audit permissions remain append-only; no direct SELECT is granted.
+The reader combines user-attributed access events and invitation lifecycle events within
+the existing 90-day retention, omitting private operator-only access events. Filters cover
+source/action/subject/from/to. Ordering uses timestamp, ID and source, preserving PostgreSQL
+microseconds in filter/fingerprint-bound cursors. The UI exports only its displayed page
+as quoted/formula-neutralized CSV and does not reconstruct absent historical field values.
+Actor/subject display names resolve only from linked product records and are marked as
+current/last verified context. Stable identifiers remain available in disclosure/export;
+role-name resolution additionally requires Roles authority. Ambiguous cross-record IDs
+retain their identifiers rather than receiving an inferred label. Runtime readiness checks
+the audit reader's owner, definer mode, pinned search path and non-public execution grant.
+`GET /api/people/members/{id}/access` requires People management and actor unit-read
+coverage for an optional exact-unit target. It uses readAccess/covers and returns matching
+saved grant sources, suspension precedence and explanatory reasons. The result describes
+workspace authorization, not a promise that identity authentication or deployment is open.
+Offboarding guidance uses existing suspension/reactivation commands; identity-wide sessions,
+credentials and provisioning remain at the identity authority. API schemas/examples and
+generated OpenAPI own the public contracts. The permission catalog advertises usersInsights=1.
+Directory search/status/role/coverage/delivery/sort filters live in URL parameters and
+reset pagination on changes or browser navigation. Member sorting captures normalized
+name and stable ID; invitation sorting captures the exact created/expiry instant and ID.
+Cursor bindings include filters, sort and current access. Role counts link to matching
+members and actionable invitations. Delivery filtering uses the same effective expired
+delivery state as detail reads. Migration 0036 adds tenant-prefixed creation-order and
+accepted-subject indexes. Member dates project only recorded invitation acceptance and/or
+legacy access import; creation and last-active dates are never inferred. Invitation dates
+include recorded acceptance, cancellation and invalidation where applicable. Bulk preflight
+errors identify the recipient; copying unsent addresses excludes saved/uncertain outcomes.
+Expanded role/coverage filters use aligned columns when their container has sufficient
+width and stack on smaller screens. Unit results scroll within a bounded filter area.
+Search forms size to their controls; only direct horizontal-toolbar searches receive a
+flex basis, so vertical role/unit pickers never reserve empty toolbar-sized height.
+
+Users server data uses TanStack React Query 5.107.1 within the People/Structure session
+boundary. Query keys contain the subject, live Access fingerprint, caller revision and
+canonical full URL (filters/sort/cursor included). Only bounded read responses are cached
+in memory, for 30 seconds fresh and five minutes unobserved; each consumer validates its
+own wire-response projection. No session, CSRF, impact proof, command receipt, mutation,
+secret or persisted browser store enters this cache. Subject/unavailable-session/fingerprint
+transitions cancel and discard old queries while retaining same-subject local draft owners.
+Denied reads hide their cached data, clear inactive protected results and recheck live auth.
+Writes have no automatic retries. Successful owning commands invalidate affected directory,
+metadata, usage/activity and structure keys without replaying a write; previews do not.
+Invalidation cancels preceding matching reads so a late pre-write reply cannot mark
+obsolete data fresh after an intervening edit.
+Import progress invalidates dependent invitation/usage/activity reads when saved rows grow.
+Global Access revision changes also invalidate scoped read metadata even when the actor's
+grant fingerprint is unchanged. Only stale active queries refetch after the workspace owner
+completes its live authority checks; inactive tabs refresh when visited. Window focus and
+reconnect do not independently start query requests ahead of those authority checks.
+
+Users subtab changes keep the common header/navigation mounted and visible. Navigation
+still verifies a live session and deployment status before committing the destination;
+only completed setup/module context may be reused for up to 30 seconds between different
+Users tabs, with identical subject/fingerprint/deployment and a fixed expiry. Focus,
+post-mutation checks, other destinations and failures take the full verification path.
+Cold tab reads show loaders only inside their content area; cached/stale reads keep data
+visible with background update status. Filter changes never show another filter's rows.
+
 The completed-workspace shell composes independent `/people/members`,
-`/people/invitations`, `/people/roles` and `/structure` routes. Navigation uses the live
+`/people/invitations`, `/people/roles`, `/people/activity` and `/structure` routes. Navigation uses the live
 normal session; each route loads only its owning authorized API. Permission refresh updates
 the existing shell. People-only and role-only screens do not request company configuration
 or structure snapshots. The permission catalog additionally projects the current organization
@@ -2441,43 +2549,113 @@ These additive fields guide drafts; transactional backend checks remain authorit
 Eligible role definitions and unit choices are fetched independently, with bounded paging;
 unit context contains canonical ancestor paths and does not confer management access.
 
-Completed-workspace navigation groups Members, Invitations and Roles under People & access;
-Structure is a separate destination. The requested route drives visible active states in
+Completed-workspace navigation has one Users entry under People & access, with Members,
+Invitations, Roles and Activity available as permission-filtered internal sections. Users opens
+Members for People managers and Roles for role-only managers, and stays active across
+the People routes. Structure is a separate destination. The requested route drives visible active states in
 both navigation areas while owning loaders still wait for session authorization. The old
 Settings Structure URL redirects to `/structure`; the old Workspace settings URL redirects
 to General settings, which edits organization name/time zone together. Setup overview
 links to the canonical Structure editor. Onboarding retains its dedicated configuration
 journey; company-only profile data is never loaded for scoped structure users.
-Structure offers chart/outline presentations over the same authorized page and one reviewed
-command flow. Read-only units open details without mutation controls. Company unit managers
+Structure offers chart/outline presentations over one complete authorized hierarchy and one reviewed
+command flow. The dedicated hierarchy read query assembles the existing 100-unit cursor
+pages within the configured 500-node/eight-level boundary, publishing only when organization
+revision, Access revision, total and explicit ancestor paths agree. Cancellation, duplicate
+units/cursors, inconsistent context or an incomplete batch cannot publish a fresh tree.
+The owning Query cache uses the current subject/Access scope and a hierarchy projection
+discriminator; no unrestricted configuration snapshot is fetched. Background reads keep the
+previous verified hierarchy visible and local errors require deliberate Reload. Canonical
+ancestors supply presentation geometry but never become actionable unit records.
+Read-only units open details without mutation controls. Company unit managers
 can add sites under the root. New unit-scope assignments default child coverage on; saved
 assignments are retained verbatim. Custom role editing selects one intended action at a
 time (details, permissions, copy or deletion), preserving separate backend authorization.
 
-Members Invite person carries a one-shot router-state compose intent to Invitations.
-Only the authorized owning route opens the empty composer; it consumes the intent with
-history replacement, so ordinary tab navigation/Back does not reopen a discarded draft.
-It does not issue invitations, choose a role or bypass the ordinary loader/command checks.
-Access inspectors use the shared Card panel variant: task header/close, independently
-scrolling body and persistent action footer, with natural document scrolling on narrow
-screens. Impact/recovery actions render into the same footer while the owning Review
+Users has a stable header and permission-filtered Members/Invitations/Roles link row.
+Member invitation tasks open directly within Members or Invitations. The older router-state
+compose intent remains compatible and is consumed once. All task owners retain the owning
+People permission gate; composing never sends mail or grants access. Invitations use a
+compact table separating approval state, email delivery and expiry. SMTP acceptance is not
+claimed as recipient delivery. Role directories show permission summaries; role editing
+uses a wider dedicated task with explicit details/permissions/duplicate/delete actions.
+New roles can start from an authorized built-in permission template without copying its
+protected system identity. Permission groups include the registered business-module actions.
+
+Member search supports roleId and unitId filters against one saved assignment. Coverage
+matches company-wide assignments, exact unit anchors, or current descendant coverage.
+Unit filtering requires current read authority for that unit; filter values are included
+in revision/fingerprint-bound cursors and counts apply to the full authorized result set.
+The permission catalog advertises memberAssignmentFilters; clients omit these controls
+when an older API does not advertise support, rather than sending unsupported queries.
+Imported independent access is still displayed separately and is not a role assignment.
+Role-list usage counts distinct saved members and unexpired pending/reapproval invitations;
+counts are returned only to actors with both company Roles and People powers. Role-only
+responses omit usage and never enumerate membership or invitation identities.
+
+Bulk invitation composition is bounded to ten distinct normalized recipient addresses and
+one explicit common assignment set. It orchestrates independent existing owning commands,
+not an atomic transaction. Initial review validates every recipient; explicit confirmation
+sends sequentially with a fresh session/current impact proof per item. The reviewed recipient,
+role versions, scope and organization revision remain fixed. Each item retains its own
+idempotency key; failures stop later items and saved results remain visible. A lost response
+offers command-status readback and explicit re-review/retry of the identical command/key;
+neither receipt lookup nor UI refresh replays a write. Definite readiness rejection stays
+failed, rather than uncertain. Drafts and batch receipts stay in memory and clear on subject change.
+
+Users task sheets compose the shared Base UI Sheet and Card panel variant: task
+header/close, independently scrolling body and persistent action footer at every viewport.
+The overlay leaves directory widths unchanged and occupies the full screen on phones.
+Base UI manages focus containment; closing returns to the initiating control. Escape and
+outside dismissal use the same draft guard as Close, with an accessible discard dialog.
+Portal keepMounted plus the current People activity gate retains same-subject drafts while
+keeping unauthorized or expired-session tasks hidden and inert. Structure opens a nonmodal
+unit overview over the unchanged desktop canvas, or a modal overview on phones. Explicit
+create/rename/move/delete tasks use the same guarded Sheet composition; Close, Cancel,
+Escape and outside dismissal preserve pending/uncertain commands and confirm dirty discard.
+Impact/recovery actions render into the same footer while the owning Review
 component retains its state and idempotency key. Closing is disabled during pending or
 uncertain writes; dirty close and role-action switches require deliberate discard.
 Permissions are grouped by purpose with company-only/required labels. New assignments
-start with no role selected. Saved invitations expose their approved roles/coverage and
-lifecycle rather than an editable-looking disabled form. No authorization semantics change.
+start with no role selected. Saved invitations expose their approved roles/coverage, creation/expiry dates and
+lifecycle, with state-specific close/actions. New invitation tasks begin with one
+unselected role row; single and bounded batch recipients have associated inline errors.
+Coverage choices retain selected canonical paths during search and explain loading or
+empty results. Role View opens a read-only overview; creation may use built-in templates.
+Duplication is an explicit new custom-role draft with editable copied permissions and the
+ordinary current grant ceiling; it does not patch the original role or copy protected identity.
+Permission edits and member assignment reviews show additions/removals relative to the
+opened saved record; the server assessment and version/revision checks remain authoritative.
+Review expiry removes the proof from the UI and offers reassessment. No authorization
+semantics change.
 
-Roles and scoped Structure share a compact directory surface, search/filter/reload toolbar
-and adjacent non-modal editor. Wide workspace pages use up to 82rem; at 70rem and below
-the selected editor precedes its directory. Roles use the shared semantic table with
-permission summaries and explicit system/protected labels; narrow screens retain role
-identity/actions and expose permissions through the editor. Structure reconstructs a
-nested outline from only the current authorized page and its supplied ancestor paths.
-Path-only ancestors have collapse controls but no management action; collapsed units keep
-their own label/action visible. Search/page changes expand the new result ancestry and do
-not infer missing siblings or fetch full configuration. The unit editor selects one
-rename/create/move/delete operation at a time. Both editors retain existing owning APIs,
-permission gates, version capture, impact review and confirmation.
+Users directories retain their compact directory surfaces and search/filter/reload toolbars.
+They remain full width while member, invitation and role tasks open in modal sheets. Wide
+directory pages use up to 82rem. Structure owns the available workspace canvas beneath one
+compact heading, search/view/action toolbar and path/count row, without a second page
+scrollbar. Its scoped adapter reuses the native pointer/touch/keyboard camera and automatic
+layout helpers from configuration presentation, rather than the unrestricted onboarding
+controller. Connected cards and a dense outline share selection/collapse state. Search
+matches authorized units and retains explicit ancestry; branch focus/breadcrumbs never
+infer hidden siblings. Camera transforms and branch state remain transient. A desktop
+overview reserves unobscured camera space without relaying out nodes. Phone defaults to
+outline and uses the shared full-viewport sheets. No diagram dependency or saved positions
+are introduced. Eligible department move handles use native pointer capture and indexed
+destination checks. A drop opens the ordinary move draft and impact review; it never
+writes directly. Invalid drops, pointer cancellation and Escape do not send commands.
+The same action remains available through the keyboard-accessible Move chooser.
+Root-only management reads organization context only through the existing
+authorized company endpoint. Unit task forms infer legal types, omit known invalid move
+destinations and explain visible non-leaf restrictions; transactional backend checks remain
+authoritative for hidden references, complete subtree coverage and current limits.
+Drafts capture their opened versions; explicit stale-context reload preserves intended
+fields and requires a new review. Uncertain writes retain their exact command/key and
+offer uncached receipt or full scoped-hierarchy readback, including root creation. Confirmed
+saves never become uncertain because a subsequent refresh fails. Permission-gated Members
+links reuse advertised assignment filters; no employee/headcount or unit-wide access metrics
+are invented. Roles retain their semantic tables and permission summaries, with narrow
+details in the owning editor. Existing APIs, authorization, impact proofs and receipts
+remain unchanged by this presentation work.
 
 The Members directory uses compact person/status/role-and-coverage rows, with a direct
 Invitations link. Selecting a member opens a saved-access overview; role editing is an
@@ -2498,8 +2676,9 @@ After a successful mutation, a fresh session/access read drains any preceding in
 read before checking current state. Focus/interval checks join that refresh, and dependent
 list reloads wait for it. This sequences cookie/context changes without retrying writes.
 Assignment controls show actual permissions, company-only constraints and explicit child-unit
-coverage. Shared-role and member/invitation changes obtain server impact proofs before an
-explicit confirmation. A command keeps one idempotency key; an uncertain response offers
+coverage. Shared-role and member/invitation changes obtain server impact proofs automatically upon
+entering review, before an explicit operation-specific confirmation. Failed/stale reviews
+have an explicit retry; uncertain writes remain in readback recovery and never auto-review. A command keeps one idempotency key; an uncertain response offers
 authorized readback and never automatically replays a write. Structure moves use their
 own impact API. Loading and failures remain local to the section; authoritative confirmation
 precedes refreshed saved data. The restricted invitation entry displays approved permission
@@ -3355,6 +3534,10 @@ HTTP checks and owning transactions require current approval for changes and ver
 activation for qualified reads. Identity/session and safe deployment-status endpoints are
 explicit exemptions, independent of workspace-readiness exemptions. Invitation identity
 setup/recovery is independent of full-approval membership acceptance and new mail dispatch.
+The Turnstile clock fence samples database time only after locking its durable clock row
+(migration 0034). A request queued behind a newer legitimate clock-floor update must not
+mistake its earlier start time for rollback. A clock sampled after that lock which is
+below the durable floor still quarantines the installation and requires reviewed recovery.
 Signed-in customers see activation/recovery guidance or a restricted-read notice, plus
 separate DMS restriction from its authenticated local capabilities response. The client
 explicitly opts into `Prefer: include-deployment-status`; ordinary version-1 capability
@@ -6011,7 +6194,12 @@ flowchart LR
 ```
 
 Give `/api` routing priority over `/` on the Turnstile domain. Nginx serves the compiled
-Vite HTML/JavaScript/CSS and SPA fallback from the frontend image; Traefik owns ingress
+Vite HTML/JavaScript/CSS and SPA fallback from the frontend image. HTML and SPA entry
+responses use Cache-Control: no-store so a release cannot leave browsers on a cached
+application shell. Successful content-hashed /assets/ responses (including conditional
+304s) use a one-year immutable cache policy. Missing assets return an uncached 404,
+never the SPA document. Cache headers share server-level security-header inheritance.
+Traefik owns ingress
 and TLS. Nginx is inside the application container and does not proxy the product API
 or require a separate host installation. Private job/operator endpoints must not become
 public merely because the DMS API domain is routed; implement route-specific access and
@@ -7069,3 +7257,61 @@ References carried forward from the accepted blueprint, where they were recorded
 - [Docling supported formats](https://docling-project.github.io/docling/usage/supported_formats/) and [offline/model configuration](https://docling-project.github.io/docling/usage/advanced_options/)
 - [PostgreSQL license](https://www.postgresql.org/about/licence/), [RabbitMQ OSS licensing](https://www.rabbitmq.com/), and [Grafana licensing](https://grafana.com/licensing/)
 - [PyMuPDF/MuPDF licensing](https://pymupdf.readthedocs.io/en/latest/about.html#license-and-copyright)
+
+
+## Contractual licence lifecycle (2026-11-12)
+
+Central registry products own a nullable `licence_expires_at` (UTC timestamptz). Null means
+unconfigured, never perpetual. Approval/reapproval requires a future configured end;
+Admin/Operator with recent MFA may update it using the existing revision/reason/atomic
+receipt/audit command. A same-state approval with a changed end is a licence update.
+A product's administrative policy and its time-dependent licence validity remain distinct.
+DMS and Turnstile dates are independently managed, like their approvals.
+
+Approved issuance requires a future licence end. The signed v1/v2 envelope includes
+`licenceExpiresAt` as integer UTC seconds and caps `exp` at that end; cached decisions
+cannot bypass a shortened end. The post-sign transaction rechecks revision, licence end
+and time. Expired/unconfigured approved products cannot receive new grants, and module
+activation/handover also requires a current licence. Receipt retries do not replay writes.
+The customer verifier closes all business access at the signed licence end, including
+retained-read exceptions; identity/recovery routes retain their existing independent rules.
+Renewal requires a newer approved policy and signed sync. A shortened date cannot alter
+an offline customer's already issued token: the previous signed deadline/offline TTL binds
+it until a newer policy arrives. No data is deleted at expiry.
+
+The field is optional only for historical v1/v2 compatibility. Upgrade customer verifiers
+before new central issuance (old strict parsers reject the added field), migrate central,
+then explicitly configure expiry on existing approved products. Historical tokens without
+a contractual date keep their original bounded validity; they are not retroactively dated.
+Live signed installations require their normal reviewed release/cutover procedure.
+
+## Configurable business-module registration (2026-11-12)
+
+`packages/turnstile-contracts/src/module-registry.ts` is the source-owned registry of IDs,
+titles, versions, read permissions, dependencies, optional integrations and enablement.
+It has no executable imports or service credentials. At most 63 active business modules
+plus Foundation form a catalogue; up to 1,024 retained registrations preserve historical
+identities. Runtime contracts, permission lists/labels and source build maps derive from it.
+Feature source follows conventional ID-based backend module/class and web entry paths.
+Central Core/Individual classification remains a separate verified catalogue decision.
+
+`pnpm modules:sync` validates owned active entrypoints, generates a custom owning permission
+migration for additions, rebuilds contracts and regenerates affected OpenAPI references.
+The retained `module-permissions.json` ledger prevents changing/reusing published permission
+identities. `turnstile.permission_catalog` is a non-tenant, runtime-read-only code catalogue;
+role permissions reference it by foreign key. Company-scope SQL guards query that catalogue
+rather than listing Incident/Risk. Business permissions are company-only and never become
+implicit system-role grants. Customer tenant data and grants remain isolated by existing RLS.
+
+Retire a published registration using `enabled: false`, retaining its metadata/permission
+identity. Active dependencies on a retired module are rejected. Retired feature source may
+remain in the checkout; selected builds remove it and do not register its routes. Contracts
+can still represent retained role permissions; module capability/operator entry admits only
+active modules. Retirement does not delete customer records or rewrite deployed catalogues.
+Customers change through reviewed desired assignment, matching release installation,
+activation/sync and explicit user permissions. Adding a registration implements no business
+workflow by itself; new handlers must use the existing service-level authorization boundary.
+
+Installer-created PostgreSQL uses `unless-stopped`, matching long-lived application
+services. Existing customer Compose/container policies require explicit reconciliation;
+changing an installer source default does not rewrite a signed installed release.

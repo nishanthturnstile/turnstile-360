@@ -9,6 +9,7 @@ export async function testStructuredOnboarding({
   restartProduct,
   setFault,
   clearRateLimits,
+  activateFeature,
 }) {
   const heading = (name) => page.getByRole('heading', { name, exact: true }).waitFor();
   const read = () =>
@@ -124,28 +125,28 @@ export async function testStructuredOnboarding({
     setFault('none');
   }
   await restartProduct();
+  await activateFeature();
   await page.goto(`${origin}/settings/organization/structure`);
-  await heading('Organization structure');
-  const list = page.getByRole('list', { name: 'Saved units' });
+  await heading('Structure');
+  assert.equal(new URL(page.url()).pathname, '/structure');
+  const list = page.getByRole('list', { name: 'Available organization units' });
   await list.getByText('Operations team', { exact: true }).waitFor();
   assert.deepEqual(await read(), activated);
   async function create(name) {
-    const expand = page.getByRole('button', { name: 'Expand structure tools', exact: true });
-    if (await expand.isVisible()) await expand.click();
-    if (!(await page.getByLabel('Unit name', { exact: true }).isVisible()))
-      await page.getByRole('button', { name: 'Add a unit', exact: true }).click();
     await page.getByLabel('Unit name', { exact: true }).fill(name);
-    await page.getByRole('button', { name: 'Add unit', exact: true }).click();
+    await page.getByRole('button', { name: 'Review new unit', exact: true }).click();
+    await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
     await list.getByText(name, { exact: true }).waitFor();
   }
+  await page.getByRole('button', { name: 'Add site', exact: true }).click();
   await create('North office');
-  await page.getByLabel('Unit type', { exact: true }).selectOption('department');
   await page
     .getByRole('button', {
-      name: 'Add below Structured fixture organization / North office',
+      name: 'View Structured fixture organization / North office',
       exact: true,
     })
     .click();
+  await page.getByRole('button', { name: 'Add department', exact: true }).click();
   await create('Engineering');
   const ongoing = await read();
   const site = ongoing.structure.units.find((unit) => unit.type === 'site');
@@ -154,6 +155,6 @@ export async function testStructuredOnboarding({
   assert.equal(nested.parentId, site.id);
   assert.deepEqual(ongoing.setup.completion, activated.setup.completion);
   console.log(
-    'Structured onboarding browser journey passed: fresh required Department, explicitly confirmed India suggestion, saved-unit resume after restart, Back/Forward dirty protection, preserved completion/session during DMS outage and ongoing nested units in canonical Settings.',
+    'Structured onboarding browser journey passed: fresh required Department, explicitly confirmed India suggestion, saved-unit resume after restart, Back/Forward dirty protection, preserved completion/session during DMS outage, owning administrator handover and ongoing nested units in canonical Structure.',
   );
 }

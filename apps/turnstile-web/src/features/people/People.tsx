@@ -2,6 +2,7 @@ import { Add01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   type InvitationDto,
+  invitationEmailSchema,
   invitationListResponseSchema,
   type MemberDto,
   memberListResponseSchema,
@@ -14,9 +15,9 @@ import {
   type UserSessionDto,
 } from '@thaarei/turnstile-contracts';
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router';
-import { ButtonLink } from '@/components/button-link';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { ContentLoading } from '@/components/content-loading';
+import { AppLink } from '@/components/navigation';
 import { Notice } from '@/components/notice';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,10 +33,17 @@ import { Field, FieldLabel, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import { useUnsavedEntries } from '../configuration/shared';
-import { AccessEmpty, AccessInspector, Reload, RoleTable } from './AccessViews';
+import { AccessEmpty, Reload, RoleTable } from './AccessViews';
+import { PeopleAudit } from './Audit';
 import { PeopleActivity } from './activity';
+import { BulkInvitations } from './BulkInvitations';
 import { company, message } from './client';
+import { DirectoryFilters } from './DirectoryFilters';
+import { PeopleImports } from './Imports';
+import { deliveryStatus, InvitationTable, invitationStatus } from './Invitations';
 import { MemberIdentity, MemberOverview, MemberTable } from './Members';
+import { peoplePaths } from './navigation-state';
+import { PeopleQueryScope } from './QueryScope';
 import { Review } from './Review';
 import { ScopedStructure } from './Structure';
 import {
@@ -49,53 +57,57 @@ import {
   Search,
   usePage,
 } from './shared';
-export const peoplePaths = [
-  '/people/members',
-  '/people/invitations',
-  '/people/roles',
-  '/structure',
-];
-export function People({
+import { TaskSheet, useTaskConfirm, useTaskDismiss } from './TaskSheet';
+
+export { peoplePaths } from './navigation-state';
+
+type PeopleProps = {
+  session: UserSessionDto;
+  path: string;
+  active?: boolean;
+  requestedPath?: string;
+  verification: number;
+  onCheck: (fresh?: boolean) => Promise<boolean>;
+};
+export function People(props: PeopleProps) {
+  return (
+    <PeopleQueryScope
+      session={props.session}
+      active={props.active ?? true}
+      onCheck={props.onCheck}
+      verification={props.verification}
+    >
+      <PeopleContent {...props} />
+    </PeopleQueryScope>
+  );
+}
+function PeopleContent({
   session,
   path,
   onCheck,
   active = true,
   requestedPath = path,
-}: {
-  session: UserSessionDto;
-  path: string;
-  active?: boolean;
-  requestedPath?: string;
-  onCheck: (fresh?: boolean) => Promise<boolean>;
-}) {
+}: PeopleProps) {
+  const pending =
+    requestedPath.startsWith('/people/') && path.startsWith('/people/') && requestedPath !== path;
   const isRoles = path === '/people/roles',
     isUnits = path === '/structure';
   const allowed = isUnits
     ? true
     : company(session, isRoles ? 'turnstile:roles:manage' : 'turnstile:people:manage');
   return (
-    <div className="access-workspace">
-      <header className="access-heading">
-        <span className="eyebrow">PEOPLE & ACCESS</span>
-        <h1 className="page-title">
-          {isUnits
-            ? 'Structure'
-            : isRoles
-              ? 'Roles'
-              : path.endsWith('invitations')
-                ? 'Invitations'
-                : 'Members'}
-        </h1>
-        <p className="intro">
-          {isUnits
-            ? 'Organize your sites and departments in one connected hierarchy.'
-            : isRoles
-              ? 'Define what people can do. Choose where access applies when assigning a role.'
-              : path.endsWith('invitations')
-                ? 'Invite people and track their access approvals.'
-                : 'See who belongs here, understand their access, and manage roles or workspace membership.'}
-        </p>
-      </header>
+    <div className="access-workspace" data-structure={isUnits || undefined}>
+      {!isUnits && (
+        <header className="access-heading">
+          <span className="eyebrow">WORKSPACE</span>
+          <h1 className="page-title">{isUnits ? 'Structure' : 'Users'}</h1>
+          <p className="intro">
+            {isUnits
+              ? 'Organize your sites and departments in one connected hierarchy.'
+              : 'Manage members and their workspace access.'}
+          </p>
+        </header>
+      )}
       {!isUnits && (
         <nav aria-label="People sections" className="access-sections">
           {peoplePaths
@@ -108,30 +120,39 @@ export function People({
                 ),
             )
             .map((p) => (
-              <ButtonLink
-                href={p}
-                key={p}
-                variant={requestedPath === p ? 'secondary' : 'ghost'}
-                aria-current={requestedPath === p ? 'page' : undefined}
-              >
+              <AppLink href={p} key={p} aria-current={requestedPath === p ? 'page' : undefined}>
                 {p === '/structure'
                   ? 'Structure'
                   : p.endsWith('roles')
                     ? 'Roles'
                     : p.endsWith('invitations')
                       ? 'Invitations'
-                      : 'Members'}
-              </ButtonLink>
+                      : p.endsWith('activity')
+                        ? 'Activity'
+                        : 'Members'}
+              </AppLink>
             ))}
         </nav>
       )}
       {!allowed && (
         <Notice message="You do not have access to this section. Check your session for current permissions. Your unsaved entries are kept on this page." />
       )}
-      <PeopleActivity value={active && allowed}>
-        <div hidden={!active || !allowed} inert={!active || !allowed}>
+      <PeopleActivity value={active && allowed && !pending}>
+        <div
+          className={isUnits ? 'hierarchy-content' : undefined}
+          hidden={!active || !allowed}
+          inert={!active || !allowed}
+          aria-busy={pending}
+        >
+          {pending && (
+            <p className="picker-loading" role="status">
+              Opening {requestedPath.split('/').at(-1)}…
+            </p>
+          )}
           {isUnits ? (
             <ScopedStructure session={session} onCheck={onCheck} />
+          ) : path === '/people/activity' ? (
+            <PeopleAudit session={session} />
           ) : (
             <Directory
               key={`${session.user.id}:${path}`}
@@ -142,9 +163,12 @@ export function People({
           )}
         </div>
       </PeopleActivity>
-      <Button variant="ghost" className="self-start" onClick={() => void onCheck()}>
-        Refresh session and access
-      </Button>
+      <details className="access-session-tools">
+        <summary>Session and access</summary>
+        <Button variant="ghost" className="self-start" onClick={() => void onCheck()}>
+          Refresh session and access
+        </Button>
+      </details>
     </div>
   );
 }
@@ -163,9 +187,37 @@ function Directory({
     kind === 'invitations' &&
     location.pathname === '/people/invitations' &&
     location.state?.peopleAction === 'invite';
-  const [search, setSearch] = useState(''),
-    [cursors, setCursors] = useState<string[]>([]),
-    [filter, setFilter] = useState('');
+  const [params, setParams] = useSearchParams();
+  const filterKey = kind === 'roles' ? 'kind' : kind === 'members' ? 'status' : 'state';
+  const search = params.get('search') ?? '';
+  const filter = params.get(filterKey) ?? '';
+  const roleId = params.get('roleId') ?? '';
+  const unitId = params.get('unitId') ?? '';
+  const delivery = params.get('delivery') ?? '';
+  const actionable = params.get('actionable') === 'true';
+  const sort = params.get('sort') ?? (kind === 'invitations' ? 'created_desc' : 'name');
+  const binding = params.toString();
+  const [pagination, setPagination] = useState<{ binding: string; cursors: string[] }>({
+    binding,
+    cursors: [],
+  });
+  const cursors = pagination.binding === binding ? pagination.cursors : [];
+  const setCursors = (value: string[] | ((old: string[]) => string[])) =>
+    setPagination((old) => ({
+      binding,
+      cursors:
+        typeof value === 'function' ? value(old.binding === binding ? old.cursors : []) : value,
+    }));
+  const updateFilters = (values: Record<string, string>) => {
+    const next = new URLSearchParams(params);
+    for (const [key, value] of Object.entries(values)) {
+      if (value) next.set(key, value);
+      else next.delete(key);
+    }
+    setParams(next);
+  };
+  const [bulk, setBulk] = useState(false);
+  const [imports, setImports] = useState(false);
   const [saved, setSaved] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<
@@ -177,7 +229,7 @@ function Directory({
       void navigate('/people/invitations', { replace: true, state: null });
     }
   }, [composeIntent, navigate]);
-  const query = `limit=25${search ? `&search=${encodeURIComponent(search)}` : ''}${cursors.length ? `&cursor=${encodeURIComponent(cursors.at(-1) ?? '')}` : ''}${filter ? `&${kind === 'roles' ? 'kind' : kind === 'members' ? 'status' : 'state'}=${filter}` : ''}`;
+  const query = `${roleId && kind !== 'roles' ? `roleId=${encodeURIComponent(roleId)}&` : ''}${unitId && kind === 'members' ? `unitId=${encodeURIComponent(unitId)}&` : ''}limit=25&sort=${encodeURIComponent(sort)}${search ? `&search=${encodeURIComponent(search)}` : ''}${cursors.length ? `&cursor=${encodeURIComponent(cursors.at(-1) ?? '')}` : ''}${filter ? `&${filterKey}=${encodeURIComponent(filter)}` : ''}${kind === 'invitations' && delivery ? `&delivery=${encodeURIComponent(delivery)}` : ''}${kind === 'invitations' && actionable ? '&actionable=true' : ''}`;
   const schema =
     kind === 'members'
       ? memberListResponseSchema
@@ -192,6 +244,7 @@ function Directory({
         nextCursor: string | null;
         total: number;
         accessRevision: number;
+        usage?: { roleId: string; memberCount: number; invitationCount: number }[];
       };
     },
     `${session.access?.accessRevision}:${session.access?.fingerprint}`,
@@ -201,6 +254,7 @@ function Directory({
     setRefreshing(true);
     setSaved(true);
     setSelected(undefined);
+    setBulk(false);
     try {
       // Drain preceding reads and refresh the access generation before reloading the directory.
       if (await onCheck(true)) {
@@ -220,14 +274,55 @@ function Directory({
           message={refreshing || page.loading ? 'Saved. Refreshing access…' : 'Changes saved.'}
         />
       )}
-      <div className="access-workbench" data-editing={!!selected}>
+      <div className="users-section-heading">
+        <div>
+          <h2>{kind === 'members' ? 'Members' : kind === 'roles' ? 'Roles' : 'Invitations'}</h2>
+          <p>
+            {kind === 'members'
+              ? 'People with workspace membership.'
+              : kind === 'roles'
+                ? 'Define what people can do. Choose coverage when assigning a role.'
+                : 'Track invitations, approvals and email delivery.'}
+          </p>
+        </div>
+        <Button
+          disabled={!!selected || bulk || imports || page.loading || refreshing}
+          onClick={() => setSelected('new')}
+        >
+          <HugeiconsIcon icon={Add01Icon} data-icon="inline-start" />
+          {kind === 'roles' ? 'Create role' : 'Invite member'}
+        </Button>
+      </div>
+      {kind !== 'roles' && (
+        <div className="users-secondary-actions">
+          <Button
+            variant="ghost"
+            disabled={!!selected || bulk || imports || page.loading || refreshing}
+            onClick={() => setBulk(true)}
+          >
+            Invite multiple members
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!!selected || bulk || imports || page.loading || refreshing}
+            onClick={() => setImports(true)}
+          >
+            Import CSV
+          </Button>
+        </div>
+      )}
+      <div
+        className="users-workbench"
+        data-kind={kind}
+        data-editing={!!selected || bulk || imports}
+      >
         <section className="access-surface" aria-label={`${kind} directory`}>
           <div className="access-toolbar">
             <Search
+              value={search}
               placeholder={`Search ${kind}…`}
               onChange={(s) => {
-                setSearch(s);
-                setCursors([]);
+                updateFilters({ search: s });
               }}
             />
             <Field className="access-filter">
@@ -239,8 +334,7 @@ function Directory({
                 id="people-filter"
                 value={filter}
                 onChange={(e) => {
-                  setFilter(e.target.value);
-                  setCursors([]);
+                  updateFilters({ [filterKey]: e.target.value });
                 }}
               >
                 <option value="">{kind === 'roles' ? 'All role types' : 'All statuses'}</option>
@@ -251,33 +345,107 @@ function Directory({
                     : ['pending', 'needs_reapproval', 'accepted', 'cancelled', 'expired']
                 ).map((v) => (
                   <option key={v} value={v}>
-                    {v.charAt(0).toUpperCase() + v.slice(1).replaceAll('_', ' ')}
+                    {kind === 'invitations'
+                      ? invitationStatus(v as InvitationDto['state'])
+                      : v === 'system'
+                        ? 'Built-in'
+                        : v.charAt(0).toUpperCase() + v.slice(1)}
                   </option>
                 ))}
               </NativeSelect>
             </Field>
+            {kind === 'invitations' && (
+              <Field className="access-filter">
+                <FieldLabel className="sr-only" htmlFor="delivery-filter">
+                  Email delivery filter
+                </FieldLabel>
+                <NativeSelect
+                  id="delivery-filter"
+                  value={delivery}
+                  onChange={(e) => updateFilters({ delivery: e.target.value })}
+                >
+                  <option value="">All email delivery</option>
+                  {['queued', 'sending', 'smtp_accepted', 'failed', 'unknown', 'unavailable'].map(
+                    (state) => (
+                      <option key={state} value={state}>
+                        {state === 'unavailable'
+                          ? 'Delivery unavailable'
+                          : deliveryStatus(
+                              state as NonNullable<InvitationDto['delivery']>['state'],
+                            )}
+                      </option>
+                    ),
+                  )}
+                </NativeSelect>
+              </Field>
+            )}
             <Reload loading={page.loading} onClick={page.refresh} />
-            {kind === 'members' && (
-              <Button
-                onClick={() =>
-                  void navigate('/people/invitations', { state: { peopleAction: 'invite' } })
-                }
+            <Field className="access-filter">
+              <FieldLabel className="sr-only" htmlFor="directory-sort">
+                Sort {kind}
+              </FieldLabel>
+              <NativeSelect
+                id="directory-sort"
+                value={sort}
+                onChange={(e) => updateFilters({ sort: e.target.value })}
               >
-                <HugeiconsIcon icon={Add01Icon} data-icon="inline-start" />
-                Invite person
-              </Button>
-            )}
-            {kind !== 'members' && (
-              <Button
-                disabled={!!selected || page.loading || refreshing}
-                onClick={() => setSelected('new')}
-              >
-                <HugeiconsIcon icon={Add01Icon} data-icon="inline-start" />
-                {kind === 'roles' ? 'Create role' : 'Invite person'}
-              </Button>
-            )}
+                {(kind === 'invitations'
+                  ? [
+                      ['created_desc', 'Newest invitations'],
+                      ['expires_asc', 'Expiring first'],
+                      ['id', 'Default order'],
+                    ]
+                  : kind === 'members'
+                    ? [
+                        ['name', 'Name A–Z'],
+                        ['name_desc', 'Name Z–A'],
+                        ['id', 'Default order'],
+                      ]
+                    : [
+                        ['name', 'Name A–Z'],
+                        ['name_desc', 'Name Z–A'],
+                      ]
+                ).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </NativeSelect>
+            </Field>
           </div>
-          {page.loading && <ContentLoading label={`Loading ${kind}…`} />}{' '}
+          {kind === 'invitations' && (roleId || actionable) && (
+            <div className="directory-filter-disclosure flex flex-wrap items-center gap-2">
+              <span>
+                Showing {actionable ? 'actionable ' : ''}invitations
+                {roleId ? ' using the selected role' : ''}.
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => updateFilters({ roleId: '', actionable: '' })}
+              >
+                Clear role invitation filter
+              </Button>
+            </div>
+          )}
+          {kind === 'members' && (
+            <DirectoryFilters
+              session={session}
+              roleId={roleId}
+              unitId={unitId}
+              onChange={(role, unit) => {
+                updateFilters({ roleId: role, unitId: unit });
+              }}
+            />
+          )}
+          {page.loading && !page.value && (
+            <ContentLoading label={`Loading ${kind}…`} shape="list" />
+          )}
+          {page.refreshing && (
+            <p className="picker-loading" role="status">
+              Updating {kind}…
+            </p>
+          )}{' '}
           {!!page.failure && (
             <>
               <Notice message={message(page.failure)} />
@@ -295,11 +463,12 @@ function Directory({
                 )}
                 {kind === 'roles' ? (
                   <RoleTable
+                    usage={page.value.usage}
                     roles={page.value.items.filter(
                       (item): item is RoleDefinitionDto => 'permissions' in item,
                     )}
                     selectedId={selected && selected !== 'new' ? selected.id : undefined}
-                    disabled={!!selected || page.loading || refreshing}
+                    disabled={!!selected || bulk || imports || page.loading || refreshing}
                     onSelect={setSelected}
                   />
                 ) : kind === 'members' ? (
@@ -307,77 +476,18 @@ function Directory({
                     members={page.value.items.filter((item): item is MemberDto => 'userId' in item)}
                     currentUserId={session.user.id}
                     selectedId={selected && selected !== 'new' ? selected.id : undefined}
-                    disabled={!!selected || page.loading || refreshing}
+                    disabled={!!selected || bulk || imports || page.loading || refreshing}
                     onSelect={setSelected}
                   />
                 ) : (
-                  page.value.items.map((item) => (
-                    <Card key={item.id}>
-                      <CardHeader>
-                        <CardTitle>
-                          <h2 className="break-words">
-                            {'userId' in item
-                              ? 'name' in item.identity
-                                ? item.identity.name
-                                : item.userId
-                              : 'email' in item
-                                ? item.email
-                                : item.name}
-                          </h2>
-                        </CardTitle>
-                        <CardDescription>
-                          {'userId' in item
-                            ? `${item.status} · Identity ${item.identity.state}`
-                            : 'email' in item
-                              ? `${item.state.replaceAll('_', ' ')} · Delivery ${item.delivery?.state.replaceAll('_', ' ') ?? 'unavailable'}`
-                              : `${item.systemKey ? 'System template' : 'Custom role'} · Version ${item.version}`}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex flex-col gap-4">
-                        {'assignments' in item ? (
-                          <details>
-                            <summary className="cursor-pointer">
-                              Assignments and grant sources
-                            </summary>
-                            <AssignmentSummary assignments={item.assignments} session={session} />
-                            {'legacySource' in item && item.legacySource && (
-                              <p className="text-sm">
-                                Imported source (
-                                {item.legacySource.retired ? 'retired' : 'retained'}):{' '}
-                                {item.legacySource.permissions.map(permissionLabel).join(', ')}
-                              </p>
-                            )}
-                          </details>
-                        ) : (
-                          <p className="text-sm">
-                            {item.permissions.map(permissionLabel).join(', ')}
-                          </p>
-                        )}
-                        {'userId' in item && 'email' in item.identity && (
-                          <p className="break-words text-sm">
-                            {item.identity.email}
-                            {item.identity.state === 'stale'
-                              ? ' · Last verified display; refresh before relying on contact details.'
-                              : ''}
-                          </p>
-                        )}
-                        {'email' in item && item.delivery?.state === 'unknown' && (
-                          <p>
-                            Delivery may have occurred. Check with the recipient before deliberately
-                            resending.
-                          </p>
-                        )}
-                        <Button
-                          variant="outline"
-                          className="self-start"
-                          disabled={!!selected || page.loading || refreshing}
-                          onClick={() => setSelected(item)}
-                        >
-                          View and manage
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))
+                  <InvitationTable
+                    invitations={page.value.items.filter(
+                      (item): item is InvitationDto => 'email' in item,
+                    )}
+                    selectedId={selected && selected !== 'new' ? selected.id : undefined}
+                    disabled={!!selected || bulk || imports || page.loading || refreshing}
+                    onSelect={setSelected}
+                  />
                 )}
               </div>
               <Pager
@@ -391,8 +501,7 @@ function Directory({
           )}
           {kind === 'members' && (
             <p className="access-caption">
-              Select a person to review their roles and coverage. Invite new people from
-              Invitations.
+              Select a member to see their roles and where each role applies.
             </p>
           )}
           {kind === 'roles' && (
@@ -402,21 +511,52 @@ function Directory({
             </p>
           )}
         </section>
+        {imports && (
+          <TaskSheet label="CSV imports">
+            <PeopleImports
+              session={session}
+              onClose={() => {
+                setImports(false);
+                page.refresh();
+              }}
+            />
+          </TaskSheet>
+        )}
+        {bulk && (
+          <TaskSheet label="Bulk invitations">
+            <BulkInvitations
+              session={session}
+              onCheck={onCheck}
+              onClose={(didSave) => {
+                if (didSave) void changed();
+                else setBulk(false);
+              }}
+            />
+          </TaskSheet>
+        )}
         {selected && (
-          <AccessInspector
+          <TaskSheet
             key={selected === 'new' ? 'new' : selected.id}
-            label={kind === 'roles' ? 'Role details' : 'Access details'}
+            label={
+              kind === 'roles'
+                ? 'Role details'
+                : selected === 'new'
+                  ? 'Invite member'
+                  : kind === 'invitations'
+                    ? 'Invitation details'
+                    : 'Access details'
+            }
           >
             <Editor
               key={selected === 'new' ? 'new' : selected.id}
               session={session}
-              kind={kind}
+              kind={kind === 'members' && selected === 'new' ? 'invitations' : kind}
               value={selected}
               accessRevision={page.value?.accessRevision ?? session.access?.accessRevision ?? 0}
               onSaved={changed}
               onClose={() => setSelected(undefined)}
             />
-          </AccessInspector>
+          </TaskSheet>
         )}
       </div>
     </>
@@ -441,7 +581,9 @@ function Editor({
   const invitation = value !== 'new' && 'email' in value ? value : undefined;
   const role = value !== 'new' && 'permissions' in value ? value : undefined;
   const [editingMember, setEditingMember] = useState(false);
-  const [roleAction, setRoleAction] = useState(role?.systemKey ? 'copy' : 'details');
+  const [roleAction, setRoleAction] = useState(role ? 'overview' : 'details');
+  const confirmDiscard = useTaskConfirm();
+  const [emailError, setEmailError] = useState<string>();
   const [name, setName] = useState(role?.systemKey ? `${role.name} copy` : (role?.name ?? '')),
     [description, setDescription] = useState(role?.description ?? ''),
     [email, setEmail] = useState(invitation?.email ?? '');
@@ -450,11 +592,13 @@ function Editor({
   );
   const initial = member?.assignments ?? invitation?.assignments ?? [];
   const [assignments, setAssignments] = useState<RoleAssignmentRequestDto[]>(
-    initial.map((a) => ({
-      roleId: a.role.id,
-      expectedRoleVersion: a.role.version,
-      scope: a.scope,
-    })),
+    initial.length || member || invitation
+      ? initial.map((a) => ({
+          roleId: a.role.id,
+          expectedRoleVersion: a.role.version,
+          scope: a.scope,
+        }))
+      : [{ roleId: '', expectedRoleVersion: 1, scope: { kind: 'company' } }],
   );
   const [retire, setRetire] = useState(false),
     [dirty, setDirty] = useState(false),
@@ -488,8 +632,27 @@ function Editor({
     markSaved();
     onClose();
   };
+  const close = () => {
+    if (busy) return;
+    const discard = () => {
+      markSaved();
+      onClose();
+    };
+    if (dirty || command)
+      confirmDiscard('Your unsaved draft will be discarded. Saved access stays in place.', discard);
+    else discard();
+  };
+  useTaskDismiss(close);
   async function review(operation: string, extra: object = {}) {
     try {
+      if (
+        operation === 'invitation.issue' &&
+        !invitationEmailSchema.safeParse(email.trim()).success
+      ) {
+        setEmailError('Enter a valid email address, for example alex@example.com.');
+        document.getElementById('invitation-email')?.focus();
+        return;
+      }
       const revision = organizationRevision;
       if (
         revision === undefined &&
@@ -520,12 +683,11 @@ function Editor({
       else if (operation === 'role.copy')
         body = {
           operation: 'role.create',
+          source: 'new',
           expectedAccessRevision: accessRevision,
-          source: 'copy',
           name,
           description: description || null,
-          copyFromRoleId: role?.id,
-          expectedRoleVersion: role?.version,
+          permissions,
         };
       else if (operation === 'role.details')
         body = {
@@ -602,12 +764,7 @@ function Editor({
           className="access-panel-close"
           aria-label="Close panel"
           disabled={busy}
-          onClick={() => {
-            if (busy) return;
-            if ((dirty || !!command) && !window.confirm('Discard this unsaved draft?')) return;
-            markSaved();
-            onClose();
-          }}
+          onClick={close}
         >
           <HugeiconsIcon icon={Cancel01Icon} />
         </Button>
@@ -617,12 +774,22 @@ function Editor({
           <CardTitle>
             <h2 className="break-words">
               {kind === 'roles'
-                ? (role?.name ?? 'Create role')
+                ? role
+                  ? roleAction === 'overview'
+                    ? role.name
+                    : roleAction === 'copy'
+                      ? 'Duplicate role'
+                      : roleAction === 'permissions'
+                        ? 'Edit permissions'
+                        : roleAction === 'delete'
+                          ? 'Delete role'
+                          : 'Edit role details'
+                  : 'Create role'
                 : kind === 'members'
                   ? 'Member access'
                   : invitation
                     ? 'Invitation details'
-                    : 'Invite person'}
+                    : 'Invite member'}
             </h2>
           </CardTitle>
         )}
@@ -631,11 +798,15 @@ function Editor({
             ? editingMember
               ? 'Edit role assignments, then review the change.'
               : 'Member access overview'
-            : role?.systemKey
-              ? 'System role · Use a new name to create a custom copy.'
+            : role
+              ? roleAction === 'overview'
+                ? 'Permissions and available actions for this saved role.'
+                : `Working with ${role.name}. Changes require review.`
               : kind === 'roles'
                 ? 'Give this role a purpose and choose what it allows.'
-                : 'Choose a recipient and the access they should receive.'}
+                : invitation
+                  ? 'Saved invitation, approved access and email delivery.'
+                  : 'Choose who to invite and the access they need.'}
         </CardDescription>
       </CardHeader>
       <CardContent className="access-panel-body">
@@ -645,17 +816,85 @@ function Editor({
             <Review
               command={command}
               target={
-                role?.name ??
+                (roleAction === 'copy' ? name : role?.name) ??
                 invitation?.email ??
                 (member && 'name' in member.identity ? member.identity.name : member?.userId) ??
                 (kind === 'roles' ? name : email)
               }
               session={session}
+              beforeRole={role}
+              beforeAssignments={member?.assignments ?? invitation?.assignments}
               onSaved={saved}
               onBusyChange={setBusy}
               actionsTarget={reviewFooter}
               onCancel={() => setCommand(undefined)}
             />
+          ) : role && roleAction === 'overview' ? (
+            <section className="role-overview flex flex-col gap-5">
+              <div className="flex flex-wrap gap-2">
+                {company(session, 'turnstile:people:manage') && (
+                  <>
+                    <AppLink href={`/people/members?roleId=${role.id}`}>
+                      View members using this role
+                    </AppLink>
+                    <AppLink href={`/people/invitations?roleId=${role.id}&actionable=true`}>
+                      View open invitations using this role
+                    </AppLink>
+                    <AppLink href={`/people/activity?subjectId=${role.id}`}>
+                      View role activity
+                    </AppLink>
+                  </>
+                )}
+                <Badge variant="secondary">
+                  {role.systemKey ? 'Built-in role' : 'Custom role'}
+                </Badge>
+                {role.systemKey === 'workspace_administrator' && (
+                  <Badge variant="outline">Protected</Badge>
+                )}
+              </div>
+              <p>{role.description || 'No description added.'}</p>
+              <h3>
+                {role.permissions.length}{' '}
+                {role.permissions.length === 1 ? 'permission' : 'permissions'}
+              </h3>
+              <div className="access-permission-summary">
+                {role.permissions.map((p) => (
+                  <Badge key={p} variant="outline">
+                    {permissionLabel(p)}
+                  </Badge>
+                ))}
+              </div>
+              <p className="panel-help">
+                Coverage is chosen separately for each member assignment.
+                {role.systemKey ? ' Built-in roles cannot be edited or deleted.' : ''}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {!role.systemKey && (
+                  <>
+                    <Button variant="outline" onClick={() => setRoleAction('details')}>
+                      Edit details
+                    </Button>
+                    <Button variant="outline" onClick={() => setRoleAction('permissions')}>
+                      Edit permissions
+                    </Button>
+                  </>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setName(`${role.name} copy`);
+                    setRoleAction('copy');
+                  }}
+                >
+                  Duplicate role
+                </Button>
+                {!role.systemKey && (
+                  <Button variant="destructive" onClick={() => setRoleAction('delete')}>
+                    Delete role
+                  </Button>
+                )}
+              </div>
+            </section>
           ) : member && !editingMember ? (
             <>
               {!!catalog.failure && (
@@ -692,34 +931,67 @@ function Editor({
               )}
               <FieldSet
                 className="access-panel-fields"
+                hidden={catalog.loading && !catalog.value}
                 disabled={catalog.loading || !catalog.value}
               >
                 {kind === 'roles' ? (
                   <>
-                    {role && !role.systemKey && (
-                      <Field>
-                        <FieldLabel htmlFor="role-action">Role action</FieldLabel>
-                        <NativeSelect
-                          id="role-action"
-                          value={roleAction}
-                          onChange={(e) => {
-                            if (
-                              dirty &&
-                              !window.confirm('Discard edits before changing this action?')
-                            )
-                              return;
+                    {role && (
+                      <Button
+                        variant="ghost"
+                        className="self-start"
+                        onClick={() => {
+                          const reset = () => {
+                            setRoleAction('overview');
                             setDirty(false);
-                            setPermissions(role.permissions);
-                            setRoleAction(e.target.value);
-                            setName(e.target.value === 'copy' ? `${role.name} copy` : role.name);
+                            setName(role.name);
                             setDescription(role.description ?? '');
+                            setPermissions(role.permissions);
+                          };
+                          if (dirty)
+                            confirmDiscard('Discard edits and return to the saved role?', reset);
+                          else reset();
+                        }}
+                      >
+                        Back to role overview
+                      </Button>
+                    )}
+                    {roleAction === 'delete' && (
+                      <Notice message="Remove or replace this role in member assignments and actionable invitations before deleting it. Retained invitation history alone does not prevent deletion." />
+                    )}
+                    {!role && (
+                      <Field>
+                        <FieldLabel htmlFor="role-starter">Start from</FieldLabel>
+                        <NativeSelect
+                          id="role-starter"
+                          defaultValue=""
+                          onChange={(e) => {
+                            const starter = catalog.value?.starters.find(
+                              (r) => r.id === e.target.value,
+                            );
+                            setPermissions(
+                              starter ? [...starter.permissions] : ['turnstile:access'],
+                            );
+                            setDirty(true);
                           }}
                         >
-                          <option value="details">Edit name and description</option>
-                          <option value="permissions">Edit permissions</option>
-                          <option value="copy">Create a custom copy</option>
-                          <option value="delete">Delete role</option>
+                          <option value="">Blank role</option>
+                          {catalog.value?.starters
+                            .filter((r) =>
+                              r.permissions.every((p) =>
+                                catalog.value?.grantableCompanyPermissions?.includes(p),
+                              ),
+                            )
+                            .map((r) => (
+                              <option key={r.id} value={r.id}>
+                                {r.name}
+                              </option>
+                            ))}
                         </NativeSelect>
+                        <p className="panel-help">
+                          Use a starting point, then adjust permissions. Creating a role does not
+                          assign members.
+                        </p>
                       </Field>
                     )}
                     {(!role || roleAction === 'details' || roleAction === 'copy') && (
@@ -736,7 +1008,7 @@ function Editor({
                         }}
                       />
                     )}
-                    {(!role || roleAction === 'permissions') && (
+                    {(!role || roleAction === 'permissions' || roleAction === 'copy') && (
                       <Permissions
                         value={permissions}
                         onChange={(p) => {
@@ -746,7 +1018,7 @@ function Editor({
                         allowed={catalog.value?.grantableCompanyPermissions ?? []}
                       />
                     )}
-                    {role?.systemKey && (
+                    {role?.systemKey && roleAction !== 'copy' && (
                       <>
                         <div className="access-permission-summary">
                           {role.permissions.map((p) => (
@@ -770,13 +1042,45 @@ function Editor({
                         assignments; terminal invitations cannot be changed.
                       </p>
                     )}
+                    {invitation && (
+                      <dl className="invitation-dates">
+                        {[
+                          ['Invited', invitation.createdAt],
+                          ['Expires', invitation.expiresAt],
+                          [
+                            'Accepted',
+                            invitation.state === 'accepted' ? invitation.acceptedAt : undefined,
+                          ],
+                          [
+                            'Cancelled',
+                            invitation.state === 'cancelled' ? invitation.cancelledAt : undefined,
+                          ],
+                          [
+                            'Needs review since',
+                            invitation.state === 'needs_reapproval'
+                              ? invitation.invalidatedAt
+                              : undefined,
+                          ],
+                        ]
+                          .filter(([, value]) => !!value)
+                          .map(([label, value]) => (
+                            <div key={label}>
+                              <dt>{label}</dt>
+                              <dd>
+                                <time dateTime={value}>
+                                  {new Date(value ?? '').toLocaleString()}
+                                </time>
+                              </dd>
+                            </div>
+                          ))}
+                      </dl>
+                    )}
                     {invitation && invitation.state !== 'needs_reapproval' ? (
-                      <section className="invitation-saved">
+                      <section className="invitation-saved flex flex-col gap-4">
                         <div className="access-permission-summary">
-                          <Badge variant="secondary">{invitation.state.replaceAll('_', ' ')}</Badge>
+                          <Badge variant="secondary">{invitationStatus(invitation.state)}</Badge>
                           <Badge variant="outline">
-                            {invitation.delivery?.state.replaceAll('_', ' ') ??
-                              'Delivery unavailable'}
+                            {deliveryStatus(invitation.delivery?.state)}
                           </Badge>
                         </div>
                         <h3>{invitation.email}</h3>
@@ -794,10 +1098,18 @@ function Editor({
                               value={email}
                               onChange={(e) => {
                                 setEmail(e.target.value);
+                                setEmailError(undefined);
                                 setDirty(true);
                               }}
-                              autoComplete="off"
+                              aria-invalid={!!emailError}
+                              aria-describedby={emailError ? 'invitation-email-error' : undefined}
+                              autoComplete="email"
                             />
+                            {emailError && (
+                              <p id="invitation-email-error" className="field-error" role="alert">
+                                {emailError}
+                              </p>
+                            )}
                           </Field>
                         )}
 
@@ -836,7 +1148,7 @@ function Editor({
         </CardFooter>
       ) : (
         <CardFooter className="access-panel-footer">
-          {member && !editingMember ? (
+          {(member && !editingMember) || (role && roleAction === 'overview') ? (
             <Button variant="outline" className="self-start" onClick={onClose}>
               Close details
             </Button>
@@ -916,8 +1228,16 @@ function Editor({
                   )}
                 </>
               )}{' '}
-              <Button variant="outline" className="self-start" onClick={cancelDraft}>
-                {member ? 'Cancel changes' : 'Cancel and discard draft'}
+              <Button
+                variant="outline"
+                className="self-start"
+                onClick={member ? cancelDraft : close}
+              >
+                {member
+                  ? 'Cancel changes'
+                  : invitation && invitation.state !== 'needs_reapproval'
+                    ? 'Close details'
+                    : 'Cancel and discard draft'}
               </Button>
             </>
           )}

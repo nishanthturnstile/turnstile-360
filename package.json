@@ -14,12 +14,12 @@
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "check": "biome ci . && pnpm check:boundaries && pnpm check:contracts && pnpm typecheck && pnpm check:python && pnpm check:deploy && pnpm check:auth:cli",
-    "check:contracts": "turbo run build --filter=@thaarei/turnstile-contracts --filter=@thaarei/dms-contracts --filter=@thaarei/control-plane-contracts && node scripts/generate-control-plane-openapi.mjs --check && node scripts/generate-turnstile-time-zones.mjs --check && node scripts/generate-turnstile-onboarding-openapi.mjs --check && node scripts/generate-user-management-openapi.mjs --check && node scripts/generate-module-openapi.mjs --check && node scripts/generate-module-transition-openapi.mjs --check && node scripts/generate-dms-auth-openapi.mjs --check && node scripts/generate-dms-openapi.mjs --check && node scripts/generate-dms-operator-contract.mjs --check && node scripts/generate-dms-work-contract.mjs --check && pnpm --filter @thaarei/dms-processing exec uv run --locked python ../../scripts/check-dms-contracts.py && node scripts/generate-dms-evidence.mjs --check",
+    "check:contracts": "node scripts/module-registry.mjs --check && turbo run build --filter=@thaarei/turnstile-contracts --filter=@thaarei/dms-contracts --filter=@thaarei/control-plane-contracts && node scripts/generate-control-plane-openapi.mjs --check && node scripts/generate-turnstile-time-zones.mjs --check && node scripts/generate-turnstile-onboarding-openapi.mjs --check && node scripts/generate-user-management-openapi.mjs --check && node scripts/generate-module-openapi.mjs --check && node scripts/generate-module-transition-openapi.mjs --check && node scripts/generate-dms-auth-openapi.mjs --check && node scripts/generate-dms-openapi.mjs --check && node scripts/generate-dms-operator-contract.mjs --check && node scripts/generate-dms-work-contract.mjs --check && pnpm --filter @thaarei/dms-processing exec uv run --locked python ../../scripts/check-dms-contracts.py && node scripts/generate-dms-evidence.mjs --check",
     "check:fix": "biome check --write .",
     "check:boundaries": "turbo run build --filter=@thaarei/dms-contracts --filter=@thaarei/turnstile-contracts --filter=@thaarei/dms-client --filter=@thaarei/control-plane-contracts --filter=@thaarei/deployment-control --filter=@thaarei/module-catalog && depcruise apps/thaarei-control-plane/src apps/dms-api/src apps/turnstile-api/src apps/turnstile-web/src packages/installation-engine/src packages/module-catalog/src packages/deployment-control/src packages/control-plane-contracts/src packages/dms-client/src packages/dms-contracts/src packages/turnstile-contracts/src --config tooling/dependency-rules/config.cjs",
     "check:python": "pnpm --filter @thaarei/dms-processing run check",
     "check:deploy": "node scripts/check-deploy.mjs",
-    "test": "node --test scripts/dev-container.test.mjs scripts/module-delivery.test.mjs scripts/installation-intent.test.mjs && turbo run test",
+    "test": "node --test scripts/dev-container.test.mjs scripts/module-delivery.test.mjs scripts/module-registry.test.mjs scripts/installation-intent.test.mjs && turbo run test",
     "test:integration": "turbo run test:integration && pnpm test:database && pnpm test:storage",
     "test:smoke": "node scripts/smoke-runtime.mjs",
     "check:auth:cli": "node scripts/check-auth-cli.mjs && node scripts/check-control-plane-cli.mjs",
@@ -60,7 +60,8 @@
     "test:module:cutover": "pnpm exec turbo run build --filter=@thaarei/deployment-control... && node scripts/test-module-cutover.mjs",
     "docs:module-transitions": "pnpm exec turbo run build --filter=@thaarei/module-catalog... && node scripts/generate-module-transition-openapi.mjs",
     "release:installation": "pnpm exec turbo run build --filter=@thaarei/installation-engine... && node scripts/installation-release.mjs",
-    "test:installation:engine": "pnpm exec turbo run build --filter=@thaarei/installation-engine... && node scripts/test-installation-engine.mjs"
+    "test:installation:engine": "pnpm exec turbo run build --filter=@thaarei/installation-engine... && node scripts/test-installation-engine.mjs",
+    "modules:sync": "node scripts/module-registry.mjs --sync"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",

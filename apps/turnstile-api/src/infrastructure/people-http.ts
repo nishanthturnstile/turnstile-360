@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { HttpException } from '@nestjs/common';
 import {
+  PEOPLE_IMPORT_LIMITS,
   PEOPLE_LIMITS,
   type PeopleErrorDto,
   peopleErrorSchema,
@@ -38,14 +39,17 @@ export function registerPeopleHttp(server: FastifyInstance) {
   const timers = new WeakMap<object, ReturnType<typeof setTimeout>>();
   server.addHook('onRoute', (route) => {
     if (
-      !/^\/api\/people\/(?:catalog|members(?:\/:id(?:\/(?:assignments|suspend|reactivate))?)?|eligible-roles|roles(?:\/:id)?|invitations(?:\/:id(?:\/(?:resend|reapprove|cancel))?)?|impact|commands\/:id)\/?$/.test(
+      !/^\/api\/people\/(?:imports(?:\/:id(?:\/(?:actions|errors))?)?|catalog|audit|members(?:\/:id(?:\/(?:access|assignments|suspend|reactivate))?)?|eligible-roles|roles(?:\/:id)?|invitations(?:\/:id(?:\/(?:resend|reapprove|cancel))?)?|impact|commands\/:id)\/?$/.test(
         route.url,
       )
     )
       return;
     route.config ??= {};
     route.config.peopleEndpoint = true;
-    route.bodyLimit = PEOPLE_LIMITS.bodyBytes;
+    route.bodyLimit =
+      route.url === '/api/people/imports' && route.method === 'POST'
+        ? PEOPLE_IMPORT_LIMITS.bodyBytes
+        : PEOPLE_LIMITS.bodyBytes;
   });
   server.addHook('onRequest', async (request, reply) => {
     if (!request.routeOptions.config.peopleEndpoint) return;

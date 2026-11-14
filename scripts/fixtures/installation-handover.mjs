@@ -9,6 +9,8 @@ import { chromium } from '@playwright/test';
 import { decodeJwt, decodeProtectedHeader, importPKCS8, SignJWT } from 'jose';
 import { catalogueDigest } from '../../packages/module-catalog/dist/index.js';
 
+const fixtureLicenceEnd = new Date(Date.now() + 365 * 86400000).toISOString();
+
 export async function verifyInstallationHandover({
   fixture,
   admin,
@@ -238,6 +240,62 @@ export async function verifyInstallationHandover({
     assert.equal((await invoke('plan')).result.conditions[0], 'installation-not-initialized');
     const installed = await invoke('install');
     assert.ok(installed.result.conditions.includes('dms-pairing-required'));
+    const database = JSON.parse(
+      await run('docker', [
+        'inspect',
+        `thaarei-${(await read()).binding.localInstallationId}-postgres`,
+      ]),
+    )[0];
+    assert.equal(database.HostConfig.RestartPolicy.Name, 'unless-stopped');
+    const marker = randomUUID();
+    const sql = (statement) =>
+      run('docker', [
+        'exec',
+        database.Id,
+        'sh',
+        '-c',
+        'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "$1"',
+        'restart-verification',
+        statement,
+      ]);
+    await sql(
+      `CREATE TABLE public.thaarei_restart_probe(value uuid PRIMARY KEY); INSERT INTO public.thaarei_restart_probe VALUES('${marker}');`,
+    );
+    // PostgreSQL SIGQUIT performs immediate shutdown without a clean checkpoint.
+    // Unlike SIGKILL sent inside its namespace, this reaches the container's PID 1 handler.
+    // Do not use Docker's manually-stopped container path, which suppresses restart policy.
+    await run('docker', [
+      'exec',
+      '-d',
+      '--user',
+      'postgres',
+      database.Id,
+      'sh',
+      '-c',
+      'sleep 1; kill -QUIT 1',
+    ]);
+    let restarted = false;
+    for (let attempt = 0; attempt < 60; attempt++) {
+      await delay(1000);
+      const current = JSON.parse(await run('docker', ['inspect', database.Id]))[0];
+      if (current.RestartCount > database.RestartCount && current.State.Running) {
+        try {
+          assert.equal(
+            (await sql('SELECT value FROM public.thaarei_restart_probe')).trim(),
+            marker,
+          );
+          restarted = true;
+          break;
+        } catch {
+          /* Wait for PostgreSQL crash recovery to finish. */
+        }
+      }
+    }
+    assert.ok(restarted, 'Installer database must restart automatically and retain committed data');
+    await sql('DROP TABLE public.thaarei_restart_probe');
+    console.log(
+      'Fresh installer PostgreSQL: automatic restart and committed-data recovery passed.',
+    );
     const original = await readFile(join(state, '.env.dms'), 'utf8');
     await Promise.all([invoke('resume'), invoke('resume')]);
     assert.equal(await readFile(join(state, '.env.dms'), 'utf8'), original);
@@ -329,6 +387,7 @@ export async function verifyInstallationHandover({
         id: p.id,
         revision: row.revision,
         decision: 'approve',
+        licenceExpiresAt: fixtureLicenceEnd,
       });
     }
     v = await read();

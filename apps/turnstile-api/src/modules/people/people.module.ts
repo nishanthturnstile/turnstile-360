@@ -4,12 +4,16 @@ import { IdentityModule } from '../../integrations/identity/identity.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { AdministrationController } from './administration.controller.js';
 import { AdministrationService } from './administration.service.js';
+import { BulkImportController } from './bulk-import.controller.js';
+import { BulkImportService } from './bulk-import.service.js';
+import { BulkImportWorkerService } from './bulk-import-worker.service.js';
 import { InvitationService } from './invitation.service.js';
 import { InvitationDeliveryService } from './invitation-delivery.service.js';
 import { InvitationMailService } from './invitation-mail.service.js';
 import { InvitationStoreService } from './invitation-store.service.js';
 import { InvitationPolicyBindingsModule } from './invitation-structure-policy.js';
 import { PeopleCommandsService } from './people-commands.service.js';
+import { PeopleInsightsService } from './people-insights.service.js';
 import { PeopleStoreService } from './people-store.service.js';
 import { RecipientController } from './recipient.controller.js';
 import { RecipientService } from './recipient.service.js';
@@ -25,8 +29,11 @@ import { RecipientService } from './recipient.service.js';
     RecipientService,
     AdministrationService,
     PeopleCommandsService,
+    PeopleInsightsService,
     PeopleStoreService,
+    BulkImportService,
+    BulkImportWorkerService,
   ],
-  controllers: [RecipientController, AdministrationController],
+  controllers: [RecipientController, AdministrationController, BulkImportController],
 })
 export class PeopleModule {}

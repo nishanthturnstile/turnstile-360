@@ -523,6 +523,7 @@ export async function execute(
         Labels: labels(local, 'postgres'),
         HostConfig: {
           NetworkMode: network,
+          RestartPolicy: { Name: 'unless-stopped' },
           Memory: 1073741824,
           NanoCpus: 1000000000,
           PidsLimit: 256,

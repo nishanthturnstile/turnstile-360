@@ -258,6 +258,18 @@ export function ClientWorkspace({ initial, role }: { initial: ClientDetail; role
                   : 'Suspend'}{' '}
               {detail.products.find((p) => p.id === review.id)?.product} in{' '}
               {detail.products.find((p) => p.id === review.id)?.environment}.
+              {review.decision === 'approve' && (
+                <>
+                  {' '}
+                  Licence expiry:{' '}
+                  {date(
+                    review.licenceExpiresAt ??
+                      detail.products.find((p) => p.id === review.id)?.licenceExpiresAt ??
+                      null,
+                  )}
+                  .
+                </>
+              )}
             </p>
           )}
           {review.type === 'client.update' && review.archived !== client.archived && (
@@ -408,10 +420,15 @@ export function ClientWorkspace({ initial, role }: { initial: ClientDetail; role
             .filter((p) => p.installationId === installation.id)
             .map((product) => {
               const choices: Array<{ value: string; label: string }> = [];
-              if (product.policyState !== 'approved' && product.pairingVerifiedAt)
+              if (product.pairingVerifiedAt)
                 choices.push({
                   value: 'approve',
-                  label: product.firstApprovedAt ? 'Reapprove' : 'Approve',
+                  label:
+                    product.policyState === 'approved'
+                      ? 'Update licence'
+                      : product.firstApprovedAt
+                        ? 'Reapprove'
+                        : 'Approve',
                 });
               if (product.policyState === 'pending')
                 choices.push({ value: 'reject', label: 'Reject' });
@@ -545,6 +562,13 @@ export function ClientWorkspace({ initial, role }: { initial: ClientDetail; role
                       </a>
                     </p>
                   )}
+                  <p>
+                    Licence expiry:{' '}
+                    {product.licenceExpiresAt
+                      ? date(product.licenceExpiresAt)
+                      : 'Not configured — approval requires an expiry'}
+                    .
+                  </p>
                   {product.policyReason && <p>Latest policy reason: {product.policyReason}</p>}
                   {canWrite && choices.length > 0 && (
                     <details
@@ -554,7 +578,8 @@ export function ClientWorkspace({ initial, role }: { initial: ClientDetail; role
                       <summary>Review product policy</summary>
                       <p className="muted">
                         Approval requires verified pairing and current MFA. This decision applies
-                        only to this product.
+                        only to this product. Licence changes reach the customer on signed sync; an
+                        offline customer keeps its previously issued deadline until then.
                       </p>
                       <form
                         key={product.revision}
@@ -565,6 +590,14 @@ export function ClientWorkspace({ initial, role }: { initial: ClientDetail; role
                             id: product.id,
                             revision: product.revision,
                             decision: fields.get('decision'),
+                            ...(fields.get('decision') === 'approve' &&
+                            fields.get('licenceExpiresAt')
+                              ? {
+                                  licenceExpiresAt: new Date(
+                                    `${fields.get('licenceExpiresAt')}Z`,
+                                  ).toISOString(),
+                                }
+                              : {}),
                             reason: fields.get('reason'),
                           }))
                         }
@@ -583,6 +616,15 @@ export function ClientWorkspace({ initial, role }: { initial: ClientDetail; role
                           <label>
                             Reason
                             <input name="reason" required maxLength={300} />
+                          </label>
+                          <label>
+                            Licence expires at (UTC; required for approval)
+                            <input
+                              name="licenceExpiresAt"
+                              type="datetime-local"
+                              step="1"
+                              defaultValue={product.licenceExpiresAt?.slice(0, 19) ?? ''}
+                            />
                           </label>
                           <button type="submit">Review decision</button>
                         </fieldset>

@@ -12,6 +12,8 @@ import {
 } from '../../packages/deployment-control/dist/index.js';
 import { verifyReports } from './control-plane-reports.mjs';
 
+const fixtureLicenceEnd = new Date(Date.now() + 365 * 86400000).toISOString();
+
 export async function verifyCentralMachines({
   admin,
   viewer,
@@ -268,6 +270,7 @@ export async function verifyCentralMachines({
       id: product.resourceId,
       revision: (await getProduct()).revision,
       decision,
+      ...(decision === 'approve' ? { licenceExpiresAt: fixtureLicenceEnd } : {}),
     });
   await policy('approve');
   const active = await client.sync();
@@ -293,6 +296,44 @@ export async function verifyCentralMachines({
     policy,
   });
   await verifyOffline((await store.load()).decision, expected);
+  // Actual staff command and issuer: online renewal cannot outlive a contractual end.
+  const licencePolicy = async (licenceExpiresAt) =>
+    command({
+      type: 'product.policy',
+      id: product.resourceId,
+      revision: (await getProduct()).revision,
+      decision: 'approve',
+      licenceExpiresAt,
+    });
+  const deadline = Math.floor(Date.now() / 1000) + 5;
+  await licencePolicy(new Date(deadline * 1000).toISOString());
+  const short = await client.sync();
+  const signed = await verifyDecision(
+    short.decision,
+    expected,
+    epoch,
+    publicTrust,
+    Math.floor(Date.now() / 1000),
+  );
+  assert.equal(signed.licenceExpiresAt, deadline);
+  assert.equal(signed.exp, deadline, 'Cached longer approvals must not survive licence shortening');
+  await new Promise((done) => setTimeout(done, Math.max(0, deadline * 1000 - Date.now()) + 100));
+  assert.deepEqual(await client.access(), { access: 'closed', state: 'licence-expired' });
+  assert.equal(
+    (await call('sync', syncInput(epoch), candidate)).status,
+    403,
+    'Online clients cannot renew expired licences',
+  );
+  await licencePolicy(fixtureLicenceEnd);
+  await client.sync();
+  assert.equal(
+    (await client.access()).access,
+    'full',
+    'New licence revision restores approved access',
+  );
+  console.log(
+    'Contractual licence: actual HTTP shortening, bounded signed expiry, offline closure, online renewal denial and staff renewal passed.',
+  );
   const preDenialBackup = await backup();
   const report = syncInput(epoch);
   const first = (await call('sync', report, candidate)).json();
@@ -468,6 +509,7 @@ export async function verifyCentralMachines({
       id: product.resourceId,
       revision: (await getProduct()).revision,
       decision: 'approve',
+      licenceExpiresAt: fixtureLicenceEnd,
     }),
   );
   assert.equal(deniedApproval.status, 503);

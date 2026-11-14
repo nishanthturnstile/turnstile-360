@@ -5,6 +5,9 @@ import { readFile, writeFile } from 'node:fs/promises';
 import http from 'node:http';
 import { join } from 'node:path';
 import { catalogueDigest, resolveSelection } from '../../packages/module-catalog/dist/index.js';
+
+const fixtureLicenceEnd = new Date(Date.now() + 365 * 86400000).toISOString();
+
 export async function moduleCutoverControl({
   fixture,
   admin,
@@ -176,6 +179,7 @@ export async function moduleCutoverControl({
           id,
           revision: (await read()).productRevision,
           decision: 'approve',
+          licenceExpiresAt: fixtureLicenceEnd,
         });
         result = await read();
       } else if (input.action === 'activate') {

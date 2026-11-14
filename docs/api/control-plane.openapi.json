@@ -1724,6 +1724,11 @@
               "iat": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
               "nbf": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
               "exp": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
+              "licenceExpiresAt": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 253402300799
+              },
               "state": { "type": "string", "const": "approved" },
               "entitlement": { "type": "string", "const": "product-business" }
             },
@@ -1861,6 +1866,11 @@
               "iat": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
               "nbf": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
               "exp": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
+              "licenceExpiresAt": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 253402300799
+              },
               "state": { "type": "string", "const": "pending" }
             },
             "required": [
@@ -1996,6 +2006,11 @@
               "iat": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
               "nbf": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
               "exp": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
+              "licenceExpiresAt": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 253402300799
+              },
               "state": { "type": "string", "const": "rejected" }
             },
             "required": [
@@ -2131,6 +2146,11 @@
               "iat": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
               "nbf": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
               "exp": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
+              "licenceExpiresAt": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 253402300799
+              },
               "state": { "type": "string", "const": "suspended" }
             },
             "required": [

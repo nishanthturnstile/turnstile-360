@@ -7,6 +7,9 @@ import pg from 'pg';
 import { provisionDatabase } from '../provision-auth-database.mjs';
 import { verifyProductKeyRecovery } from './control-plane-key-recovery.mjs';
 import { verifyContainerReporter } from './control-plane-reporter.mjs';
+
+const fixtureLicenceEnd = new Date(Date.now() + 365 * 86400000).toISOString();
+
 // Separate owning DMS database/roles and real central HTTPS. No cross-database business reads.
 export async function verifyDmsCentralHttp({
   admin,
@@ -259,7 +262,13 @@ export async function verifyDmsCentralHttp({
     assert.equal((await status()).access, 'closed', 'Pairing is not approval');
     let revision = 1;
     const policy = async (decision) => {
-      await staff({ type: 'product.policy', id: product.resourceId, revision, decision });
+      await staff({
+        type: 'product.policy',
+        id: product.resourceId,
+        revision,
+        decision,
+        ...(decision === 'approve' ? { licenceExpiresAt: fixtureLicenceEnd } : {}),
+      });
       revision++;
     };
     await policy('approve');

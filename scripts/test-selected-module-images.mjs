@@ -63,12 +63,18 @@ if (!resuming)
 if (!resuming) writeFileSync(join(store, 'trust.json'), JSON.stringify(trust), { mode: 0o600 });
 const catalogue = sourceCatalogue(hash(JSON.stringify(sourceInventory()))),
   records = [];
-for (const ids of [
-  [],
-  ['incident-management'],
-  ['risk-management'],
-  ['incident-management', 'risk-management'],
-]) {
+const selection = process.argv.find((arg) => arg.startsWith('--modules='));
+const selections = process.argv.includes('--all-registered')
+  ? [catalogue.modules.filter((m) => m.id !== 'foundation').map((m) => m.id)]
+  : selection
+    ? [selection.slice('--modules='.length).split(',').filter(Boolean)]
+    : [
+        [],
+        ['incident-management'],
+        ['risk-management'],
+        ['incident-management', 'risk-management'],
+      ];
+for (const ids of selections) {
   const profile = await createProfile(catalogue, { requestedIndividualIds: ids }, [
     'foundation',
     ...ids,
@@ -174,5 +180,5 @@ writeFileSync(
   { mode: 0o600, flag: resuming ? 'w' : 'wx' },
 );
 console.log(
-  `All four actual selected API/web image profiles passed${access ? ' with ordinary-login module acceptance' : ''}.`,
+  `${records.length} actual selected API/web image profiles passed${access ? ' with ordinary-login module acceptance' : ''}.`,
 );

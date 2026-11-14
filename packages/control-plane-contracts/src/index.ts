@@ -191,6 +191,7 @@ const decisionBase = {
   iat: positive,
   nbf: positive,
   exp: positive,
+  licenceExpiresAt: z.number().int().positive().max(253402300799).optional(),
 };
 export const decision = z.discriminatedUnion('state', [
   z

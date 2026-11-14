@@ -67,6 +67,10 @@ export const invitation = productSchema
         .on(t.tenantId, t.email)
         .where(sql`${t.state} IN ('pending','needs_reapproval')`),
       index('invitation_expiry_idx').on(t.tenantId, t.expiresAt),
+      index('invitation_created_idx').on(t.tenantId, t.createdAt, t.id),
+      index('invitation_accepted_subject_idx')
+        .on(t.tenantId, t.acceptedUserId, t.acceptedAt)
+        .where(sql`${t.state}='accepted'`),
       check(
         'invitation_state',
         sql`${t.state} IN ('pending','needs_reapproval','accepted','cancelled','expired')`,

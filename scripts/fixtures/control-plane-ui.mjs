@@ -35,7 +35,14 @@ export async function verifyControlPlaneUi({ admin, viewer, origin, reauthentica
     await page.route(
       `**${path}`,
       async (route) => {
-        const response = await route.fetch();
+        // route.fetch runs in Node, outside Chromium's fixture DNS mapping.
+        const target = new URL(route.request().url());
+        const host = target.host;
+        if (target.hostname === 'central.fixture.test') target.hostname = '127.0.0.1';
+        const response = await route.fetch({
+          url: target.href,
+          headers: { ...route.request().headers(), host },
+        });
         assert.ok(response.ok(), 'The production handler committed before transport response loss');
         await route.abort('failed');
       },

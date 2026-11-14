@@ -1,9 +1,14 @@
 import { z } from 'zod';
+import { MODULE_REGISTRY } from './module-registry.js';
 import { configurationNameKey, normalizeConfigurationName } from './onboarding.js';
 
 // Public product catalogue. Legacy private replacement inputs remain a separate v1 contract.
 export const PEOPLE_CATALOG_VERSION = 2;
-export const PEOPLE_API_VERSION = '1.1.0';
+export const PEOPLE_API_VERSION = '1.3.1';
+// New optional catalog fields are returned only to clients that request the feature.
+// Older open pages validate this response strictly and must keep the legacy shape.
+export const PEOPLE_FEATURES_HEADER = 'x-turnstile-people-features';
+export const PEOPLE_IMPORT_FEATURE = 'imports-v1';
 export const PEOPLE_LIMITS = {
   bodyBytes: 16_384,
   responseBytes: 1_048_576,
@@ -47,8 +52,7 @@ export const PEOPLE_PERMISSIONS = [
   'turnstile:configuration:manage',
   'turnstile:people:manage',
   'turnstile:roles:manage',
-  'turnstile:incidents:read',
-  'turnstile:risks:read',
+  ...MODULE_REGISTRY.map((module) => module.permission),
   'turnstile:units:read',
   'turnstile:units:manage',
 ] as const;
@@ -58,8 +62,7 @@ export const COMPANY_ONLY_PERMISSIONS: readonly PeoplePermission[] = [
   'turnstile:configuration:manage',
   'turnstile:people:manage',
   'turnstile:roles:manage',
-  'turnstile:incidents:read',
-  'turnstile:risks:read',
+  ...MODULE_REGISTRY.map((module) => module.permission),
 ];
 export const peoplePermissionSchema = z.enum(PEOPLE_PERMISSIONS);
 export const peopleIdSchema = z.uuid().toLowerCase();
@@ -213,13 +216,23 @@ export const peopleListQuerySchema = z.strictObject({
   search: searchSchema.transform((value) => value || undefined).optional(),
 });
 export const memberListQuerySchema = peopleListQuerySchema.extend({
+  sort: z.enum(['id', 'name', 'name_desc']).optional(),
   status: z.enum(['active', 'suspended']).optional(),
+  roleId: canonicalPeopleIdSchema.optional(),
+  unitId: canonicalPeopleIdSchema.optional(),
 });
 export const roleListQuerySchema = peopleListQuerySchema.extend({
+  sort: z.enum(['name', 'name_desc']).optional(),
   kind: z.enum(['system', 'custom']).optional(),
 });
 export const invitationListQuerySchema = peopleListQuerySchema.extend({
+  sort: z.enum(['id', 'created_desc', 'expires_asc']).optional(),
   state: z.enum(['pending', 'needs_reapproval', 'accepted', 'cancelled', 'expired']).optional(),
+  roleId: canonicalPeopleIdSchema.optional(),
+  actionable: z.enum(['true']).optional(),
+  delivery: z
+    .enum(['queued', 'sending', 'smtp_accepted', 'failed', 'unknown', 'unavailable'])
+    .optional(),
 });
 
 export function peoplePageSchema<T extends z.ZodType>(item: T) {

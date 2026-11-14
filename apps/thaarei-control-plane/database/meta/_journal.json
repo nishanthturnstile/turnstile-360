@@ -141,6 +141,13 @@
       "when": 1794397470506,
       "tag": "0019_machine_application_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794489304247,
+      "tag": "0020_mysterious_black_queen",
+      "breakpoints": true
     }
   ]
 }

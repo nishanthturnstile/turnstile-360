@@ -106,7 +106,7 @@ export class ModuleAccessService {
           if (claims.state !== 'approved') return work(empty);
           const disabled = z
             .array(businessModuleIdSchema)
-            .max(2)
+            .max(BUSINESS_MODULES.length)
             .refine((v) => new Set(v).size === v.length)
             .parse(JSON.parse(process.env.TURNSTILE_DISABLED_MODULES ?? '[]'));
           const enabled = locallyEnabledIds(

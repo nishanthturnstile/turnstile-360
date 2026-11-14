@@ -124,3 +124,8 @@ TCP-I04 deployment protocol reuse (2026-11-06):
   workspace pin; retain its packaged LICENSE.md. Zod 4.6.7 reuses the existing MIT pin.
 - The Linux private-file adapter invokes the host's util-linux flock executable. Runtime
   hosts must provide it and preserve their packaged notices; no util-linux source is vendored.
+
+Users query-cache addition (2026-11-14):
+- @tanstack/react-query and @tanstack/query-core 5.107.1: MIT,
+  Copyright (c) 2021-present Tanner Linsley. Preserve their packaged LICENSE files.
+  Exact integrity pins are in pnpm-lock.yaml; no browser persistence adapter is included.

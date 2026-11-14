@@ -68,6 +68,7 @@ export const registryProduct = central.table(
     product: text('product').notNull(),
     applicationId: uuid('application_id'),
     policyState: text('policy_state').notNull().default('pending'),
+    licenceExpiresAt: timestamp('licence_expires_at', { withTimezone: true }),
     revision: integer('revision').notNull().default(1),
     registeredAt: time('registered_at'),
     policyChangedAt: time('policy_changed_at'),

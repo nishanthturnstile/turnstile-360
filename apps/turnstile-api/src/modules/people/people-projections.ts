@@ -49,7 +49,8 @@ export async function memberRow(db: PoolClient, tenant: string, id: string) {
   const m = (
     await db.query(
       `SELECT m.*,d.state AS display_state,d.name,d.email,d.verified_at,d.checked_at,d.member_version AS display_version,
-    l.version AS legacy_version,l.permissions AS legacy_permissions,l.retired FROM turnstile.access_member m
+    l.version AS legacy_version,l.permissions AS legacy_permissions,l.retired,l.imported_at,
+    (SELECT min(i.accepted_at) FROM turnstile.invitation i WHERE i.tenant_id=m.tenant_id AND i.accepted_user_id=m.user_id AND i.state='accepted') AS accepted_at FROM turnstile.access_member m
     LEFT JOIN turnstile.member_display d ON d.tenant_id=m.tenant_id AND d.member_id=m.id AND d.user_id=m.user_id
     LEFT JOIN turnstile.access_legacy_source l ON l.tenant_id=m.tenant_id AND l.member_id=m.id WHERE m.tenant_id=$1 AND m.id=$2`,
       [tenant, id],
@@ -76,6 +77,8 @@ export async function memberRow(db: PoolClient, tenant: string, id: string) {
     version: m.version,
     status: m.status,
     identity,
+    ...(m.accepted_at ? { acceptedAt: m.accepted_at.toISOString() } : {}),
+    ...(m.imported_at ? { importedAt: m.imported_at.toISOString() } : {}),
     assignments: await assignments(db, tenant, id),
     legacySource: m.legacy_version
       ? {

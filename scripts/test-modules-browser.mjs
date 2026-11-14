@@ -1,16 +1,15 @@
 // Actual selected images, canonical HTTPS ingress, normal user login and owning private administration.
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
 
-const definitions = [
-  {
-    id: 'incident-management',
-    title: 'Incident Management',
-    message: 'You are in Incident Management',
-  },
-  { id: 'risk-management', title: 'Risk Management', message: 'You are in Risk Management' },
-];
+import { BUSINESS_MODULES } from '../packages/turnstile-contracts/dist/index.js';
+
+const definitions = BUSINESS_MODULES.map((module) => ({
+  ...module,
+  message: `You are in ${module.title}`,
+}));
 const inputCode = `let input='';for await(const c of process.stdin) input+=c; const value=JSON.parse(input);`;
 export async function testModuleAccess({
   page,
@@ -26,6 +25,7 @@ export async function testModuleAccess({
   const installed = definitions.filter((m) =>
     moduleFixture.request.profile.modules.some((p) => p.id === m.id),
   );
+  let phase = 'initial login and handover';
   const request = async (path, status = 200) => {
     const response = await page.evaluate(async (path) => {
       const result = await fetch(path);
@@ -36,7 +36,7 @@ export async function testModuleAccess({
         referrer: result.headers.get('referrer-policy'),
       };
     }, path);
-    assert.equal(response.status, status, `${path}: ${JSON.stringify(response.body)}`);
+    assert.equal(response.status, status, `${phase}: ${path}: ${JSON.stringify(response.body)}`);
     if (path.startsWith('/api/modules')) {
       assert.equal(response.cache, 'private, no-store');
       assert.equal(response.referrer, 'no-referrer');
@@ -114,10 +114,15 @@ export async function testModuleAccess({
     { userId: fixture.users.member.id, requestId: randomUUID() },
   );
   for (const m of definitions) await changePermission(m.id, 'grant');
+  phase = 'granted module access';
   // Real deferred database guards reject unit-scoped module readers; system SQL templates stay unchanged.
   await invoke(
-    `import {withProductOperator} from './dist/infrastructure/database/product-operator.js';${inputCode}await withProductOperator(process.env,async(db,installed)=>{const t=installed.tenant_id;const bad=(await db.query("SELECT 1 FROM turnstile.access_role r JOIN turnstile.access_role_permission p ON p.tenant_id=r.tenant_id AND p.role_id=r.id WHERE r.tenant_id=$1 AND r.system_key IS NOT NULL AND p.permission IN ('turnstile:incidents:read','turnstile:risks:read')",[t])).rows;if(bad.length)throw new Error('Implicit system grant');const a=(await db.query('SELECT member_id FROM turnstile.access_assignment WHERE tenant_id=$1 AND role_id=$2',[t,value.roleId])).rows[0];const unit=(await db.query("SELECT id FROM turnstile.organization_unit WHERE tenant_id=$1 AND type='site' LIMIT 1",[t])).rows[0].id;await db.query('SAVEPOINT scope_guard');let denied=false;try{await db.query("INSERT INTO turnstile.access_assignment(tenant_id,id,member_id,role_id,scope_kind,include_children,scope_key) VALUES($1,$2,$3,$4,'units',false,$5)",[t,value.assignmentId,a.member_id,value.roleId,'units:false:'+unit]);await db.query('INSERT INTO turnstile.access_scope_anchor(tenant_id,assignment_id,unit_id) VALUES($1,$2,$3)',[t,value.assignmentId,unit]);await db.query('SET CONSTRAINTS ALL IMMEDIATE');}catch(e){if(e.code!=='23514'||e.message!=='Company action requires company scope')throw e;denied=true;}await db.query('ROLLBACK TO SAVEPOINT scope_guard');if(!denied)throw new Error('Module scope guard failed');});console.log('{}');`,
-    { roleId: roles.get('incident-management'), assignmentId: randomUUID() },
+    `import {withProductOperator} from './dist/infrastructure/database/product-operator.js';${inputCode}await withProductOperator(process.env,async(db,installed)=>{const t=installed.tenant_id;const bad=(await db.query("SELECT 1 FROM turnstile.access_role r JOIN turnstile.access_role_permission p ON p.tenant_id=r.tenant_id AND p.role_id=r.id WHERE r.tenant_id=$1 AND r.system_key IS NOT NULL AND p.permission=ANY($2::text[])",[t,value.permissions])).rows;if(bad.length)throw new Error('Implicit system grant');const a=(await db.query('SELECT member_id FROM turnstile.access_assignment WHERE tenant_id=$1 AND role_id=$2',[t,value.roleId])).rows[0];const unit=(await db.query("SELECT id FROM turnstile.organization_unit WHERE tenant_id=$1 AND type='site' LIMIT 1",[t])).rows[0].id;await db.query('SAVEPOINT scope_guard');let denied=false;try{await db.query("INSERT INTO turnstile.access_assignment(tenant_id,id,member_id,role_id,scope_kind,include_children,scope_key) VALUES($1,$2,$3,$4,'units',false,$5)",[t,value.assignmentId,a.member_id,value.roleId,'units:false:'+unit]);await db.query('INSERT INTO turnstile.access_scope_anchor(tenant_id,assignment_id,unit_id) VALUES($1,$2,$3)',[t,value.assignmentId,unit]);await db.query('SET CONSTRAINTS ALL IMMEDIATE');}catch(e){if(e.code!=='23514'||e.message!=='Company action requires company scope')throw e;denied=true;}await db.query('ROLLBACK TO SAVEPOINT scope_guard');if(!denied)throw new Error('Module scope guard failed');});console.log('{}');`,
+    {
+      roleId: roles.get(installed.at(-1)?.id ?? definitions[0].id),
+      assignmentId: randomUUID(),
+      permissions: definitions.map((m) => m.permission),
+    },
   );
   const caps = await request('/api/modules');
   assert.deepEqual(
@@ -143,8 +148,17 @@ export async function testModuleAccess({
       await request(`/api/modules/${m.id}/entry`, 404);
     }
   }
+  const retired = Object.keys(
+    JSON.parse(readFileSync('packages/turnstile-contracts/module-permissions.json', 'utf8')),
+  ).filter((id) => !definitions.some((module) => module.id === id));
+  for (const id of retired) {
+    await request(`/api/modules/${id}/entry`, 404);
+    await page.goto(`${origin}/modules/${id}`);
+    await page.getByRole('heading', { name: 'Page not found', exact: true }).waitFor();
+  }
   if (installed.length) {
-    const target = installed[0];
+    phase = 'permission revocation and replay';
+    const target = installed.at(-1);
     await changePermission(target.id, 'revoke');
     assert.equal(
       (await changePermission(target.id, 'grant', grants.get(target.id))).replayed,
@@ -159,6 +173,7 @@ export async function testModuleAccess({
       false,
     );
     await changePermission(target.id, 'grant');
+    phase = 'local disablement';
     await disable([target.id]);
     await page.goto(`${origin}/modules/${target.id}`);
     await page.getByRole('heading', { name: 'Module access unavailable', exact: true }).waitFor();
@@ -172,11 +187,14 @@ export async function testModuleAccess({
     await session();
     assert.equal((await request(`/api/modules/${target.id}/entry`)).message, target.message);
     await moduleFixture.change('turnstile', 'approved', ['foundation']);
+    phase = 'signed removal';
     assert.deepEqual((await request('/api/modules')).modules, []);
     await request(`/api/modules/${target.id}/entry`, 403);
     await moduleFixture.change('turnstile', 'approved');
+    phase = 'reapproval';
     await request(`/api/modules/${target.id}/entry`);
     await moduleFixture.change('turnstile', 'approved', undefined, 1);
+    phase = 'signed expiry';
     await delay(1500);
     assert.deepEqual(
       (await request('/api/modules')).modules,
@@ -185,6 +203,7 @@ export async function testModuleAccess({
     );
     await request(`/api/modules/${target.id}/entry`, 403);
     await moduleFixture.change('turnstile', 'suspended');
+    phase = 'signed suspension';
     assert.deepEqual(
       (await request('/api/modules')).modules,
       [],
@@ -194,6 +213,7 @@ export async function testModuleAccess({
     await moduleFixture.change('turnstile', 'approved');
   }
   // DMS enrollment and product approval remain separate from Turnstile module authority.
+  phase = 'independent DMS policy';
   await moduleFixture.change('dms', 'suspended');
   assert.equal((await request('/api/dms/capabilities')).deploymentAccess, 'existing-reads');
   assert.deepEqual(

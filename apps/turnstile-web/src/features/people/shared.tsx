@@ -1,5 +1,6 @@
 import { Search01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   COMPANY_ONLY_PERMISSIONS,
   eligibleRolesResponseSchema,
@@ -11,7 +12,7 @@ import {
   scopedUnitsResponseSchema,
   type UserSessionDto,
 } from '@thaarei/turnstile-contracts';
-import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Notice } from '@/components/notice';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,10 +26,13 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { NativeSelect } from '@/components/ui/native-select';
+import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { usePeopleActivity } from './activity';
 import { canReadUnits, message, PeopleError, request } from './client';
 import { permissionLabel } from './labels';
+import { usePeopleScope } from './QueryScope';
+import { peopleQueryKey, refreshPeopleQuery } from './query-cache';
 
 export { permissionLabel } from './labels';
 export function Check({
@@ -60,6 +64,7 @@ export function Permissions({
   onChange: (p: PeoplePermission[]) => void;
   allowed: PeoplePermission[];
 }) {
+  const [permissionSearch, setPermissionSearch] = useState('');
   const groups = [
     {
       title: 'Workspace access',
@@ -86,92 +91,119 @@ export function Permissions({
       permissions: ['turnstile:dms:capabilities:read'],
     },
   ];
+  const covered = groups.flatMap((group) => group.permissions);
+  const businessPermissions = PEOPLE_PERMISSIONS.filter((p) => !covered.includes(p));
+  if (businessPermissions.length)
+    groups.push({
+      title: 'Business modules',
+      description: 'Explicit access to available business modules.',
+      permissions: businessPermissions,
+    });
   return (
     <FieldSet className="permission-picker">
       <FieldLegend>Permissions</FieldLegend>
       <p className="panel-help">
         Choose what this role allows. Coverage is selected when assigning it to a person.
       </p>
-      {groups.map((group) => (
-        <FieldSet className="permission-group" key={group.title}>
-          <FieldLegend>{group.title}</FieldLegend>
-          <p className="panel-help">{group.description}</p>
-          {PEOPLE_PERMISSIONS.filter((p) => group.permissions.includes(p)).map((p) => (
-            <div className="permission-option" key={p} data-checked={value.includes(p)}>
-              <Check
-                checked={value.includes(p)}
-                disabled={p === 'turnstile:access' || (!value.includes(p) && !allowed.includes(p))}
-                onChange={(yes) => onChange(yes ? [...value, p] : value.filter((x) => x !== p))}
-              >
-                {permissionLabel(p)}
-                {p === 'turnstile:access' ? (
-                  <Badge variant="outline">Required</Badge>
-                ) : COMPANY_ONLY_PERMISSIONS.includes(p) ? (
-                  <Badge variant="outline">Company</Badge>
-                ) : null}
-              </Check>
-              {!value.includes(p) && !allowed.includes(p) && (
-                <p className="panel-help">Outside your current grant permissions.</p>
-              )}
-            </div>
-          ))}
-        </FieldSet>
-      ))}
+      <Field>
+        <FieldLabel htmlFor="permission-search">Find permissions</FieldLabel>
+        <Input
+          id="permission-search"
+          value={permissionSearch}
+          onChange={(e) => setPermissionSearch(e.target.value)}
+          placeholder="Search by name or purpose…"
+        />
+      </Field>
+      <p className="panel-help">{value.length} selected</p>
+      {groups
+        .filter((g) =>
+          g.permissions.some((p) =>
+            permissionLabel(p as PeoplePermission)
+              .toLowerCase()
+              .includes(permissionSearch.toLowerCase()),
+          ),
+        )
+        .map((group) => (
+          <FieldSet className="permission-group" key={group.title}>
+            <FieldLegend>{group.title}</FieldLegend>
+            <p className="panel-help">{group.description}</p>
+            {PEOPLE_PERMISSIONS.filter(
+              (p) =>
+                group.permissions.includes(p) &&
+                permissionLabel(p).toLowerCase().includes(permissionSearch.toLowerCase()),
+            ).map((p) => (
+              <div className="permission-option" key={p} data-checked={value.includes(p)}>
+                <Check
+                  checked={value.includes(p)}
+                  disabled={
+                    p === 'turnstile:access' || (!value.includes(p) && !allowed.includes(p))
+                  }
+                  onChange={(yes) => onChange(yes ? [...value, p] : value.filter((x) => x !== p))}
+                >
+                  {permissionLabel(p)}
+                  {p === 'turnstile:access' ? (
+                    <Badge variant="outline">Required</Badge>
+                  ) : COMPANY_ONLY_PERMISSIONS.includes(p) ? (
+                    <Badge variant="outline">Company</Badge>
+                  ) : null}
+                </Check>
+                {!value.includes(p) && !allowed.includes(p) && (
+                  <p className="panel-help">Outside your current grant permissions.</p>
+                )}
+              </div>
+            ))}
+          </FieldSet>
+        ))}
     </FieldSet>
   );
 }
 
+const wireResponse = { parse: (value: unknown) => value };
 export function usePage<T>(url: string, schema: { parse(value: unknown): T }, revision: unknown) {
   const active = usePeopleActivity();
-  const [value, setValue] = useState<T>();
-  const [failure, setFailure] = useState<unknown>();
-  const [loading, setLoading] = useState(true);
-  const [reload, setReload] = useState(0);
-  useEffect(() => {
-    void revision;
-    void reload;
-    if (!active) {
-      setLoading(false);
-      return;
-    }
-    const controller = new AbortController();
-
-    setFailure(undefined);
-    setLoading(true);
-    void request(url, schema, { signal: controller.signal })
-      .then((v) => {
-        if (!controller.signal.aborted) setValue(v);
-      })
-      .catch((e) => {
-        if (!controller.signal.aborted) {
-          setFailure(e);
-          if (e instanceof PeopleError && [401, 403].includes(e.status)) setValue(undefined);
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [url, schema, revision, reload, active]);
-  return {
-    value,
-    failure,
-    loading,
-    refresh: () => {
-      setLoading(true);
-      setReload((n) => n + 1);
+  const scope = usePeopleScope();
+  const client = useQueryClient();
+  const key = useMemo(() => peopleQueryKey(scope, revision, url), [scope, revision, url]);
+  const page = useQuery({
+    queryKey: key,
+    // Cache the wire response once; each observer validates its own projection.
+    // Eligible roles, for example, have both nested and flattened consumers.
+    queryFn: ({ signal }) => request(url, wireResponse, { signal }),
+    select: (wire) => {
+      try {
+        return schema.parse(wire);
+      } catch {
+        throw new PeopleError(503, 'PEOPLE_RESPONSE_INVALID');
+      }
     },
+    enabled: active,
+  });
+  const denied = page.error instanceof PeopleError && [401, 403].includes(page.error.status);
+  const refresh = useCallback(() => {
+    void refreshPeopleQuery(client, key);
+  }, [client, key]);
+  return {
+    value: denied ? undefined : page.data,
+    failure: page.error ?? undefined,
+    loading: page.isFetching || page.isPending,
+    refreshing: page.isFetching && page.data !== undefined,
+    refresh,
   };
 }
 export function Search({
   onChange,
   placeholder = 'Search…',
+  value: externalValue,
 }: {
   onChange: (search: string) => void;
   placeholder?: string;
+  value?: string;
 }) {
   const id = useId();
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(externalValue ?? '');
+  useEffect(() => {
+    if (externalValue !== undefined) setValue(externalValue);
+  }, [externalValue]);
   return (
     <form
       onSubmit={(e) => {
@@ -273,9 +305,13 @@ export function AssignmentEditor({
   return (
     <FieldSet>
       <FieldLegend>Access & coverage</FieldLegend>
-      <p className="panel-help">
-        Choose a role, then decide where it applies. Multiple assignments add access together.
-      </p>
+      <p className="panel-help">Choose a role and where it applies.</p>
+      {roles.loading && (
+        <p className="picker-loading" role="status">
+          <Spinner />
+          Loading available roles…
+        </p>
+      )}
       {!!roles.failure && <Notice message={message(roles.failure)} />}{' '}
       {!!error && <Notice message={message(error)} />}
       {!!roles.failure && (
@@ -315,6 +351,7 @@ export function AssignmentEditor({
               <NativeSelect
                 id={`assignment-role-${rowIds.current[index]}`}
                 className="max-w-full"
+                disabled={roles.loading}
                 value={a.roleId}
                 onChange={(e) => {
                   const c = choices.find((x) => x.role.id === e.target.value);
@@ -330,7 +367,11 @@ export function AssignmentEditor({
               >
                 <option value={a.roleId}>
                   {choice?.role.name ??
-                    (a.roleId ? 'Retained role (outside current grant choices)' : 'Choose a role…')}
+                    (a.roleId
+                      ? roles.loading
+                        ? 'Loading role…'
+                        : 'Retained role (outside current grant choices)'
+                      : 'Choose a role…')}
                 </option>
                 {choices
                   .filter((c) => c.role.id !== a.roleId)
@@ -352,35 +393,37 @@ export function AssignmentEditor({
                 </p>
               </details>
             )}
-            <Field>
-              <FieldLabel htmlFor={`assignment-scope-${rowIds.current[index]}`}>Scope</FieldLabel>
-              <NativeSelect
-                id={`assignment-scope-${rowIds.current[index]}`}
-                className="max-w-full"
-                value={a.scope.kind}
-                onChange={(e) =>
-                  update(index, {
-                    scope:
-                      e.target.value === 'company'
-                        ? { kind: 'company' }
-                        : { kind: 'units', unitIds: [], includeChildren: true },
-                  })
-                }
-              >
-                <option
-                  value="company"
-                  disabled={!!choice && !choice.allowedScopes.includes('company')}
+            {choice && (
+              <Field>
+                <FieldLabel htmlFor={`assignment-scope-${rowIds.current[index]}`}>Scope</FieldLabel>
+                <NativeSelect
+                  id={`assignment-scope-${rowIds.current[index]}`}
+                  className="max-w-full"
+                  value={a.scope.kind}
+                  onChange={(e) =>
+                    update(index, {
+                      scope:
+                        e.target.value === 'company'
+                          ? { kind: 'company' }
+                          : { kind: 'units', unitIds: [], includeChildren: true },
+                    })
+                  }
                 >
-                  Whole company
-                </option>
-                <option
-                  value="units"
-                  disabled={!!choice && !choice.allowedScopes.includes('units')}
-                >
-                  Selected sites / departments
-                </option>
-              </NativeSelect>
-            </Field>
+                  <option
+                    value="company"
+                    disabled={!!choice && !choice.allowedScopes.includes('company')}
+                  >
+                    Whole company
+                  </option>
+                  <option
+                    value="units"
+                    disabled={!!choice && !choice.allowedScopes.includes('units')}
+                  >
+                    Selected sites / departments
+                  </option>
+                </NativeSelect>
+              </Field>
+            )}
             {a.scope.kind === 'units' && (
               <UnitPicker
                 session={session}
@@ -407,7 +450,9 @@ export function AssignmentEditor({
               </Check>
             )}
             <Button
-              variant="outline"
+              variant="ghost"
+              size="sm"
+              className="self-start"
               type="button"
               onClick={() => {
                 rowIds.current.splice(index, 1);
@@ -422,6 +467,8 @@ export function AssignmentEditor({
       <Button
         type="button"
         variant="outline"
+        size="sm"
+        className="self-start"
         disabled={!choices.length || value.length >= 32}
         onClick={() => {
           const c = choices[0];
@@ -446,8 +493,7 @@ export function AssignmentEditor({
         </Button>
       )}
       <p className="text-sm text-muted-foreground">
-        Roles add access together. Company-only roles apply across the company. Changes take effect
-        only after review and confirmation.
+        Additional role assignments combine access. Review all changes before saving.
       </p>
     </FieldSet>
   );
@@ -494,23 +540,56 @@ function UnitChoices({
       />
       {!!page.failure && <Notice message={message(page.failure)} />}
       <p className="text-sm">{value.length} selected</p>
-      {page.value?.units.map((u) => {
-        const labels = new Map(
-          [...(page.value?.units ?? []), ...(page.value?.ancestors ?? [])].map((x) => [
-            x.id,
-            x.name,
-          ]),
-        );
-        return (
-          <Check
-            key={u.id}
-            checked={value.includes(u.id)}
-            onChange={(yes) => onChange(yes ? [...value, u.id] : value.filter((x) => x !== u.id))}
-          >
-            {[...u.ancestorIds.map((id) => labels.get(id) ?? id), u.name].join(' / ')}
-          </Check>
-        );
-      })}
+      {!!value.length && (
+        <div className="selected-unit-list">
+          {value.map((id) => (
+            <div key={id} className="flex items-center justify-between gap-2">
+              <UnitPath id={id} session={session} />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-label={`Remove selected unit ${id}`}
+                onClick={() => onChange(value.filter((v) => v !== id))}
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+      {page.loading && (
+        <p className="picker-loading" role="status">
+          <Spinner />
+          Loading units…
+        </p>
+      )}
+      {!page.loading && !page.failure && !page.value?.units.length && (
+        <p className="panel-help">No units match this search. Try another name.</p>
+      )}
+      {!!page.value?.units.length && (
+        <FieldSet className="unit-picker-results min-w-0 gap-3" aria-label="Available units">
+          {page.value.units.map((u) => {
+            const labels = new Map(
+              [...(page.value?.units ?? []), ...(page.value?.ancestors ?? [])].map((x) => [
+                x.id,
+                x.name,
+              ]),
+            );
+            return (
+              <Check
+                key={u.id}
+                checked={value.includes(u.id)}
+                onChange={(yes) =>
+                  onChange(yes ? [...value, u.id] : value.filter((x) => x !== u.id))
+                }
+              >
+                {[...u.ancestorIds.map((id) => labels.get(id) ?? id), u.name].join(' / ')}
+              </Check>
+            );
+          })}
+        </FieldSet>
+      )}
       {page.value?.nextCursor && (
         <Button
           type="button"
@@ -520,9 +599,11 @@ function UnitChoices({
           More units
         </Button>
       )}
-      <Button variant="ghost" type="button" onClick={() => setCursor(null)}>
-        First units
-      </Button>
+      {cursor && (
+        <Button variant="ghost" type="button" onClick={() => setCursor(null)}>
+          First units
+        </Button>
+      )}
     </div>
   );
 }
@@ -542,7 +623,7 @@ export function AssignmentSummary({
           <p className="break-words text-sm text-muted-foreground">
             {a.scope.kind === 'company'
               ? 'Whole company'
-              : `${a.scope.unitIds.length} selected units · ${a.scope.includeChildren ? 'Includes child units' : 'Exact units only'}`}
+              : `${a.scope.unitIds.length} selected ${a.scope.unitIds.length === 1 ? 'unit' : 'units'} · ${a.scope.includeChildren ? 'Includes child units' : 'Exact units only'}`}
           </p>
           {a.scope.kind === 'units' && <UnitPaths ids={a.scope.unitIds} session={session} />}
         </li>

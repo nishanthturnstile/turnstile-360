@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   createProfile,
@@ -46,18 +46,27 @@ assert.equal(
   process.arch === 'arm64' ? 'linux/arm64' : 'linux/amd64',
   'Wrong build platform',
 );
+const knownModuleIds = Object.keys(
+  JSON.parse(readFileSync('packages/turnstile-contracts/module-permissions.json', 'utf8')),
+);
 const ids = request.profile.modules.map((m) => m.id).filter((id) => id !== 'foundation');
 for (const app of ['turnstile-api', 'turnstile-web']) {
   const root = `apps/${app}/src/features`;
-  assert.deepEqual(
-    readdirSync(root)
-      .filter((name) => name !== '.gitkeep')
-      .sort(),
-    [...foundationFeatures[app], ...Object.keys(moduleSources)].sort(),
+  const features = readdirSync(root).filter((name) => name !== '.gitkeep');
+  assert.ok(
+    features.every(
+      (name) => foundationFeatures[app].includes(name) || knownModuleIds.includes(name),
+    ),
     'Unowned feature source',
   );
-  for (const id of Object.keys(moduleSources))
-    if (!ids.includes(id)) rmSync(join(root, id), { recursive: true });
+  assert.ok(
+    [...foundationFeatures[app], ...Object.keys(moduleSources)].every((name) =>
+      features.includes(name),
+    ),
+    'Missing registered feature source',
+  );
+  for (const id of knownModuleIds)
+    if (!ids.includes(id)) rmSync(join(root, id), { recursive: true, force: true });
 }
 writeFileSync(
   'apps/turnstile-api/src/module-release-profile.ts',

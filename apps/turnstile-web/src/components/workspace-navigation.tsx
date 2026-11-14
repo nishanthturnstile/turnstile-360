@@ -47,31 +47,16 @@ export function workspaceDestinations(
     })),
     ...(session
       ? [
-          ...(company(session, 'turnstile:people:manage')
+          ...(company(session, 'turnstile:people:manage') ||
+          company(session, 'turnstile:roles:manage')
             ? [
                 {
-                  label: 'Members',
+                  label: 'Users',
                   group: 'People & access',
-                  href: '/people/members',
-                  active: path === '/people/members',
-                  icon: Settings01Icon,
-                },
-                {
-                  label: 'Invitations',
-                  group: 'People & access',
-                  href: '/people/invitations',
-                  active: path === '/people/invitations',
-                  icon: Settings01Icon,
-                },
-              ]
-            : []),
-          ...(company(session, 'turnstile:roles:manage')
-            ? [
-                {
-                  label: 'Roles',
-                  group: 'People & access',
-                  href: '/people/roles',
-                  active: path === '/people/roles',
+                  href: company(session, 'turnstile:people:manage')
+                    ? '/people/members'
+                    : '/people/roles',
+                  active: path.startsWith('/people/'),
                   icon: Settings01Icon,
                 },
               ]

@@ -116,6 +116,12 @@ artificial delays or replace existing form entries with skeletons during a save.
 loading indicators respect reduced motion. The gallery includes all three shapes and
 an action spinner. Changing presentation must preserve existing auth/session/permission behavior.
 
+Users keeps its header and subtab navigation visible during verified tab transitions.
+Only cold tab content uses a list placeholder. Cached results remain visible during a
+background update with a small status message, as demonstrated by the Roles gallery.
+Do not substitute rows from a different filter while that filter loads. Cache policy,
+authority boundaries and invalidation are defined in architecture.md.
+
 This project uses Base UI. Navigation uses the shared `ButtonLink` composition,
 which renders a router link with native anchor semantics and the same `buttonVariants` as actions:
 `<ButtonLink href="/path" variant="outline">…</ButtonLink>`. Base UI's non-native
@@ -152,8 +158,8 @@ never a second onboarding model or browser storage.
 ## Onboarding structure editing and gallery
 
 Completed workspaces use the canonical scoped Structure destination described under
-Access directories below. Its chart/outline views share reviewed commands; the camera
-and floating tools described here belong to onboarding and the legacy gallery only.
+Access directories below. Its scoped adapter now reuses the camera/layout helpers with
+its own guarded workflows; the floating onboarding tools described here remain separate.
 
 The legacy `StructureTree` presentation serves onboarding and inert gallery examples through the owning
 `StructureEditor` controller. Use contextual + / Add below to infer the parent and allowed
@@ -243,7 +249,7 @@ sibling sorting, an additional palette or a diagram dependency for this composit
 ## People patterns
 
 People uses independent Members, Invitations, Roles and Structure sections within the
-existing workspace shell. Cards expose identity freshness, invitation delivery, actual role
+existing workspace shell. Directory rows and task inspectors expose identity freshness, invitation delivery, actual role
 permissions and all independent grant sources. Scope controls use canonical paths and an
 explicit Include child units checkbox; a role name never substitutes for its permissions.
 The People gallery uses fixed examples without account data or network requests.
@@ -298,15 +304,18 @@ LICENSE remains authoritative for Thaarei-owned code.
 
 ## Access directories
 
-Roles and scoped Structure compose the shared access surface, compact toolbar and adjacent
-non-modal inspector. Use `RoleTable` and `StructureOutline` from the People feature for
+Users directories and scoped Structure compose the shared access surface and compact
+toolbar. Users task sheets overlay full-width directories at desktop and fill the phone
+viewport. Structure uses a bounded chart workspace with a desktop overview and guarded
+task sheets. Use `RoleTable` and the scoped `HierarchyWorkbench` from the People feature for
 these domain presentations; the development gallery demonstrates them with inert fixtures.
-Keep ordinary list navigation available around an editor and retain drafts under the
-existing session/access boundary. Opening an inspector focuses its named region; narrow
-layouts place it above the directory and scroll it into view. Use a single action selector
-in unit editing so rename, child creation, moves and deletion have distinct fields.
+Retain drafts under the existing session/access boundary. Users modal sheets contain
+focus and return it to the initiating control; Escape, outside dismissal and Close share
+the same guard. Hidden or unauthorized tasks remain inert. Structure overviews focus
+their named region on desktop and become sheets on phones. Explicit task buttons separate
+rename, child creation, moves and deletion; browsing never starts a rename draft.
 
-Role permission summaries use wrapping badges; system and protected status use explicit
+Role directories use concise permission counts and previews, with full permissions in the editor; system and protected status use explicit
 text. On phones the table retains identity and View; permission details remain in the
 selected editor. Organization outlines use nested lists with named expand/collapse buttons
 and `aria-expanded`/`aria-controls`. A branch retains its own row when collapsed. Only the
@@ -315,12 +324,36 @@ counts exclude ancestor context and describe the authorized API result set, not 
 in the organization. Empty states explain search/access without implying hidden data exists.
 
 Completed-workspace Structure has one scoped editor, with outline/chart presentations of
-the same returned units and contextual ancestry. Settings links to it; old URLs redirect.
-People sections contain Members, Invitations and Roles only, grouped in the sidebar as
-People & access. Active links use explicit primary emphasis and aria-current in both
+the complete authorized hierarchy and contextual ancestry. The hierarchy query assembles
+100-unit pages only when their organization/Access revisions agree; a failed or cancelled
+batch never replaces the previously verified view. Settings links to it; old URLs redirect.
+People sections contain Members, Invitations and Roles only. A single Users sidebar
+entry under People & access opens the authorized default section; see the
+[People UI architecture](../../architecture.md#people-and-scoped-structure-ui-um-i10). Active links use explicit primary emphasis and aria-current in both
 navigation areas. General settings combines company name and time zone. Unit readers get
 View and a read-only inspector; eligible managers get mutation controls. Role action
 selection exposes only the intended operation before review.
+
+`HierarchyWorkbench` owns the completed-workspace chart, outline, local search, branch
+focus and breadcrumbs. Use one compact heading/toolbar above an internally bounded
+canvas. Desktop opens Chart; phones open Outline. Both use the same scoped normalized
+nodes, with dashed ancestor-only cards and counts explicitly limited to visible authorized
+units. Preserve selection/camera while data refreshes. Fit and focus account for the
+desktop overview without narrowing/reflowing the chart. Camera gestures never submit
+commands. Reuse the native camera/layout helpers; keep onboarding's full configuration
+controller separate. The scoped gallery renders the production composition with inert
+commands and empty, scoped, loading, refreshing, conflict, wide and narrow examples.
+
+Unit selection opens an overview, with deliberate Add department/Rename/Move/Delete
+tasks. Context ancestors never gain unit-management buttons; a company manager's global
+Add site remains independently authorized. Child creation requires descendant coverage
+and a legal level/type. Destination choices omit self, descendants, the current parent
+and known scope/type/depth/name conflicts. Explain visible non-leaf removal restrictions,
+while the server checks hidden references/current state. Search parent choices by full
+path. Review shows old/new paths, legal type and real move-impact counts. Keep exact
+command keys through uncertain outcomes and offer uncached receipt/current-hierarchy
+readback; do not automatically replay. Explicit stale-context reload preserves intended
+fields for comparison and re-review. Only real edits/reviews mark navigation dirty.
 
 Members use the MemberTable and MemberOverview compositions: person/contact, explicit
 membership status, and each saved role's coverage. Keep member status distinct from
@@ -333,12 +366,23 @@ long permission previews behind disclosure. Do not invent global metrics from a 
 filtered member list. Directory actions stay disabled through post-save access refresh.
 
 Use the shared Card `panel` variant for access inspectors. Keep one task header/close,
-a scrollable body and a persistent footer; let narrow layouts scroll naturally. Focus the
-named region without drawing a heavy outline around the whole panel; interactive controls
-retain their keyboard focus rings. Scroll new panels into view at every viewport size.
+a scrollable body and a persistent footer inside the Users sheet at every viewport.
+Keep keyboard focus rings and use the shared AlertDialog for dirty dismissal. The
+Structure overview/task sheets retain the same fixed header, scrolling body and action footer.
 Review/uncertain-save actions share that footer while retaining the owning review state.
 Prevent closing a pending or uncertain write; deliberate Cancel discards only transient
 changes. Role-action switching must not silently lose dirty fields. Group permissions by
 purpose and label required/company choices. New assignments require an explicit role
-choice. Members Invite person opens the Invitations composer in one action through a
-consumed navigation intent, never a mutation or an automatic grant.
+choice. Invite member opens the owning composer directly from Members or Invitations.
+Bulk invitations use a bounded task with the same assignment composition, associated
+recipient errors, explicit review and per-recipient outcomes. Dismissal is separate from
+successful-save notification. Role View opens an overview; Duplicate opens an editable
+new custom-role draft. Review shows added/removed permissions and assignments. Keep
+mobile invitation delivery and expiry available, and test internal table overflow as
+well as document width. Section navigation uses semantic AppLinks without button styles.
+See the [People UI architecture](../../architecture.md#people-and-scoped-structure-ui-um-i10)
+for filtering, usage-count visibility and durable-command recovery rules.
+
+CSV import tasks compose the shared task sheet, fields, assignment review, progress and
+row-result table. Show progress counts with text; preserve independent invitation/mail
+status, show explicit cancellation consequences and keep long filenames/addresses wrapped.

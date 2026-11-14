@@ -14,6 +14,9 @@ import {
 import {
   PEOPLE_API_VERSION,
   PEOPLE_ERROR_STATUS,
+  PEOPLE_FEATURES_HEADER,
+  PEOPLE_IMPORT_FEATURE,
+  PEOPLE_IMPORT_LIMITS,
   PEOPLE_LIMITS,
   PEOPLE_ROUTES,
   peopleJsonSchemas,
@@ -202,6 +205,15 @@ for (const route of PEOPLE_ROUTES) {
           { LocalInvitationContinuation: [], ...(mutation ? { CsrfToken: [] } : {}) },
         ];
   const parameters = [];
+  if (route.path === '/api/people/catalog')
+    parameters.push({
+      name: PEOPLE_FEATURES_HEADER,
+      in: 'header',
+      required: false,
+      schema: { type: 'string', const: PEOPLE_IMPORT_FEATURE },
+      description:
+        'Optional capability opt-in. Without imports-v1 the response preserves the pre-import strict catalog shape and omits durableImports. This header grants no authority.',
+    });
   if (route.path.includes('{id}'))
     parameters.push({
       name: 'id',
@@ -249,7 +261,10 @@ for (const route of PEOPLE_ROUTES) {
     'x-origin-required': mutation,
     'x-same-actor-required': route.sameActor ?? false,
     'x-query-contract': route.query ?? 'PeopleEmpty',
-    'x-body-limit-bytes': PEOPLE_LIMITS.bodyBytes,
+    'x-body-limit-bytes':
+      route.path === '/api/people/imports' && route.method === 'POST'
+        ? PEOPLE_IMPORT_LIMITS.bodyBytes
+        : PEOPLE_LIMITS.bodyBytes,
     'x-response-limit-bytes': PEOPLE_LIMITS.responseBytes,
     'x-deadline-ms': PEOPLE_LIMITS.requestTimeoutMs,
     ...(normal

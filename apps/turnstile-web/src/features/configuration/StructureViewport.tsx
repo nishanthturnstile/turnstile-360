@@ -39,6 +39,7 @@ export function StructureViewport({
   empty,
   search,
   children,
+  panelSelector = '.structure-operations',
 }: {
   outline: boolean;
   layout: ReturnType<typeof layoutStructure>;
@@ -49,6 +50,7 @@ export function StructureViewport({
   empty: boolean;
   search: string;
   children: ReactNode;
+  panelSelector?: string;
 }) {
   const paneRef = useRef<HTMLElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
@@ -72,9 +74,7 @@ export function StructureViewport({
   function area() {
     const pane = paneRef.current;
     const bounds = pane?.querySelector<HTMLElement>('.structure-chart-bounds');
-    const panel = pane
-      ?.closest('.structure-workbench')
-      ?.querySelector<HTMLElement>('.structure-operations');
+    const panel = pane?.closest('.structure-workbench')?.querySelector<HTMLElement>(panelSelector);
     const reserved = bounds
       ? Number.parseFloat(getComputedStyle(bounds).paddingInlineEnd) || 0
       : pane && panel && getComputedStyle(pane).getPropertyValue('--structure-tools-space')
@@ -126,7 +126,7 @@ export function StructureViewport({
   // biome-ignore lint/correctness/useExhaustiveDependencies: Event handlers use refs; mode changes own their lifecycle.
   useLayoutEffect(() => {
     const pane = paneRef.current;
-    if (!pane || outline) return;
+    if (!pane || outline || empty) return;
     if (!initialized.current) {
       const available = area();
       const root = rootId ? layout.positions.get(rootId) : undefined;

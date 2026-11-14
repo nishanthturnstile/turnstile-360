@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Turnstile 360 People and Scoped Access",
-    "version": "1.1.0",
+    "version": "1.3.1",
     "description": "Executable user-management contracts. UM-I04 supplies canonical access consumers; UM-I05 implements scoped structure operations; UM-I08 implements restricted recipients; UM-I09 implements ordinary administration reads, impact, commands and current readback. Authority integration is implemented in UM-I06. Ordinary writers remain closed behind the coordinated release gate. This document does not deploy or open capabilities. Semantic Zod refinements, including normalization/applicability/versions, are normative beyond structural JSON Schema."
   },
   "servers": [{ "url": "/" }],
@@ -10,6 +10,450 @@
   "x-existing-auth-contract": "turnstile-auth.openapi.yaml",
   "x-access-aware-session-target": "#/components/schemas/AccessAwareUserSession",
   "paths": {
+    "/api/people/imports": {
+      "post": {
+        "operationId": "post_api_people_imports",
+        "summary": "POST /api/people/imports",
+        "description": "Live normal shell session; completed workspace; company turnstile:people:manage. Mutations recheck action/scope ceiling, references, protected counts and versions under owning transaction locks. Cookie mutations require current synchronizer CSRF, exact Origin and Fetch Metadata. No arbitrary callback or browser service credentials. Route path IDs and discriminated command targets must agree. Runtime reference, grant-ceiling and transactional checks remain mandatory after structural validation.",
+        "x-implementation-status": "implemented (UM-I09); administration writers release-gated; isolated verification; rollout pending",
+        "x-authentication-policy": "normal_people",
+        "x-workspace-readiness-required": true,
+        "x-csrf-required": true,
+        "x-origin-required": true,
+        "x-same-actor-required": false,
+        "x-query-contract": "PeopleEmpty",
+        "x-body-limit-bytes": 262144,
+        "x-response-limit-bytes": 1048576,
+        "x-deadline-ms": 10000,
+        "x-deadline-enforcement": "Server response deadline and transaction connection cancellation; command readback reconciles uncertain commit",
+        "x-release-gate": "public_writes_enabled",
+        "security": [
+          { "ProductCookie": [], "CsrfToken": [] },
+          { "LocalProductCookie": [], "CsrfToken": [] }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ImportCreate" },
+              "example": {
+                "id": "10000000-0000-4000-8000-0000000000c3",
+                "filename": "recipients.csv",
+                "csv": "email\nalex@example.test\n",
+                "assignments": [
+                  {
+                    "roleId": "10000000-0000-4000-8000-000000000014",
+                    "expectedRoleVersion": 1,
+                    "scope": { "kind": "company" }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/ImportDetail" },
+          "400": { "$ref": "#/components/responses/PeopleError400" },
+          "401": { "$ref": "#/components/responses/PeopleError401" },
+          "403": { "$ref": "#/components/responses/PeopleError403" },
+          "404": { "$ref": "#/components/responses/PeopleError404" },
+          "409": { "$ref": "#/components/responses/PeopleError409" },
+          "410": { "$ref": "#/components/responses/PeopleError410" },
+          "413": { "$ref": "#/components/responses/PeopleError413" },
+          "415": { "$ref": "#/components/responses/PeopleError415" },
+          "429": { "$ref": "#/components/responses/PeopleError429" },
+          "503": { "$ref": "#/components/responses/PeopleError503" }
+        }
+      },
+      "get": {
+        "operationId": "get_api_people_imports",
+        "summary": "GET /api/people/imports",
+        "description": "Live normal shell session; completed workspace; company turnstile:people:manage. Mutations recheck action/scope ceiling, references, protected counts and versions under owning transaction locks. Cookie mutations require current synchronizer CSRF, exact Origin and Fetch Metadata. No arbitrary callback or browser service credentials. Route path IDs and discriminated command targets must agree. Runtime reference, grant-ceiling and transactional checks remain mandatory after structural validation.",
+        "x-implementation-status": "implemented (UM-I09); administration writers release-gated; isolated verification; rollout pending",
+        "x-authentication-policy": "normal_people",
+        "x-workspace-readiness-required": true,
+        "x-csrf-required": false,
+        "x-origin-required": false,
+        "x-same-actor-required": false,
+        "x-query-contract": "PeopleEmpty",
+        "x-body-limit-bytes": 16384,
+        "x-response-limit-bytes": 1048576,
+        "x-deadline-ms": 10000,
+        "x-deadline-enforcement": "Server response deadline and transaction connection cancellation; command readback reconciles uncertain commit",
+        "x-release-gate": "read-only current authorized projection",
+        "security": [{ "ProductCookie": [] }, { "LocalProductCookie": [] }],
+        "parameters": [],
+        "responses": {
+          "200": { "$ref": "#/components/responses/ImportList" },
+          "400": { "$ref": "#/components/responses/PeopleError400" },
+          "401": { "$ref": "#/components/responses/PeopleError401" },
+          "403": { "$ref": "#/components/responses/PeopleError403" },
+          "404": { "$ref": "#/components/responses/PeopleError404" },
+          "409": { "$ref": "#/components/responses/PeopleError409" },
+          "410": { "$ref": "#/components/responses/PeopleError410" },
+          "413": { "$ref": "#/components/responses/PeopleError413" },
+          "415": { "$ref": "#/components/responses/PeopleError415" },
+          "429": { "$ref": "#/components/responses/PeopleError429" },
+          "503": { "$ref": "#/components/responses/PeopleError503" }
+        }
+      }
+    },
+    "/api/people/imports/{id}": {
+      "get": {
+        "operationId": "get_api_people_imports__id_",
+        "summary": "GET /api/people/imports/{id}",
+        "description": "Live normal shell session; completed workspace; company turnstile:people:manage. Mutations recheck action/scope ceiling, references, protected counts and versions under owning transaction locks. Cookie mutations require current synchronizer CSRF, exact Origin and Fetch Metadata. No arbitrary callback or browser service credentials. Route path IDs and discriminated command targets must agree. Runtime reference, grant-ceiling and transactional checks remain mandatory after structural validation.",
+        "x-implementation-status": "implemented (UM-I09); administration writers release-gated; isolated verification; rollout pending",
+        "x-authentication-policy": "normal_people",
+        "x-workspace-readiness-required": true,
+        "x-csrf-required": false,
+        "x-origin-required": false,
+        "x-same-actor-required": false,
+        "x-query-contract": "ImportRowsQuery",
+        "x-body-limit-bytes": 16384,
+        "x-response-limit-bytes": 1048576,
+        "x-deadline-ms": 10000,
+        "x-deadline-enforcement": "Server response deadline and transaction connection cancellation; command readback reconciles uncertain commit",
+        "x-release-gate": "read-only current authorized projection",
+        "security": [{ "ProductCookie": [] }, { "LocalProductCookie": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": { "default": 0, "type": "integer", "minimum": 0, "maximum": 501 }
+          }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/ImportDetail" },
+          "400": { "$ref": "#/components/responses/PeopleError400" },
+          "401": { "$ref": "#/components/responses/PeopleError401" },
+          "403": { "$ref": "#/components/responses/PeopleError403" },
+          "404": { "$ref": "#/components/responses/PeopleError404" },
+          "409": { "$ref": "#/components/responses/PeopleError409" },
+          "410": { "$ref": "#/components/responses/PeopleError410" },
+          "413": { "$ref": "#/components/responses/PeopleError413" },
+          "415": { "$ref": "#/components/responses/PeopleError415" },
+          "429": { "$ref": "#/components/responses/PeopleError429" },
+          "503": { "$ref": "#/components/responses/PeopleError503" }
+        }
+      }
+    },
+    "/api/people/imports/{id}/actions": {
+      "post": {
+        "operationId": "post_api_people_imports__id__actions",
+        "summary": "POST /api/people/imports/{id}/actions",
+        "description": "Live normal shell session; completed workspace; company turnstile:people:manage. Mutations recheck action/scope ceiling, references, protected counts and versions under owning transaction locks. Cookie mutations require current synchronizer CSRF, exact Origin and Fetch Metadata. No arbitrary callback or browser service credentials. Route path IDs and discriminated command targets must agree. Runtime reference, grant-ceiling and transactional checks remain mandatory after structural validation.",
+        "x-implementation-status": "implemented (UM-I09); administration writers release-gated; isolated verification; rollout pending",
+        "x-authentication-policy": "normal_people",
+        "x-workspace-readiness-required": true,
+        "x-csrf-required": true,
+        "x-origin-required": true,
+        "x-same-actor-required": false,
+        "x-query-contract": "PeopleEmpty",
+        "x-body-limit-bytes": 16384,
+        "x-response-limit-bytes": 1048576,
+        "x-deadline-ms": 10000,
+        "x-deadline-enforcement": "Server response deadline and transaction connection cancellation; command readback reconciles uncertain commit",
+        "x-release-gate": "public_writes_enabled",
+        "security": [
+          { "ProductCookie": [], "CsrfToken": [] },
+          { "LocalProductCookie": [], "CsrfToken": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ImportAction" },
+              "example": { "action": "start", "expectedVersion": 1 }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/ImportDetail" },
+          "400": { "$ref": "#/components/responses/PeopleError400" },
+          "401": { "$ref": "#/components/responses/PeopleError401" },
+          "403": { "$ref": "#/components/responses/PeopleError403" },
+          "404": { "$ref": "#/components/responses/PeopleError404" },
+          "409": { "$ref": "#/components/responses/PeopleError409" },
+          "410": { "$ref": "#/components/responses/PeopleError410" },
+          "413": { "$ref": "#/components/responses/PeopleError413" },
+          "415": { "$ref": "#/components/responses/PeopleError415" },
+          "429": { "$ref": "#/components/responses/PeopleError429" },
+          "503": { "$ref": "#/components/responses/PeopleError503" }
+        }
+      }
+    },
+    "/api/people/imports/{id}/errors": {
+      "get": {
+        "operationId": "get_api_people_imports__id__errors",
+        "summary": "GET /api/people/imports/{id}/errors",
+        "description": "Live normal shell session; completed workspace; company turnstile:people:manage. Mutations recheck action/scope ceiling, references, protected counts and versions under owning transaction locks. Cookie mutations require current synchronizer CSRF, exact Origin and Fetch Metadata. No arbitrary callback or browser service credentials. Route path IDs and discriminated command targets must agree. Runtime reference, grant-ceiling and transactional checks remain mandatory after structural validation.",
+        "x-implementation-status": "implemented (UM-I09); administration writers release-gated; isolated verification; rollout pending",
+        "x-authentication-policy": "normal_people",
+        "x-workspace-readiness-required": true,
+        "x-csrf-required": false,
+        "x-origin-required": false,
+        "x-same-actor-required": false,
+        "x-query-contract": "PeopleEmpty",
+        "x-body-limit-bytes": 16384,
+        "x-response-limit-bytes": 1048576,
+        "x-deadline-ms": 10000,
+        "x-deadline-enforcement": "Server response deadline and transaction connection cancellation; command readback reconciles uncertain commit",
+        "x-release-gate": "read-only current authorized projection",
+        "security": [{ "ProductCookie": [] }, { "LocalProductCookie": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/ImportErrors" },
+          "400": { "$ref": "#/components/responses/PeopleError400" },
+          "401": { "$ref": "#/components/responses/PeopleError401" },
+          "403": { "$ref": "#/components/responses/PeopleError403" },
+          "404": { "$ref": "#/components/responses/PeopleError404" },
+          "409": { "$ref": "#/components/responses/PeopleError409" },
+          "410": { "$ref": "#/components/responses/PeopleError410" },
+          "413": { "$ref": "#/components/responses/PeopleError413" },
+          "415": { "$ref": "#/components/responses/PeopleError415" },
+          "429": { "$ref": "#/components/responses/PeopleError429" },
+          "503": { "$ref": "#/components/responses/PeopleError503" }
+        }
+      }
+    },
+    "/api/people/audit": {
+      "get": {
+        "operationId": "get_api_people_audit",
+        "summary": "GET /api/people/audit",
+        "description": "Live normal shell session; completed workspace; company turnstile:people:manage. Mutations recheck action/scope ceiling, references, protected counts and versions under owning transaction locks. Cookie mutations require current synchronizer CSRF, exact Origin and Fetch Metadata. No arbitrary callback or browser service credentials. Route path IDs and discriminated command targets must agree. Runtime reference, grant-ceiling and transactional checks remain mandatory after structural validation.",
+        "x-implementation-status": "implemented (UM-I09); administration writers release-gated; isolated verification; rollout pending",
+        "x-authentication-policy": "normal_people",
+        "x-workspace-readiness-required": true,
+        "x-csrf-required": false,
+        "x-origin-required": false,
+        "x-same-actor-required": false,
+        "x-query-contract": "PeopleAuditQuery",
+        "x-body-limit-bytes": 16384,
+        "x-response-limit-bytes": 1048576,
+        "x-deadline-ms": 10000,
+        "x-deadline-enforcement": "Server response deadline and transaction connection cancellation; command readback reconciles uncertain commit",
+        "x-release-gate": "read-only current authorized projection",
+        "security": [{ "ProductCookie": [] }, { "LocalProductCookie": [] }],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048,
+              "pattern": "^[A-Za-z0-9_.-]+$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "minimum": -9007199254740991, "maximum": 9007199254740991 },
+                { "type": "string", "pattern": "^[1-9][0-9]{0,2}$" }
+              ]
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["access", "invitations"] }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "legacy_retired",
+                "member_assignments_changed",
+                "member_suspended",
+                "member_reactivated",
+                "role_created",
+                "role_details_changed",
+                "role_permissions_changed",
+                "role_deleted",
+                "unit_coverage_changed",
+                "invitation_changed",
+                "issued",
+                "resent",
+                "reapproved",
+                "cancelled",
+                "expired",
+                "invalidated",
+                "smtp_accepted",
+                "delivery_failed",
+                "delivery_unknown",
+                "accepted",
+                "declined"
+              ]
+            }
+          },
+          {
+            "name": "subjectId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "allOf": [
+                {
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                { "pattern": "^[0-9a-f-]+$" }
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/PeopleAuditResponse" },
+          "400": { "$ref": "#/components/responses/PeopleError400" },
+          "401": { "$ref": "#/components/responses/PeopleError401" },
+          "403": { "$ref": "#/components/responses/PeopleError403" },
+          "404": { "$ref": "#/components/responses/PeopleError404" },
+          "409": { "$ref": "#/components/responses/PeopleError409" },
+          "410": { "$ref": "#/components/responses/PeopleError410" },
+          "413": { "$ref": "#/components/responses/PeopleError413" },
+          "415": { "$ref": "#/components/responses/PeopleError415" },
+          "429": { "$ref": "#/components/responses/PeopleError429" },
+          "503": { "$ref": "#/components/responses/PeopleError503" }
+        }
+      }
+    },
+    "/api/people/members/{id}/access": {
+      "get": {
+        "operationId": "get_api_people_members__id__access",
+        "summary": "GET /api/people/members/{id}/access",
+        "description": "Live normal shell session; completed workspace; company turnstile:people:manage. Mutations recheck action/scope ceiling, references, protected counts and versions under owning transaction locks. Cookie mutations require current synchronizer CSRF, exact Origin and Fetch Metadata. No arbitrary callback or browser service credentials. Route path IDs and discriminated command targets must agree. Runtime reference, grant-ceiling and transactional checks remain mandatory after structural validation.",
+        "x-implementation-status": "implemented (UM-I09); administration writers release-gated; isolated verification; rollout pending",
+        "x-authentication-policy": "normal_people",
+        "x-workspace-readiness-required": true,
+        "x-csrf-required": false,
+        "x-origin-required": false,
+        "x-same-actor-required": false,
+        "x-query-contract": "AccessInspectionQuery",
+        "x-body-limit-bytes": 16384,
+        "x-response-limit-bytes": 1048576,
+        "x-deadline-ms": 10000,
+        "x-deadline-enforcement": "Server response deadline and transaction connection cancellation; command readback reconciles uncertain commit",
+        "x-release-gate": "read-only current authorized projection",
+        "security": [{ "ProductCookie": [] }, { "LocalProductCookie": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "permission",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "turnstile:access",
+                "turnstile:dms:capabilities:read",
+                "turnstile:configuration:manage",
+                "turnstile:people:manage",
+                "turnstile:roles:manage",
+                "turnstile:incidents:read",
+                "turnstile:risks:read",
+                "turnstile:units:read",
+                "turnstile:units:manage"
+              ]
+            }
+          },
+          {
+            "name": "unitId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/AccessInspection" },
+          "400": { "$ref": "#/components/responses/PeopleError400" },
+          "401": { "$ref": "#/components/responses/PeopleError401" },
+          "403": { "$ref": "#/components/responses/PeopleError403" },
+          "404": { "$ref": "#/components/responses/PeopleError404" },
+          "409": { "$ref": "#/components/responses/PeopleError409" },
+          "410": { "$ref": "#/components/responses/PeopleError410" },
+          "413": { "$ref": "#/components/responses/PeopleError413" },
+          "415": { "$ref": "#/components/responses/PeopleError415" },
+          "429": { "$ref": "#/components/responses/PeopleError429" },
+          "503": { "$ref": "#/components/responses/PeopleError503" }
+        }
+      }
+    },
     "/api/people/catalog": {
       "get": {
         "operationId": "get_api_people_catalog",
@@ -28,7 +472,15 @@
         "x-deadline-enforcement": "Server response deadline and transaction connection cancellation; command readback reconciles uncertain commit",
         "x-release-gate": "read-only current authorized projection",
         "security": [{ "ProductCookie": [] }, { "LocalProductCookie": [] }],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "x-turnstile-people-features",
+            "in": "header",
+            "required": false,
+            "schema": { "type": "string", "const": "imports-v1" },
+            "description": "Optional capability opt-in. Without imports-v1 the response preserves the pre-import strict catalog shape and omits durableImports. This header grants no authority."
+          }
+        ],
         "responses": {
           "200": { "$ref": "#/components/responses/PermissionCatalog" },
           "400": { "$ref": "#/components/responses/PeopleError400" },
@@ -92,10 +544,44 @@
             "schema": { "type": "string", "maxLength": 1024 }
           },
           {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["id", "name", "name_desc"] }
+          },
+          {
             "name": "status",
             "in": "query",
             "required": false,
             "schema": { "type": "string", "enum": ["active", "suspended"] }
+          },
+          {
+            "name": "roleId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "allOf": [
+                {
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                { "pattern": "^[0-9a-f-]+$" }
+              ]
+            }
+          },
+          {
+            "name": "unitId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "allOf": [
+                {
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                { "pattern": "^[0-9a-f-]+$" }
+              ]
+            }
           }
         ],
         "responses": {
@@ -524,6 +1010,12 @@
             "schema": { "type": "string", "maxLength": 1024 }
           },
           {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["name", "name_desc"] }
+          },
+          {
             "name": "kind",
             "in": "query",
             "required": false,
@@ -939,12 +1431,47 @@
             "schema": { "type": "string", "maxLength": 1024 }
           },
           {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["id", "created_desc", "expires_asc"] }
+          },
+          {
             "name": "state",
             "in": "query",
             "required": false,
             "schema": {
               "type": "string",
               "enum": ["pending", "needs_reapproval", "accepted", "cancelled", "expired"]
+            }
+          },
+          {
+            "name": "roleId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "allOf": [
+                {
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                { "pattern": "^[0-9a-f-]+$" }
+              ]
+            }
+          },
+          {
+            "name": "actionable",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["true"] }
+          },
+          {
+            "name": "delivery",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["queued", "sending", "smtp_accepted", "failed", "unknown", "unavailable"]
             }
           }
         ],
@@ -2484,6 +3011,224 @@
   },
   "components": {
     "responses": {
+      "ImportDetail": {
+        "description": "Validated safe current projection",
+        "headers": {
+          "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+          "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ImportDetail" },
+            "example": {
+              "job": {
+                "id": "10000000-0000-4000-8000-0000000000c3",
+                "actorId": "example-administrator",
+                "filename": "recipients.csv",
+                "state": "draft",
+                "version": 1,
+                "reason": null,
+                "createdAt": "2026-11-03T10:00:00Z",
+                "updatedAt": "2026-11-03T10:00:00Z",
+                "reviewExpiresAt": "2026-11-03T10:00:00Z",
+                "nextAttemptAt": "2026-11-03T10:00:00Z",
+                "assignments": [
+                  {
+                    "id": "10000000-0000-4000-8000-00000000001e",
+                    "role": {
+                      "id": "10000000-0000-4000-8000-000000000014",
+                      "version": 1,
+                      "permissionVersion": 1,
+                      "description": null,
+                      "systemKey": null,
+                      "name": "Operations lead",
+                      "permissions": [
+                        "turnstile:access",
+                        "turnstile:units:read",
+                        "turnstile:units:manage"
+                      ]
+                    },
+                    "scope": {
+                      "kind": "units",
+                      "unitIds": ["10000000-0000-4000-8000-000000000002"],
+                      "includeChildren": true
+                    }
+                  },
+                  {
+                    "id": "10000000-0000-4000-8000-00000000001f",
+                    "role": {
+                      "id": "10000000-0000-4000-8000-00000000000d",
+                      "version": 1,
+                      "permissionVersion": 1,
+                      "description": null,
+                      "systemKey": "member",
+                      "name": "Member",
+                      "permissions": ["turnstile:access"]
+                    },
+                    "scope": {
+                      "kind": "units",
+                      "unitIds": ["10000000-0000-4000-8000-000000000003"],
+                      "includeChildren": false
+                    }
+                  }
+                ],
+                "counts": {
+                  "pending": 1,
+                  "processing": 0,
+                  "succeeded": 0,
+                  "failed": 0,
+                  "skipped": 0,
+                  "cancelled": 0
+                }
+              },
+              "rows": [
+                {
+                  "number": 2,
+                  "email": "alex@example.test",
+                  "state": "pending",
+                  "reason": null,
+                  "invitationId": null
+                }
+              ],
+              "nextAfter": null
+            }
+          }
+        }
+      },
+      "ImportList": {
+        "description": "Validated safe current projection",
+        "headers": {
+          "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+          "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ImportList" },
+            "example": {
+              "items": [
+                {
+                  "id": "10000000-0000-4000-8000-0000000000c3",
+                  "actorId": "example-administrator",
+                  "filename": "recipients.csv",
+                  "state": "draft",
+                  "version": 1,
+                  "reason": null,
+                  "createdAt": "2026-11-03T10:00:00Z",
+                  "updatedAt": "2026-11-03T10:00:00Z",
+                  "reviewExpiresAt": "2026-11-03T10:00:00Z",
+                  "nextAttemptAt": "2026-11-03T10:00:00Z",
+                  "assignments": [
+                    {
+                      "id": "10000000-0000-4000-8000-00000000001e",
+                      "role": {
+                        "id": "10000000-0000-4000-8000-000000000014",
+                        "version": 1,
+                        "permissionVersion": 1,
+                        "description": null,
+                        "systemKey": null,
+                        "name": "Operations lead",
+                        "permissions": [
+                          "turnstile:access",
+                          "turnstile:units:read",
+                          "turnstile:units:manage"
+                        ]
+                      },
+                      "scope": {
+                        "kind": "units",
+                        "unitIds": ["10000000-0000-4000-8000-000000000002"],
+                        "includeChildren": true
+                      }
+                    },
+                    {
+                      "id": "10000000-0000-4000-8000-00000000001f",
+                      "role": {
+                        "id": "10000000-0000-4000-8000-00000000000d",
+                        "version": 1,
+                        "permissionVersion": 1,
+                        "description": null,
+                        "systemKey": "member",
+                        "name": "Member",
+                        "permissions": ["turnstile:access"]
+                      },
+                      "scope": {
+                        "kind": "units",
+                        "unitIds": ["10000000-0000-4000-8000-000000000003"],
+                        "includeChildren": false
+                      }
+                    }
+                  ],
+                  "counts": {
+                    "pending": 1,
+                    "processing": 0,
+                    "succeeded": 0,
+                    "failed": 0,
+                    "skipped": 0,
+                    "cancelled": 0
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "ImportErrors": {
+        "description": "Validated safe current projection",
+        "headers": {
+          "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+          "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ImportErrors" },
+            "example": { "rows": [] }
+          }
+        }
+      },
+      "PeopleAuditResponse": {
+        "description": "Validated safe current projection",
+        "headers": {
+          "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+          "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/PeopleAuditResponse" },
+            "example": { "items": [], "nextCursor": null, "retentionDays": 90, "accessRevision": 3 }
+          }
+        }
+      },
+      "AccessInspection": {
+        "description": "Validated safe current projection",
+        "headers": {
+          "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+          "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/AccessInspection" },
+            "example": {
+              "memberId": "10000000-0000-4000-8000-000000000028",
+              "permission": "turnstile:units:read",
+              "unitId": "10000000-0000-4000-8000-000000000002",
+              "memberStatus": "active",
+              "allowed": true,
+              "reason": "granted",
+              "sources": [
+                {
+                  "id": "10000000-0000-4000-8000-00000000001e",
+                  "name": "Operations lead",
+                  "scope": {
+                    "kind": "units",
+                    "unitIds": ["10000000-0000-4000-8000-000000000002"],
+                    "includeChildren": true
+                  }
+                }
+              ],
+              "accessRevision": 3
+            }
+          }
+        }
+      },
       "PermissionCatalog": {
         "description": "Validated safe current projection",
         "headers": {
@@ -3862,6 +4607,9 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
+          "usersInsights": { "type": "number", "const": 1 },
+          "durableImports": { "type": "number", "const": 1 },
+          "memberAssignmentFilters": { "type": "boolean", "const": true },
           "organizationRevision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
           "grantableCompanyPermissions": {
             "maxItems": 9,
@@ -4193,6 +4941,16 @@
           "assignments": { "$ref": "#/components/schemas/ResolvedRoleAssignments" },
           "legacySource": {
             "anyOf": [{ "$ref": "#/components/schemas/LegacyGrantSource" }, { "type": "null" }]
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "importedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
           }
         },
         "required": [
@@ -4253,7 +5011,29 @@
             ]
           },
           "total": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
-          "accessRevision": { "type": "integer", "minimum": 0, "maximum": 2147483647 }
+          "accessRevision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+          "usage": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "roleId": {
+                  "type": "string",
+                  "allOf": [
+                    {
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    { "pattern": "^[0-9a-f-]+$" }
+                  ]
+                },
+                "memberCount": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+                "invitationCount": { "type": "integer", "minimum": 0, "maximum": 2147483647 }
+              },
+              "required": ["roleId", "memberCount", "invitationCount"],
+              "additionalProperties": false
+            }
+          }
         },
         "required": ["items", "nextCursor", "total", "accessRevision"],
         "additionalProperties": false
@@ -4573,6 +5353,565 @@
         "required": ["user", "permissions", "session", "csrfToken", "access"],
         "additionalProperties": false
       },
+      "PeopleAuditQuery": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "cursor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048,
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          },
+          "limit": {
+            "anyOf": [
+              { "type": "integer", "minimum": -9007199254740991, "maximum": 9007199254740991 },
+              { "type": "string", "pattern": "^[1-9][0-9]{0,2}$" }
+            ]
+          },
+          "source": { "type": "string", "enum": ["access", "invitations"] },
+          "action": {
+            "type": "string",
+            "enum": [
+              "legacy_retired",
+              "member_assignments_changed",
+              "member_suspended",
+              "member_reactivated",
+              "role_created",
+              "role_details_changed",
+              "role_permissions_changed",
+              "role_deleted",
+              "unit_coverage_changed",
+              "invitation_changed",
+              "issued",
+              "resent",
+              "reapproved",
+              "cancelled",
+              "expired",
+              "invalidated",
+              "smtp_accepted",
+              "delivery_failed",
+              "delivery_unknown",
+              "accepted",
+              "declined"
+            ]
+          },
+          "subjectId": {
+            "type": "string",
+            "allOf": [
+              {
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              { "pattern": "^[0-9a-f-]+$" }
+            ]
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PeopleAuditEvent": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "allOf": [
+              {
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              { "pattern": "^[0-9a-f-]+$" }
+            ]
+          },
+          "source": { "type": "string", "enum": ["access", "invitations"] },
+          "action": {
+            "type": "string",
+            "enum": [
+              "legacy_retired",
+              "member_assignments_changed",
+              "member_suspended",
+              "member_reactivated",
+              "role_created",
+              "role_details_changed",
+              "role_permissions_changed",
+              "role_deleted",
+              "unit_coverage_changed",
+              "invitation_changed",
+              "issued",
+              "resent",
+              "reapproved",
+              "cancelled",
+              "expired",
+              "invalidated",
+              "smtp_accepted",
+              "delivery_failed",
+              "delivery_unknown",
+              "accepted",
+              "declined"
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "actorKind": { "type": "string", "enum": ["user", "system"] },
+          "actorId": {
+            "anyOf": [{ "type": "string", "pattern": "^[A-Za-z0-9_-]{1,200}$" }, { "type": "null" }]
+          },
+          "actorName": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "subjectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "allOf": [
+                  {
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  { "pattern": "^[0-9a-f-]+$" }
+                ]
+              },
+              { "type": "null" }
+            ]
+          },
+          "subjectLabel": { "type": "string", "minLength": 1, "maxLength": 320 },
+          "subjectKind": { "type": "string", "enum": ["member", "role", "invitation"] },
+          "revisionBefore": {
+            "anyOf": [
+              { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+              { "type": "null" }
+            ]
+          },
+          "revisionAfter": {
+            "anyOf": [
+              { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+              { "type": "null" }
+            ]
+          },
+          "generation": {
+            "anyOf": [
+              { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+              { "type": "null" }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "action",
+          "occurredAt",
+          "actorKind",
+          "actorId",
+          "subjectId",
+          "revisionBefore",
+          "revisionAfter",
+          "generation"
+        ],
+        "additionalProperties": false
+      },
+      "PeopleAuditResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "items": {
+            "maxItems": 100,
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PeopleAuditEvent" }
+          },
+          "nextCursor": { "anyOf": [{ "type": "string", "maxLength": 2048 }, { "type": "null" }] },
+          "retentionDays": { "type": "number", "const": 90 },
+          "accessRevision": { "type": "integer", "minimum": 0, "maximum": 2147483647 }
+        },
+        "required": ["items", "nextCursor", "retentionDays", "accessRevision"],
+        "additionalProperties": false
+      },
+      "AccessInspectionQuery": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "permission": {
+            "type": "string",
+            "enum": [
+              "turnstile:access",
+              "turnstile:dms:capabilities:read",
+              "turnstile:configuration:manage",
+              "turnstile:people:manage",
+              "turnstile:roles:manage",
+              "turnstile:incidents:read",
+              "turnstile:risks:read",
+              "turnstile:units:read",
+              "turnstile:units:manage"
+            ]
+          },
+          "unitId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": ["permission"],
+        "additionalProperties": false
+      },
+      "AccessInspection": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "allOf": [
+              {
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              { "pattern": "^[0-9a-f-]+$" }
+            ]
+          },
+          "permission": {
+            "type": "string",
+            "enum": [
+              "turnstile:access",
+              "turnstile:dms:capabilities:read",
+              "turnstile:configuration:manage",
+              "turnstile:people:manage",
+              "turnstile:roles:manage",
+              "turnstile:incidents:read",
+              "turnstile:risks:read",
+              "turnstile:units:read",
+              "turnstile:units:manage"
+            ]
+          },
+          "unitId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "allOf": [
+                  {
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  { "pattern": "^[0-9a-f-]+$" }
+                ]
+              },
+              { "type": "null" }
+            ]
+          },
+          "memberStatus": { "type": "string", "enum": ["active", "suspended"] },
+          "allowed": { "type": "boolean" },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "granted",
+              "suspended",
+              "no_workspace_entry",
+              "company_only",
+              "no_matching_grant"
+            ]
+          },
+          "sources": {
+            "maxItems": 33,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "allOf": [
+                    {
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    { "pattern": "^[0-9a-f-]+$" }
+                  ]
+                },
+                "name": { "type": "string", "minLength": 1, "maxLength": 320 },
+                "scope": { "$ref": "#/components/schemas/AssignmentScope" }
+              },
+              "required": ["id", "name", "scope"],
+              "additionalProperties": false
+            }
+          },
+          "accessRevision": { "type": "integer", "minimum": 0, "maximum": 2147483647 }
+        },
+        "required": [
+          "memberId",
+          "permission",
+          "unitId",
+          "memberStatus",
+          "allowed",
+          "reason",
+          "sources",
+          "accessRevision"
+        ],
+        "additionalProperties": false
+      },
+      "ImportCreate": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "filename": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "pattern": "^[^\\p{Cc}]+$"
+          },
+          "csv": { "type": "string", "minLength": 1, "maxLength": 131072 },
+          "assignments": { "$ref": "#/components/schemas/RoleAssignmentRequests" }
+        },
+        "required": ["id", "filename", "csv", "assignments"],
+        "additionalProperties": false
+      },
+      "ImportAction": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "action": { "type": "string", "enum": ["start", "resume", "cancel"] },
+          "expectedVersion": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": ["action", "expectedVersion"],
+        "additionalProperties": false
+      },
+      "ImportRowsQuery": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "after": { "default": 0, "type": "integer", "minimum": 0, "maximum": 501 }
+        },
+        "additionalProperties": false
+      },
+      "ImportJob": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "actorId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,200}$" },
+          "filename": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "state": {
+            "type": "string",
+            "enum": ["draft", "queued", "running", "paused", "completed", "cancelled"]
+          },
+          "version": { "type": "integer", "exclusiveMinimum": 0, "maximum": 9007199254740991 },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "invalid_email",
+                  "duplicate_csv",
+                  "invalid_columns",
+                  "existing_member",
+                  "existing_invitation",
+                  "context_changed",
+                  "permission_changed",
+                  "dependency",
+                  "rate_limit",
+                  "cancelled",
+                  "attempts_exhausted"
+                ]
+              },
+              { "type": "null" }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "reviewExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "nextAttemptAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "assignments": { "$ref": "#/components/schemas/ResolvedRoleAssignments" },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "pending": { "type": "integer", "minimum": 0, "maximum": 500 },
+              "processing": { "type": "integer", "minimum": 0, "maximum": 500 },
+              "succeeded": { "type": "integer", "minimum": 0, "maximum": 500 },
+              "failed": { "type": "integer", "minimum": 0, "maximum": 500 },
+              "skipped": { "type": "integer", "minimum": 0, "maximum": 500 },
+              "cancelled": { "type": "integer", "minimum": 0, "maximum": 500 }
+            },
+            "required": ["pending", "processing", "succeeded", "failed", "skipped", "cancelled"],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "actorId",
+          "filename",
+          "state",
+          "version",
+          "reason",
+          "createdAt",
+          "updatedAt",
+          "reviewExpiresAt",
+          "nextAttemptAt",
+          "assignments",
+          "counts"
+        ],
+        "additionalProperties": false
+      },
+      "ImportDetail": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "job": { "$ref": "#/components/schemas/ImportJob" },
+          "rows": {
+            "maxItems": 25,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "number": { "type": "integer", "minimum": 2, "maximum": 501 },
+                "email": { "type": "string", "maxLength": 320 },
+                "state": {
+                  "type": "string",
+                  "enum": ["pending", "processing", "succeeded", "failed", "skipped", "cancelled"]
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "invalid_email",
+                        "duplicate_csv",
+                        "invalid_columns",
+                        "existing_member",
+                        "existing_invitation",
+                        "context_changed",
+                        "permission_changed",
+                        "dependency",
+                        "rate_limit",
+                        "cancelled",
+                        "attempts_exhausted"
+                      ]
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "invitationId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    { "type": "null" }
+                  ]
+                }
+              },
+              "required": ["number", "email", "state", "reason", "invitationId"],
+              "additionalProperties": false
+            }
+          },
+          "nextAfter": {
+            "anyOf": [
+              { "type": "integer", "minimum": -9007199254740991, "maximum": 9007199254740991 },
+              { "type": "null" }
+            ]
+          }
+        },
+        "required": ["job", "rows", "nextAfter"],
+        "additionalProperties": false
+      },
+      "ImportList": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "items": {
+            "maxItems": 100,
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ImportJob" }
+          }
+        },
+        "required": ["items"],
+        "additionalProperties": false
+      },
+      "ImportErrors": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rows": {
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "number": { "type": "integer", "minimum": 2, "maximum": 501 },
+                "email": { "type": "string", "maxLength": 320 },
+                "state": {
+                  "type": "string",
+                  "enum": ["pending", "processing", "succeeded", "failed", "skipped", "cancelled"]
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "invalid_email",
+                        "duplicate_csv",
+                        "invalid_columns",
+                        "existing_member",
+                        "existing_invitation",
+                        "context_changed",
+                        "permission_changed",
+                        "dependency",
+                        "rate_limit",
+                        "cancelled",
+                        "attempts_exhausted"
+                      ]
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "invitationId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    { "type": "null" }
+                  ]
+                }
+              },
+              "required": ["number", "email", "state", "reason", "invitationId"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["rows"],
+        "additionalProperties": false
+      },
       "PeoplePath": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -4643,7 +5982,26 @@
             ]
           },
           "search": { "type": "string", "maxLength": 1024 },
-          "status": { "type": "string", "enum": ["active", "suspended"] }
+          "sort": { "type": "string", "enum": ["id", "name", "name_desc"] },
+          "status": { "type": "string", "enum": ["active", "suspended"] },
+          "roleId": {
+            "type": "string",
+            "allOf": [
+              {
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              { "pattern": "^[0-9a-f-]+$" }
+            ]
+          },
+          "unitId": {
+            "type": "string",
+            "allOf": [
+              {
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              { "pattern": "^[0-9a-f-]+$" }
+            ]
+          }
         },
         "additionalProperties": false
       },
@@ -4664,6 +6022,7 @@
             ]
           },
           "search": { "type": "string", "maxLength": 1024 },
+          "sort": { "type": "string", "enum": ["name", "name_desc"] },
           "kind": { "type": "string", "enum": ["system", "custom"] }
         },
         "additionalProperties": false
@@ -4685,9 +6044,24 @@
             ]
           },
           "search": { "type": "string", "maxLength": 1024 },
+          "sort": { "type": "string", "enum": ["id", "created_desc", "expires_asc"] },
           "state": {
             "type": "string",
             "enum": ["pending", "needs_reapproval", "accepted", "cancelled", "expired"]
+          },
+          "roleId": {
+            "type": "string",
+            "allOf": [
+              {
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              { "pattern": "^[0-9a-f-]+$" }
+            ]
+          },
+          "actionable": { "type": "string", "enum": ["true"] },
+          "delivery": {
+            "type": "string",
+            "enum": ["queued", "sending", "smtp_accepted", "failed", "unknown", "unavailable"]
           }
         },
         "additionalProperties": false

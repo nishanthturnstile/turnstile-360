@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { chmod, mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import {
   DeploymentClient,
   ProtectedFileStore,
@@ -26,6 +27,76 @@ describe('Turnstile-owned deployment persistence and private reporter', () => {
   });
   afterAll(async () => {
     await Promise.all([owner.end(), coordinator.end()]);
+  });
+  it('samples the deployment clock after a blocked writer and still quarantines a future durable clock floor', async () => {
+    const runtime = new Pool({ connectionString: process.env.TURNSTILE_DATABASE_URL, max: 1 });
+    const held = await owner.connect();
+    const waiter = await runtime.connect();
+    const savedClock = await withTenant(
+      owner,
+      tenantId,
+      async (db) => (await db.query('SELECT * FROM turnstile.deployment_clock_state')).rows[0],
+    );
+    await withTenant(owner, tenantId, (db) =>
+      db.query(
+        'INSERT INTO turnstile.deployment_clock_state(tenant_id) VALUES($1) ON CONFLICT DO NOTHING',
+        [tenantId],
+      ),
+    );
+    let waiting: Promise<unknown> | undefined;
+    try {
+      await held.query('BEGIN');
+      await held.query("SELECT set_config('app.tenant_id',$1,true)", [tenantId]);
+      await held.query('SELECT * FROM turnstile.deployment_clock_state FOR UPDATE');
+      const holderPid = (await held.query('SELECT pg_backend_pid() AS pid')).rows[0].pid;
+      await waiter.query('BEGIN');
+      await waiter.query("SELECT set_config('app.tenant_id',$1,true)", [tenantId]);
+      const waiterPid = (await waiter.query('SELECT pg_backend_pid() AS pid')).rows[0].pid;
+      waiting = waiter.query('SELECT turnstile.deployment_clock() AS value');
+      let blocked = false;
+      for (let attempt = 0; attempt < 50; attempt++) {
+        const pids = (await owner.query('SELECT pg_blocking_pids($1) AS pids', [waiterPid])).rows[0]
+          .pids;
+        if (pids.includes(holderPid)) {
+          blocked = true;
+          break;
+        }
+        await delay(20);
+      }
+      expect(blocked).toBe(true);
+      await delay(1200);
+      await held.query(
+        'UPDATE turnstile.deployment_clock_state SET last_time=floor(extract(epoch FROM clock_timestamp())),quarantined=false',
+      );
+      await held.query('COMMIT');
+      const result = (await waiting) as { rows: { value: { quarantined: boolean } }[] };
+      await waiter.query('COMMIT');
+      expect(result.rows[0]?.value.quarantined).toBe(false);
+      await withTenant(owner, tenantId, (db) =>
+        db.query(
+          'UPDATE turnstile.deployment_clock_state SET last_time=floor(extract(epoch FROM clock_timestamp()))+30,quarantined=false',
+        ),
+      );
+      await waiter.query('BEGIN');
+      await waiter.query("SELECT set_config('app.tenant_id',$1,true)", [tenantId]);
+      const backward = (await waiter.query('SELECT turnstile.deployment_clock() AS value')).rows[0]
+        .value;
+      await waiter.query('COMMIT');
+      expect(backward.quarantined).toBe(true);
+    } finally {
+      await held.query('ROLLBACK').catch(() => {});
+      await waiting?.catch(() => {});
+      await waiter.query('ROLLBACK').catch(() => {});
+      held.release();
+      waiter.release();
+      await withTenant(owner, tenantId, (db) =>
+        db.query('UPDATE turnstile.deployment_clock_state SET last_time=$1,quarantined=$2', [
+          savedClock?.last_time ?? 0,
+          savedClock?.quarantined ?? false,
+        ]),
+      );
+      await runtime.end();
+    }
   });
   it('recovers DB-before-file promotion, fences independent operators and reports from read-only credentials without storing secrets in SQL', async () => {
     const saved = await withTenant(

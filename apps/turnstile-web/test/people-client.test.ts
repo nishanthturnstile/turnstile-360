@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   canManageUnit,
   commandTarget,
+  message,
   PeopleError,
   request,
 } from '../src/features/people/client.ts';
@@ -102,4 +103,53 @@ test('unit edit controls respect read-only, exact-unit and subtree coverage', ()
     ]),
     true,
   );
+});
+
+test('catalog requests explicitly opt in to new capabilities', async () => {
+  const original = globalThis.fetch;
+  const observed = [];
+  globalThis.fetch = async (_path, init) => {
+    observed.push(new Headers(init?.headers));
+    return new Response('{}', { status: 200 });
+  };
+  try {
+    await request('/api/people/catalog', { parse: (value) => value });
+    await request('/api/people/members', { parse: (value) => value });
+    assert.equal(observed[0].get('x-turnstile-people-features'), 'imports-v1');
+    assert.equal(observed[1].has('x-turnstile-people-features'), false);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+test('a rejected successful response has refresh guidance and remains uncertain for writes', async () => {
+  const original = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return new Response('{}', { status: 200 });
+  };
+  try {
+    await assert.rejects(
+      request(
+        '/api/people/members',
+        {
+          parse: () => {
+            throw new Error('private response contents');
+          },
+        },
+        { method: 'POST', body: {} },
+      ),
+      (error) => {
+        assert.ok(error instanceof PeopleError);
+        assert.equal(error.code, 'PEOPLE_RESPONSE_INVALID');
+        assert.equal(error.status, 503); // Keep the existing uncertain-mutation recovery path.
+        assert.match(message(error), /Refresh the page/);
+        assert.doesNotMatch(message(error), /service is unavailable|private response/);
+        return true;
+      },
+    );
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = original;
+  }
 });

@@ -1,0 +1,2 @@
+CREATE INDEX "invitation_created_idx" ON "turnstile"."invitation" USING btree ("tenant_id","created_at","id");--> statement-breakpoint
+CREATE INDEX "invitation_accepted_subject_idx" ON "turnstile"."invitation" USING btree ("tenant_id","accepted_user_id","accepted_at") WHERE "turnstile"."invitation"."state"='accepted';

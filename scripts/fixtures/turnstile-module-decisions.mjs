@@ -9,6 +9,8 @@ import { DECISION_TYPE } from '../../packages/control-plane-contracts/dist/index
 import { provisionDatabase } from '../provision-auth-database.mjs';
 import { verifyContainerReporter } from './control-plane-reporter.mjs';
 
+const fixtureLicenceEnd = new Date(Date.now() + 365 * 86400000).toISOString();
+
 /** Real selected image, owning CLI/store/API evaluator, independent roles and HTTPS ingress.
  * Private SQL seeds initial/restrictive authority; staff activation remains MOD-I08. */
 export async function verifyInstalledModuleDecisions({
@@ -282,7 +284,13 @@ export async function verifyInstalledModuleDecisions({
     });
   };
   const productPolicy = async (decision) =>
-    staff({ type: 'product.policy', id, revision: await revision(), decision });
+    staff({
+      type: 'product.policy',
+      id,
+      revision: await revision(),
+      decision,
+      ...(decision === 'approve' ? { licenceExpiresAt: fixtureLicenceEnd } : {}),
+    });
   const installAuthority = async (allowedModuleIds) => {
     const value = await privateValue(),
       profile = fixture.request.profile;

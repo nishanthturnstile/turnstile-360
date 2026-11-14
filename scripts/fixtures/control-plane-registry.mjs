@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import pg from 'pg';
 
+const fixtureLicenceEnd = new Date(Date.now() + 365 * 86400000).toISOString();
+
 // Uses the owning real Next HTTP fixture, including the TCP-I04 pairing protocol.
 export async function verifyCentralRegistry({
   admin,
@@ -178,7 +180,13 @@ export async function verifyCentralRegistry({
     }),
   );
   const policy = (id, revision, decision) =>
-    fresh({ type: 'product.policy', id, revision, decision });
+    fresh({
+      type: 'product.policy',
+      id,
+      revision,
+      decision,
+      ...(decision === 'approve' ? { licenceExpiresAt: fixtureLicenceEnd } : {}),
+    });
   await command(admin, policy(dms.resourceId, 1, 'approve'), 409);
   await command(
     admin,
@@ -252,6 +260,17 @@ export async function verifyCentralRegistry({
   };
   await pair(dms.resourceId, 1);
   const approve = policy(dms.resourceId, 1, 'approve');
+  const { licenceExpiresAt: _expiry, ...undated } = approve;
+  await command(admin, { ...undated, requestId: randomUUID() }, 409);
+  await command(
+    admin,
+    {
+      ...approve,
+      requestId: randomUUID(),
+      licenceExpiresAt: '2020-01-01T00:00:00.000Z',
+    },
+    409,
+  );
   const approved = await command(admin, approve);
   let product = (await read(clientId)).products.find((p) => p.id === dms.resourceId);
   assert.equal(product.policyState, 'approved');

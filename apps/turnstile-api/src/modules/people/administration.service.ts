@@ -95,10 +95,13 @@ export class AdministrationService {
       }
     });
   }
-  async catalog(actor: ConfigurationActor) {
+  async catalog(actor: ConfigurationActor, imports = false) {
     return this.store.run(actor, 'either', async (tx) =>
       permissionCatalogSchema.parse({
         catalogVersion: PEOPLE_CATALOG_VERSION,
+        memberAssignmentFilters: true,
+        usersInsights: 1,
+        ...(imports ? { durableImports: 1 } : {}),
         organizationRevision: tx.organizationRevision,
         grantableCompanyPermissions: PEOPLE_PERMISSIONS.filter((id) =>
           covers(tx.access, id, { kind: 'company' }),
@@ -133,7 +136,11 @@ export class AdministrationService {
       });
     }
     const cursor = peopleParse(
-      z.strictObject({ after: peopleIdSchema, binding: z.string() }),
+      z.strictObject({
+        after: peopleIdSchema,
+        binding: z.string(),
+        sortValue: z.string().max(500).optional(),
+      }),
       decoded,
     );
     if (cursor.binding !== hash(binding))
@@ -141,7 +148,7 @@ export class AdministrationService {
         reason: 'revision',
         accessRevision: tx.access.context.accessRevision,
       });
-    return cursor.after;
+    return cursor;
   }
   private binding(tx: PeopleTransaction, query: { cursor?: string | undefined }, domain: string) {
     return {
@@ -151,7 +158,7 @@ export class AdministrationService {
       fingerprint: tx.access.context.fingerprint,
     };
   }
-  private page<T extends { id: string }>(
+  private page<T extends { id: string; sortValue?: string }>(
     tx: PeopleTransaction,
     rows: T[],
     total: number,
@@ -165,7 +172,11 @@ export class AdministrationService {
       nextCursor:
         rows.length > limit
           ? Buffer.from(
-              JSON.stringify({ after: rows[limit - 1]?.id, binding: hash(binding) }),
+              JSON.stringify({
+                after: rows[limit - 1]?.id,
+                sortValue: rows[limit - 1]?.sortValue,
+                binding: hash(binding),
+              }),
             ).toString('base64url')
           : null,
     };
@@ -184,10 +195,49 @@ export class AdministrationService {
         ).rowCount
       )
         return peopleFailure(503, 'PEOPLE_UNAVAILABLE', { reason: 'capacity' });
+      const ancestors: string[] = [];
+      if (query.unitId) {
+        if (
+          !tx.access.units.has(query.unitId) ||
+          !covers(tx.access, 'turnstile:units:read', {
+            kind: 'units',
+            unitIds: [query.unitId],
+            includeChildren: false,
+          })
+        )
+          return peopleFailure(403, 'PERMISSION_DENIED');
+        let parent: string | null | undefined = query.unitId;
+        while (parent) {
+          ancestors.push(parent);
+          parent = tx.access.units.get(parent);
+        }
+      }
       const binding = this.binding(tx, query, 'members'),
         after = this.cursor(tx, query, binding);
-      const where = `m.tenant_id=$1 AND ($2::text IS NULL OR m.status=$2) AND ($3::text IS NULL OR m.user_id ILIKE $3 ESCAPE '\\' OR d.name ILIKE $3 ESCAPE '\\' OR d.email ILIKE $3 ESCAPE '\\')`;
-      const params = [tx.tenant, query.status ?? null, query.search ? literal(query.search) : null];
+      // Role and coverage filters match the same saved assignment, never unrelated grants.
+      const where = `m.tenant_id=$1 AND ($2::text IS NULL OR m.status=$2) AND ($3::text IS NULL OR m.user_id ILIKE $3 ESCAPE '\\' OR d.name ILIKE $3 ESCAPE '\\' OR d.email ILIKE $3 ESCAPE '\\')
+        AND (($4::uuid IS NULL AND $5::uuid IS NULL) OR EXISTS (
+          SELECT 1 FROM turnstile.access_assignment a WHERE a.tenant_id=m.tenant_id AND a.member_id=m.id
+          AND ($4::uuid IS NULL OR a.role_id=$4)
+          AND ($5::uuid IS NULL OR a.scope_kind='company' OR EXISTS (
+            SELECT 1 FROM turnstile.access_scope_anchor s WHERE s.tenant_id=a.tenant_id AND s.assignment_id=a.id
+            AND (s.unit_id=$5 OR (a.include_children AND s.unit_id=ANY($6::uuid[])))
+          ))
+        ))`;
+      const params = [
+        tx.tenant,
+        query.status ?? null,
+        query.search ? literal(query.search) : null,
+        query.roleId ?? null,
+        query.unitId ?? null,
+        ancestors,
+      ];
+      const descending = query.sort === 'name_desc';
+      const sortKey =
+        query.sort && query.sort !== 'id'
+          ? 'lower(coalesce(d.name,m.user_id)) COLLATE "C"'
+          : 'm.id::text COLLATE "C"';
+      const direction = descending ? 'DESC' : 'ASC';
       const total = (
         await tx.db.query(
           `SELECT count(*)::int AS n FROM turnstile.access_member m LEFT JOIN turnstile.member_display d ON d.tenant_id=m.tenant_id AND d.member_id=m.id WHERE ${where}`,
@@ -195,9 +245,15 @@ export class AdministrationService {
         )
       ).rows[0].n;
       const rows = (
-        await tx.db.query<{ id: string }>(
-          `SELECT m.id FROM turnstile.access_member m LEFT JOIN turnstile.member_display d ON d.tenant_id=m.tenant_id AND d.member_id=m.id WHERE ${where} AND ($4::uuid IS NULL OR m.id>$4) ORDER BY m.id LIMIT $5`,
-          [...params, after ?? null, query.limit + 1],
+        await tx.db.query<{ id: string; sortValue: string }>(
+          `SELECT m.id,${sortKey} AS "sortValue" FROM turnstile.access_member m LEFT JOIN turnstile.member_display d ON d.tenant_id=m.tenant_id AND d.member_id=m.id WHERE ${where}
+          AND ($7::uuid IS NULL OR (${sortKey},m.id) ${descending ? '<' : '>'} ($8::text COLLATE "C",$7::uuid)) ORDER BY ${sortKey} ${direction},m.id ${direction} LIMIT $9`,
+          [
+            ...params,
+            after?.after ?? null,
+            after?.sortValue ?? after?.after ?? null,
+            query.limit + 1,
+          ],
         )
       ).rows;
       return {
@@ -262,9 +318,10 @@ export class AdministrationService {
           return { role, allowedScopes };
         })
         .filter((row) => row.allowedScopes.length);
-      const source = eligible ? choices.map((c) => c.role) : all,
+      const unsorted = eligible ? choices.map((c) => c.role) : all,
+        source = 'sort' in query && query.sort === 'name_desc' ? [...unsorted].reverse() : unsorted,
         binding = this.binding(tx, query, eligible ? 'eligible' : 'roles'),
-        after = this.cursor(tx, query, binding);
+        after = this.cursor(tx, query, binding)?.after;
       const offset = after ? source.findIndex((r) => r.id === after) + 1 : 0;
       if (after && !offset) return peopleFailure(409, 'PEOPLE_CONFLICT', { reason: 'revision' });
       const page = this.page(
@@ -274,12 +331,35 @@ export class AdministrationService {
         query.limit,
         binding,
       );
+      const usage =
+        !eligible && covers(tx.access, 'turnstile:people:manage', { kind: 'company' })
+          ? (
+              await tx.db.query(
+                `WITH selected_roles AS (
+                  SELECT id FROM turnstile.access_role WHERE tenant_id=$1 AND id=ANY($2::uuid[])
+                ), member_usage AS (
+                  SELECT a.role_id,count(DISTINCT a.member_id)::int AS n
+                  FROM turnstile.access_assignment a JOIN selected_roles r ON r.id=a.role_id
+                  WHERE a.tenant_id=$1 GROUP BY a.role_id
+                ), invitation_usage AS (
+                  SELECT r.id AS role_id,count(DISTINCT i.id)::int AS n
+                  FROM turnstile.invitation i CROSS JOIN LATERAL jsonb_array_elements(i.assignments) a
+                  JOIN selected_roles r ON r.id::text=a->'role'->>'id'
+                  WHERE i.tenant_id=$1 AND i.state IN ('pending','needs_reapproval')
+                    AND i.expires_at>statement_timestamp() GROUP BY r.id
+                ) SELECT r.id AS "roleId",coalesce(m.n,0) AS "memberCount",coalesce(i.n,0) AS "invitationCount"
+                FROM selected_roles r LEFT JOIN member_usage m ON m.role_id=r.id
+                  LEFT JOIN invitation_usage i ON i.role_id=r.id`,
+                [tx.tenant, page.items.map((r) => r.id)],
+              )
+            ).rows
+          : undefined;
       return eligible
         ? eligibleRolesResponseSchema.parse({
             ...page,
             items: page.items.map((role) => choices.find((c) => c.role.id === role.id)),
           })
-        : roleListResponseSchema.parse(page);
+        : roleListResponseSchema.parse({ ...page, ...(usage ? { usage } : {}) });
     });
   }
   async role(actor: ConfigurationActor, idInput: string) {
@@ -297,18 +377,48 @@ export class AdministrationService {
     const selected = await this.store.run(actor, 'people', async (tx) => {
       const binding = this.binding(tx, query, 'invitations'),
         after = this.cursor(tx, query, binding);
-      const condition = `tenant_id=$1 AND ($2::text IS NULL OR (CASE WHEN state IN ('pending','needs_reapproval') AND expires_at<=statement_timestamp() THEN 'expired' ELSE state END)=$2) AND ($3::text IS NULL OR email ILIKE $3 ESCAPE '\\')`;
-      const params = [tx.tenant, query.state ?? null, query.search ? literal(query.search) : null];
+      const condition = `i.tenant_id=$1 AND ($2::text IS NULL OR (CASE WHEN i.state IN ('pending','needs_reapproval') AND i.expires_at<=statement_timestamp() THEN 'expired' ELSE i.state END)=$2)
+        AND ($3::text IS NULL OR i.email ILIKE $3 ESCAPE '\\')
+        AND ($4::uuid IS NULL OR EXISTS(SELECT 1 FROM jsonb_array_elements(i.assignments) a WHERE a->'role'->>'id'=$4::text))
+        AND ($5::boolean=false OR (i.state IN ('pending','needs_reapproval') AND i.expires_at>statement_timestamp()))
+        AND ($6::text IS NULL OR coalesce((SELECT CASE WHEN i.state IN ('pending','needs_reapproval') AND i.expires_at<=statement_timestamp() AND d.state IN ('queued','sending') THEN 'failed' ELSE d.state END FROM turnstile.invitation_delivery d WHERE d.tenant_id=i.tenant_id AND d.invitation_id=i.id AND d.generation=i.generation),'unavailable')=$6)`;
+      const params = [
+        tx.tenant,
+        query.state ?? null,
+        query.search ? literal(query.search) : null,
+        query.roleId ?? null,
+        query.actionable === 'true',
+        query.delivery ?? null,
+      ];
+      const sortKey =
+        query.sort === 'created_desc'
+          ? 'i.created_at'
+          : query.sort === 'expires_asc'
+            ? 'i.expires_at'
+            : 'i.id';
+      const descending = query.sort === 'created_desc';
+      const sortValue =
+        sortKey === 'i.id'
+          ? 'i.id::text'
+          : `to_char(${sortKey} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
+      const positionType = sortKey === 'i.id' ? 'uuid' : 'timestamptz';
       const total = (
         await tx.db.query(
-          `SELECT count(*)::int AS n FROM turnstile.invitation WHERE ${condition}`,
+          `SELECT count(*)::int AS n FROM turnstile.invitation i WHERE ${condition}`,
           params,
         )
       ).rows[0].n;
       const rows = (
-        await tx.db.query<{ id: string }>(
-          `SELECT id FROM turnstile.invitation WHERE ${condition} AND ($4::uuid IS NULL OR id>$4) ORDER BY id LIMIT $5`,
-          [...params, after ?? null, query.limit + 1],
+        await tx.db.query<{ id: string; sortValue: string }>(
+          `SELECT i.id,${sortValue} AS "sortValue" FROM turnstile.invitation i WHERE ${condition}
+          AND ($7::uuid IS NULL OR (${sortKey},i.id) ${descending ? '<' : '>'} ($8::${positionType},$7::uuid))
+          ORDER BY ${sortKey} ${descending ? 'DESC' : 'ASC'},i.id ${descending ? 'DESC' : 'ASC'} LIMIT $9`,
+          [
+            ...params,
+            after?.after ?? null,
+            after?.sortValue ?? after?.after ?? null,
+            query.limit + 1,
+          ],
         )
       ).rows;
       return this.page(tx, rows, total, query.limit, binding);

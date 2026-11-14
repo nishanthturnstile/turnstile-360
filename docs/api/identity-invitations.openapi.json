@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Thaarei Narrow Invitation Identity Service",
-    "version": "1.1.0",
+    "version": "1.3.1",
     "description": "Authority-owned service and setup handlers implemented in UM-I06. Product invitation lifecycle, restricted acceptance and browser invitation resume are implemented in UM-I07/I08. Existing public signup remains disabled. All example credentials are synthetic and grant no authority."
   },
   "servers": [{ "url": "/" }],

@@ -25,13 +25,16 @@ const link = BUSINESS_MODULES[0];
 const examples = {
   ModuleCapabilities: {
     version: 1,
-    modules: [{ id: link.id, title: link.title, path: link.path }],
-    context,
+    modules: link ? [{ id: link.id, title: link.title, path: link.path }] : [],
+    context: link ? context : null,
   },
-  ModuleEntry: { id: link.id, title: link.title, message: 'You are in Incident Management' },
+  ...(link
+    ? { ModuleEntry: { id: link.id, title: link.title, message: `You are in ${link.title}` } }
+    : {}),
   ModuleError: { code: 'MODULE_ACCESS_DENIED' },
 };
-for (const [name, schema] of Object.entries(schemas)) schema.parse(examples[name]);
+for (const [name, schema] of Object.entries(schemas))
+  if (examples[name]) schema.parse(examples[name]);
 const components = moduleJsonSchemas;
 const response = (name, description) => ({
   description,

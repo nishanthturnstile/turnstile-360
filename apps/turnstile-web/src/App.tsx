@@ -42,6 +42,7 @@ import {
 import { loadWorkspaceStatus } from './features/configuration/api';
 import { settingsPaths, setupPaths } from './features/configuration/routes';
 import { OnboardingJourney } from './features/onboarding/OnboardingJourney';
+import { canReuseUsersContext, type UsersContextStamp } from './features/people/navigation-state';
 import { People, peoplePaths } from './features/people/People';
 import { LegacyUnitPrompt } from './features/settings/LegacyUnitPrompt';
 import { Settings } from './features/settings/Settings';
@@ -170,6 +171,7 @@ export function Workspace() {
   const checks = useRef(0);
   const identityId = useRef<string | undefined>(undefined);
   const [checking, setChecking] = useState(false);
+  const [verification, setVerification] = useState(0);
   const [session, setSession] = useState<UserSessionDto>();
   const [modules, setModules] = useState<ModuleCapabilitiesDto>();
   const [deployment, setDeployment] = useState<DeploymentStatusDto>();
@@ -206,6 +208,13 @@ export function Workspace() {
   const [connection, setConnection] = useState('');
   const [logout, setLogout] = useState<{ csrf: string; retryUntil: number }>();
   const freshCheck = useRef<Promise<boolean>>(undefined);
+  const verifiedContext = useRef<
+    | (UsersContextStamp & {
+        workspace: WorkspaceStatusDto;
+        modules: ModuleCapabilitiesDto | undefined;
+      })
+    | undefined
+  >(undefined);
   const check = useCallback(
     (fresh = false): Promise<boolean> => {
       // Focus/navigation joins a pending post-mutation check instead of superseding it.
@@ -220,6 +229,7 @@ export function Workspace() {
           if (current !== generation.current || checkId !== checks.current) return false;
           const subjectChanged = !!identityId.current && identityId.current !== value.user.id;
           if (subjectChanged) {
+            verifiedContext.current = undefined;
             setModules(undefined);
             setWorkspace(undefined);
             setState('loading');
@@ -232,10 +242,27 @@ export function Workspace() {
           if (current !== generation.current || checkId !== checks.current) return false;
           setDeployment(activation);
           if (activation.access === 'closed') {
+            verifiedContext.current = undefined;
             setSession(value);
             setModules(undefined);
             setState('activation');
             return false;
+          }
+          const previous = verifiedContext.current;
+          if (
+            !fresh &&
+            previous &&
+            canReuseUsersContext(previous, requestedPath, value, activation, Date.now())
+          ) {
+            setSession(value);
+            setWorkspace(previous.workspace);
+            setModules(previous.modules);
+            setPath(requestedPath);
+            setState('ready');
+            setVerification(checkId);
+            // Do not extend the comprehensive-check expiry on each tab switch.
+            verifiedContext.current = { ...previous, path: requestedPath };
+            return true;
           }
           const status = await loadWorkspaceStatus(value.user.id);
           if (current !== generation.current || checkId !== checks.current) return false;
@@ -254,13 +281,28 @@ export function Workspace() {
           if (current !== generation.current || checkId !== checks.current) return false;
           setModules(capabilities);
           // Navigation may have joined this fresh check while it was draining a prior read.
-          setPath(fresh ? window.location.pathname : requestedPath);
+          const committedPath = fresh ? window.location.pathname : requestedPath;
+          verifiedContext.current = {
+            path: committedPath,
+            userId: value.user.id,
+            fingerprint: value.access.fingerprint,
+            checkedAt: Date.now(),
+            complete:
+              status.status === 'complete' &&
+              (!selectedModuleRoutes.length || capabilities !== undefined),
+            deployment: activation,
+            workspace: status,
+            modules: capabilities,
+          };
+          setPath(committedPath);
           setState('ready');
+          setVerification(checkId);
           if (window.location.pathname === '/auth-unavailable')
             void navigate('/', { replace: true });
           return true;
         } catch (error) {
           if (current !== generation.current || checkId !== checks.current) return false;
+          verifiedContext.current = undefined;
           setModules(undefined);
           if (error instanceof ProductError && error.status === 401) {
             // Keep the last subject's mounted draft owners hidden during in-page recovery.
@@ -607,7 +649,9 @@ export function Workspace() {
     );
   return (
     <WorkspaceLayout
+      structure={state === 'ready' && path === '/structure'}
       pending={state === 'ready' && routePath !== path}
+      nestedNavigation={routePath.startsWith('/people/') && path.startsWith('/people/')}
       header={header}
       destinations={
         state === 'ready'
@@ -654,6 +698,7 @@ export function Workspace() {
             requestedPath={routePath}
             onCheck={refreshWorkspace}
             active={state === 'ready'}
+            verification={verification}
           />
         ) : settingsPaths.some((value) => value === path) ? (
           workspace.canManageConfiguration ? (

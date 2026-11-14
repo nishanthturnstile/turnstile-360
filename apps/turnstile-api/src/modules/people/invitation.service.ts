@@ -273,6 +273,7 @@ export class InvitationService {
     keyInput: string,
     input: unknown,
     validate?: (db: PoolClient, tenant: string) => Promise<void>,
+    committed?: (db: PoolClient, tenant: string, invitationId: string) => Promise<void>,
   ): Promise<InvitationDto> {
     const key = peopleIdSchema.parse(keyInput);
     const command = parseCommand(input);
@@ -562,6 +563,7 @@ export class InvitationService {
         actor.requestId,
         command.expectedAccessRevision,
       ]);
+      if (committed) await committed(db, tenant, operation.invitation_id);
       return this.project(db, tenant, await this.row(db, tenant, operation.invitation_id));
     }, actor);
   }

@@ -46,6 +46,8 @@ export async function activateModules(headers: Headers, id: string, raw: unknown
       p.product !== 'turnstile' ||
       p.archived ||
       p.policy_state !== 'approved' ||
+      !p.licence_expires_at ||
+      new Date(p.licence_expires_at).getTime() <= Date.now() ||
       !p.pairing_verified_at ||
       p.revision !== input.expectedRevision ||
       input.expectedRevision >= 2147483647 ||

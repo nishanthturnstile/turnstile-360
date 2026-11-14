@@ -12,6 +12,7 @@ export default defineConfig({
     './src/modules/access/access.schema.ts',
     './src/modules/people/persistence/invitation.schema.ts',
     './src/modules/people/persistence/people.schema.ts',
+    './src/modules/people/persistence/import.schema.ts',
   ],
   out: './database/migrations',
   migrations: { schema: 'turnstile_migrations' },

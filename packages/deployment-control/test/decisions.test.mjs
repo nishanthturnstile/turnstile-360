@@ -279,3 +279,56 @@ test('offline expiry is bounded but a compromised trusted key needs independent 
     'An old trust bundle cannot reverse independent revocation',
   );
 });
+
+test('contractual expiry closes retained reads and only a newer licence can reopen', async () => {
+  const token = await sign({ exp: now + 60, licenceExpiresAt: now + 60 });
+  const state = await applyDecision(initialDecisionState(epoch), token, expected, trust, now);
+  await assert.rejects(
+    applyDecision(
+      state,
+      await denial('suspended', { policyRevision: 2, decisionSequence: 2 }),
+      expected,
+      trust,
+      now,
+    ),
+    /Licence policy downgrade/,
+  );
+  assert.equal((await evaluateDecision(state, expected, trust, now + 59)).access, 'full');
+  assert.deepEqual(await evaluateDecision(state, expected, trust, now + 60), {
+    access: 'closed',
+    state: 'licence-expired',
+  });
+  assert.equal((await evaluateDecision(state, expected, trust, now + 86400)).access, 'closed');
+  await assert.rejects(
+    verifyDecision(
+      await sign({ exp: now + 61, licenceExpiresAt: now + 60 }),
+      expected,
+      epoch,
+      trust,
+      now,
+    ),
+  );
+  await assert.rejects(
+    applyDecision(
+      state,
+      await sign({ decisionSequence: 2, licenceExpiresAt: now + 120, exp: now + 120 }),
+      expected,
+      trust,
+      now + 61,
+    ),
+  );
+  const renewed = await applyDecision(
+    state,
+    await sign({
+      policyRevision: 2,
+      decisionSequence: 2,
+      licenceExpiresAt: now + 120,
+      exp: now + 120,
+    }),
+    expected,
+    trust,
+    now + 61,
+  );
+  assert.equal((await evaluateDecision(renewed, expected, trust, now + 61)).access, 'full');
+  await assert.rejects(applyDecision(renewed, token, expected, trust, now + 61));
+});

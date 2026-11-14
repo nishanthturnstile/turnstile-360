@@ -1082,7 +1082,8 @@ HTTPS origin, scoped local credential custody and redirect/digest policy separat
 1. Download an independent one-use pairing file for each product from **Deployment setup
    and credentials**, with current MFA. Deliver privately; the customer applies each through
    the corresponding owning command. Pairing itself leaves business access closed.
-2. Explicitly select **Approve**, enter a reason and confirm for DMS and Turnstile separately.
+2. Explicitly select **Approve**, enter a future **Licence expires at (UTC)** and a reason,
+   then confirm for DMS and Turnstile separately.
    Do not rely on the form's previous action. Customer sync must apply and acknowledge each
    signed approval; check acknowledgement and report freshness separately.
 3. Require permanent v2 enforcement for Turnstile. On its Modules page review the exact
@@ -1101,3 +1102,79 @@ Use a shorter value only for a deliberate isolated expiry rehearsal. Sync a newl
 short decision before stopping central; do not change host clocks. Restore the default
 and sync after testing. Lifetimes shorter than the normal reporter interval can expire
 between renewals. A reporter restart does not reset its durable next-attempt election.
+
+
+## Managing contractual licence expiry
+
+Set the licence end on each registered product when approving it. Use the UTC date/time
+field and inspect the exact date on the confirmation screen. DMS and Turnstile may share
+a commercial end date, but each has an independently reviewed approval. Missing dates do
+not mean unlimited licences. For an approved product, choose **Update licence** to extend
+or shorten the end, supply a reason and confirm with current MFA/revision. The audit records
+the before/after dates. Changing the date does not install a package or grant user rights.
+
+After the customer applies the signed policy, its grant cannot outlive the contractual end.
+Expiry closes business access even while central is unavailable; it does not erase data.
+A customer that remains online cannot renew past the end. Renew centrally and apply a newer
+signed sync to restore otherwise permitted access. Shortening/removing authority while a
+customer is offline remains bounded by its previously issued grant; do not promise immediate
+offline revocation. The short decision-lifetime setting is a test/offline setting, not a
+replacement for a contractual date.
+
+For an existing installation, upgrade customer verifiers through the signed release path
+before central starts issuing the new field, apply central migrations and explicitly set
+end dates for existing approvals. Older strict verifiers reject the new field. Historical
+tokens cannot be rewritten retroactively. Never update frozen signed bundle files in place.
+
+## Registering and retiring module implementations
+
+1. Implement the owned Nest feature under `apps/turnstile-api/src/features/<id>/` and the
+   web entry under `apps/turnstile-web/src/features/<id>/entry.tsx`. Follow the existing
+   module/service authorization boundary; a hidden navigation link is not authorization.
+   The backend file is `<id>.module.ts`; its exported class is the ID converted to PascalCase
+   plus `Module` (for example, `permit-management` becomes `PermitManagementModule`).
+2. Add one entry to `packages/turnstile-contracts/src/module-registry.ts`, with stable ID,
+   title/version, unique read permission and reviewed required/optional dependencies.
+   Run `pnpm modules:sync`. Review its generated permission migration and API references;
+   run workspace checks and selected-image/authorization tests. Do not edit SQL permission
+   lists, UI labels, capability limits or build maps for each new module.
+   Example registry entry (after implementing its owned feature sources):
+
+   ```ts
+   {
+     id: 'permit-management', title: 'Permit Management', version: '1.0.0',
+     permission: 'turnstile:permits:read', requires: ['foundation'],
+     optionalIntegrations: [], enabled: true,
+   }
+   ```
+
+3. Publish signed code facts/classification through the catalogue workflow above. Approve
+   the customer's desired selection, deliver/install its matching profile, activate and
+   sync, then grant the intended users permission. Existing supported modules use this
+   administrative workflow without new feature development.
+4. To retire an implementation from future releases, set its registry entry to
+   `enabled: false`, resolve any active dependants and run `pnpm modules:sync` and checks.
+   Retain its metadata, permission ledger and customer records. New builds omit its code
+   and routes. Existing customers still require a reviewed restriction/cutover; changing
+   the source registry does not silently mutate their installation.
+
+The disposable `node scripts/test-module-registration.mjs <new-private-absolute-directory>`
+qualification copies public source, adds a Permit fixture, generates its permission migration,
+builds/tests it through normal browser login, then retires it by configuration and tests
+route exclusion. It does not add Permit to the supported production registry.
+
+## Qualification storage maintenance
+
+Run image qualification jobs sequentially on a shared workstation. Check actual Windows
+host free space as well as Docker usage (`docker system df`); WSL's virtual capacity is not
+available C: capacity. Keep resumable fixtures outside `/tmp` and outside the checkout,
+for example under a private `~/.local/state/thaarei-qualification/` directory. Retain the
+final evidence and current resume artifacts; delete superseded disposable fixtures after
+checking that no container uses them.
+
+Unused build cache and obsolete test image tags can be removed without deleting customer
+volumes. Preserve images referenced by existing containers and retained releases. Do not
+use a blanket volume prune or delete Docker's VHDX. On Windows, physical disk reclamation
+may also require trimming and compacting the detached Docker virtual disk; stop Docker
+cleanly and verify compaction success before restarting it. Restore retained central
+services and verify both customer and central database readiness afterward.

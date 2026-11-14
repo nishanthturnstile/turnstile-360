@@ -123,9 +123,7 @@ export function rawEnvironment(values: Record<string, string>) {
   for (const [key, value] of Object.entries(values))
     if (!/^[A-Z][A-Z0-9_]*$/.test(key) || /[\r\n\0]/.test(value))
       throw new Error('Single-line environment values required');
-  return (
-    Object.entries(values)
-      .map(([key, value]) => `${key}=${value}`)
-      .join('\n') + '\n'
-  );
+  return `${Object.entries(values)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n')}\n`;
 }

@@ -3,18 +3,23 @@ export const foundationFeatures = Object.freeze({
   'turnstile-api': [],
   'turnstile-web': ['auth', 'configuration', 'onboarding', 'people', 'settings'],
 });
-export const moduleSources = Object.freeze({
-  'incident-management': {
-    apiClass: 'IncidentManagementModule',
-    apiModule: 'incident-management.module',
-    version: '1.0.0',
-  },
-  'risk-management': {
-    apiClass: 'RiskManagementModule',
-    apiModule: 'risk-management.module',
-    version: '1.0.0',
-  },
-});
+
+import { ACTIVE_MODULE_REGISTRY } from '../packages/turnstile-contracts/src/module-registry.ts';
+export const moduleSources = Object.freeze(
+  Object.fromEntries(
+    ACTIVE_MODULE_REGISTRY.map((m) => [
+      m.id,
+      {
+        apiClass: `${m.id
+          .split('-')
+          .map((part) => part[0].toUpperCase() + part.slice(1))
+          .join('')}Module`,
+        apiModule: `${m.id}.module`,
+        version: m.version,
+      },
+    ]),
+  ),
+);
 export const codeModules = [
   {
     id: 'foundation',
@@ -24,12 +29,12 @@ export const codeModules = [
     requires: [],
     optionalIntegrations: [],
   },
-  ...Object.entries(moduleSources).map(([id, m]) => ({
-    id,
-    label: id === 'incident-management' ? 'Incident Management' : 'Risk Management',
+  ...ACTIVE_MODULE_REGISTRY.map((m) => ({
+    id: m.id,
+    label: m.title,
     version: m.version,
     category: 'individual',
-    requires: ['foundation'],
-    optionalIntegrations: [],
+    requires: [...m.requires],
+    optionalIntegrations: [...m.optionalIntegrations],
   })),
 ];

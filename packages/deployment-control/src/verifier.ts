@@ -79,6 +79,9 @@ async function verifyEnvelope(
   if (
     value.nbf !== value.iat ||
     value.exp <= value.iat ||
+    (value.state === 'approved' &&
+      value.licenceExpiresAt !== undefined &&
+      value.exp > value.licenceExpiresAt) ||
     value.exp - value.iat > MAX_DECISION_SECONDS ||
     value.iat > now ||
     (!cached && value.exp <= now)
@@ -137,11 +140,16 @@ export async function verifyInstalledDecision(
 // authority, active/desired context and the assignment that produced it may not.
 function policyContent(value: VersionedDecision): string {
   if (value.version === 1 || value.state !== 'approved')
-    return JSON.stringify({ version: value.version, state: value.state });
+    return JSON.stringify({
+      version: value.version,
+      state: value.state,
+      licenceExpiresAt: value.licenceExpiresAt,
+    });
   const p = value.modulePolicy;
   return JSON.stringify({
     version: 2,
     state: value.state,
+    licenceExpiresAt: value.licenceExpiresAt,
     active: [
       p.active.catalogueDigest,
       p.active.profileDigest,
@@ -185,6 +193,8 @@ export async function applyDecision(
   const incoming = await verifyInstalledDecision(token, expected, state.epoch, trust, now, release);
   if (state.accepted) {
     const old = await retained(state.accepted, expected, state, trust, now);
+    if (old.licenceExpiresAt !== undefined && incoming.licenceExpiresAt === undefined)
+      throw new Error('Licence policy downgrade forbidden');
     if (
       incoming.policyRevision < old.policyRevision ||
       (incoming.policyRevision === old.policyRevision &&
@@ -253,6 +263,8 @@ export async function evaluateDecision(
       release,
       true,
     );
+    if (current.licenceExpiresAt !== undefined && now >= current.licenceExpiresAt)
+      return { access: 'closed', state: 'licence-expired' };
     let activated = false;
     if (state.activation) {
       const activation = await retained(state.activation, expected, state, trust, now);

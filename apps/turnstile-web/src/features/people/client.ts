@@ -1,5 +1,7 @@
 import {
   PEOPLE_ERROR_STATUS,
+  PEOPLE_FEATURES_HEADER,
+  PEOPLE_IMPORT_FEATURE,
   PEOPLE_LIMITS,
   PEOPLE_ROUTES,
   peopleCommandResultSchema,
@@ -7,6 +9,7 @@ import {
   peopleErrorSchema,
   type UserSessionDto,
 } from '@thaarei/turnstile-contracts';
+import { capturePeopleWrite } from './cache-events.ts';
 export class PeopleError extends Error {
   readonly status: number;
   readonly code: string;
@@ -29,6 +32,7 @@ export async function request<T>(
     signal?: AbortSignal;
   } = {},
 ) {
+  const invalidate = capturePeopleWrite(path, options.method);
   try {
     const response = await fetch(path, {
       method: options.method ?? 'GET',
@@ -41,6 +45,9 @@ export async function request<T>(
         : AbortSignal.timeout(PEOPLE_LIMITS.requestTimeoutMs),
       headers: {
         accept: 'application/json',
+        ...(path.split('?')[0] === '/api/people/catalog'
+          ? { [PEOPLE_FEATURES_HEADER]: PEOPLE_IMPORT_FEATURE }
+          : {}),
         ...(options.body !== undefined
           ? { 'content-type': 'application/json', 'x-csrf-token': options.csrf ?? '' }
           : {}),
@@ -80,7 +87,15 @@ export async function request<T>(
         );
       throw new PeopleError(response.status, 'PEOPLE_UNAVAILABLE');
     }
-    return schema.parse(value);
+    try {
+      const parsed = schema.parse(value);
+      invalidate();
+      return parsed;
+    } catch {
+      // A successful HTTP response rejected by the client is not a service outage.
+      // Keep mutation outcomes uncertain: it may already have been committed.
+      throw new PeopleError(503, 'PEOPLE_RESPONSE_INVALID');
+    }
   } catch (error) {
     if (error instanceof PeopleError) throw error;
     throw new PeopleError(503, 'PEOPLE_UNAVAILABLE');
@@ -126,6 +141,8 @@ export function canReadUnits(session: UserSessionDto) {
   );
 }
 export function message(error: unknown) {
+  if (error instanceof PeopleError && error.code === 'PEOPLE_RESPONSE_INVALID')
+    return 'This page could not read the server response. Refresh the page to load the latest version. Copy any unsaved entries before refreshing.';
   if (error instanceof PeopleError && error.code === 'DEPLOYMENT_RESTRICTED')
     return 'This installation is restricted. Existing authorized reads remain available; changes require renewed approval. Your draft is kept.';
   if (!(error instanceof PeopleError)) return 'Check your entries and review this change again.';
@@ -136,6 +153,12 @@ export function message(error: unknown) {
   if (error.status === 429) return 'Too many requests. Wait a minute before trying again.';
   if (error.reason === 'readiness')
     return 'Administration changes are not available for this installation yet. Your draft is kept.';
+  if (error.reason === 'impact_stale')
+    return 'This review expired. Review current impact again before saving. Your draft is kept.';
+  if (error.reason === 'reference_in_use')
+    return 'This role is still used by saved member assignments or actionable invitations. Remove or replace its member assignments and cancel or reapprove invitations without this role, then review deletion again. Retained invitation history alone does not prevent deletion.';
+  if (error.reason === 'duplicate_name')
+    return 'A role with this name already exists. Choose a different name.';
   if (error.status === 409)
     return `Saved access has changed${error.reason ? ` (${error.reason.replaceAll('_', ' ')})` : ''}. Reload current data and review a new change. Your draft is kept.`;
   if (error.status === 400) return 'Check the name, permissions, assignments and selected scope.';

@@ -232,6 +232,48 @@
       "when": 1794382136229,
       "tag": "0032_module_grant_receipts",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794489538375,
+      "tag": "0033_powerful_tomorrow_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794636384353,
+      "tag": "0034_deployment_clock_serialization",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1794640918440,
+      "tag": "0035_people_audit_reader",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794641884984,
+      "tag": "0036_people_directory_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1794646292700,
+      "tag": "0037_people_import_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794646517747,
+      "tag": "0038_people_import_tenant",
+      "breakpoints": true
     }
   ]
 }
