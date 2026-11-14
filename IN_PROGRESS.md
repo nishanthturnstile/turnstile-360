@@ -369,12 +369,17 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
-WORKSPACE-PUBLISH-12 — **In progress** (owner: Codex, 2026-11-14).
-Owner requests committing all pending workspace changes and pushing to GitHub. The
-current `development` branch is synchronized with `origin/development`; preserve all
-authorized source, migration, contract, fixture and documentation changes. Review the
-complete staged set, exclude ignored local credentials/runtime evidence, verify the
-previously tested source digest, then commit and push without touching `main`.
+WORKSPACE-PUBLISH-12 — **Completed** (owner: Codex, 2026-11-14).
+Owner requests committing all pending workspace changes and pushing to GitHub. All 148
+pending source, migration, contract, fixture and documentation files were committed as
+`c50a1809ec9421ee07d58b6547644cf23ecfe282` and pushed to `origin/development`.
+The branch was synchronized with its remote before publication; `main` was untouched.
+Staged whitespace/content checks pass: no local credentials, private runtime files,
+private-key literals or oversized files were included. The runtime source still matches
+the verified deployed digest recorded under STRUCTURE-IMPLEMENT-11; its four workspace
+gates and People/auth/onboarding browser results were reviewed, with no runtime changes
+requiring a repeat. Ignored deployment evidence and credentials remain local. This
+handoff is recorded in a separate documentation commit; no pull request was requested.
 
 STRUCTURE-IMPLEMENT-11 — **Completed** (owner: Codex, 2026-11-14).
 Owner authorizes implementation of STRUCTURE-DESIGN-10. Deliver the scoped hierarchy
