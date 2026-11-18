@@ -71,9 +71,10 @@ export async function fixturePolicy(product, environment = process.env) {
       material.trust.keys.find((value) => value.kid === kid).status = 'revoked';
       await writeFile(trustFile, JSON.stringify(material.trust), { mode: 0o600 });
     },
-    async set(policy, { fresh = false, expired = false } = {}) {
+    async set(policy, { fresh = false, expired = false, licenceExpired = false } = {}) {
       const now = Math.floor(Date.now() / 1000),
-        iat = expired ? now - 604801 : now,
+        iat = expired || licenceExpired ? now - 604801 : now,
+        exp = iat + 604800,
         epoch = fresh ? randomUUID() : state.epoch;
       const token = await new SignJWT({
         version: 1,
@@ -86,7 +87,8 @@ export async function fixturePolicy(product, environment = process.env) {
         decisionId: randomUUID(),
         iat,
         nbf: iat,
-        exp: iat + 604800,
+        exp,
+        ...(licenceExpired ? { licenceExpiresAt: exp } : {}),
         state: policy,
         ...(policy === 'approved' ? { entitlement: 'product-business' } : {}),
       })
@@ -97,7 +99,7 @@ export async function fixturePolicy(product, environment = process.env) {
         token,
         saved.binding,
         material.trust,
-        expired ? iat + 1 : now,
+        expired || licenceExpired ? iat + 1 : now,
       );
       await run(async (db) => {
         await db.query(

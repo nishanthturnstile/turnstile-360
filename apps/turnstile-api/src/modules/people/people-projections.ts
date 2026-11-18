@@ -2,7 +2,7 @@ import {
   memberSchema,
   type ResolvedRoleAssignmentDto,
   roleDefinitionSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { PoolClient } from 'pg';
 import { peopleFailure } from './people-store.service.js';
 export async function roleRows(db: PoolClient, tenant: string) {

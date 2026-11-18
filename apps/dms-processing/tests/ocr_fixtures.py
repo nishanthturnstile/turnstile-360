@@ -23,8 +23,13 @@ def printed(text: str, *, size: tuple[int, int] = (1654, 1900)) -> Image.Image:
     return image
 
 
-def mixed_pdf(path: Path, *, rotated: bool = False) -> None:
-    with printed(TRUTH["texts"][0]) as scan, printed(TRUTH["texts"][2]) as mixed:
+def mixed_pdf(path: Path, *, rotated: bool = False, incomplete: bool = False) -> None:
+    with (
+        printed("" if incomplete else TRUTH["texts"][0]) as scan,
+        printed(TRUTH["texts"][2]) as mixed,
+    ):
+        if incomplete:
+            ImageDraw.Draw(scan).ellipse((260, 260, 1394, 1640), fill="black")
         photos = []
         for image in (scan, mixed):
             buffer = io.BytesIO()

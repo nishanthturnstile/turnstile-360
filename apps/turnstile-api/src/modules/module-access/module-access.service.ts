@@ -13,7 +13,7 @@ import {
   type ModuleEntryDto,
   moduleCapabilitiesSchema,
   moduleEntrySchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { AccessContextChangedException } from '../../infrastructure/access-context-exception.js';

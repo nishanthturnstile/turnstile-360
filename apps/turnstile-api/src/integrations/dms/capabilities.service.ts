@@ -1,6 +1,9 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { DmsClient, DmsClientError } from '@thaarei/dms-client';
-import type { DmsCapabilitiesDto, DmsIntegrationErrorDto } from '@thaarei/turnstile-contracts';
+import type {
+  DmsCapabilitiesDto,
+  DmsIntegrationErrorDto,
+} from '@thaarei/turnstile-contracts/runtime';
 import { DmsConfigurationService } from './dms-configuration/dms-configuration.service.js';
 import { MachineTokenService } from './machine-token.service.js';
 

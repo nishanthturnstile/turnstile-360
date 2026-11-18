@@ -1,6 +1,7 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import type { PoolClient } from 'pg';
 import { AccessContextChangedException } from '../../infrastructure/access-context-exception.js';
+import { fenceAccessContract } from '../../infrastructure/access-contract.js';
 import type { ConfigurationActor } from '../../infrastructure/configuration-context.js';
 import { withTenant } from '../../infrastructure/database/postgres.js';
 import { ProductPersistenceService } from '../../infrastructure/database/product-persistence.service.js';
@@ -46,6 +47,7 @@ export class InvitationStoreService {
           await db.query('SELECT turnstile.lock_access_context($1::uuid)', [
             config.INSTALLATION_TENANT_ID,
           ]);
+          await fenceAccessContract(db, config.INSTALLATION_TENANT_ID);
           if (actor) {
             const access = await readAccess(db, config.INSTALLATION_TENANT_ID, actor.userId);
             if (!covers(access, 'turnstile:people:manage', { kind: 'company' }))

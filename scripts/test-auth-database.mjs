@@ -20,7 +20,17 @@ function run(command, args, env = process.env, input) {
     // runner budget does not alter application/request deadlines.
     timeout:
       args[0] === 'scripts/test-auth-browser.mjs'
-        ? process.argv.includes('--module-cutover')
+        ? process.argv.some((arg) =>
+            [
+              '--module-cutover',
+              '--documents-upload',
+              '--documents-versions',
+              '--documents-batches',
+              '--documents-lifecycle',
+              '--documents-processing',
+              '--documents-release',
+            ].includes(arg),
+          )
           ? 900000
           : 240000
         : args.includes('test:database')
@@ -43,6 +53,7 @@ const image = parse(readFileSync('deploy/compose.local.yaml', 'utf8')).services.
 // The retired Settings-only structure suite now uses the canonical scoped workflow fixture.
 if (process.argv.includes('--structure-editor')) process.argv.push('--people-ui');
 const browser = process.argv.includes('--browser');
+const documentsRelease = process.argv.includes('--documents-release');
 let installationManifestDirectory;
 let turnstileDeploymentFixture;
 let deploymentFixture;
@@ -141,6 +152,11 @@ try {
   for (const key of Object.keys(env)) if (key.startsWith('CONTROL_PLANE_')) delete env[key];
   // Optional capabilities are configured only by their disposable fixtures, never inherited live secrets/transports.
   for (const key of [
+    'AUTH_BROWSER_DOCUMENTS',
+    'AUTH_BROWSER_DOCUMENTS_UPLOAD',
+    'AUTH_BROWSER_DOCUMENTS_LIFECYCLE',
+    'DMS_DOCUMENTS_TRANSFER_ORIGIN',
+    'DMS_DOCUMENTS_SCOPES',
     'IDENTITY_SERVICE_CLIENT_ID',
     'IDENTITY_SERVICE_CLIENT_SECRET',
     'IDENTITY_SERVICE_RESOURCE_URL',
@@ -229,16 +245,64 @@ try {
   }
   delete env.INSTALLATION_LOCAL_ID;
   await provisionDatabase(env);
+  async function packagedProductMigration(image, command) {
+    assert.match(image ?? '', /^sha256:[0-9a-f]{64}$/);
+    const host = run('docker', [
+      'inspect',
+      '--format',
+      '{{(index .NetworkSettings.Networks "bridge").IPAddress}}',
+      name,
+    ]);
+    const database = new URL(env.TURNSTILE_MIGRATION_DATABASE_URL);
+    database.hostname = host;
+    database.port = '5432';
+    const configuration = {
+      TURNSTILE_MIGRATION_DATABASE_URL: database.href,
+      INSTALLATION_LOCAL_ID: env.INSTALLATION_LOCAL_ID,
+      INSTALLATION_TENANT_ID: env.INSTALLATION_TENANT_ID,
+      INSTALLATION_CUSTOMER_KEY: env.INSTALLATION_CUSTOMER_KEY,
+      TURNSTILE_APPLICATION_ID: env.TURNSTILE_APPLICATION_ID,
+    };
+    run(
+      'docker',
+      [
+        'run',
+        '--rm',
+        '--read-only',
+        '--tmpfs',
+        '/tmp',
+        ...Object.keys(configuration).flatMap((key) => ['-e', key]),
+        image,
+        'node',
+        'dist/infrastructure/database/migrate.js',
+        command,
+      ],
+      { ...env, ...configuration },
+    );
+  }
+  async function installedProduct() {
+    const db = new pg.Client({ connectionString: env.PROVISION_DATABASE_URL });
+    await db.connect();
+    try {
+      return (
+        await db.query('SELECT tenant_id, application_id, customer_key FROM turnstile.installation')
+      ).rows;
+    } finally {
+      await db.end();
+    }
+  }
   // Deployment scripts are exercised as compiled Node ESM commands with dedicated migrators.
   for (let repeat = 0; repeat < 2; repeat++) {
     for (const [application, owner] of [
       ['dms-api', 'auth'],
       ['dms-api', 'dms'],
-      ...(standalone ? [] : [['turnstile-api', 'turnstile']]),
+      ...(standalone || documentsRelease ? [] : [['turnstile-api', 'turnstile']]),
     ]) {
       run('pnpm', ['--filter', `@thaarei/${application}`, `db:migrate:${owner}`], env);
     }
-    for (const application of standalone ? ['dms-api'] : ['dms-api', 'turnstile-api']) {
+    for (const application of standalone || documentsRelease
+      ? ['dms-api']
+      : ['dms-api', 'turnstile-api']) {
       run('pnpm', ['--filter', `@thaarei/${application}`, 'db:bootstrap'], env);
       if (application === 'dms-api' && !standalone && !env.INSTALLATION_LOCAL_ID) {
         installationManifestDirectory = await mkdtemp(
@@ -254,6 +318,29 @@ try {
         const exported = JSON.parse(readFileSync(outputFile, 'utf8'));
         assert.equal(exported.tenantId, env.INSTALLATION_TENANT_ID);
         env.INSTALLATION_LOCAL_ID = exported.localInstallationId;
+      }
+    }
+    if (documentsRelease) {
+      let previous;
+      if (repeat === 0) {
+        const legacy = JSON.parse(
+          readFileSync(
+            'packages/turnstile-contracts/test/documents-legacy-v2.fixture.json',
+            'utf8',
+          ),
+        );
+        await packagedProductMigration(legacy.provenance.apiImage, 'turnstile');
+        await packagedProductMigration(legacy.provenance.apiImage, 'bootstrap');
+        previous = await installedProduct();
+        assert.equal(previous.length, 1);
+      }
+      await packagedProductMigration(env.AUTH_BROWSER_API_IMAGE, 'turnstile');
+      await packagedProductMigration(env.AUTH_BROWSER_API_IMAGE, 'bootstrap');
+      if (previous) {
+        assert.deepEqual(await installedProduct(), previous);
+        console.log(
+          'Exact legacy-to-candidate image migrations preserved the installation identity.',
+        );
       }
     }
   }
@@ -404,6 +491,23 @@ try {
           ...(process.argv.includes('--structured-onboarding') ? ['--structured-onboarding'] : []),
           ...(process.argv.includes('--structure-editor') ? ['--structure-editor'] : []),
           ...(process.argv.includes('--people-ui') ? ['--people-ui'] : []),
+          ...(process.argv.includes('--documents') ? ['--documents'] : []),
+          ...(process.argv.includes('--documents-release') ? ['--documents-release'] : []),
+          ...(process.argv.includes('--documents-upload')
+            ? ['--documents', '--documents-upload']
+            : []),
+          ...(process.argv.includes('--documents-versions')
+            ? ['--documents', '--documents-upload', '--documents-versions']
+            : []),
+          ...(process.argv.includes('--documents-batches')
+            ? ['--documents', '--documents-upload', '--documents-versions', '--documents-batches']
+            : []),
+          ...(process.argv.includes('--documents-lifecycle')
+            ? ['--documents', '--documents-upload', '--documents-lifecycle']
+            : []),
+          ...(process.argv.includes('--documents-processing')
+            ? ['--documents', '--documents-upload', '--documents-processing']
+            : []),
           ...(process.argv.includes('--modules') ? ['--modules'] : []),
           ...(process.argv.includes('--module-cutover') ? ['--module-cutover'] : []),
         ],
@@ -411,7 +515,8 @@ try {
       ),
     );
   else
-    for (const application of process.argv.includes('--configuration-upgrade') ||
+    for (const application of process.argv.includes('--documents-upgrade') ||
+    process.argv.includes('--configuration-upgrade') ||
     process.argv.includes('--bff') ||
     process.argv.includes('--turnstile-deployment') ||
     process.argv.includes('--identity-service') ||
@@ -428,40 +533,42 @@ try {
           process.argv.includes('--dms-admission')
         ? ['dms-api']
         : ['dms-api', 'turnstile-api']) {
-      const selected = process.argv.includes('--configuration-upgrade')
-        ? [
-            'test/configuration-upgrade.database-spec.ts',
-            'test/user-management-upgrade.database-spec.ts',
-          ]
-        : process.argv.includes('--bff')
-          ? ['test/bff.database-spec.ts']
-          : process.argv.includes('--turnstile-deployment')
-            ? ['test/deployment.database-spec.ts']
-            : process.argv.includes('--dms-deployment')
+      const selected = process.argv.includes('--documents-upgrade')
+        ? ['test/documents-upgrade.database-spec.ts']
+        : process.argv.includes('--configuration-upgrade')
+          ? [
+              'test/configuration-upgrade.database-spec.ts',
+              'test/user-management-upgrade.database-spec.ts',
+            ]
+          : process.argv.includes('--bff')
+            ? ['test/bff.database-spec.ts']
+            : process.argv.includes('--turnstile-deployment')
               ? ['test/deployment.database-spec.ts']
-              : process.argv.includes('--dms-access') || process.argv.includes('--dms-admission')
-                ? ['test/enrollment.database-spec.ts']
-                : standalone
-                  ? ['test/standalone.database-spec.ts']
-                  : process.argv.includes('--user-management-release')
-                    ? [
-                        'test/user-management-upgrade.database-spec.ts',
-                        'test/recipients.database-spec.ts',
-                      ]
-                    : process.argv.includes('--identity-service')
-                      ? ['test/identity-service.database-spec.ts']
-                      : process.argv.includes('--people')
-                        ? ['test/people.database-spec.ts']
-                        : process.argv.includes('--scoped-structure')
-                          ? ['test/scoped-structure.database-spec.ts']
-                          : process.argv.includes('--recipients')
-                            ? ['test/recipients.database-spec.ts']
-                            : process.argv.includes('--invitations')
-                              ? ['test/invitations.database-spec.ts']
-                              : readdirSync(`apps/${application}/test`)
-                                  .filter((file) => file.endsWith('.database-spec.ts'))
-                                  .sort()
-                                  .map((file) => `test/${file}`);
+              : process.argv.includes('--dms-deployment')
+                ? ['test/deployment.database-spec.ts']
+                : process.argv.includes('--dms-access') || process.argv.includes('--dms-admission')
+                  ? ['test/enrollment.database-spec.ts']
+                  : standalone
+                    ? ['test/standalone.database-spec.ts']
+                    : process.argv.includes('--user-management-release')
+                      ? [
+                          'test/user-management-upgrade.database-spec.ts',
+                          'test/recipients.database-spec.ts',
+                        ]
+                      : process.argv.includes('--identity-service')
+                        ? ['test/identity-service.database-spec.ts']
+                        : process.argv.includes('--people')
+                          ? ['test/people.database-spec.ts']
+                          : process.argv.includes('--scoped-structure')
+                            ? ['test/scoped-structure.database-spec.ts']
+                            : process.argv.includes('--recipients')
+                              ? ['test/recipients.database-spec.ts']
+                              : process.argv.includes('--invitations')
+                                ? ['test/invitations.database-spec.ts']
+                                : readdirSync(`apps/${application}/test`)
+                                    .filter((file) => file.endsWith('.database-spec.ts'))
+                                    .sort()
+                                    .map((file) => `test/${file}`);
       assert.ok(selected.length, `No database tests for ${application}`);
       for (const file of selected)
         console.log(

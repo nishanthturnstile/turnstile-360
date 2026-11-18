@@ -1,0 +1,1838 @@
+{
+  "capturedAt": "2026-11-17",
+  "provenance": {
+    "apiImage": "sha256:8b6748f8c75f887f6943bb0c1466c3722ea5203a20ee64a7bc3c71a6e0ade481",
+    "webImage": "sha256:a3e1a9fc81b12e4173ad0deb5c4cb1afff127da6e575bd4be45730ab33278b66",
+    "webAssets": [
+      {
+        "path": "/usr/share/nginx/html/assets/entry-B2B4rf9-.js",
+        "sha256": "9dd9f0ea92bfc7aa27fedf48c96d92b4c9f8ecd944e3693f138062f425f2b1a2"
+      },
+      {
+        "path": "/usr/share/nginx/html/assets/entry-CHoYgG4B.js",
+        "sha256": "596a32e68083f04feba1f9868871753dccaf87bb118dff9f4bcb58a6bb3cf7d8"
+      },
+      {
+        "path": "/usr/share/nginx/html/assets/index-Ckjgmjh_.js",
+        "sha256": "52770c1628e51731c51b321706d7ed2a7a7aa7a1df1e5d8f9f98182ef813e677"
+      },
+      {
+        "path": "/usr/share/nginx/html/assets/module-entry-TLMvRvdD.js",
+        "sha256": "66b13e4298843c63cc5945f329869331321180c7868128853e4612eefbbd0b59"
+      },
+      {
+        "path": "/usr/share/nginx/html/assets/product-D5mvsVzs.js",
+        "sha256": "c9227e32e19ae3e08bb223ae9c4b8ec141f12e7d5061422baf6ffc7130bc478b"
+      },
+      {
+        "path": "/usr/share/nginx/html/assets/rolldown-runtime-WkwZ5CU-.js",
+        "sha256": "2629f2ad3cb75a57d98de697127f5af7d777ef572bbcdfa6e3ce8f438cd4527e"
+      },
+      {
+        "path": "/usr/share/nginx/html/index.html",
+        "sha256": "5a6badd1d34856fe94327c88b23513d6c4191beb9305e15c0e19b3035dcdabc0"
+      }
+    ],
+    "method": "Read-only installed API package schema capture and validation of synthetic repository examples. Web files hashed; browser behavior remains DV-I02."
+  },
+  "permissions": [
+    "turnstile:access",
+    "turnstile:dms:capabilities:read",
+    "turnstile:configuration:manage",
+    "turnstile:people:manage",
+    "turnstile:roles:manage",
+    "turnstile:incidents:read",
+    "turnstile:risks:read",
+    "turnstile:units:read",
+    "turnstile:units:manage"
+  ],
+  "schemas": {
+    "PermissionCatalog": "67e0f74626a24a57bcd0ca0015112eab5246c4f45683e3ce555dc377ee07870a",
+    "RoleDefinition": "1411f3fb8bc7e4eb115a038c87a1114af994b695b31744c8b8f7ec5349e75899",
+    "AssignmentScope": "cb7fa7d1cbcfe3695168b48c1e951df627dbae63ca249997ac838fd02540ee01",
+    "RoleAssignmentRequest": "0f5c728b167694872aa90bfaab2f281b2b5f28f8949b24e8fb7a2fa32d1f10cd",
+    "RoleAssignmentRequests": "a7a3f807cf4fe01a76beb0c942948bfed20c81ad5f6554c989da71b035222981",
+    "ResolvedRoleAssignment": "d477b6dda550ed3eb4ec3b5eb9af4ed4ed0c9bb47e98b7c88c66f11528412658",
+    "ResolvedRoleAssignments": "80cf62a0ce2ff543c469dd5513d3f431d674d347e6892b0c573afae729906fb1",
+    "LegacyGrantSource": "a0c0be3f34cc14adcfc050c7f7d8d0ffddb3929b70500cea5db7cf68c39d9554",
+    "Member": "d96cc47a1ca58e0fcdace277522409e0bb2e1478a994d3ee50432aaf8345ab19",
+    "MemberListResponse": "32401e4630d7eb4e4cca0e1097661e9e2695bb6174767baa9db432f2c334a933",
+    "RoleListResponse": "87bd3f18477cfc380994a924e8d6c6052a517370954133a79fcd112a681cd44d",
+    "EligibleRolesResponse": "12c4a16173c7ad3519724c6d66f8a25a98528f0a95f92c9b2c3eeaf3a7a3acba",
+    "ScopedUnit": "791846313f7b7f2088b6379d63a7d68e65e802bc8a7666be816db2fa80b44c8f",
+    "UnitAncestorContext": "e93dcd3c97f3d2b6718f1648fa620131627630ee070031daeceaf94fe0644594",
+    "ScopedUnitsResponse": "767fe96d9b49019cd6026f44eebd51b1035b69c9eb8ab5e982f1249f57100cc7",
+    "ScopedUnitDetail": "6a5d528abbbc7bc69cf4379fd45484943e870aa2a8ec54b21af2cdfa8d4b5d9a",
+    "ScopedUnitContext": "01ac6b279cfe23ae13daae4540f8ba42964cc21caa9ffda00b1857225c78d036",
+    "UserAccessContext": "e715e418f7ef2a77d0461dad69fe027a4b09697d0f9cf563a64a84df5948e6a2",
+    "AccessAwareUserSession": "26e51145557fddb2e5dbe339cd9220ebbdc7bcf8c0749140db095098032f419a",
+    "PeopleAuditQuery": "7878018f503cb6c123bdbc9fb85e6fe69265e8ed7585b020e030480ba8ba9461",
+    "PeopleAuditEvent": "f7de344e6969c5b575efda685493d901f343ada0756f6277ffe97252d824f051",
+    "PeopleAuditResponse": "e85d20e924d9c05fb1d915a8c6a68a9ab78e0d03832c0a5a8a86ec975b689db8",
+    "AccessInspectionQuery": "0981a99d44c4372844e51588af01bc573488e1f88a6f1ba56a7d0b9375395347",
+    "AccessInspection": "3e9fd0d934218f44fced8317c16b23490067e2d935fc8c6302a1e39dd91e7d97",
+    "ImportCreate": "dacf88d031c08e967e3c8bf977e327e04ed5e794aea5c7a6d7501e71160772fc",
+    "ImportAction": "064fdb1e77eae7af8f54004f652370cc01f190748a1d9cab925ceaa34c56add5",
+    "ImportRowsQuery": "b5989589865d31638ce83b9569a87592622ca2588850bc23b0ae4921ed0fdba6",
+    "ImportJob": "3876dbb6fa96cc0f2d7f27fc881aebaf3b5ed6ccfe48e1e3268652357728792f",
+    "ImportDetail": "8472f4604dfbec78b56b2249258c23bc5b309fed8a0fd85a6082100a2caf8100",
+    "ImportList": "9595ef2a4918b62129aa79f5e1a55954936a15413403b52c5cdd0b748ababf90",
+    "ImportErrors": "d4e10d4ea7575f7577b2e9fdaa5260466243d0a8443d14fe529cabe01d32679a",
+    "PeoplePath": "604dbe3369dfb301701fae6d21828ff266ae93dc6ea421a82ef6924eefa2f848",
+    "PeopleMutationHeaders": "aebc29c98dde0e09ce9a4f015311068e99e01b74aeb2f8889f1a8d2a3d35dad5",
+    "PeopleEmpty": "25c7d85c859a6f78f6f4e83edf2d3073645b7c71d2832348387882a6833b1834",
+    "PeopleListQuery": "b7e48eec1d2c9681e02449475b1587d6af39207bff8e82af7ced52b7f9a909d1",
+    "MemberListQuery": "c13d014e1b9529b841f64c4d9264a1fe3feb503cd38fd17bdb9f639b8c5d7b93",
+    "RoleListQuery": "72b8e24d1014c540e4a48837c32c1983a64144e66055c60619aa48e990642287",
+    "InvitationListQuery": "32aeb12ef84e4852391e4b3230f38d79a677823f8281cc2358d6c9c1b7807a82",
+    "Invitation": "8a5a30a9ada690a5c6da0132a4da43e238cf5beed20a0144d7e326bc7d28f923",
+    "InvitationListResponse": "ab3a78dc84896b6a189b3620efeaca64bb64df3f93e04c943cf4765aed2788da",
+    "InvitationApproval": "2490e3dd00bfd5a1bc97117e8f698171e2484ab6259524e2af6db07538bdef98",
+    "InvitationDelivery": "04ba8cfc703b49a75ad0ba44d7f069dafe7b41d94af8088d98617cb2e6fab08c",
+    "RoleCreateCommand": "11a07ab28a8ebe589afd1ea38ea1af2338bb91c9b40cae49d9d2e0349b97f842",
+    "RolePatchCommand": "84915208b7c08f74c727c92dab8718e36408728942a7999bd671b41caefb891b",
+    "RoleDeleteCommand": "82b968bc869371088f1ba138af9b08faa5b3486251aa351c0e4a38045e51ca68",
+    "MemberAssignmentsCommand": "6f5dad803bfe3129ec4185d1eba18a53ceef20f7a94d8f5e090385e9ef05382f",
+    "MemberSuspendCommand": "01a354b591886584b1d6f2b39684d8df083cfde78607a5ff5f2838dcc6bd30de",
+    "MemberReactivateCommand": "0371fdbaeeba5152b2c468b21074e17e9e7d2632a99aafc8c506068301b3a9d1",
+    "InvitationIssueCommand": "b618c676291d29ba08f120bfdbbde3e6eda97efc9a44154fdec5a798b255f808",
+    "InvitationResendCommand": "93de31b20eb0530dce82c54e2690fa5344fa50dae4bfaf323d7faa2b6ca9e6dc",
+    "InvitationCancelCommand": "469d7ba791bf4fb41177fde4f7d7e5f6dc71118ddde199e7fd429a7f5e94d7f6",
+    "InvitationReapproveCommand": "befe9c1f5bfa9f751d0ccf238fa040c3233e5124bdffda626a6c5e70a01ebdb8",
+    "PeopleCommand": "306984c03ba030735f9698beddf9915f1e0abcd67dccdad001e0b2e4b8138415",
+    "PeopleMutationRequest": "0816b428cbc34a78d80cc07b74e8295ab92435fed9147c180a3f628887a11828",
+    "RoleCreateRequest": "8d1c38960f2fb7cb6f9ebebd8e39e8cfac00ff410cb4186a78435298b66084cd",
+    "RolePatchRequest": "501e561b0ad8a8f34ca306cfdde158f71925fe29826bf2b197831cba591bd0ff",
+    "RoleDeleteRequest": "0f84548cfd6449f5b9ec1fd02963811682179959eb0ab752b6c695d74b7a2e4c",
+    "MemberAssignmentsRequest": "15644bc1e2477a0e5fe641fe55c64489d85aa62b07faccf4132cb70c13af6c72",
+    "MemberSuspendRequest": "3123b34ad5af82973510c490f77d0742b05be04beb4516ae3bc5597712d06e92",
+    "MemberReactivateRequest": "d5d0ea511a871580eb8c9bbbf406ac4bc25566859907be668cf7aec74c2fc13c",
+    "InvitationIssueRequest": "6871df727e96bf71b0afdac4c19948edf052634f8ad29f3b61a92b8d0c1abbbb",
+    "InvitationResendRequest": "39c88fa38a36c058f050654c496b116df511e38e281614b6a12fc517ede6665a",
+    "InvitationCancelRequest": "6d7606a54ed5ed97125b30530d8598271ac14a8aaa233dc845cc08be593f92c8",
+    "InvitationReapproveRequest": "e75fccdd975a2f7c38b58841e485fe67ac959ad6abc3bc07ffeaded57b7ace5e",
+    "ImpactReviewRequest": "0acce3938a49db31d741d29849a7380c12b94c74e4d6d0179d57949b37c215bd",
+    "ImpactReview": "eabd3e9bd7fbafaf39f13eba5807757c65fc2cc7617f96b88f462cc83895be96",
+    "PeopleCommandResult": "1d330ff6f3a733614af9c02baad220e6d1a5427a0144c4a07f633c0e836c4a3e",
+    "ScopedUnitCreate": "92210c1ba8169c4e458f1067a684b21ccff9c730a5d080fdcea7c395cb4569d6",
+    "ScopedUnitRename": "841452616b8e7f3b2951b06bf0a67737c079cc6c7bf4dfc68f5abe4d1a975c04",
+    "ScopedUnitDelete": "ea2ce8370142eef5128e5256275044c4e85deda9453f73f47143c4b6a2bc1af4",
+    "ScopedMoveCommand": "2991224d3c588f1eb22a97a2585f8282ee97579aa7e3f0bca4a5f043c0458828",
+    "ScopedMoveRequest": "2a19ba9847586171a4471b4043fd300bfccf1b9c677ab53348c5322022e4d54e",
+    "ScopedMoveImpact": "548f0f24ae5d81e5458e21e99556d0ea514bfd29dc113e7f4a7aa0d2b1f5faa8",
+    "ScopedCommandResult": "bfc202cfa648a423a5626c0bdc33377f29c217044168caad74f2cb5d5c52c625",
+    "RecipientReview": "2c3615feded02014ca64738b63e739f67426f8a12eb0508c5b978063c16d2c1d",
+    "RestrictedInvitationContext": "95919e635ea716f915219e56681ccf8f8bdb84cd709f6a15936ac55073cd015c",
+    "InvitationExchange": "0478eba358075d5ef7526bd0ee3ece48bd09d578a3ba5ce43cff85307040fb3b",
+    "RecipientAction": "b971b13f83671f1cdc921abc2bba0b0f9614c524351d5b96ea3bb23e1322e76b",
+    "InvitationAccept": "35673fc1f9cab702a9435795fc9807041f9d437f67b723031397405de44a47e4",
+    "RecipientSwitch": "4ae87f2e96ac8b0e8af81ac1d167e47e2ae07058ef88bd0dcb42d442b90e12a2",
+    "RecipientNavigation": "28e261698291696f17e08fa8ea49ddf764e984bfc60e09ac16af88164503558e",
+    "InvitationSetupHandoff": "4e99782dd29b3f3933a446e3bbf8a09d0fec50749a6941b5d48e4ed0b60cb766",
+    "RecipientFlowResult": "8cbdab0a71de019056f21f4abb3b7503c2ef25100f8c3ab4b8e87b212c0e86e2",
+    "InvitationAcceptanceResult": "2b7a3335450a9e93562a0f1222008721aea6e6a80780504b0d82ad13e4a6337c",
+    "PeopleError": "67cd8923d319e2ce6caacf65255487104486750fbc0cda6ce3c4530e5985b8e8"
+  },
+  "examples": {
+    "ImportCreate": {
+      "id": "10000000-0000-4000-8000-0000000000c3",
+      "filename": "recipients.csv",
+      "csv": "email\nalex@example.test\n",
+      "assignments": [
+        {
+          "roleId": "10000000-0000-4000-8000-000000000014",
+          "expectedRoleVersion": 1,
+          "scope": {
+            "kind": "company"
+          }
+        }
+      ]
+    },
+    "ImportAction": {
+      "action": "start",
+      "expectedVersion": 1
+    },
+    "ImportRowsQuery": {
+      "after": 0
+    },
+    "ImportJob": {
+      "id": "10000000-0000-4000-8000-0000000000c3",
+      "actorId": "example-administrator",
+      "filename": "recipients.csv",
+      "state": "draft",
+      "version": 1,
+      "reason": null,
+      "createdAt": "2026-11-03T10:00:00Z",
+      "updatedAt": "2026-11-03T10:00:00Z",
+      "reviewExpiresAt": "2026-11-03T10:00:00Z",
+      "nextAttemptAt": "2026-11-03T10:00:00Z",
+      "assignments": [
+        {
+          "id": "10000000-0000-4000-8000-00000000001e",
+          "role": {
+            "id": "10000000-0000-4000-8000-000000000014",
+            "version": 1,
+            "permissionVersion": 1,
+            "description": null,
+            "systemKey": null,
+            "name": "Operations lead",
+            "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+          },
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000002"],
+            "includeChildren": true
+          }
+        },
+        {
+          "id": "10000000-0000-4000-8000-00000000001f",
+          "role": {
+            "id": "10000000-0000-4000-8000-00000000000d",
+            "version": 1,
+            "permissionVersion": 1,
+            "description": null,
+            "systemKey": "member",
+            "name": "Member",
+            "permissions": ["turnstile:access"]
+          },
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000003"],
+            "includeChildren": false
+          }
+        }
+      ],
+      "counts": {
+        "pending": 1,
+        "processing": 0,
+        "succeeded": 0,
+        "failed": 0,
+        "skipped": 0,
+        "cancelled": 0
+      }
+    },
+    "ImportDetail": {
+      "job": {
+        "id": "10000000-0000-4000-8000-0000000000c3",
+        "actorId": "example-administrator",
+        "filename": "recipients.csv",
+        "state": "draft",
+        "version": 1,
+        "reason": null,
+        "createdAt": "2026-11-03T10:00:00Z",
+        "updatedAt": "2026-11-03T10:00:00Z",
+        "reviewExpiresAt": "2026-11-03T10:00:00Z",
+        "nextAttemptAt": "2026-11-03T10:00:00Z",
+        "assignments": [
+          {
+            "id": "10000000-0000-4000-8000-00000000001e",
+            "role": {
+              "id": "10000000-0000-4000-8000-000000000014",
+              "version": 1,
+              "permissionVersion": 1,
+              "description": null,
+              "systemKey": null,
+              "name": "Operations lead",
+              "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+            },
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000002"],
+              "includeChildren": true
+            }
+          },
+          {
+            "id": "10000000-0000-4000-8000-00000000001f",
+            "role": {
+              "id": "10000000-0000-4000-8000-00000000000d",
+              "version": 1,
+              "permissionVersion": 1,
+              "description": null,
+              "systemKey": "member",
+              "name": "Member",
+              "permissions": ["turnstile:access"]
+            },
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000003"],
+              "includeChildren": false
+            }
+          }
+        ],
+        "counts": {
+          "pending": 1,
+          "processing": 0,
+          "succeeded": 0,
+          "failed": 0,
+          "skipped": 0,
+          "cancelled": 0
+        }
+      },
+      "rows": [
+        {
+          "number": 2,
+          "email": "alex@example.test",
+          "state": "pending",
+          "reason": null,
+          "invitationId": null
+        }
+      ],
+      "nextAfter": null
+    },
+    "ImportList": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-0000000000c3",
+          "actorId": "example-administrator",
+          "filename": "recipients.csv",
+          "state": "draft",
+          "version": 1,
+          "reason": null,
+          "createdAt": "2026-11-03T10:00:00Z",
+          "updatedAt": "2026-11-03T10:00:00Z",
+          "reviewExpiresAt": "2026-11-03T10:00:00Z",
+          "nextAttemptAt": "2026-11-03T10:00:00Z",
+          "assignments": [
+            {
+              "id": "10000000-0000-4000-8000-00000000001e",
+              "role": {
+                "id": "10000000-0000-4000-8000-000000000014",
+                "version": 1,
+                "permissionVersion": 1,
+                "description": null,
+                "systemKey": null,
+                "name": "Operations lead",
+                "permissions": [
+                  "turnstile:access",
+                  "turnstile:units:read",
+                  "turnstile:units:manage"
+                ]
+              },
+              "scope": {
+                "kind": "units",
+                "unitIds": ["10000000-0000-4000-8000-000000000002"],
+                "includeChildren": true
+              }
+            },
+            {
+              "id": "10000000-0000-4000-8000-00000000001f",
+              "role": {
+                "id": "10000000-0000-4000-8000-00000000000d",
+                "version": 1,
+                "permissionVersion": 1,
+                "description": null,
+                "systemKey": "member",
+                "name": "Member",
+                "permissions": ["turnstile:access"]
+              },
+              "scope": {
+                "kind": "units",
+                "unitIds": ["10000000-0000-4000-8000-000000000003"],
+                "includeChildren": false
+              }
+            }
+          ],
+          "counts": {
+            "pending": 1,
+            "processing": 0,
+            "succeeded": 0,
+            "failed": 0,
+            "skipped": 0,
+            "cancelled": 0
+          }
+        }
+      ]
+    },
+    "ImportErrors": {
+      "rows": []
+    },
+    "PeopleAuditQuery": {
+      "limit": 25,
+      "source": "access"
+    },
+    "PeopleAuditEvent": {
+      "id": "10000000-0000-4000-8000-0000000000be",
+      "source": "access",
+      "action": "member_suspended",
+      "occurredAt": "2026-11-03T10:00:00Z",
+      "actorKind": "user",
+      "actorId": "example-administrator",
+      "actorName": "Example Administrator",
+      "subjectId": "10000000-0000-4000-8000-000000000028",
+      "subjectLabel": "Samira Example",
+      "subjectKind": "member",
+      "revisionBefore": 2,
+      "revisionAfter": 3,
+      "generation": null
+    },
+    "PeopleAuditResponse": {
+      "items": [],
+      "nextCursor": null,
+      "retentionDays": 90,
+      "accessRevision": 3
+    },
+    "AccessInspectionQuery": {
+      "permission": "turnstile:units:read",
+      "unitId": "10000000-0000-4000-8000-000000000002"
+    },
+    "AccessInspection": {
+      "memberId": "10000000-0000-4000-8000-000000000028",
+      "permission": "turnstile:units:read",
+      "unitId": "10000000-0000-4000-8000-000000000002",
+      "memberStatus": "active",
+      "allowed": true,
+      "reason": "granted",
+      "sources": [
+        {
+          "id": "10000000-0000-4000-8000-00000000001e",
+          "name": "Operations lead",
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000002"],
+            "includeChildren": true
+          }
+        }
+      ],
+      "accessRevision": 3
+    },
+    "PermissionCatalog": {
+      "catalogVersion": 2,
+      "permissions": [
+        {
+          "id": "turnstile:access",
+          "applicability": "scope_neutral",
+          "implies": []
+        },
+        {
+          "id": "turnstile:dms:capabilities:read",
+          "applicability": "company_only",
+          "implies": []
+        },
+        {
+          "id": "turnstile:configuration:manage",
+          "applicability": "company_only",
+          "implies": ["turnstile:units:read", "turnstile:units:manage"]
+        },
+        {
+          "id": "turnstile:people:manage",
+          "applicability": "company_only",
+          "implies": []
+        },
+        {
+          "id": "turnstile:roles:manage",
+          "applicability": "company_only",
+          "implies": []
+        },
+        {
+          "id": "turnstile:incidents:read",
+          "applicability": "company_only",
+          "implies": []
+        },
+        {
+          "id": "turnstile:risks:read",
+          "applicability": "company_only",
+          "implies": []
+        },
+        {
+          "id": "turnstile:units:read",
+          "applicability": "scope_aware",
+          "implies": []
+        },
+        {
+          "id": "turnstile:units:manage",
+          "applicability": "scope_aware",
+          "implies": ["turnstile:units:read"]
+        }
+      ],
+      "starters": [
+        {
+          "id": "10000000-0000-4000-8000-00000000000a",
+          "version": 1,
+          "permissionVersion": 1,
+          "description": null,
+          "systemKey": "workspace_administrator",
+          "name": "Workspace administrator",
+          "permissions": [
+            "turnstile:access",
+            "turnstile:configuration:manage",
+            "turnstile:people:manage",
+            "turnstile:roles:manage",
+            "turnstile:units:read",
+            "turnstile:units:manage"
+          ]
+        },
+        {
+          "id": "10000000-0000-4000-8000-00000000000b",
+          "version": 1,
+          "permissionVersion": 1,
+          "description": null,
+          "systemKey": "configuration_manager",
+          "name": "Configuration manager",
+          "permissions": [
+            "turnstile:access",
+            "turnstile:configuration:manage",
+            "turnstile:units:read",
+            "turnstile:units:manage"
+          ]
+        },
+        {
+          "id": "10000000-0000-4000-8000-00000000000c",
+          "version": 1,
+          "permissionVersion": 1,
+          "description": null,
+          "systemKey": "unit_manager",
+          "name": "Unit manager",
+          "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+        },
+        {
+          "id": "10000000-0000-4000-8000-00000000000d",
+          "version": 1,
+          "permissionVersion": 1,
+          "description": null,
+          "systemKey": "member",
+          "name": "Member",
+          "permissions": ["turnstile:access"]
+        }
+      ]
+    },
+    "RoleDefinition": {
+      "id": "10000000-0000-4000-8000-000000000014",
+      "version": 1,
+      "permissionVersion": 1,
+      "description": null,
+      "systemKey": null,
+      "name": "Operations lead",
+      "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+    },
+    "AssignmentScope": {
+      "kind": "units",
+      "unitIds": ["10000000-0000-4000-8000-000000000002"],
+      "includeChildren": true
+    },
+    "RoleAssignmentRequest": {
+      "roleId": "10000000-0000-4000-8000-000000000014",
+      "expectedRoleVersion": 1,
+      "scope": {
+        "kind": "units",
+        "unitIds": ["10000000-0000-4000-8000-000000000002"],
+        "includeChildren": true
+      }
+    },
+    "RoleAssignmentRequests": [
+      {
+        "roleId": "10000000-0000-4000-8000-000000000014",
+        "expectedRoleVersion": 1,
+        "scope": {
+          "kind": "units",
+          "unitIds": ["10000000-0000-4000-8000-000000000002"],
+          "includeChildren": true
+        }
+      },
+      {
+        "roleId": "10000000-0000-4000-8000-00000000000d",
+        "expectedRoleVersion": 1,
+        "scope": {
+          "kind": "units",
+          "unitIds": ["10000000-0000-4000-8000-000000000003"],
+          "includeChildren": false
+        }
+      }
+    ],
+    "ResolvedRoleAssignment": {
+      "id": "10000000-0000-4000-8000-00000000001e",
+      "role": {
+        "id": "10000000-0000-4000-8000-000000000014",
+        "version": 1,
+        "permissionVersion": 1,
+        "description": null,
+        "systemKey": null,
+        "name": "Operations lead",
+        "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+      },
+      "scope": {
+        "kind": "units",
+        "unitIds": ["10000000-0000-4000-8000-000000000002"],
+        "includeChildren": true
+      }
+    },
+    "ResolvedRoleAssignments": [
+      {
+        "id": "10000000-0000-4000-8000-00000000001e",
+        "role": {
+          "id": "10000000-0000-4000-8000-000000000014",
+          "version": 1,
+          "permissionVersion": 1,
+          "description": null,
+          "systemKey": null,
+          "name": "Operations lead",
+          "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+        },
+        "scope": {
+          "kind": "units",
+          "unitIds": ["10000000-0000-4000-8000-000000000002"],
+          "includeChildren": true
+        }
+      },
+      {
+        "id": "10000000-0000-4000-8000-00000000001f",
+        "role": {
+          "id": "10000000-0000-4000-8000-00000000000d",
+          "version": 1,
+          "permissionVersion": 1,
+          "description": null,
+          "systemKey": "member",
+          "name": "Member",
+          "permissions": ["turnstile:access"]
+        },
+        "scope": {
+          "kind": "units",
+          "unitIds": ["10000000-0000-4000-8000-000000000003"],
+          "includeChildren": false
+        }
+      }
+    ],
+    "LegacyGrantSource": {
+      "kind": "legacy",
+      "version": 1,
+      "permissions": ["turnstile:access", "turnstile:dms:capabilities:read"],
+      "retired": false
+    },
+    "Member": {
+      "id": "10000000-0000-4000-8000-000000000028",
+      "userId": "example-recipient",
+      "version": 1,
+      "status": "active",
+      "identity": {
+        "state": "fresh",
+        "name": "Samira Example",
+        "email": "samira@example.test",
+        "verifiedAt": "2026-11-03T10:00:00Z"
+      },
+      "assignments": [
+        {
+          "id": "10000000-0000-4000-8000-00000000001e",
+          "role": {
+            "id": "10000000-0000-4000-8000-000000000014",
+            "version": 1,
+            "permissionVersion": 1,
+            "description": null,
+            "systemKey": null,
+            "name": "Operations lead",
+            "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+          },
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000002"],
+            "includeChildren": true
+          }
+        },
+        {
+          "id": "10000000-0000-4000-8000-00000000001f",
+          "role": {
+            "id": "10000000-0000-4000-8000-00000000000d",
+            "version": 1,
+            "permissionVersion": 1,
+            "description": null,
+            "systemKey": "member",
+            "name": "Member",
+            "permissions": ["turnstile:access"]
+          },
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000003"],
+            "includeChildren": false
+          }
+        }
+      ],
+      "legacySource": {
+        "kind": "legacy",
+        "version": 1,
+        "permissions": ["turnstile:access", "turnstile:dms:capabilities:read"],
+        "retired": false
+      }
+    },
+    "MemberListResponse": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000028",
+          "userId": "example-recipient",
+          "version": 1,
+          "status": "active",
+          "identity": {
+            "state": "fresh",
+            "name": "Samira Example",
+            "email": "samira@example.test",
+            "verifiedAt": "2026-11-03T10:00:00Z"
+          },
+          "assignments": [
+            {
+              "id": "10000000-0000-4000-8000-00000000001e",
+              "role": {
+                "id": "10000000-0000-4000-8000-000000000014",
+                "version": 1,
+                "permissionVersion": 1,
+                "description": null,
+                "systemKey": null,
+                "name": "Operations lead",
+                "permissions": [
+                  "turnstile:access",
+                  "turnstile:units:read",
+                  "turnstile:units:manage"
+                ]
+              },
+              "scope": {
+                "kind": "units",
+                "unitIds": ["10000000-0000-4000-8000-000000000002"],
+                "includeChildren": true
+              }
+            },
+            {
+              "id": "10000000-0000-4000-8000-00000000001f",
+              "role": {
+                "id": "10000000-0000-4000-8000-00000000000d",
+                "version": 1,
+                "permissionVersion": 1,
+                "description": null,
+                "systemKey": "member",
+                "name": "Member",
+                "permissions": ["turnstile:access"]
+              },
+              "scope": {
+                "kind": "units",
+                "unitIds": ["10000000-0000-4000-8000-000000000003"],
+                "includeChildren": false
+              }
+            }
+          ],
+          "legacySource": {
+            "kind": "legacy",
+            "version": 1,
+            "permissions": ["turnstile:access", "turnstile:dms:capabilities:read"],
+            "retired": false
+          }
+        }
+      ],
+      "nextCursor": null,
+      "total": 1,
+      "accessRevision": 3
+    },
+    "RoleListResponse": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000014",
+          "version": 1,
+          "permissionVersion": 1,
+          "description": null,
+          "systemKey": null,
+          "name": "Operations lead",
+          "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+        }
+      ],
+      "nextCursor": null,
+      "total": 1,
+      "accessRevision": 3
+    },
+    "EligibleRolesResponse": {
+      "items": [
+        {
+          "role": {
+            "id": "10000000-0000-4000-8000-000000000014",
+            "version": 1,
+            "permissionVersion": 1,
+            "description": null,
+            "systemKey": null,
+            "name": "Operations lead",
+            "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+          },
+          "allowedScopes": ["company", "units"]
+        }
+      ],
+      "nextCursor": null,
+      "total": 1,
+      "accessRevision": 3
+    },
+    "ScopedUnit": {
+      "id": "10000000-0000-4000-8000-000000000002",
+      "type": "site",
+      "parentId": "10000000-0000-4000-8000-000000000001",
+      "name": "North site",
+      "ancestorIds": ["10000000-0000-4000-8000-000000000001"]
+    },
+    "UnitAncestorContext": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "type": "organization",
+      "name": "Example Company",
+      "actionable": false
+    },
+    "ScopedUnitsResponse": {
+      "revision": 5,
+      "accessRevision": 3,
+      "units": [
+        {
+          "id": "10000000-0000-4000-8000-000000000002",
+          "type": "site",
+          "parentId": "10000000-0000-4000-8000-000000000001",
+          "name": "North site",
+          "ancestorIds": ["10000000-0000-4000-8000-000000000001"]
+        }
+      ],
+      "ancestors": [
+        {
+          "id": "10000000-0000-4000-8000-000000000001",
+          "type": "organization",
+          "name": "Example Company",
+          "actionable": false
+        }
+      ],
+      "nextCursor": null,
+      "total": 1
+    },
+    "ScopedUnitContext": {
+      "unit": {
+        "id": "10000000-0000-4000-8000-000000000002",
+        "type": "site",
+        "parentId": "10000000-0000-4000-8000-000000000001",
+        "name": "North site",
+        "ancestorIds": ["10000000-0000-4000-8000-000000000001"]
+      },
+      "ancestors": [
+        {
+          "id": "10000000-0000-4000-8000-000000000001",
+          "type": "organization",
+          "name": "Example Company",
+          "actionable": false
+        }
+      ]
+    },
+    "ScopedUnitDetail": {
+      "revision": 5,
+      "accessRevision": 3,
+      "unit": {
+        "id": "10000000-0000-4000-8000-000000000002",
+        "type": "site",
+        "parentId": "10000000-0000-4000-8000-000000000001",
+        "name": "North site",
+        "ancestorIds": ["10000000-0000-4000-8000-000000000001"]
+      },
+      "ancestors": [
+        {
+          "id": "10000000-0000-4000-8000-000000000001",
+          "type": "organization",
+          "name": "Example Company",
+          "actionable": false
+        }
+      ]
+    },
+    "UserAccessContext": {
+      "catalogVersion": 2,
+      "accessRevision": 3,
+      "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "grants": [
+        {
+          "sourceId": "10000000-0000-4000-8000-00000000001e",
+          "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"],
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000002"],
+            "includeChildren": true
+          }
+        },
+        {
+          "sourceId": "10000000-0000-4000-8000-00000000001f",
+          "permissions": ["turnstile:access"],
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000003"],
+            "includeChildren": false
+          }
+        }
+      ]
+    },
+    "AccessAwareUserSession": {
+      "user": {
+        "id": "example-recipient",
+        "name": "Samira Example",
+        "email": "samira@example.test"
+      },
+      "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"],
+      "session": {
+        "expiresAt": "2026-11-03T18:00:00Z",
+        "idleExpiresAt": "2026-11-03T10:30:00Z"
+      },
+      "csrfToken": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "access": {
+        "catalogVersion": 2,
+        "accessRevision": 3,
+        "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "grants": [
+          {
+            "sourceId": "10000000-0000-4000-8000-00000000001e",
+            "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"],
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000002"],
+              "includeChildren": true
+            }
+          },
+          {
+            "sourceId": "10000000-0000-4000-8000-00000000001f",
+            "permissions": ["turnstile:access"],
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000003"],
+              "includeChildren": false
+            }
+          }
+        ]
+      }
+    },
+    "PeoplePath": {
+      "id": "10000000-0000-4000-8000-000000000028"
+    },
+    "PeopleMutationHeaders": {
+      "idempotency-key": "10000000-0000-4000-8000-000000000063"
+    },
+    "PeopleEmpty": {},
+    "PeopleListQuery": {
+      "limit": 25
+    },
+    "MemberListQuery": {
+      "limit": 25,
+      "status": "active"
+    },
+    "RoleListQuery": {
+      "limit": 25,
+      "kind": "custom"
+    },
+    "InvitationListQuery": {
+      "limit": 25,
+      "state": "pending"
+    },
+    "Invitation": {
+      "id": "10000000-0000-4000-8000-000000000032",
+      "version": 1,
+      "generation": 1,
+      "email": "samira@example.test",
+      "createdAt": "2026-11-03T10:00:00Z",
+      "expiresAt": "2026-11-10T10:00:00Z",
+      "assignments": [
+        {
+          "id": "10000000-0000-4000-8000-00000000001e",
+          "role": {
+            "id": "10000000-0000-4000-8000-000000000014",
+            "version": 1,
+            "permissionVersion": 1,
+            "description": null,
+            "systemKey": null,
+            "name": "Operations lead",
+            "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+          },
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000002"],
+            "includeChildren": true
+          }
+        },
+        {
+          "id": "10000000-0000-4000-8000-00000000001f",
+          "role": {
+            "id": "10000000-0000-4000-8000-00000000000d",
+            "version": 1,
+            "permissionVersion": 1,
+            "description": null,
+            "systemKey": "member",
+            "name": "Member",
+            "permissions": ["turnstile:access"]
+          },
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000003"],
+            "includeChildren": false
+          }
+        }
+      ],
+      "state": "pending",
+      "approval": {
+        "approverId": "example-administrator",
+        "approvedAt": "2026-11-03T10:00:00Z",
+        "accessRevision": 3,
+        "organizationRevision": 5,
+        "permissionDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "scopeDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "delivery": {
+        "state": "queued",
+        "generation": 1,
+        "attempts": 0,
+        "nextAttemptAt": "2026-11-03T10:00:00Z"
+      }
+    },
+    "InvitationListResponse": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000032",
+          "version": 1,
+          "generation": 1,
+          "email": "samira@example.test",
+          "createdAt": "2026-11-03T10:00:00Z",
+          "expiresAt": "2026-11-10T10:00:00Z",
+          "assignments": [
+            {
+              "id": "10000000-0000-4000-8000-00000000001e",
+              "role": {
+                "id": "10000000-0000-4000-8000-000000000014",
+                "version": 1,
+                "permissionVersion": 1,
+                "description": null,
+                "systemKey": null,
+                "name": "Operations lead",
+                "permissions": [
+                  "turnstile:access",
+                  "turnstile:units:read",
+                  "turnstile:units:manage"
+                ]
+              },
+              "scope": {
+                "kind": "units",
+                "unitIds": ["10000000-0000-4000-8000-000000000002"],
+                "includeChildren": true
+              }
+            },
+            {
+              "id": "10000000-0000-4000-8000-00000000001f",
+              "role": {
+                "id": "10000000-0000-4000-8000-00000000000d",
+                "version": 1,
+                "permissionVersion": 1,
+                "description": null,
+                "systemKey": "member",
+                "name": "Member",
+                "permissions": ["turnstile:access"]
+              },
+              "scope": {
+                "kind": "units",
+                "unitIds": ["10000000-0000-4000-8000-000000000003"],
+                "includeChildren": false
+              }
+            }
+          ],
+          "state": "pending",
+          "approval": {
+            "approverId": "example-administrator",
+            "approvedAt": "2026-11-03T10:00:00Z",
+            "accessRevision": 3,
+            "organizationRevision": 5,
+            "permissionDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "scopeDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "delivery": {
+            "state": "queued",
+            "generation": 1,
+            "attempts": 0,
+            "nextAttemptAt": "2026-11-03T10:00:00Z"
+          }
+        }
+      ],
+      "nextCursor": null,
+      "total": 1,
+      "accessRevision": 3
+    },
+    "InvitationApproval": {
+      "approverId": "example-administrator",
+      "approvedAt": "2026-11-03T10:00:00Z",
+      "accessRevision": 3,
+      "organizationRevision": 5,
+      "permissionDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "scopeDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "InvitationDelivery": {
+      "state": "queued",
+      "generation": 1,
+      "attempts": 0,
+      "nextAttemptAt": "2026-11-03T10:00:00Z"
+    },
+    "RoleCreateCommand": {
+      "operation": "role.create",
+      "source": "new",
+      "expectedAccessRevision": 3,
+      "name": "Shift lead",
+      "description": "",
+      "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+    },
+    "RolePatchCommand": {
+      "operation": "role.patch",
+      "change": "details",
+      "id": "10000000-0000-4000-8000-000000000014",
+      "expectedVersion": 1,
+      "expectedAccessRevision": 3,
+      "name": "Operations coordinator"
+    },
+    "RoleDeleteCommand": {
+      "operation": "role.delete",
+      "id": "10000000-0000-4000-8000-000000000014",
+      "expectedVersion": 1,
+      "expectedAccessRevision": 3
+    },
+    "MemberAssignmentsCommand": {
+      "id": "10000000-0000-4000-8000-000000000028",
+      "expectedVersion": 1,
+      "expectedAccessRevision": 3,
+      "expectedOrganizationRevision": 5,
+      "operation": "member.assignments",
+      "assignments": [
+        {
+          "roleId": "10000000-0000-4000-8000-000000000014",
+          "expectedRoleVersion": 1,
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000002"],
+            "includeChildren": true
+          }
+        },
+        {
+          "roleId": "10000000-0000-4000-8000-00000000000d",
+          "expectedRoleVersion": 1,
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000003"],
+            "includeChildren": false
+          }
+        }
+      ],
+      "retireLegacyVersion": null
+    },
+    "MemberSuspendCommand": {
+      "id": "10000000-0000-4000-8000-000000000028",
+      "expectedVersion": 1,
+      "expectedAccessRevision": 3,
+      "expectedOrganizationRevision": 5,
+      "operation": "member.suspend"
+    },
+    "MemberReactivateCommand": {
+      "id": "10000000-0000-4000-8000-000000000028",
+      "expectedVersion": 1,
+      "expectedAccessRevision": 3,
+      "expectedOrganizationRevision": 5,
+      "operation": "member.reactivate"
+    },
+    "InvitationIssueCommand": {
+      "operation": "invitation.issue",
+      "expectedAccessRevision": 3,
+      "expectedOrganizationRevision": 5,
+      "email": "Samira@Example.test",
+      "assignments": [
+        {
+          "roleId": "10000000-0000-4000-8000-000000000014",
+          "expectedRoleVersion": 1,
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000002"],
+            "includeChildren": true
+          }
+        },
+        {
+          "roleId": "10000000-0000-4000-8000-00000000000d",
+          "expectedRoleVersion": 1,
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000003"],
+            "includeChildren": false
+          }
+        }
+      ]
+    },
+    "InvitationResendCommand": {
+      "id": "10000000-0000-4000-8000-000000000032",
+      "expectedVersion": 1,
+      "expectedAccessRevision": 3,
+      "expectedOrganizationRevision": 5,
+      "expectedGeneration": 1,
+      "operation": "invitation.resend"
+    },
+    "InvitationCancelCommand": {
+      "operation": "invitation.cancel",
+      "id": "10000000-0000-4000-8000-000000000032",
+      "expectedVersion": 1,
+      "expectedAccessRevision": 3,
+      "expectedGeneration": 1
+    },
+    "InvitationReapproveCommand": {
+      "id": "10000000-0000-4000-8000-000000000032",
+      "expectedVersion": 1,
+      "expectedAccessRevision": 3,
+      "expectedOrganizationRevision": 5,
+      "expectedGeneration": 1,
+      "operation": "invitation.reapprove",
+      "email": "samira@example.test",
+      "assignments": [
+        {
+          "roleId": "10000000-0000-4000-8000-000000000014",
+          "expectedRoleVersion": 1,
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000002"],
+            "includeChildren": true
+          }
+        },
+        {
+          "roleId": "10000000-0000-4000-8000-00000000000d",
+          "expectedRoleVersion": 1,
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000003"],
+            "includeChildren": false
+          }
+        }
+      ]
+    },
+    "PeopleCommand": {
+      "id": "10000000-0000-4000-8000-000000000028",
+      "expectedVersion": 1,
+      "expectedAccessRevision": 3,
+      "expectedOrganizationRevision": 5,
+      "operation": "member.assignments",
+      "assignments": [
+        {
+          "roleId": "10000000-0000-4000-8000-000000000014",
+          "expectedRoleVersion": 1,
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000002"],
+            "includeChildren": true
+          }
+        },
+        {
+          "roleId": "10000000-0000-4000-8000-00000000000d",
+          "expectedRoleVersion": 1,
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000003"],
+            "includeChildren": false
+          }
+        }
+      ],
+      "retireLegacyVersion": null
+    },
+    "PeopleMutationRequest": {
+      "command": {
+        "id": "10000000-0000-4000-8000-000000000028",
+        "expectedVersion": 1,
+        "expectedAccessRevision": 3,
+        "expectedOrganizationRevision": 5,
+        "operation": "member.assignments",
+        "assignments": [
+          {
+            "roleId": "10000000-0000-4000-8000-000000000014",
+            "expectedRoleVersion": 1,
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000002"],
+              "includeChildren": true
+            }
+          },
+          {
+            "roleId": "10000000-0000-4000-8000-00000000000d",
+            "expectedRoleVersion": 1,
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000003"],
+              "includeChildren": false
+            }
+          }
+        ],
+        "retireLegacyVersion": null
+      },
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "RoleCreateRequest": {
+      "command": {
+        "operation": "role.create",
+        "source": "new",
+        "expectedAccessRevision": 3,
+        "name": "Shift lead",
+        "description": "",
+        "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+      },
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "RolePatchRequest": {
+      "command": {
+        "operation": "role.patch",
+        "change": "details",
+        "id": "10000000-0000-4000-8000-000000000014",
+        "expectedVersion": 1,
+        "expectedAccessRevision": 3,
+        "name": "Operations coordinator"
+      },
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "RoleDeleteRequest": {
+      "command": {
+        "operation": "role.delete",
+        "id": "10000000-0000-4000-8000-000000000014",
+        "expectedVersion": 1,
+        "expectedAccessRevision": 3
+      },
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "MemberAssignmentsRequest": {
+      "command": {
+        "id": "10000000-0000-4000-8000-000000000028",
+        "expectedVersion": 1,
+        "expectedAccessRevision": 3,
+        "expectedOrganizationRevision": 5,
+        "operation": "member.assignments",
+        "assignments": [
+          {
+            "roleId": "10000000-0000-4000-8000-000000000014",
+            "expectedRoleVersion": 1,
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000002"],
+              "includeChildren": true
+            }
+          },
+          {
+            "roleId": "10000000-0000-4000-8000-00000000000d",
+            "expectedRoleVersion": 1,
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000003"],
+              "includeChildren": false
+            }
+          }
+        ],
+        "retireLegacyVersion": null
+      },
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "MemberSuspendRequest": {
+      "command": {
+        "id": "10000000-0000-4000-8000-000000000028",
+        "expectedVersion": 1,
+        "expectedAccessRevision": 3,
+        "expectedOrganizationRevision": 5,
+        "operation": "member.suspend"
+      },
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "MemberReactivateRequest": {
+      "command": {
+        "id": "10000000-0000-4000-8000-000000000028",
+        "expectedVersion": 1,
+        "expectedAccessRevision": 3,
+        "expectedOrganizationRevision": 5,
+        "operation": "member.reactivate"
+      },
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "InvitationIssueRequest": {
+      "command": {
+        "operation": "invitation.issue",
+        "expectedAccessRevision": 3,
+        "expectedOrganizationRevision": 5,
+        "email": "Samira@Example.test",
+        "assignments": [
+          {
+            "roleId": "10000000-0000-4000-8000-000000000014",
+            "expectedRoleVersion": 1,
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000002"],
+              "includeChildren": true
+            }
+          },
+          {
+            "roleId": "10000000-0000-4000-8000-00000000000d",
+            "expectedRoleVersion": 1,
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000003"],
+              "includeChildren": false
+            }
+          }
+        ]
+      },
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "InvitationResendRequest": {
+      "command": {
+        "id": "10000000-0000-4000-8000-000000000032",
+        "expectedVersion": 1,
+        "expectedAccessRevision": 3,
+        "expectedOrganizationRevision": 5,
+        "expectedGeneration": 1,
+        "operation": "invitation.resend"
+      },
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "InvitationCancelRequest": {
+      "command": {
+        "operation": "invitation.cancel",
+        "id": "10000000-0000-4000-8000-000000000032",
+        "expectedVersion": 1,
+        "expectedAccessRevision": 3,
+        "expectedGeneration": 1
+      },
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "InvitationReapproveRequest": {
+      "command": {
+        "id": "10000000-0000-4000-8000-000000000032",
+        "expectedVersion": 1,
+        "expectedAccessRevision": 3,
+        "expectedOrganizationRevision": 5,
+        "expectedGeneration": 1,
+        "operation": "invitation.reapprove",
+        "email": "samira@example.test",
+        "assignments": [
+          {
+            "roleId": "10000000-0000-4000-8000-000000000014",
+            "expectedRoleVersion": 1,
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000002"],
+              "includeChildren": true
+            }
+          },
+          {
+            "roleId": "10000000-0000-4000-8000-00000000000d",
+            "expectedRoleVersion": 1,
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000003"],
+              "includeChildren": false
+            }
+          }
+        ]
+      },
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "ImpactReviewRequest": {
+      "command": {
+        "id": "10000000-0000-4000-8000-000000000028",
+        "expectedVersion": 1,
+        "expectedAccessRevision": 3,
+        "expectedOrganizationRevision": 5,
+        "operation": "member.assignments",
+        "assignments": [
+          {
+            "roleId": "10000000-0000-4000-8000-000000000014",
+            "expectedRoleVersion": 1,
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000002"],
+              "includeChildren": true
+            }
+          },
+          {
+            "roleId": "10000000-0000-4000-8000-00000000000d",
+            "expectedRoleVersion": 1,
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000003"],
+              "includeChildren": false
+            }
+          }
+        ],
+        "retireLegacyVersion": null
+      }
+    },
+    "ImpactReview": {
+      "actorId": "example-administrator",
+      "commandDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "accessRevision": 3,
+      "organizationRevision": 5,
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "expiresAt": "2026-11-03T10:10:00Z",
+      "visibility": "people",
+      "affectedMemberIds": ["10000000-0000-4000-8000-000000000028"],
+      "affectedInvitationIds": [],
+      "memberCount": 1,
+      "invitationCount": 0,
+      "assignments": [
+        {
+          "id": "10000000-0000-4000-8000-00000000001e",
+          "role": {
+            "id": "10000000-0000-4000-8000-000000000014",
+            "version": 1,
+            "permissionVersion": 1,
+            "description": null,
+            "systemKey": null,
+            "name": "Operations lead",
+            "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+          },
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000002"],
+            "includeChildren": true
+          }
+        },
+        {
+          "id": "10000000-0000-4000-8000-00000000001f",
+          "role": {
+            "id": "10000000-0000-4000-8000-00000000000d",
+            "version": 1,
+            "permissionVersion": 1,
+            "description": null,
+            "systemKey": "member",
+            "name": "Member",
+            "permissions": ["turnstile:access"]
+          },
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000003"],
+            "includeChildren": false
+          }
+        }
+      ]
+    },
+    "PeopleCommandResult": {
+      "commandId": "10000000-0000-4000-8000-000000000063",
+      "changed": true,
+      "replayed": false,
+      "accessRevision": 4,
+      "kind": "member",
+      "current": {
+        "id": "10000000-0000-4000-8000-000000000028",
+        "userId": "example-recipient",
+        "version": 1,
+        "status": "active",
+        "identity": {
+          "state": "fresh",
+          "name": "Samira Example",
+          "email": "samira@example.test",
+          "verifiedAt": "2026-11-03T10:00:00Z"
+        },
+        "assignments": [
+          {
+            "id": "10000000-0000-4000-8000-00000000001e",
+            "role": {
+              "id": "10000000-0000-4000-8000-000000000014",
+              "version": 1,
+              "permissionVersion": 1,
+              "description": null,
+              "systemKey": null,
+              "name": "Operations lead",
+              "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+            },
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000002"],
+              "includeChildren": true
+            }
+          },
+          {
+            "id": "10000000-0000-4000-8000-00000000001f",
+            "role": {
+              "id": "10000000-0000-4000-8000-00000000000d",
+              "version": 1,
+              "permissionVersion": 1,
+              "description": null,
+              "systemKey": "member",
+              "name": "Member",
+              "permissions": ["turnstile:access"]
+            },
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000003"],
+              "includeChildren": false
+            }
+          }
+        ],
+        "legacySource": {
+          "kind": "legacy",
+          "version": 1,
+          "permissions": ["turnstile:access", "turnstile:dms:capabilities:read"],
+          "retired": false
+        }
+      }
+    },
+    "ScopedUnitCreate": {
+      "expectedAccessRevision": 3,
+      "expectedOrganizationRevision": 5,
+      "type": "department",
+      "parentId": "10000000-0000-4000-8000-000000000002",
+      "name": "Engineering"
+    },
+    "ScopedUnitRename": {
+      "expectedAccessRevision": 3,
+      "expectedOrganizationRevision": 5,
+      "name": "Engineering"
+    },
+    "ScopedUnitDelete": {
+      "expectedAccessRevision": 3,
+      "expectedOrganizationRevision": 5
+    },
+    "ScopedMoveCommand": {
+      "expectedAccessRevision": 3,
+      "expectedOrganizationRevision": 5,
+      "id": "10000000-0000-4000-8000-000000000003",
+      "parentId": "10000000-0000-4000-8000-000000000002"
+    },
+    "ScopedMoveRequest": {
+      "command": {
+        "expectedAccessRevision": 3,
+        "expectedOrganizationRevision": 5,
+        "id": "10000000-0000-4000-8000-000000000003",
+        "parentId": "10000000-0000-4000-8000-000000000002"
+      },
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "ScopedMoveImpact": {
+      "actorId": "example-administrator",
+      "commandDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "accessRevision": 3,
+      "organizationRevision": 5,
+      "confirmation": "example_impact_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "expiresAt": "2026-11-03T10:10:00Z",
+      "sourceId": "10000000-0000-4000-8000-000000000003",
+      "parentId": "10000000-0000-4000-8000-000000000002",
+      "accessChanges": true,
+      "affectedMemberCount": 1,
+      "affectedInvitationCount": 1
+    },
+    "ScopedCommandResult": {
+      "commandId": "10000000-0000-4000-8000-000000000063",
+      "changed": false,
+      "replayed": true,
+      "accessRevision": 3,
+      "kind": "unit",
+      "current": {
+        "revision": 5,
+        "accessRevision": 3,
+        "unit": {
+          "id": "10000000-0000-4000-8000-000000000002",
+          "type": "site",
+          "parentId": "10000000-0000-4000-8000-000000000001",
+          "name": "North site",
+          "ancestorIds": ["10000000-0000-4000-8000-000000000001"]
+        },
+        "ancestors": [
+          {
+            "id": "10000000-0000-4000-8000-000000000001",
+            "type": "organization",
+            "name": "Example Company",
+            "actionable": false
+          }
+        ]
+      }
+    },
+    "RecipientReview": {
+      "invitationId": "10000000-0000-4000-8000-000000000032",
+      "version": 1,
+      "generation": 1,
+      "expiresAt": "2026-11-10T10:00:00Z",
+      "workspaceName": "Example Company",
+      "assignments": [
+        {
+          "id": "10000000-0000-4000-8000-00000000001e",
+          "role": {
+            "id": "10000000-0000-4000-8000-000000000014",
+            "version": 1,
+            "permissionVersion": 1,
+            "description": null,
+            "systemKey": null,
+            "name": "Operations lead",
+            "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+          },
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000002"],
+            "includeChildren": true
+          }
+        },
+        {
+          "id": "10000000-0000-4000-8000-00000000001f",
+          "role": {
+            "id": "10000000-0000-4000-8000-00000000000d",
+            "version": 1,
+            "permissionVersion": 1,
+            "description": null,
+            "systemKey": "member",
+            "name": "Member",
+            "permissions": ["turnstile:access"]
+          },
+          "scope": {
+            "kind": "units",
+            "unitIds": ["10000000-0000-4000-8000-000000000003"],
+            "includeChildren": false
+          }
+        }
+      ],
+      "addressedEmail": "samira@example.test",
+      "scopeContext": [
+        {
+          "unit": {
+            "id": "10000000-0000-4000-8000-000000000002",
+            "type": "site",
+            "parentId": "10000000-0000-4000-8000-000000000001",
+            "name": "North site",
+            "ancestorIds": ["10000000-0000-4000-8000-000000000001"]
+          },
+          "ancestors": [
+            {
+              "id": "10000000-0000-4000-8000-000000000001",
+              "type": "organization",
+              "name": "Example Company",
+              "actionable": false
+            }
+          ]
+        },
+        {
+          "unit": {
+            "id": "10000000-0000-4000-8000-000000000003",
+            "type": "department",
+            "parentId": "10000000-0000-4000-8000-000000000001",
+            "name": "Workshop",
+            "ancestorIds": ["10000000-0000-4000-8000-000000000001"]
+          },
+          "ancestors": [
+            {
+              "id": "10000000-0000-4000-8000-000000000001",
+              "type": "organization",
+              "name": "Example Company",
+              "actionable": false
+            }
+          ]
+        }
+      ],
+      "permissionDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "scopeDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "RestrictedInvitationContext": {
+      "kind": "invitation",
+      "csrfToken": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "expiresAt": "2026-11-03T10:10:00Z",
+      "phase": "identity_required",
+      "review": {
+        "invitationId": "10000000-0000-4000-8000-000000000032",
+        "version": 1,
+        "generation": 1,
+        "expiresAt": "2026-11-10T10:00:00Z",
+        "workspaceName": "Example Company",
+        "assignments": [
+          {
+            "id": "10000000-0000-4000-8000-00000000001e",
+            "role": {
+              "id": "10000000-0000-4000-8000-000000000014",
+              "version": 1,
+              "permissionVersion": 1,
+              "description": null,
+              "systemKey": null,
+              "name": "Operations lead",
+              "permissions": ["turnstile:access", "turnstile:units:read", "turnstile:units:manage"]
+            },
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000002"],
+              "includeChildren": true
+            }
+          },
+          {
+            "id": "10000000-0000-4000-8000-00000000001f",
+            "role": {
+              "id": "10000000-0000-4000-8000-00000000000d",
+              "version": 1,
+              "permissionVersion": 1,
+              "description": null,
+              "systemKey": "member",
+              "name": "Member",
+              "permissions": ["turnstile:access"]
+            },
+            "scope": {
+              "kind": "units",
+              "unitIds": ["10000000-0000-4000-8000-000000000003"],
+              "includeChildren": false
+            }
+          }
+        ],
+        "addressedEmail": "samira@example.test",
+        "scopeContext": [
+          {
+            "unit": {
+              "id": "10000000-0000-4000-8000-000000000002",
+              "type": "site",
+              "parentId": "10000000-0000-4000-8000-000000000001",
+              "name": "North site",
+              "ancestorIds": ["10000000-0000-4000-8000-000000000001"]
+            },
+            "ancestors": [
+              {
+                "id": "10000000-0000-4000-8000-000000000001",
+                "type": "organization",
+                "name": "Example Company",
+                "actionable": false
+              }
+            ]
+          },
+          {
+            "unit": {
+              "id": "10000000-0000-4000-8000-000000000003",
+              "type": "department",
+              "parentId": "10000000-0000-4000-8000-000000000001",
+              "name": "Workshop",
+              "ancestorIds": ["10000000-0000-4000-8000-000000000001"]
+            },
+            "ancestors": [
+              {
+                "id": "10000000-0000-4000-8000-000000000001",
+                "type": "organization",
+                "name": "Example Company",
+                "actionable": false
+              }
+            ]
+          }
+        ],
+        "permissionDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "scopeDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    },
+    "InvitationExchange": {
+      "credential": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "RecipientAction": {
+      "invitationId": "10000000-0000-4000-8000-000000000032",
+      "expectedVersion": 1,
+      "expectedGeneration": 1
+    },
+    "InvitationAccept": {
+      "invitationId": "10000000-0000-4000-8000-000000000032",
+      "expectedVersion": 1,
+      "expectedGeneration": 1,
+      "permissionDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "scopeDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "RecipientSwitch": {
+      "invitationId": "10000000-0000-4000-8000-000000000032",
+      "expectedVersion": 1,
+      "expectedGeneration": 1,
+      "endCurrentAuthoritySession": true
+    },
+    "RecipientNavigation": {
+      "destination": "/api/auth/login"
+    },
+    "InvitationSetupHandoff": {
+      "destination": "/identity/invitation-setup/exchange",
+      "receipt": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "RecipientFlowResult": {
+      "local": "complete",
+      "authority": "complete"
+    },
+    "InvitationAcceptanceResult": {
+      "invitationId": "10000000-0000-4000-8000-000000000032",
+      "memberId": "10000000-0000-4000-8000-000000000028",
+      "userId": "example-recipient",
+      "membershipStatus": "active",
+      "accessRevision": 4,
+      "session": "login_required"
+    },
+    "PeopleError": {
+      "code": "STRUCTURE_CONFLICT",
+      "requestId": "10000000-0000-4000-8000-000000000063",
+      "reason": "revision",
+      "organizationRevision": 5
+    }
+  }
+}

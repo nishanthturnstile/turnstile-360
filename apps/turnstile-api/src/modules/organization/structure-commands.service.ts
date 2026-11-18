@@ -12,7 +12,7 @@ import {
   scopedUnitDeleteSchema,
   scopedUnitDetailSchema,
   scopedUnitRenameSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { z } from 'zod';
 import type { ConfigurationActor } from '../../infrastructure/configuration-context.js';
 import { ConfigurationException } from '../../infrastructure/configuration-exception.js';

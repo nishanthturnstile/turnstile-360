@@ -5,7 +5,7 @@ import {
   type RoleAssignmentRequestDto,
   type RoleDefinitionDto,
   type UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Notice } from '@/components/notice';

@@ -10,7 +10,7 @@ import {
   recipientReviewSchema,
   recipientSwitchSchema,
   restrictedInvitationContextSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { PoolClient } from 'pg';
 import { z } from 'zod';

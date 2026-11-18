@@ -6,7 +6,7 @@ import {
   PEOPLE_LIMITS,
   peopleIdSchema,
   peopleSubjectSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { z } from 'zod';
 import { invitationSchemaSafe } from '../../infrastructure/database/invitation-safety.js';
 import { peopleSchemaSafe } from '../../infrastructure/database/people-safety.js';

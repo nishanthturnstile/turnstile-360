@@ -8,7 +8,7 @@ import {
   configurationNameKey,
   peopleIdSchema,
   peopleSubjectSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { z } from 'zod';
 import { withProductOperator } from '../../infrastructure/database/product-operator.js';
 import { covers, readAccess } from '../access/access-evaluator.js';

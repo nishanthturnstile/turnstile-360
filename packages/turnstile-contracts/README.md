@@ -107,3 +107,27 @@ composes the independent administration UI. The catalog's additive optional orga
 revision and grantable company permissions support drafts without company configuration
 reads; the owning server still checks every mutation. Installation rollout remains UM-I11.
 Technical policy is in [architecture.md](../../architecture.md).
+
+
+DV-I01 adds the isolated `@thaarei/turnstile-contracts/documents` contract export. It
+contains a separate catalogue-v3 graph, nine explicit company permissions, finite
+commands/routes, private validator inputs, HTTP budgets and reconciliation rules.
+Default exports retain catalogue v2. DV-I02 API/web consumers use the separate
+`@thaarei/turnstile-contracts/runtime` graph and explicitly negotiate v3. DV-I01 itself enabled no route, grant, database ledger or UI; DV-I02 adds guarded
+reads and private reviewed provisioning without a startup grant. The workspace command
+schema covers ordinary uploads, edits, references, version admission, assessed restore,
+batch commands, logical lifecycle and grants. DV-I06 binds Contribute mode when the
+draft is created. Shared mutations return the saved acknowledgement and a scoped
+transfer capability when the command requires one. The finite read routes include
+owner Recovery, application access and Activity.
+DV-I07 adds typed discovery, processing history, extracted content and reprocessing.
+The result DTO keeps the artifact capability separate from the public extraction
+schema. The reprocessing acknowledgement binds the exact version and run.
+`pnpm docs:documents` generates the contract. `pnpm check:contracts` verifies drift and
+the 34-operation evidence register. See the
+[Documents plan](../../docs/turnstile/documents/documents_validation_implementation_plan.md)
+and architecture for runtime adoption and compatibility gates. The frozen legacy fixture
+was captured read-only from the installed API package and validated with synthetic
+repository examples. To deliberately recapture a reviewed baseline, use
+`node scripts/capture-documents-legacy.mjs --api-container NAME --web-container NAME`;
+this replaces the fixture and does not perform browser or cross-version verification.

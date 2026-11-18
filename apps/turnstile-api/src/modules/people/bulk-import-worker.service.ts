@@ -10,7 +10,7 @@ import {
   type ImportRowDto,
   invitationIssueCommandSchema,
   PEOPLE_IMPORT_LIMITS,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { PoolClient } from 'pg';
 import { IdentityClientService } from '../../integrations/identity/identity-client.service.js';
 import { readAccess } from '../access/access-evaluator.js';

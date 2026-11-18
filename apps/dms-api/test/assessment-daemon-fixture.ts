@@ -1,11 +1,11 @@
 import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
 // Explicit online native qualification only. No installed credentials, ports or volumes.
-export async function assessmentDaemonFixture() {
+export async function assessmentDaemonFixture(cwd = resolve('../dms-processing')) {
   const child = spawn(
     'uv',
     ['run', '--locked', 'python', 'tests/assessment_native.py', '--serve'],
-    { cwd: resolve('../dms-processing'), env: { ...process.env }, stdio: ['pipe', 'pipe', 'pipe'] },
+    { cwd, env: { ...process.env }, stdio: ['pipe', 'pipe', 'pipe'] },
   );
   let line = '';
   try {

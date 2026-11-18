@@ -9,7 +9,7 @@ import {
   invitationSchema,
   peopleIdSchema,
   type ResolvedRoleAssignmentDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { PoolClient } from 'pg';
 import { z } from 'zod';
 import type { ConfigurationActor } from '../../infrastructure/configuration-context.js';

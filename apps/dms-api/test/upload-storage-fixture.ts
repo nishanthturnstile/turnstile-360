@@ -2,22 +2,25 @@ import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer, request } from 'node:http';
+import { createServer as createSecureServer, type ServerOptions } from 'node:https';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import fastify from 'fastify';
 import { parse } from 'yaml';
-import { STORAGE_ROLES } from '../src/modules/storage/storage-configuration.js';
+import { STORAGE_ROLES } from '../dist/modules/storage/storage-configuration.js';
 import {
   configureStorage,
   seaweedIdentityConfiguration,
-} from '../src/modules/storage/storage-provision.js';
-import { mountTransferIngress } from '../src/modules/storage/transfer-ingress.js';
+} from '../dist/modules/storage/storage-provision.js';
+import { mountTransferIngress } from '../dist/modules/storage/transfer-ingress.js';
 
 // Real pinned storage for PostgreSQL + authenticated HTTP lifecycle tests. Never uses
 // installed credentials/data/ports. Only identity-file paths enter Docker arguments.
-export async function uploadStorageFixture() {
+export async function uploadStorageFixture(
+  options: { root?: string; tls?: ServerOptions; browserOrigin?: string } = {},
+) {
   const name = `thaarei-upload-test-${randomBytes(6).toString('hex')}`;
-  const root = resolve('../..');
+  const root = options.root ?? resolve('../..');
   const folder = await mkdtemp(join(tmpdir(), 'thaarei-upload-'));
   const environment: NodeJS.ProcessEnv = {
     ...process.env,
@@ -29,7 +32,9 @@ export async function uploadStorageFixture() {
     DMS_STORAGE_STAGING_BUCKET: 'dms-staging',
     DMS_STORAGE_ORIGINALS_BUCKET: 'dms-originals',
     DMS_STORAGE_ARTIFACTS_BUCKET: 'dms-artifacts',
-    DMS_STORAGE_BROWSER_ORIGINS: '[]',
+    DMS_STORAGE_BROWSER_ORIGINS: JSON.stringify(
+      options.browserOrigin ? [options.browserOrigin] : [],
+    ),
   };
   for (const role of [...STORAGE_ROLES, 'bootstrap']) {
     const prefix = `DMS_STORAGE_${role.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`;
@@ -37,6 +42,7 @@ export async function uploadStorageFixture() {
     environment[`${prefix}_SECRET_ACCESS_KEY`] = randomBytes(36).toString('base64url');
   }
   const faults = { loseDeleteAck: 0, failHead: 0 };
+  let losePutAcknowledgements = 0;
   let upstream = '';
   const proxy = createServer((req, res) => {
     const original = req.url?.startsWith('/dms-originals/');
@@ -47,13 +53,15 @@ export async function uploadStorageFixture() {
       req.resume();
       return;
     }
-    const lose = original && req.method === 'DELETE' && faults.loseDeleteAck > 0;
-    if (lose) faults.loseDeleteAck--;
+    const loseDelete = original && req.method === 'DELETE' && faults.loseDeleteAck > 0;
+    const losePut = !original && req.method === 'PUT' && losePutAcknowledgements > 0;
+    if (loseDelete) faults.loseDeleteAck--;
+    if (losePut) losePutAcknowledgements--;
     const forwarded = request(
       new URL(req.url ?? '/', upstream),
       { method: req.method, headers: req.headers },
       (response) => {
-        if (lose) {
+        if ((loseDelete || losePut) && (response.statusCode ?? 503) < 300) {
           response.resume();
           response.on('end', () => res.destroy());
           return;
@@ -66,7 +74,9 @@ export async function uploadStorageFixture() {
     req.pipe(forwarded);
   });
   const edge = fastify({ logger: false, requestTimeout: 30000 });
-  const server = createServer((req, res) => edge.routing(req, res));
+  const server = options.tls
+    ? createSecureServer(options.tls, (req, res) => edge.routing(req, res))
+    : createServer((req, res) => edge.routing(req, res));
   let created = false;
   const run = (args: string[]) => {
     const result = spawnSync('docker', args, { encoding: 'utf8', timeout: 30000 });
@@ -133,10 +143,17 @@ export async function uploadStorageFixture() {
     await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('Transfer fixture unavailable');
-    environment.DMS_STORAGE_PUBLIC_ORIGIN = `http://127.0.0.1:${address.port}`;
+    environment.DMS_STORAGE_PUBLIC_ORIGIN = `${options.tls ? 'https' : 'http'}://127.0.0.1:${address.port}`;
     mountTransferIngress(edge, environment);
     await edge.ready();
-    return { environment, close, faults };
+    return {
+      environment,
+      close,
+      faults,
+      loseNextPutReply: () => {
+        losePutAcknowledgements++;
+      },
+    };
   } catch (error) {
     await close();
     throw error;

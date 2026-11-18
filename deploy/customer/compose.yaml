@@ -18,6 +18,7 @@ services:
     environment:
       TURNSTILE_API_UPSTREAM: thaarei-${CUSTOMER_INSTALLATION_ID:?}-turnstile-api
       TURNSTILE_WEB_UPSTREAM: thaarei-${CUSTOMER_INSTALLATION_ID:?}-turnstile-web
+      DMS_DOCUMENTS_TRANSFER_ORIGIN: ${DMS_DOCUMENTS_TRANSFER_ORIGIN:-}
       DMS_API_UPSTREAM: thaarei-${CUSTOMER_INSTALLATION_ID:?}-dms-api
     networks:
       customer-gateway-ingress:

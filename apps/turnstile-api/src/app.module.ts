@@ -14,6 +14,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { UserSessionGuard } from './modules/auth/user-session/user-session.guard.js';
 import { DeploymentController } from './modules/deployment/deployment.controller.js';
 import { DeploymentService } from './modules/deployment/deployment.service.js';
+import { DocumentsModule } from './modules/documents/documents.module.js';
 import { ModuleAccessModule } from './modules/module-access/module-access.module.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
 import { OrganizationModule } from './modules/organization/organization.module.js';
@@ -31,6 +32,7 @@ import { PeopleModule } from './modules/people/people.module.js';
     PeopleModule,
     ...selectedModules,
     ModuleAccessModule,
+    DocumentsModule,
   ],
   controllers: [AppController, HealthController, DeploymentController],
   providers: [

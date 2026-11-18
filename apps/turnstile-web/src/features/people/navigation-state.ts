@@ -1,4 +1,4 @@
-import type { DeploymentStatusDto, UserSessionDto } from '@thaarei/turnstile-contracts';
+import type { DeploymentStatusDto, UserSessionDto } from '@thaarei/turnstile-contracts/runtime';
 export const usersPaths = [
   '/people/members',
   '/people/invitations',

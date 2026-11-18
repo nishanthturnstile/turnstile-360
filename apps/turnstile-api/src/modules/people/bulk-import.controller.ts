@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Query, Req } from '@nestjs/common';
-import { peopleEmptySchema } from '@thaarei/turnstile-contracts';
+import { peopleEmptySchema } from '@thaarei/turnstile-contracts/runtime';
 import type { FastifyRequest } from 'fastify';
 import { RequirePermissions } from '../../infrastructure/access-policy.js';
 import { productActor } from '../../infrastructure/configuration-http.js';

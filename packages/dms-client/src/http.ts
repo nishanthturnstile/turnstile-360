@@ -7,7 +7,9 @@ export type DmsClientErrorCode =
   | 'DMS_INVALID_RESPONSE'
   | 'DMS_ENROLLMENT_FAILED'
   | 'DMS_CONFIGURATION_INVALID'
-  | 'DMS_REQUEST_INVALID';
+  | 'DMS_REQUEST_INVALID'
+  | 'DMS_NOT_FOUND'
+  | 'DMS_CONFLICT';
 
 // Never retain upstream bodies, headers, URLs, credentials or exception causes.
 export class DmsClientError extends Error {
@@ -54,6 +56,7 @@ export async function jsonRequest(
   init: RequestInit,
   transport: typeof fetch,
   timeoutMs: number,
+  maximumBytes = 16384,
 ): Promise<{ status: number; body: unknown }> {
   try {
     const response = await transport(url, {
@@ -73,7 +76,7 @@ export async function jsonRequest(
           const { done, value } = await reader.read();
           if (done) break;
           bytes += value.byteLength;
-          if (bytes > 16384) {
+          if (bytes > maximumBytes) {
             await reader.cancel();
             throw new DmsClientError('DMS_INVALID_RESPONSE');
           }

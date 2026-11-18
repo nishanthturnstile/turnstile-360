@@ -11,6 +11,9 @@ http {
   uwsgi_temp_path /tmp/uwsgi;
   scgi_temp_path /tmp/scgi;
   resolver 127.0.0.11 valid=10s ipv6=off;
+  map $request_id $documents_request_id {
+    "~^(?<doc_a>.{8})(?<doc_b>.{4}).(?<doc_c>.{3}).(?<doc_d>.{3})(?<doc_e>.{12})$" "$doc_a-$doc_b-4$doc_c-8$doc_d-$doc_e";
+  }
   server {
     listen 8080;
     set $product_api ${TURNSTILE_API_UPSTREAM};
@@ -23,10 +26,42 @@ http {
     add_header Referrer-Policy no-referrer always;
     location ^~ /internal/ { return 404; }
     location = /health/gateway { access_log off; return 200 'ok'; }
+    # Documents controls have scoped ingress budgets; file bytes use separate storage authority.
+    location = /api/documents/operations {
+      client_max_body_size 270336;
+      proxy_intercept_errors on;
+      error_page 413 = @documents_too_large;
+      error_page 415 = @documents_media_type;
+      proxy_pass http://$product_api:3002;
+    }
+    location /api/documents {
+      client_max_body_size 16384;
+      proxy_intercept_errors on;
+      error_page 413 = @documents_too_large;
+      error_page 415 = @documents_media_type;
+      proxy_pass http://$product_api:3002;
+    }
+    location @documents_too_large {
+      default_type application/json;
+      add_header Cache-Control "private, no-store" always;
+      add_header Referrer-Policy no-referrer always;
+      return 413 '{"code":"DOCUMENTS_TOO_LARGE","requestId":"$documents_request_id","guidance":"correct_input"}';
+    }
+    location @documents_media_type {
+      default_type application/json;
+      add_header Cache-Control "private, no-store" always;
+      add_header Referrer-Policy no-referrer always;
+      return 415 '{"code":"DOCUMENTS_MEDIA_TYPE_UNSUPPORTED","requestId":"$documents_request_id","guidance":"correct_input"}';
+    }
     location /api/ { proxy_pass http://$product_api:3002; }
     location = /api { proxy_pass http://$product_api:3002; }
     location /identity/ { proxy_pass http://$authority:3001; }
     location /.well-known/ { proxy_pass http://$authority:3001; }
-    location / { proxy_pass http://$product_web:8080; }
+    location / {
+      proxy_hide_header Content-Security-Policy;
+      add_header_inherit merge;
+      add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' ${DMS_DOCUMENTS_TRANSFER_ORIGIN}; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'" always;
+      proxy_pass http://$product_web:8080;
+    }
   }
 }

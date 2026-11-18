@@ -9,7 +9,7 @@ import {
   type DmsIntegrationErrorDto,
   type LogoutDto,
   type UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 
 type ProductErrorCode =
   | 'MODULE_ACCESS_DENIED'
@@ -52,6 +52,7 @@ export async function productRequest<T>(
       signal: AbortSignal.timeout(CONFIGURATION_LIMITS.requestTimeoutMs),
       headers: {
         accept: 'application/json',
+        'x-turnstile-access-contract': '3',
         ...options.headers,
         ...(method !== 'GET'
           ? { 'x-csrf-token': csrf ?? '', 'content-type': 'application/json' }

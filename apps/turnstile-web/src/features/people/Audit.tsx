@@ -2,7 +2,7 @@ import {
   auditActions,
   peopleAuditResponseSchema,
   type UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Notice } from '@/components/notice';

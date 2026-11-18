@@ -1,4 +1,4 @@
-import type { PeopleAuditEventDto } from '@thaarei/turnstile-contracts';
+import type { PeopleAuditEventDto } from '@thaarei/turnstile-contracts/runtime';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 

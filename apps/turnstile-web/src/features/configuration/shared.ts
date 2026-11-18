@@ -2,7 +2,7 @@ import type {
   ConfigurationErrorDto,
   ConfigurationSnapshotDto,
   UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { useEffect, useRef } from 'react';
 import { useNavigationEntries } from '@/components/navigation';
 import { ProductError } from '../auth/product';

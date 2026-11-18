@@ -2,7 +2,7 @@ import {
   CONFIGURATION_LIMITS,
   organizationUnitSchema,
   type scopedUnitsResponseSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { StructureUnit } from '../configuration/structure-model.ts';
 import { PeopleError } from './client.ts';
 

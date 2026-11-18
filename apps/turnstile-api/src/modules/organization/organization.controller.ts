@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Req, Res } from '@nestjs/common';
-import { CONFIGURATION_MANAGE_PERMISSION } from '@thaarei/turnstile-contracts';
+import { CONFIGURATION_MANAGE_PERMISSION } from '@thaarei/turnstile-contracts/runtime';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { RequirePermissions } from '../../infrastructure/access-policy.js';
 import { configurationActor } from '../../infrastructure/configuration-http.js';

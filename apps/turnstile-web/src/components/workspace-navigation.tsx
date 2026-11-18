@@ -5,7 +5,7 @@ import {
   SidebarLeftIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import type { ModuleCapabilitiesDto, UserSessionDto } from '@thaarei/turnstile-contracts';
+import type { ModuleCapabilitiesDto, UserSessionDto } from '@thaarei/turnstile-contracts/runtime';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
@@ -19,6 +19,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { canEnterDocuments } from '@/features/documents/Documents';
 import { canReadUnits, company } from '@/features/people/client';
 import { cn } from '@/lib/utils';
 
@@ -38,6 +39,18 @@ export function workspaceDestinations(
 ): WorkspaceDestination[] {
   return [
     { label: 'Home', href: '/', active: path === '/', icon: Home01Icon },
+    ...(session && canEnterDocuments(session)
+      ? [
+          {
+            label: 'Documents',
+            href: company(session, 'turnstile:documents:read')
+              ? '/documents'
+              : '/documents/connection',
+            active: path === '/documents' || path.startsWith('/documents/'),
+            icon: Home01Icon,
+          },
+        ]
+      : []),
     ...modules.map((module) => ({
       label: module.title,
       href: module.path,

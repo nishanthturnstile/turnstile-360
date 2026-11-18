@@ -1,4 +1,4 @@
-import { unitMoveSchema } from '@thaarei/turnstile-contracts';
+import { unitMoveSchema } from '@thaarei/turnstile-contracts/runtime';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Notice } from '@/components/notice';
 import { Button } from '@/components/ui/button';

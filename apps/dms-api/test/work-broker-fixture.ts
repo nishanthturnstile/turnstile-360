@@ -5,11 +5,10 @@ import { resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { parse } from 'yaml';
 
-export async function workBrokerFixture() {
+export async function workBrokerFixture(root = resolve('../..')) {
   const name = `thaarei-work-test-${randomBytes(6).toString('hex')}`,
     password = randomBytes(36).toString('base64url');
-  const root = resolve('../..'),
-    cwd = resolve('../dms-processing');
+  const cwd = resolve(root, 'apps/dms-processing');
   const run = (args: string[], env = process.env) => {
     const r = spawnSync('docker', args, { encoding: 'utf8', timeout: 30000, env });
     if (r.status !== 0) throw new Error('Disposable work broker command failed');

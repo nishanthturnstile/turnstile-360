@@ -4,7 +4,7 @@ import {
   type ModuleEntryDto,
   moduleEntrySchema,
   type UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { useEffect, useState } from 'react';
 import { ContentLoading } from '@/components/content-loading';
 import { Notice } from '@/components/notice';

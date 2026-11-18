@@ -5,7 +5,7 @@ import {
   normalizeConfigurationName,
   type UnitCreate,
   unitCreateSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ButtonLink } from '@/components/button-link';

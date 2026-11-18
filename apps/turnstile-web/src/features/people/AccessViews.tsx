@@ -7,7 +7,10 @@ import {
   Shield01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import type { RoleDefinitionDto, scopedUnitsResponseSchema } from '@thaarei/turnstile-contracts';
+import type {
+  RoleDefinitionDto,
+  scopedUnitsResponseSchema,
+} from '@thaarei/turnstile-contracts/runtime';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { AppLink } from '@/components/navigation';
 import { Badge } from '@/components/ui/badge';

@@ -1,4 +1,4 @@
-import type { ConfigurationSnapshotDto } from '@thaarei/turnstile-contracts';
+import type { ConfigurationSnapshotDto } from '@thaarei/turnstile-contracts/runtime';
 export const setupPaths = [
   '/onboarding/organization',
   '/onboarding/structure',

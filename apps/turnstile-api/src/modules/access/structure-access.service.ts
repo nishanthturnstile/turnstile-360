@@ -1,6 +1,9 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
-import { type PeoplePermission, scopedMoveImpactSchema } from '@thaarei/turnstile-contracts';
+import {
+  type PeoplePermission,
+  scopedMoveImpactSchema,
+} from '@thaarei/turnstile-contracts/runtime';
 import type { PoolClient } from 'pg';
 import type { ConfigurationActor } from '../../infrastructure/configuration-context.js';
 import { StructureException } from '../../infrastructure/structure-http.js';

@@ -2,7 +2,7 @@ import {
   CONFIGURATION_LIMITS,
   type ConfigurationSnapshotDto,
   configurationNameKey,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 
 export type StructureUnit = ConfigurationSnapshotDto['units'][number];
 export function unitPath(units: readonly StructureUnit[], id: string) {

@@ -3,7 +3,7 @@ import {
   type MemberDto,
   PEOPLE_PERMISSIONS,
   type UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { useState } from 'react';
 import { Notice } from '@/components/notice';
 import { Badge } from '@/components/ui/badge';

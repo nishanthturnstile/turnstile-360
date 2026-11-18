@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-11-14
+Last updated: 2026-11-18
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -9,6 +9,54 @@ requirements remain in their linked specifications. This file records what has a
 been completed, verified, or left pending.
 
 ## Current position
+
+2026-11-18 DV-UX-01 redesigned the full Documents workspace and refreshed the
+existing local validator build. The library, search, upload and batch workspaces,
+recovery, activity, connection, validation, contribution and all document detail
+tabs use the redesigned layout. Workspace gates and focused Documents browser
+regressions passed. Local desktop and phone checks cover all sections and tabs.
+
+2026-11-18 DV-LOCAL-01 started the current source-built Documents workspace at
+`https://documents.localhost:23600/documents/validation` with a separate synthetic
+database and signed storage. A fresh validator login, the 34-item checklist and
+browser upload through native assessment, extraction and indexing passed. The
+retained Titan demo still responds on its existing host.
+
+2026-11-18 DV-AUDIT-02 closed all four DV-AUDIT-01 findings locally. Uploads
+shows byte progress and follows extraction and indexing past upload completion.
+Validation and Connection use the complete ordinary action permissions. The
+upload and batch draft/execute restriction matrix and same-intent renewal passed.
+All four workspace gates, three Documents browser suites and the exact signed Core
+rehearsal passed. See the [current qualification](docs/qualification/documents-audit-20261118.json).
+
+2026-11-18 DV-AUDIT-01 completed an independent review of DV-I01–08. All eight
+increments have implementation and owning evidence. Full plan acceptance remains
+open for upload processing polling, transfer progress, partial-role diagnostics
+and the remaining restricted-mode control tests. All four workspace gates passed
+on rerun, and the current selected product source matches the qualified Core
+release record. See DV-AUDIT-01 for findings and separate target scope.
+
+2026-11-18 DV-I08 is implemented and locally qualified. Documents has protected
+operation coverage and live diagnostics. The exact selected Core images passed
+legacy compatibility, first-validator provisioning and PostgreSQL recovery and
+retention checks. All four workspace gates and the batch, lifecycle and native
+processing browser regressions passed. The reviewed customer target and optional
+structured profile have separate acceptance. See the
+[release evidence](docs/qualification/documents-release-20261118.json).
+
+2026-11-18 DV-I02 compatibility, private validator provisioning and the guarded read-only
+Documents workspace are implemented and locally qualified. All four workspace gates,
+actual old/new-bundle and private-tool browser checks, auth/People/Structure regressions
+and all four selected API/web foundation builds pass. See DV-I02 below and the
+[qualification record](docs/qualification/documents-readonly-20261118.json). No live
+installation or grant changed. Next: DV-I03 ledger and first real upload flow; exact-image
+Documents rollout/restore and target acceptance remain separately gated.
+
+2026-11-17 Documents validation implementation has started with completed DV-I01
+executable contracts and legacy-bundle fixtures. All four workspace gates pass; no
+Documents route, grant, ledger, UI or deployment is enabled. DV-I02 compatibility,
+first-validator provisioning and read-only shell are next. See DV-I01 below and the
+[coverage register](docs/turnstile/documents/documents_validation_coverage.json).
 
 2026-11-14 Structure redesign is implemented and deployed in signed release
 40aaf5da986cb49b572cb3daf3a95c46b704fc3c34a50d7ded57ba8476cb5a98. The scoped
@@ -368,6 +416,442 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+DV-PUBLISH-01 — **In progress** (owner Codex, 2026-11-18).
+Prepare the Documents implementation, audit fixes and redesign for publication on
+development and the owner-requested development-to-main pull request. Keep the
+separate portal prototype and local runtime files out of the commit.
+
+DV-NAV-01 — **Completed** (navigation explanation, owner Codex, 2026-11-18).
+Confirmed that the local validator role and installation profile govern the global
+sidebar. Structure and Settings routes remain in development. Both local sign-in
+hosts respond. No permissions or application code changed for this review.
+
+DV-UX-01 — **Completed** (owner Codex, 2026-11-18).
+Documents now has a wider library, expandable exact filters, mobile library rows,
+direct search navigation and responsive document tabs. Uploads, Batches and Contribute
+put saved operations beside the active workflow. Version, processing, content,
+application access, lifecycle, recovery, Activity and Connection views use the shared
+document status and data patterns. Validation has a selectable coverage table and
+request inspector. Detail editing and reference/restore sheets keep action buttons
+visible and protect dirty drafts with the shared confirmation controls. The design
+gallery and design guide cover the reused patterns.
+
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed. The
+standard batch/version/upload, lifecycle/Contribute and native processing/OCR/search
+browser suites passed. The versions suite now exercises keeping a dirty document
+draft through the discard dialog. Fresh local validator checks cover eight workspace
+sections and seven detail tabs at 1440, 390 and 320 pixels, including mobile filtering,
+operation selection, extracted sample content and explicit draft discard. The existing
+local validator server serves the current compiled web build and retained synthetic data.
+
+DV-LOCAL-01 — **Completed** (owner Codex, 2026-11-18).
+The source-built validator workspace remains running on a dedicated HTTPS host at
+the existing loopback ingress (23600), with signed storage on 23608 and a separate
+disposable PostgreSQL database, Mailpit and native processing fixture. The source
+digest matches DV-AUDIT-02. Fresh normal login, the 34-item checklist, private-route
+denial from public ingress, and `Local validation example.csv` through upload,
+native assessment, extraction and indexing passed. The retained Titan demo
+still responds on its existing host. Its retained data and assignments were preserved.
+The ignored mode-0600 login handoff and launcher live in the local validation fixture
+directory. The isolated data is temporary. The application source was untouched.
+
+DV-AUDIT-02 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+Uploads shows signed PUT byte progress with the existing Progress component and
+keeps the visible upload and run polling until processing and indexing settle.
+Validation and Connection reuse ordinary execution permissions, including READ
+when required. Explicit no-READ Contribute eligibility remains independent.
+The real product/DMS browser matrix verifies draft and execute denials for upload
+refresh, complete, cancel and batch create, admit, close and cancel, with independent
+product restrictions, both restricted, closure, decision/licence expiry and renewal.
+Eligible saved commands recover under their original IDs. Updated the generated
+contract, coverage register, design guide, operational runbook and qualified image record.
+
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed, with the
+pinned native OCR runtime enabled for integration. Batch/version/upload, lifecycle/
+Contribute and processing browser suites passed in their separate standard fixtures.
+An exploratory combined run shared document version state between suites and failed
+the lifecycle fixture's initial-version expectation. The signed Core rerun passed
+after a fixture startup failure in the initial attempt. It verified prior-client
+recovery, first-validator handover, partial-role projections, and a disposable
+PostgreSQL restore with the marker, legacy rollback fence and receipt pruning.
+The [evidence](docs/qualification/documents-audit-20261118.json) pins the current
+source and images. Customer acceptance, coordinated database/object recovery on
+the reviewed target and the optional structured runtime remain separate.
+
+DV-AUDIT-01 — **Completed** (audit, owner Codex, 2026-11-18).
+An independent reviewer traced DV-I01–08 against the plan, specifications, owning
+handlers and coverage register. The primary review confirmed these open items:
+
+- DV-I03/I07 and DV-R13. Upload status polling stops when DMS marks the upload
+  complete, even if extraction is queued. Processing history initially returns
+  `NOT_INDEXED` and that also stops the Uploads view's history polling. A slow
+  searchable upload needs a focused browser test for processing and index updates
+  while the Uploads view remains open. Current batch creation uses secure-only text.
+- DV-I02/I08 and DV-R10–11. Validation and Connection use single permission
+  checks for some compound actions. A role with reprocess and validate but no
+  Documents READ can see `Action permitted` while execution correctly denies.
+  Verify the projections with partial company roles and the ordinary/Contribute
+  action requirements.
+- DV-I03/I05 and RF-06. The real HTTP restriction matrix varies both products for
+  completion. Refresh, cancel and batch controls share full-access guards and need
+  equivalent runtime evidence. Close the pending RF-06 entry with that evidence and
+  refresh the outdated DV-R12 runtime wording in the coverage register.
+- DV-I03 and DV-R02. The signed PUT exposes busy and completion states. The Uploads
+  view lacks transfer progress while bytes are in flight.
+
+The contract and fixture baseline (DV-I01), assessed restoration of historical
+versions and conflict/replay journeys (DV-I04), and lifecycle/no-READ Contribute
+with independent fixture-owner verification (DV-I06) have matching evidence.
+The other increments retain their verified paths subject to the findings above.
+The independent reviewer reran contract drift and six focused contract tests. The
+primary review reran `pnpm check`, `pnpm build`, `pnpm test`, and `pnpm test:integration`
+with pinned native OCR enabled, all passing. The archived selected Core release log
+and recorded source digest were verified against the current product source. Only
+this handoff changed during review. Customer acceptance, coordinated database/object
+recovery on the reviewed target and optional structured runtime remain separate.
+
+DV-I08 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+The protected Validation checklist covers all 34 inventory entries and records the
+latest actual HTTP status, request ID and bounded outcome per operation during the
+current authorized Documents visit. Live identity and admission policy diagnostics
+use the fixed owning endpoints. The coverage register records real product evidence
+for the 32 consumer operations and assigns identity, enrollment and transfer evidence.
+
+`pnpm test:release:documents` passed for the exact signed Core API/web bundle and
+DMS image. The test ran packaged migrations from the captured legacy API through
+the candidate, repeated bootstrap and verified the legacy web bundle, retained
+records, role write fencing and the packaged private first-validator command.
+An actual PostgreSQL archive restored matching setup, identities, grants, documents
+and operation IDs. Rotation of the independent marker closed Documents access with
+authentication ready. The disposable clone used fixture-signed approval to resume.
+The candidate retained the v3 barrier, resolved receipt and unresolved older-marker
+draft. The old API failed database readiness. Aged receipts exercised payload
+compaction, tombstone pruning and refusal to replay.
+
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed with
+the opt-in native image and PDF OCR integration cases enabled. The Documents source
+browser, batch/version/upload, lifecycle/Contribute and native processing suites
+passed, including artifact preflight allow/deny. The [release record](docs/qualification/documents-release-20261118.json)
+pins the exact Core and legacy image identities. The [handoff](docs/runbooks/documents-validation.md#coverage-and-release-qualification)
+records the separate customer image, database/object recovery and optional structured
+qualification.
+
+DV-I07 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+Processing and Content support the current or a selected version, retained runs, active
+results, source coverage, warnings and index status. The browser verifies artifact
+bytes, schema and source identity, rechecks result authority after transfer and pages
+the visible text, tables and OCR data. Search supports exact filters and English text
+and links to the matched source. Ordinary uploads expose the current DMS formats and
+profiles. Migration 0045 binds owner reprocessing receipts to the selected version
+and accepted run.
+
+`pnpm test:browser:documents:processing` passed with Chromium, customer Nginx,
+PostgreSQL, DMS, SeaweedFS, ClamAV, RabbitMQ and production Python workers with
+pinned Tesseract. It verified native text/CSV, PNG OCR, partial mixed-PDF extraction,
+exact and English search, cursor binding, retained run selection, lost-reply retry,
+concurrent-run rejection and failed replacement preserving the active result and
+original bytes. A corrupted artifact and a transfer held across deletion never
+displayed content. The DMS integration also exercised grant revocation and source
+invalidation at its owning boundary.
+
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed. The
+workspace integration enabled the native image and PDF OCR cases, and the isolated
+pinned OCR suite passed 13 tests. Both API integration suites passed after final
+code changes. The optional structured runtime, exact selected product images and
+customer target acceptance remain separate qualification.
+
+DV-I06 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+Recovery supports known document IDs, recorded lifecycle operations, reviewed soft
+deletion and logical restore with native reassessment status. Application access replaces
+grants for provisioned application IDs. Activity reads application and document audit
+streams within the owner's scope. Contribute uses owner-supplied revisions and file
+descriptors for shared metadata, references and secure-only text versions. Migration
+0044 persists the operation mode and lifecycle document binding. Contribution receipts
+record acknowledgement and keep the owner-authorized publication checks separate.
+
+`pnpm test:browser:documents:lifecycle` passed against real Chromium, customer Nginx,
+PostgreSQL, DMS, SeaweedFS and native assessment. The fixture enrolled a separate DMS
+owner that verified metadata and reference changes and the contributed original's
+SHA-256. The Turnstile registration exercised EDIT_METADATA-only and ADD_VERSION-only
+grants, READ-only write denial, revocation, namespace ownership, forbidden reads, and
+receipt-only reload. The lost shared edit entered manual review. The owner flow verified
+lost grant and delete replies, deletion racing upload completion, retry from Recovery,
+lost restore acknowledgement, native reassessment and the restored original's exact
+bytes. The fixture advanced the restore deadline and exercised the real typed 410.
+Owner Activity distinguished download authorization and enforced audit cursor scope.
+
+`pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` and
+`pnpm test:browser:documents:batches` passed. The default suites skipped six opt-in
+DMS database tests and 24 optional processing tests. DV-I07 is next. Exact-image and
+customer rollout and acceptance remain DV-I08.
+
+DV-I05 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+The Batches workspace reviews mixed create and owned new-version manifests, transfers
+one selected file at a time, and reopens saved batches and controls. The API derives
+admissions from the immutable manifest. Migration 0043 extends the intent ledger with
+batch bindings, scoped retention and protected attachment of verified DMS resources.
+The gateway admits the batch budget on operation creation and the parser applies the
+smaller limits to other commands. The contract, coverage register and runbook are current.
+
+`pnpm test:browser:documents:batches` passed with actual customer Nginx, Chromium,
+PostgreSQL, DMS, SeaweedFS and native assessment. The fixture verified a valid 100-item
+manifest, exact and over-limit envelopes, forwarded attribution bounds, media type
+errors, pagination and whole-batch counts. It exercised wrong-file rejection, capacity
+retry, lost creation and item replies, close racing admission, cancellation readback,
+and close replay after cancellation. Published versions remained available. Stored
+deadline advancement verified protection against replacement and protected attachment of
+the batch and a second-page item. The fixture advanced the transfer expiry deadlines and
+ran actual coordinator settlement before repeating the original upload journey.
+
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed. Integration
+included the owning database suites, Nginx and the pinned storage transfer fixture.
+Six opt-in DMS database tests were skipped by the default suites. The next planned
+increment is DV-I06. Exact-image and customer rollout remain DV-I08.
+
+DV-I04 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+The typed DMS client and product API expose ordinary owned-document edits, reference
+changes, paged versions, selected originals, new text versions and assessed restore.
+Migration 0042 extends the owning operation ledger for conditional readback, stable
+version/restore replay and protected disposition. Overview and Versions compose the
+existing task sheet, table and upload flow. The generated contract, coverage register,
+runbook and architecture record the current boundaries.
+
+`pnpm test:browser:documents:versions` passed with real Chromium, PostgreSQL, SeaweedFS
+and native assessment. Two tabs retained the unsaved title and the other tab's tags.
+The fixture exercised reference changes, exact and over-limit UTF-8 edits, a lost
+committed edit reply and a divergent readback that required manual review. Historical
+download matched the original bytes. Native out-of-order results preserved the current
+pointer. Same-key restore after an intervening edit produced one new admission and
+became current after assessment.
+
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed. Integration
+included the owning migrations and database suites, the actual Nginx envelope checks
+and pinned storage transfers. An initial disposable storage startup failure cleared on
+the full retry. Six opt-in DMS database cases were skipped by the default suites.
+The next planned increment is DV-I05. Exact-image and customer rollout remain DV-I08.
+
+DV-I03 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+Owner authorized the first real Documents upload and bounded reconciliation increment.
+Migration 0041 adds the tenant-bound Documents intent ledger with forced RLS, controlled
+runtime pruning, terminal history protection and separate payload/tombstone retention.
+Draft acknowledgement precedes dispatch. The original UUID, digest, actor and recovery
+marker bind the operation. A short lease, the activation/access lock and 100 reserved
+uncertainty slots bound retries. Current product and DMS full policy gates every public
+upload control. Expired or restored ambiguous work enters review. A protected current
+administrator can attach an independently verified DMS binding or dispose of an accounted
+outcome with a recorded reason. Intent reads do not authorize live DMS resource data.
+
+The ordinary Uploads view supports secure-only text, reopening, exact file re-selection,
+conditional PUT, complete, refresh and cancel. It reports upload, security, availability,
+processing and index separately. Available originals are fetched through the exact signed
+storage origin and verified by byte count and SHA-256 before saving. The product API and
+customer Nginx enforce the scoped byte budgets and exact transfer origin. The generated
+contract, [coverage register](docs/turnstile/documents/documents_validation_coverage.json),
+architecture and [runbook](docs/runbooks/documents-validation.md#secure-only-upload-and-original-download)
+record the API, provisioning and review boundaries.
+
+Verification on 2026-11-18: pnpm check, build, test and test:integration pass. Integration
+includes the central HTTP/browser suites, fresh owning PostgreSQL and retained access
+upgrade, actual Nginx envelope/CSP checks and real SeaweedFS browser/Node/Python transfers.
+Six existing opt-in database cases were skipped. Auth/onboarding/Settings and full
+People/Structure browser regressions pass. The normal Documents browser suite passes
+actual old/new compatibility and the new real DMS/product/SeaweedFS HTTP application
+journey. New evidence covers lost draft/begin/PUT/complete replies, conditional 412,
+a product SIGKILL after DMS commit, exact-key recovery, no replacement after expiry or
+missing/pruned IDs, verified private binding/disposition, independent and combined
+suspension, closure, licence expiry and renewal. It runs current official ClamAV and
+the isolated text assessor through the private DMS claim/candidate/result and publication
+handlers, including accepted work settling during DMS existing-reads. The original
+download matches the source exactly and the normal browser start/cancel path passes.
+Deadline/tombstone aging and an earlier recovery marker are simulated in the disposable
+ledger. Exact selected-image coordinated backup/restore and target rollout remain DV-I08.
+The final UUID normalization follow-up passes the full Documents browser journey with
+uppercase IDs and refreshed check/build/unit gates.
+
+Logs: /tmp/dv-i03-{check,build,test,integration,browser-final,auth-browser,structure-browser,
+ingress-final,native}.log. Verification used disposable installations and synthetic files.
+No live deployment, grant, credentials or existing installation data changed. Independent
+portal and DV-I01–02 work, root licence and third-party notices were preserved. No
+commit/push was performed. Next increment: DV-I04 metadata, references and versions.
+
+DV-I02 — **Completed** (implementation and local qualification; owner: Codex, 2026-11-18).
+Owner authorized compatibility, first-validator provisioning and the read-only Documents
+shell. The current-runtime contracts subpath adopts v3 while the package root preserves
+all 85 frozen v2 schemas/examples. Negotiating clients, request-local wire projection and
+owning access-transaction fences preserve exact legacy reads before activation; after
+the private monotonic barrier, legacy permission-bearing reads/writes take supported
+401/current-assets recovery. Stored rights, historical snapshots and receipt identities
+are preserved. Migrations 0039/0040 add the owning release-2 fence, explicit company-only
+permission definitions, private barrier/guards and immutable reviewed audit reasons;
+retained release-1 upgrades preserve setup/access/import/invitation/receipt state.
+The private Documents command verifies current protected administrator and active target
+sessions, custom company role, explicit permissions/revision/reason and atomic grant/
+revoke/handover/receipt/audit. Same-key replay never reapplies subsequently removed rights.
+No system role template or startup process implicitly grants Documents permissions.
+Typed, bounded server-only DMS reads use separately provisioned machine scopes and fixed
+application bindings, with authorization before and after remote calls. Read-only HTTP
+connection/policy/identity/list/detail routes, scoped parser/deadline/response hooks and
+customer Nginx 413/415/correlation/no-store handling are implemented. The foundation web
+workspace has contextual navigation, exact filters/cursor paging, safe overview, independent
+availability/ownership, complete format/admission policy display and identity/access/revision-
+partitioned transient query caching. No public mutation or operation ledger is opened.
+Verification on 2026-11-18: pnpm check, build, test and test:integration all pass for the
+final implementation. Fresh owning PostgreSQL includes 35 People/access cases and one
+retained Documents upgrade; six focused production-hook/real-HTTP transport cases pass.
+Actual customer Nginx scoped boundaries and real SeaweedFS browser/Node/Python transfers
+pass. Six existing opt-in database cases remain skipped; unchanged tasks may use Turbo cache.
+The actual hash-checked installed old bundle and new browser pass pre/post-barrier nested
+session/catalogue/member/role/access/eligible-role/invitation/import/receipt checks,
+legacy-write races, supported current-assets recovery, private proof/revision/acknowledgement-
+loss/audit rollback/concurrency/revoke/handover, ordinary validator login, real DMS reads,
+independent machine denial/outage, late local revocation and post-barrier recipient exchange.
+Final Documents browser rerun also verifies full policy display, keyboard navigation and
+320/390px layout; synthetic desktop/narrow screenshots were inspected. Full People/Structure
+and baseline auth/onboarding/Settings browser regressions pass; shared sources were unchanged
+by the final Documents-only presentation completion.
+All four actual selected API/web profiles pass startup/exclusion/archive/signature/
+substitution/reuse; every API inventory includes Documents handlers/private tool/hooks and
+migrations. The [qualification record](docs/qualification/documents-readonly-20261118.json)
+pins current source, eight images, seven gate/browser logs and focused test-source hashes.
+The [coverage register](docs/turnstile/documents/documents_validation_coverage.json),
+architecture, generated contracts, design guide and [runbook](docs/runbooks/documents-validation.md)
+record actual boundaries and provisioning. Logs: /tmp/dv-i02-{check,build,test,integration,
+browser-final,structure-browser,auth-browser,selected-images}.log; private final image
+fixtures: /tmp/dv-i02-selected-images-final-20261118. Exact selected-image Documents browser/
+upgrade/backup/restore repetition remains DV-I08; production/target acceptance is separate.
+Synthetic DMS metadata is read qualification, not file/security/publication evidence.
+No blocker remains for DV-I02. Next: DV-I03 draft-before-dispatch ledger/migrations,
+bounded reconciliation and one actual text upload/security/publication/download flow.
+No live deployment, grant, credentials or existing data changed. Independent portal/DV-I01
+edits, root licence and third-party notices were preserved. No commit/push was performed.
+
+DV-I01 — **Completed** (contracts only; owner: Codex, 2026-11-17).
+Owner authorized starting the Documents validation implementation plan. Implemented the
+first ordered increment against DV-R01–20 and RF-01–06. The isolated
+`@thaarei/turnstile-contracts/documents` export defines nine explicit company permissions,
+a separate catalogue-v3 graph, finite sixteen-command and 34-operation route catalogue,
+private grant/revoke/handover inputs, safe connection projection, typed errors, scoped
+UTF-8/envelope/forwarded budgets and bounded reconciliation/receipt states. Shared access,
+People/import/insight schema factories retain the active v2 exports and system templates;
+no runtime consumer negotiates v3 yet. Only public, platform-independent DMS validators
+are reused through a workspace dependency; no private/server implementation is imported.
+The read-only installed API capture pins 85 schema hashes and 85 checked synthetic
+payloads, exact API/web image IDs and seven web asset hashes. Six new focused contract
+cases verify legacy drift, nested v3/company-only shapes, private validator inputs,
+UTF-8/actor overhead, finite execution/deadlines, and no-READ contribution/full-access
+command policies. Old/new browser behavior and transactional barriers are not claimed.
+The generated [contract](docs/api/turnstile-documents.contract.json), synthetic examples,
+reproducible capture/generation scripts and [coverage register](docs/turnstile/documents/documents_validation_coverage.json)
+freeze operation, requirement and review-gate ownership. The register records planned
+runtime/image/target evidence separately, including contributor versus owner checks.
+`pnpm docs:documents` generates the reference; `pnpm check:contracts` checks schema,
+example, route/scope, local-reference and coverage drift. Architecture, package guide and
+plan/specification status now reflect this foundation increment.
+Verification on 2026-11-17: pnpm check, pnpm build, pnpm test and pnpm test:integration
+all pass. The contracts package passes 31 cases including the six new regressions;
+legacy People OpenAPI remains byte-for-byte unchanged. Fresh integration covered central
+HTTPS/PostgreSQL/browser, DMS/Turnstile owning migrations/privileges/auth/access fixtures
+and real SeaweedFS browser/Node/Python transfers. Six existing opt-in database cases were
+skipped. Generated references, 38 local documentation links and git diff --check pass.
+Logs: /tmp/dv-i01-{check,build,test,integration,contracts}.log. Some unchanged build/test
+tasks reused Turbo cache; new contracts and affected product build/test tasks ran.
+No blocker remains for DV-I01. Documents routes, grants, private operator execution,
+ledger schema, CSP/CORS changes, UI and deployment remain unimplemented. No live data,
+setup, credentials, existing installation, root licence or third-party notices changed;
+independent portal/planning edits were preserved. No commit/push was performed.
+Next: DV-I02 dual-contract rollout/barrier, private first-validator/provisioning, scoped
+HTTP hooks, typed read adapter and read-only Documents shell, with actual old/new bundle
+and selected-profile evidence before grants. DV-I03 owns the first real file and ledger;
+DV-I04–08 and target acceptance remain pending. Source-only contracts do not qualify
+those runtime, optional native-profile, selected-image or customer-target paths.
+
+DMS-WEB-READY-01 — **Completed** (planning readiness only; owner: Codex, 2026-11-17).
+Owner authorized addressing all six plan-review findings and making the Documents plan
+ready for implementation. Scope is planning-document corrections and concrete delivery/
+acceptance decisions; no runtime implementation, migrations, grant changes or deployment.
+All six findings now have concrete baseline decisions in specification DV-R15–20/RF-01–06,
+the eight-increment plan and architecture: staged catalogue-v3/legacy-v2 response gate
+before grants; private verified custom-role grant/revoke/handover; scoped HTTP/envelope/
+upstream budgets; draft-before-dispatch IDs with finite reconciliation/unresolved/manual
+disposition and retention; known-ID no-READ Contribute with receipt-only confirmation;
+full-access-only public mutations in both products. Foundation packaging is selected;
+no additive DMS directory/effective-rights API or public completion exception is required.
+The documentation index now identifies the implementation-ready baseline. Exact budgets,
+permission names, compatibility activation/concurrency/rollback, private handover,
+reconciliation deadlines/retention/capacity and contribution visibility are recorded in
+architecture; the specification owns requirements and RF-01–06 acceptance mapping.
+Verification on 2026-11-17: all 34 OpenAPI operations retained exactly once, 20 unique
+requirements, six review dispositions in both documents, eight increments, local links,
+settled architecture constraints, scoped Biome and git diff --check pass. All required
+gates pass: pnpm check, pnpm build, pnpm test and pnpm test:integration. Build/unit tasks
+used Turbo cache; fresh integration covered baseline central HTTP/PostgreSQL/browser,
+owning DMS/Turnstile database and actual storage/browser/Node/Python fixtures. Existing
+opt-in skips remain; these do not qualify the future Documents UI/native/target paths.
+No code, schema, grant, live data, deployment, root licence or third-party notice changed.
+Other workspace/portal edits were preserved. No planning blocker remains. Next authorized
+implementation task: DV-I01 executable contracts/route-permission matrix, compatibility
+fixtures and evidence register, followed by gated DV-I02–03 first-validator/read/upload/
+status/download. Runtime delivery and deployment still require their own implementation
+scope; this task made the plan ready and did not start them.
+
+DMS-WEB-REVIEW-01 — **Completed** (review only; owner: Codex parent; independent reviewer: review
+sub-agent, 2026-11-17). Owner requested a sub-agent review of the Documents validation
+plan for issues/gaps. Scope: independent source-backed review, parent disposition and
+planning corrections only; no runtime implementation, schema/grant or deployment change.
+Independent read-only review completed with five findings, all parent-verified: high
+old-client session/People compatibility when adding permission names; medium recovery
+after upstream receipt expiry, independent mutation-without-READ UI coverage, public
+upload completion restricted at DMS as well as Turnstile, and missing scoped product
+request-body limits. Parent additionally confirmed a first-validator grant bootstrap gap:
+ordinary role management cannot grant permissions the actor does not hold; existing
+administrator/module-reader private tools do not cover all proposed Documents actions.
+Recommendations: explicit old-web/new-API rollout before granting; bounded reconciliation
+plus durable unresolved/key tombstones; deliberate no-READ flow/evidence scope; preserve
+public restriction or design both-service completion changes; scoped request/ingress
+budgets and typed size errors; reviewed private first-validator handover. The complete
+34-operation inventory and previously acknowledged directories/CSP limitations stand.
+Plan/specification/architecture remain unchanged by this review; these are proposed
+corrections for DV-I01–03/DV-I06, not implemented fixes. Verification on 2026-11-17:
+pnpm check, pnpm build, pnpm test and pnpm test:integration pass; build/unit tasks used
+Turbo cache, and fresh integration included central HTTPS/PostgreSQL/browser, owning
+DMS/Turnstile database and real storage/browser/Node/Python checks. Existing opt-in skips
+remain; no new Documents runtime/browser or optional-profile qualification is claimed.
+Scoped tracker Biome and git diff --check pass. Only this tracker entry was changed;
+all other workspace/portal edits were preserved. Next: incorporate the six findings in
+the proposed documents before DV-I02 implementation, deciding the no-READ UI and public
+restricted-completion scope explicitly. The review is complete; the proposed fixes remain
+outstanding. Parent owns this progress entry.
+
+Subsequent disposition: DMS-WEB-READY-01 resolves all six findings in the planning baseline
+and acceptance gates. The review above remains the original source-backed finding record;
+runtime safeguards are future DV-I01–03/DV-I06 work, not completed implementation.
+
+DMS-WEB-PLAN-01 — **Completed** (planning only; owner: Codex, 2026-11-17).
+Owner requested analysis and a plan for a Documents sidebar/workspace in Turnstile 360
+that integrates and validates the exposed DMS core API. Scope is source-backed endpoint,
+contract, permission, integration and test inventory plus a phased UI/verification plan;
+implementation, live data changes and deployment are not authorized by this planning task.
+Source review is complete: all 34 public operations are mapped, including 32 consumer
+operations, service identity and the separate enrollment boundary. Draft specification
+and eight-increment implementation plan are in docs/turnstile/documents; architecture.md
+contains an explicitly proposed technical boundary. Confirmed gaps include capabilities-
+only token/client integration, absent document user permissions, small response bounds,
+strict transfer CSP, missing upload/batch/trash/application directories and no effective
+shared-rights projection. Existing private worker/operator/identity interfaces remain
+separate. Primary RFC 9110/OWASP upload references were researched. The documentation
+index links both proposed documents. Verification on 2026-11-17: exact 34-operation
+OpenAPI/table comparison, local document links/architecture anchor, scoped Biome and
+git diff --check pass. All four required workspace gates pass: pnpm check, pnpm build,
+pnpm test and pnpm test:integration. Build/unit tasks used Turbo cache; integration
+includes fresh central HTTP/PostgreSQL/browser fixtures, owning DMS/Turnstile database
+checks and actual SeaweedFS/browser/Node/Python transfer verification. Existing opt-in
+cases were skipped (three enrollment and three standalone cases); this is not new
+Documents browser, optional native-profile or production-target qualification.
+No runtime implementation, schema/grant change, customer deployment or existing live
+data change was made. Other portal-refresh edits were preserved. No planning blocker
+remains. Next, after owner adoption, start DV-I01 scope/permission/contract/packaging
+freeze, followed by DV-I02–03 Documents reads and real upload/status/download slice.
 
 WORKSPACE-PUBLISH-12 — **Completed** (owner: Codex, 2026-11-14).
 Owner requests committing all pending workspace changes and pushing to GitHub. All 148

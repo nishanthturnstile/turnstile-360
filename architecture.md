@@ -406,6 +406,434 @@ machine credentials/enrollment keys private. An audit user identifier asserted t
 does not delegate user permissions. Other applications consume the same DMS contract;
 the DMS never imports Turnstile business rules.
 
+### Documents validation workspace proposal
+
+2026-11-18 DV-I02 adds the guarded read-only runtime workspace to DV-I01's executable
+contract baseline. Actual qualification is tracked in IN_PROGRESS.md; no live deployment
+or startup grant is implied. DV-I03 adds the ordinary secure-only text upload slice and
+current-original download through the intent ledger.
+The six DMS-WEB-REVIEW-01 findings are resolved by the decisions below; executable contracts and their tests are delivered in DV-I01–03/DV-I06.
+Product scope and DV-R/DV-E IDs are in the
+[Documents validation specification](docs/turnstile/documents/documents_validation_specification.md);
+delivery sequencing is in the
+[implementation plan](docs/turnstile/documents/documents_validation_implementation_plan.md).
+DV-I01 encodes this baseline before any runtime route, permission or grant is enabled.
+The isolated `@thaarei/turnstile-contracts/documents` export constructs the v3 graph;
+the package root preserves exact v2 schemas and the runtime subpath adopts v3 with an
+explicit legacy wire projection before activation. Both versions use shared
+schema factories, including nested People, import, invitation, impact and receipt shapes.
+The [generated contract](docs/api/turnstile-documents.contract.json) records the finite
+catalogue and budgets; the [coverage register](docs/turnstile/documents/documents_validation_coverage.json)
+separates contract, runtime, image and target evidence. The immutable
+legacy fixture records 85 schema hashes and checked synthetic examples captured from
+the installed API package, with exact API/web image IDs and seven web asset hashes.
+The capture supplies the actual legacy assets for DV-I02 ordinary-browser compatibility
+qualification; the capture alone does not prove that release gate. Shared public DMS validators are reused through the public
+contracts package only; no server/private DMS imports enter product contracts.
+
+
+Use a feature-owned Turnstile Documents service/controller and web feature, with
+`integrations/dms` translating to typed `@thaarei/dms-client` methods over authenticated
+HTTP. Platform-independent product DTOs belong in `@thaarei/turnstile-contracts`;
+browser code does not import the server client or DMS private contracts. DMS retains
+all document, binary, security, processing, grant and search authority. Turnstile stores
+only necessary product operation/linking records in its own persistence.
+
+Extend the existing foundation DMS integration for this explicit validation workspace;
+DV-I02 updates the source-owned foundation inventory and verifies all selected build
+profiles. Documents is not a newly selectable commercial module. Signed installation/
+module policy and independent DMS approval still apply. All Documents permissions are
+explicit company-wide grants, with no implicit grants to members or system administrator
+templates. Unit-scoped libraries/business workflows remain separate scope.
+
+The new permission names are `turnstile:documents:read`, `:upload`, `:edit`, `:restore`,
+`:lifecycle`, `:share`, `:reprocess`, `:audit` and `:validate`, all using the same
+`turnstile:documents` prefix. Read covers directory/detail/history/content/search and
+ordinary status; upload covers creation/new-version and eligible session/batch controls;
+edit covers metadata/tags/references; the remaining names cover binary restore, logical
+lifecycle, application grants, reprocessing, owner audit and validation diagnostics.
+None implies READ or another action. Connection/bootstrap requires shell entry and at
+least one company Documents permission, with each subsequent route checking its action.
+Contribute requires validate plus edit/upload as applicable; no document READ is added.
+
+The authorization intersection is current product session/access context, explicit action
+permissions, readiness and Turnstile deployment/module policy, DMS deployment policy,
+machine registration/token scope ceilings and DMS resource rights. Product and DMS grants
+are distinct. Consumer audit attribution is not a DMS human principal. All actions use
+server-derived actor attribution; browser inputs cannot select an audit actor, tenant or
+calling application. DMS actor fields must use their defined bounded syntax. Owner-only
+actions remain owner-only; shared rights are independent. Do not infer effective shared
+mutation rights from global capabilities. Normal shared document tabs are read-only.
+Shared writes use the explicit Contribute flow below; no new effective-rights DMS API is
+required for this baseline.
+
+#### Access contract rollout and first validator
+
+Retain the exact current catalogue-v2 permission set/schemas as legacy wire contracts;
+the Documents permission catalogue is v3. The new web client sends
+`X-Turnstile-Access-Contract: 3` on session and permission-bearing product requests.
+This header declares response compatibility only; it never grants authority. DV-I01
+catalogues all affected routes, including session, catalogue, role/member/access views,
+eligible roles, invitations/import previews/results, impact and command readback. Any
+nested permission-bearing payload participates in this gate, not only the catalogue.
+
+Use a staged cutover. First deploy the dual-contract API and negotiating web with
+Documents grants/role creation disabled. Requests without the header keep exact legacy
+v2 shapes and the old permission enumeration; negotiated requests use v3. Then verify
+the actual pre-upgrade bundle and new bundle against this API. Before the first Documents
+role/grant is committed, atomically enable a private durable v3-required release barrier.
+Thereafter legacy permission-bearing reads and writes return the existing supported
+401 LOGIN_REQUIRED recovery envelope, before emitting incompatible data or executing a
+write. Check the barrier and produce the legacy projection or commit the command under
+the same owning access-context fence as activation/grants; a check before entering the
+transaction is insufficient. Serialize in-flight legacy reads/writes with activation so
+they either finish against v2 state or take supported recovery. Never strip new rights
+out of role snapshots or accept legacy role replacement
+commands that could erase unseen permissions. Current clients keep their existing
+session; an older open page uses its supported sign-in/full-navigation recovery to load
+the current no-store entry document. Do not revoke all sessions to perform this cutover.
+
+Identity login/recovery/logout, health and the unchanged capabilities DTO retain their
+existing contracts. Old-bundle tests must prove the explicit 401 recovery reaches the new
+bundle without a false 503 or partial write, and that current People/catalogue/session
+behavior still works after new grants exist. Test newly assigned and unassigned users,
+nested roles/invitations/imports, lost activation acknowledgement and concurrent old
+writes. Retained pre-upgrade invitations, import jobs and command receipts must remain
+readable under their captured versions; wire migration cannot rewrite historical grant
+snapshots, command hashes or receipt identities. Include those retained records in the
+old/new-client evidence. DV-I02 cannot open Documents without this evidence. On rollback, keep the v3
+barrier closed to legacy clients while v3 roles/grants/receipts remain; an old API cannot
+be restarted against new permission data without an owning coordinated rollback/restore.
+
+DV-I02 implements a private product-owned Documents grant/handover command, separate
+from HTTP role management and DMS operators. Protected JSON stdin supplies an operation
+key, expected access revision, reviewed reason, verified current administrator/operator
+session proof, active target-user proof, custom role ID and an explicit subset of the
+nine Documents permissions plus shell entry. Use the existing private product-operator
+boundary; ordinary HTTP anti-escalation rules remain unchanged. Reject foreign/inactive
+members, invalid proof, stale revision, unexpected permissions and system-role changes.
+The command creates/updates only the reviewed custom company role/assignment, commits
+the v3 barrier before any new grant becomes visible, and records atomic audit/receipt
+and access-context revision. Same-input retry is safe; changed input conflicts. Revocation
+and deliberate handover are supported without changing protected administrator counts.
+Verify real ordinary login/session-v3, action access and subsequent revocation before
+calling the first validator provisioned. No startup or migration creates such a grant.
+
+Keep `/api/dms/capabilities` compatible. Add a separate versioned Documents bootstrap
+projection with effective operations, format capabilities and admission limits, plus
+typed domain errors, request correlation and retry/readback guidance. Extend the machine
+token configuration and private issuer/registration provisioning explicitly for only the
+required read/write/audit scopes; changing a client request alone grants nothing. Use
+operation-specific finite control-response bounds rather than the current universal
+16 KiB client response ceiling. Keep token/enrollment bounds unchanged.
+
+DV-I02 runtime adoption uses `@thaarei/turnstile-contracts/runtime` in the API/web;
+the root export remains the frozen v2 contract. Request-local negotiation fences session
+access reads and every owning People/invitation transaction under `lock_access_context`.
+Readiness, identity/recovery and auth logout stay independent. Catalogue projection removes
+only static v3 definitions from pre-barrier legacy responses; saved rights are never
+stripped. The access row gains `documents_contract_required`; its private monotonic trigger
+and a deferred Documents-permission guard are verified by readiness. Access release version
+2, including the owning lock helper, closes old API startup against the upgraded database.
+Retained-row migration advances revision without rewriting roles or receipt digests.
+Private Documents commands use current administrator/target product cookies, provider live
+verification and the owning operator role. Barrier activation shares the existing revision
+update with grant/audit/receipt commit. Reviewed reasons are inserted into append-only audit;
+handover audits both subjects. No operator changes system templates or administrator counts.
+
+The separate server-only Documents token provider explicitly reads private
+`DMS_DOCUMENTS_SCOPES`, preserving the existing capabilities-only token cache. Required
+issuer/registration changes are independent private provisioning. Finite named client GETs
+validate path/query/response contracts, use the Documents response budget and the remaining
+handler deadline, and replay only one explicit expired machine token. Product service reads
+verify tenant/application capabilities and current company permissions before dispatch and
+again before exposing a late result. No database transaction spans remote HTTP. Product
+projections derive owned/shared status and omit calling-application identity selectors.
+
+The foundation web feature owns All documents, saved Overview and Connection/policy with
+its own contextual navigation. Per-scope query clients partition identity/fingerprint,
+revision and URL; retired scopes cancel and clear, and only stale active reads refetch after
+verified checks. No cache or local receipt grants DMS resource authority. The customer
+Nginx template owns scoped Documents request ceilings and typed 413/415 errors with
+correlation and no-store headers. Counter-upstream ingress evidence remains distinct from
+real product parser/authorization evidence. Operator/qualification workflow is in the
+[Documents runbook](docs/runbooks/documents-validation.md).
+
+#### Documents HTTP budgets
+
+DV-I01 defines these Documents-only limits in the public product contract; DV-I02
+registers Fastify parser/error hooks before the routes are enabled. Limits apply to
+actual UTF-8 bytes, including envelope fields; also enforce the independent upstream
+body/manifest limits after server-derived actor fields and canonicalization.
+
+| Boundary                                                        | Maximum / deadline                                                                                    |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Ordinary Documents JSON request                                 | 16,384 bytes                                                                                          |
+| Upload/new-version/metadata-edit/known-ID contribution envelope | 36,864 bytes; inner forwarded DMS control remains at most 32,768 bytes                                |
+| Batch creation envelope                                         | 270,336 bytes; forwarded DMS control at most 266,240 bytes and manifest at most 262,144 bytes         |
+| Documents control JSON response                                 | 1,048,576 bytes; schema-level item/count bounds still apply                                           |
+| Extraction artifact                                             | Existing DMS 26,214,400-byte ceiling; separate transfer/parse path, never the control-response helper |
+| Control request deadlines                                       | Upstream 8 seconds, product handler 10 seconds, browser 15 seconds                                    |
+
+Headers carry operation ID, If-Match and CSRF where applicable. The 4 KiB envelope
+allowance does not expand DMS descriptor/metadata limits or admit arbitrary wrapper keys.
+The intent-creation route uses the same per-command budget as its eventual execution.
+Product/gateway request limits for these exact JSON routes must admit their listed
+envelopes, while rejecting larger requests; direct file bytes bypass product JSON routes.
+Preserve global auth/People limits. Parser/ingress 413 and media-type 415 map to typed
+Documents errors with correlation; test exact bounds, one byte over, multibyte strings,
+actor/envelope overhead and the real gateway path, not only controller validation.
+
+Classify product operations by domain semantics before exposing them. Bounded product
+GET search translates to DMS POST search. All public Documents mutations, including
+upload complete/refresh/cancel and batch controls, continue to require full access in
+both products. DMS public write-scope transactions already enforce full access; its
+private worker completion exception is not public consumer authority. If either product
+is existing-reads, preserve known IDs/intent, allow only currently authorized reads and
+show that user writes are paused. Already accepted private work can continue under its
+existing fences. Resume public commands only after both policies are full and original
+intent/revision/replay eligibility is reauthorized. Neither a new key nor an expired
+licence bypasses this gate. No public completion exception or blanket exemption is added.
+
+#### Intent identity and bounded reconciliation
+
+Create a product-owned draft intent and return its server-minted UUID before sending
+any DMS mutation. Draft creation alone has no DMS effect; loss of that response may leave
+an unused draft. Execution/retry must name an existing intent UUID and exact canonical
+command/digest, actor, expected revision and stored upstream key. A missing, pruned,
+expired or resolved-conflicting ID returns a typed 410/conflict and never becomes a new
+execution implicitly. Forwarded actor attribution and keys are server-derived. No DB
+transaction spans HTTP; remote success followed by local-link failure is uncertain.
+
+For receipt-backed commands, reconciliation is allowed only while currently authorized
+and before the earlier of first dispatch plus 23 hours or a returned replayUntil minus
+60 seconds. Use stored server time and stop under the existing clock/recovery quarantine.
+Retry uses the same key/body/revision, with no changed actor or descriptor. On re-entry,
+reauthorize before any replay; a deadline is not authority to replay as an expired user.
+Known upstream IDs can be inspected after that deadline using ordinary read authority.
+If IDs were lost and the deadline passes, upstream returns 410, or a policy denial
+prevents timely recovery, persist UNRESOLVED_REQUIRES_REVIEW. Do not create a new key,
+report failure as rolled back, or claim automatic ID recovery after the DMS window.
+Manual private inspection can attach a verified binding or leave the case unresolved;
+it cannot synthesize a receipt or extend the upstream replay deadline.
+
+Command payloads expire 30 days after execution becomes terminal or unresolved; compact
+unresolved ID/digest/key/status evidence survives until explicit disposition. Reserve
+one of 100 installation-wide unreconciled-operation slots atomically before dispatch;
+pending uncertain and unresolved intents share this bound. Release only after a verified
+terminal binding/outcome or manual disposition, not merely on timeout/expiry. Reject new
+execution with a typed capacity error when full. Keep resolved key/digest tombstones for
+90 days after resolution.
+Unknown IDs remain non-executable after tombstone pruning because only draft creation
+mints IDs, and retry/execution never recreates missing records. Do not reuse IDs/keys.
+Pending/unresolved intents cannot silently fork a replacement; a new reviewed command
+requires explicit disposition of the original uncertainty. Revision-only writes use
+readback/conflict review, not receipt replay or assumed success.
+
+Turnstile stores one product-owned intent per reviewed command in
+`turnstile.documents_intent`. The draft UUID is also the stable upstream key for
+upload begin and complete, new-version admission, binary restore, batch creation,
+batch-item admission and batch closure.
+A 15-second dispatch lease separates an in-flight claim from its
+recovery, while the handler and upstream deadlines bound the attempt itself.
+The owning access lock serializes admission against the 100 uncertain-operation slots.
+Unstarted drafts expire after one day and are limited to 1,000 per installation. A pending
+or unresolved command reserves its subject for that action. Upload begin uses the file
+digest, upload controls use the upload ID, edits and reference commands use the document
+ID, and version admission and restore use the document ID plus the file digest or source
+version ID. Batch creation uses the reviewed set of file digests and targets, item
+admission uses the batch and item IDs, and batch controls use the batch ID. A changed
+descriptor cannot silently replace that operation. The browser can
+reopen its latest 100 authorized local operation receipts or read a known receipt by ID.
+
+Authorized replay uses live policy in both products. Refresh and cancel are checked
+through a current status read after an ambiguous attempt. Only confirmed cancellation
+can resolve that way. A private reviewed decision can attach a DMS-verified upload,
+restore, batch or item binding or dispose of an independently accounted-for outcome. It records the reason
+and current protected administrator without reopening a dispatch window. Each draft
+carries the independent product recovery marker digest, so a restored in-flight intent
+or draft from a prior marker goes to review. Payload retention starts at the initial
+terminal state, while the 90-day tombstone period starts at resolution or disposition.
+
+The ledger stores neither signed URLs, credentials, file bytes nor extracted content. Ledger reads
+recheck product permissions and DMS resource authority before projecting fresh upstream
+data; local operation ownership is not document READ authority. The ledger supplies
+Turnstile-initiated activity/known-ID recovery, not a complete DMS directory. Test lost
+response plus local crash across the replay deadline, pruning, restore and delayed retries.
+
+#### Ordinary document details and versions
+
+The owned-document Overview uses conditional title, tag, metadata and namespaced reference
+writes. Each command carries the reviewed document revision as the DMS `If-Match` value.
+A definitive stale-revision response closes that intent and the task retains the draft
+for explicit review against the latest revision. After an ambiguous response, a fresh
+authorized read confirms the requested fields or reference state. An unmatched state
+requires private review. Recovery for these mutations uses readback only.
+
+The Versions tab reads the DMS version directory and individual details using the current
+document READ authority. DMS owns the current pointer and exposes upload, security and
+availability independently. Original download can target the current version or a selected
+authorized version. New text binaries use the secure-only upload flow, including the same
+file checks, explicit completion and private assessment. DMS checks the new-version
+descriptor's title and metadata against the document at the reviewed revision.
+Binary restore creates a new assessed revision from the selected historical version
+under the owning registration.
+It requires explicit company restore permission and full access in both products. The browser
+receives an admission acknowledgement and can read assessment progress with current READ
+authority. DMS controls when that version becomes current.
+
+#### Ordinary batch manifests and saved activity
+
+Turnstile records the reviewed batch command before calling DMS. The submitting actor
+can reopen its batch receipts and the retained manifest's item identifiers, filenames,
+byte counts and digests. DMS owns the batch ID, item bindings, capacity, closure and
+independent state counts. The product reads each DMS status page through current
+Documents READ and preserves DMS's per-item session omissions. The local manifest view
+requires the submitting actor and current upload permission.
+
+An item admission carries only the saved batch ID and item ID at the browser boundary.
+The API derives the descriptor and attribution from the saved manifest. Ordinary
+new-version items also reauthorize READ and verify application ownership. Each item
+reuses its original operation key. The browser transfers one selected secure-only text
+file at a time, verifies the reselected file against its saved name, size and digest,
+and requests completion through the existing upload intent. A capacity delay pauses
+the remaining selection. A closed batch can finish already started eligible sessions.
+Cancellation preserves published versions and uses authorized readback after a lost reply.
+
+The gateway admits the 270,336-byte ceiling only on the exact operations creation
+route. The parser applies the smaller raw limits to each other command. Forwarding
+checks the 266,240-byte DMS control and the 262,144-byte item array after adding server
+attribution and version selectors. The ledger reserves a bounded 400 KiB JSONB storage
+limit for batch creation commands to account for PostgreSQL serialization whitespace.
+
+#### Owner recovery, application grants and activity
+
+Recovery reads the owner-only DMS lifecycle endpoint for a known document ID. The
+product ledger retains the actor's recorded lifecycle IDs and receipts so they can
+be reopened when the active document detail is unavailable. Logical deletion uses
+the reviewed revision. After a lost deletion response, the product confirms the
+expected lifecycle transition through authorized readback. Logical restore replays
+the original DMS receipt key within its window. DMS owns restore deadlines, generation
+fences, reassessment and current-original availability.
+
+Application access replaces a reviewed grant set by conditional DMS request. The
+editor accepts provisioned application IDs and independent READ, EDIT_METADATA and
+ADD_VERSION flags. DMS validates active same-installation targets and owner authority.
+Activity reads owner application or document audit using DMS cursors. It labels the
+recorded actor and any application-asserted subject separately and presents download
+authorization as the audited event.
+
+#### Processing, extracted content and discovery
+
+Turnstile reads DMS history by current or explicit version, with the upstream cursor
+bound to that version. History shows the accepted active run, retained runs, coverage,
+warnings and index state. Run selection keeps the exact version and run identity fixed.
+Search maps typed product GET filters to the DMS discovery POST and presents English
+matches and index state. Each matched source links to its exact version, run and unit.
+Neither response exposes a tenant or calling-application selector.
+
+Ordinary file and new-version admission offer formats and profiles from current
+capabilities and admission policy. DMS still assesses every original and owns profile
+compatibility, publication, generation and indexing. Owner-only reprocessing requires
+current Documents READ and reprocess access, full policy in both products and the
+applicable machine scopes. Migration 0045 records the exact version and acknowledged
+run with the stable intent key. A replacement only becomes active when DMS accepts
+the result. A failed run leaves the prior accepted extraction and secure original
+available under current authority.
+
+#### Shared contribution without document READ
+
+Documents → Validation → Contribute offers explicit known document ID, owner-supplied
+current revision and intended edit/reference/new-version inputs. New-version descriptors
+include owner-supplied title/metadata and a file SHA-256; no automatic document detail,
+history or status read is performed. Require current product validate plus edit/upload
+permission, full deployment access and the DMS mutation right. Normal shared read tabs
+link to this form rather than infer mutation rights. A submitted intended command is
+not a write probe for permissions; DMS remains the final check and denied commands show
+the normal bounded error without discovering other documents.
+
+Render only the caller-submitted fields and minimal acknowledgement/IDs/revision actually
+authorized by the mutation response. ADD_VERSION-only can receive begin/refresh/complete/
+cancel acknowledgements but cannot GET upload status; after 202 show completion accepted,
+publication not observable with current rights. Do not poll/read with an owner credential,
+fall back to another application, or infer success from a local receipt. A stale revision
+requires new owner-supplied inputs and reviewed intent, not a hidden refetch. After reload,
+the ledger exposes only local submission/acknowledgement state absent a permitted DMS
+read; it cannot become a read bypass. No-READ batch reads retain only the submitting
+application's permitted manifest and omit unauthorized live session projections.
+
+The ledger stores each operation's immutable mode. Contribution receipts, upload
+control bindings and retries inherit that mode and its current company permissions.
+Version admission and completion use their original keys. A lost non-receipted
+contribution outcome enters protected review because its product flow has no
+authorized recovery read. Definitive refusals release the subject for a corrected
+review. The mutation response is reduced to a local acknowledgement, known upload
+binding and any transient transfer capability before reaching the browser.
+
+DV-I06 browser tests use one installed Turnstile registration and a separately provisioned
+fixture owner backend. The latter supplies nonsecret revision/descriptor inputs and
+independently verifies persisted effects/publication. Explicitly assert successful
+EDIT_METADATA-only and ADD_VERSION-only contribution plus denied detail/status/content/
+download and owner-only actions; READ-only must still deny edits/add-version. Evidence
+distinguishes contributor acknowledgements from owner-observed outcomes.
+
+Keep direct signed storage transfer at the configured DMS transfer origin. The deployment
+must derive an exact CSP `connect-src` allowlist from validated installation configuration,
+coordinate it with `DMS_STORAGE_BROWSER_ORIGINS`, retain the signed Host/path/query and
+verify production ingress headers. DV-I03 uses the exact HTTPS `DMS_DOCUMENTS_TRANSFER_ORIGIN` in the customer gateway
+and product API configuration. The storage ingress uses its own exact browser-origin
+allowlist and keeps the signed request target intact. Operations creation applies the
+per-command JSON budgets defined above.
+The configured origin is nonsecret; no service credential enters Vite or browser assets. No wildcard CSP/CORS,
+arbitrary URL proxy or extra host-port allocation is proposed. Browser PUT uses known-size
+File/Blob with the returned Content-Type and If-None-Match; the browser sets Content-Length.
+Storage requests omit cookies, product CSRF/actor headers and machine Authorization.
+The upload client uses XHR progress events on the separate transfer origin with
+credentials disabled and the product's no-referrer policy. The owning ingress drops
+upstream Location headers. Bytes sent and storage acknowledgement are separate from
+the product's completion and assessment states.
+
+Original download and extraction-artifact GET are distinct capabilities. Validate an
+artifact's declared maximum size, exact bytes/hash and public extraction schema before
+rendering. Bind the manifest to the declared source hash, version and run and check
+the same selection through a fresh authorized product read after transfer. The browser
+holds extracted bytes only in the active viewer and pages source units, tabular cells,
+OCR words and installed structured-layout artifacts. It renders formulas, extracted
+text and search snippets as untrusted text. Signed capabilities are short-lived and
+ephemeral. An already issued storage capability can remain usable until expiry.
+
+Reuse the established web shell, semantic primitives and scoped query patterns, with
+document-specific cache keys containing verified identity/access context and relevant
+document/version/run/filter. Invalidate after writes and on authority/session changes;
+discard extracted content/capabilities when access changes. Preserve distinct upload,
+security, availability, processing and index states. Foreground upload monitoring
+uses the service's upload retry hint, then continues polling queued/running processing
+and pending index status at bounded intervals. No preview capability, filesystem
+folder model, general operator UI or private worker endpoint becomes browser-accessible.
+
+#### Documents validation diagnostics and release evidence
+
+The company Documents validate permission protects the runtime checklist and the
+service identity read. Checklist entries use the finite contract inventory and
+the expected readback descriptions generated from the coverage register. A role
+action indicator evaluates the same complete company permission set as ordinary command
+execution. Connection lists operations for the ordinary workflow, filtered for current
+deployment access and advertised DMS operations. Explicit Contribute eligibility is
+evaluated separately without READ. DMS still checks resource rights. The browser records one
+sanitized observation per operation during the current verified Documents visit.
+An observation contains a finite operation identifier, HTTP status, request
+correlation and a typed outcome. It keeps neither request targets, payloads nor
+transfer capabilities. Verified identity/access changes retire observations.
+Private provisioning remains a coverage row with no public execution path.
+
+Release qualification uses the existing signed selected-image builder and the
+captured legacy package. Exact-image compatibility evidence records migrations,
+bootstrap, runtime image identities, browser verification and the v3 rollback
+fence. The disposable database archive rehearsal restores all schemas into an
+isolated database, compares selected owning table snapshots and verifies recovery
+marker quarantine before applying new fixture approval. Artifact/object recovery,
+optional processing profiles and customer acceptance keep their owning evidence.
+
 ### Onboarding implementation baseline
 
 ONB-I01 adopted the original [onboarding specification](docs/turnstile/onboarding/onboarding_specification.md)

@@ -1,4 +1,4 @@
-import type { InvitationDto } from '@thaarei/turnstile-contracts';
+import type { InvitationDto } from '@thaarei/turnstile-contracts/runtime';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

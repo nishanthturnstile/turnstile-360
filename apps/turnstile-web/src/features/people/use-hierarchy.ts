@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { scopedUnitsResponseSchema } from '@thaarei/turnstile-contracts';
+import { scopedUnitsResponseSchema } from '@thaarei/turnstile-contracts/runtime';
 import { useCallback, useMemo, useState } from 'react';
 import { usePeopleActivity } from './activity';
 import { PeopleError, request } from './client';

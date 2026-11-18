@@ -1,8 +1,9 @@
 import { type ArgumentsHost, Catch, type ExceptionFilter, HttpException } from '@nestjs/common';
-import { PEOPLE_ERROR_STATUS } from '@thaarei/turnstile-contracts';
+import { PEOPLE_ERROR_STATUS } from '@thaarei/turnstile-contracts/runtime';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { ConfigurationException } from '../../../infrastructure/configuration-exception.js';
 import { configurationParserError } from '../../../infrastructure/configuration-http.js';
+import { documentsHttpFailure } from '../../../infrastructure/documents-http.js';
 import { peopleHttpFailure } from '../../../infrastructure/people-http.js';
 import { recipientFailure } from '../../../infrastructure/recipient-http.js';
 import { structureFailure } from '../../../infrastructure/structure-http.js';
@@ -25,6 +26,13 @@ export class AuthExceptionFilter implements ExceptionFilter {
         ? inputStatus
         : 503;
     const response = known ? error.getResponse() : undefined;
+    if (request.routeOptions?.config?.documentsEndpoint) {
+      reply
+        .code(status)
+        .header('cache-control', 'private, no-store')
+        .send(documentsHttpFailure(response, status, request.id));
+      return;
+    }
     if (
       response &&
       typeof response === 'object' &&

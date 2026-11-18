@@ -1,6 +1,6 @@
 // biome-ignore-all lint/suspicious/noUndeclaredEnvVars: Disposable uncached image qualification helper.
 // Private canonical customer transport for the packaged backends; public browser ingress is separate.
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
 
@@ -35,6 +35,29 @@ https
         },
         (incoming) => {
           incoming.on('error', () => response.destroy());
+          if (
+            fault === 'documents-held-response' &&
+            path.startsWith('/v1/documents/') &&
+            incoming.statusCode === 200
+          ) {
+            writeFileSync('/qualification/documents-response-held', 'yes');
+            const deadline = Date.now() + 5000;
+            const timer = setInterval(() => {
+              if (
+                Date.now() < deadline &&
+                readFileSync('/qualification/browser-fault', 'utf8') === 'documents-held-response'
+              )
+                return;
+              clearInterval(timer);
+              response.writeHead(incoming.statusCode, incoming.headers);
+              incoming.pipe(response);
+            }, 25);
+            response.once('close', () => {
+              clearInterval(timer);
+              incoming.destroy();
+            });
+            return;
+          }
           response.writeHead(incoming.statusCode, incoming.headers);
           incoming.pipe(response);
         },

@@ -2,7 +2,10 @@ import { type ChildProcess, fork } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
-import { type ConfigurationSnapshotDto, type InvitationDto } from '@thaarei/turnstile-contracts';
+import {
+  type ConfigurationSnapshotDto,
+  type InvitationDto,
+} from '@thaarei/turnstile-contracts/runtime';
 import { Pool, type PoolClient } from 'pg';
 import { createApplication } from '../src/bootstrap.js';
 import { pruneInvitationRecords } from '../src/infrastructure/database/invitation-maintenance.js';

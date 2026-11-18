@@ -8,7 +8,7 @@ import {
   peopleCommandSchema,
   peopleErrorSchema,
   type UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { capturePeopleWrite } from './cache-events.ts';
 export class PeopleError extends Error {
   readonly status: number;
@@ -45,6 +45,7 @@ export async function request<T>(
         : AbortSignal.timeout(PEOPLE_LIMITS.requestTimeoutMs),
       headers: {
         accept: 'application/json',
+        'x-turnstile-access-contract': '3',
         ...(path.split('?')[0] === '/api/people/catalog'
           ? { [PEOPLE_FEATURES_HEADER]: PEOPLE_IMPORT_FEATURE }
           : {}),

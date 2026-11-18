@@ -20,6 +20,11 @@ import { buildBundle, verifyBundle, verifyToken } from './module-delivery.mjs';
 
 const store = process.argv.slice(2).find((arg) => !arg.startsWith('--'));
 const access = process.argv.includes('--access');
+const documents = process.argv.includes('--documents');
+// biome-ignore lint/suspicious/noUndeclaredEnvVars: The exact image is selected by this uncached qualification command.
+const dmsImage = process.env.AUTH_BROWSER_DMS_IMAGE;
+if (documents)
+  assert.match(dmsImage ?? '', /^sha256:[0-9a-f]{64}$/, 'Supply the exact DMS image ID');
 if (access && !process.argv.includes('--resume'))
   run('docker', [
     'build',
@@ -74,6 +79,11 @@ const selections = process.argv.includes('--all-registered')
         ['risk-management'],
         ['incident-management', 'risk-management'],
       ];
+if (documents)
+  assert.ok(
+    selections.some((ids) => ids.length === 0),
+    'Documents image acceptance uses the selected Core profile',
+  );
 for (const ids of selections) {
   const profile = await createProfile(catalogue, { requestedIndividualIds: ids }, [
     'foundation',
@@ -164,6 +174,32 @@ for (const ids of selections) {
       }),
     );
   }
+  if (documents && ids.length === 0) {
+    const fixturePath = join(store, 'documents-image-fixture.json');
+    writeFileSync(
+      fixturePath,
+      JSON.stringify({ bundleDirectory: result.path, releaseTrust: trust }),
+      {
+        mode: 0o600,
+      },
+    );
+    console.log(
+      run(
+        process.execPath,
+        ['scripts/test-auth-database.mjs', '--browser', '--documents', '--documents-release'],
+        {
+          env: {
+            ...process.env,
+            AUTH_BROWSER_FULL_IMAGES: 'true',
+            MOD_I07_MODULE_FIXTURE: fixturePath,
+            AUTH_BROWSER_DMS_IMAGE: dmsImage,
+            AUTH_BROWSER_API_IMAGE: `sha256:${evidence.inventory.images.find((i) => i.role === 'turnstile-api').digest}`,
+            AUTH_BROWSER_WEB_IMAGE: `sha256:${evidence.inventory.images.find((i) => i.role === 'turnstile-web').digest}`,
+          },
+        },
+      ),
+    );
+  }
   records.push({
     profileDigest: request.profileDigest,
     modules: profile.modules,
@@ -176,7 +212,16 @@ for (const ids of selections) {
 }
 writeFileSync(
   join(store, 'qualification.json'),
-  JSON.stringify({ version: 1, ordinaryLoginModuleAcceptance: access, profiles: records }, null, 2),
+  JSON.stringify(
+    {
+      version: 1,
+      ordinaryLoginModuleAcceptance: access,
+      ...(documents ? { ordinaryLoginDocumentsImageAcceptance: true, dmsImage } : {}),
+      profiles: records,
+    },
+    null,
+    2,
+  ),
   { mode: 0o600, flag: resuming ? 'w' : 'wx' },
 );
 console.log(

@@ -386,3 +386,46 @@ for filtering, usage-count visibility and durable-command recovery rules.
 CSV import tasks compose the shared task sheet, fields, assignment review, progress and
 row-result table. Show progress counts with text; preserve independent invitation/mail
 status, show explicit cancellation consequences and keep long filenames/addresses wrapped.
+
+
+## Documents workspace composition
+
+Documents uses a wider workspace with a contextual rail on desktop and a compact
+navigation grid on phones. Keep one page heading, show file details in the library,
+and put exact filters behind an expandable control. The library table becomes stacked
+rows on narrow screens. Original availability, searchability and ownership remain
+separate. Signed or private resource data follows the scope and limits in
+[architecture.md](../../architecture.md#documents-validation-workspace-proposal).
+
+
+The Uploads view uses the existing file input and progress indicator. Keep saved
+operations beside the active task when space allows. Show the percentage of file bytes
+sent while the signed PUT is active, then display upload, security, availability,
+processing and index stages separately. Reopening an operation can prompt for the
+original file. The overview header shows the download action when the original is available.
+
+Overview tasks use a sheet with a fixed action footer, an accessible discard confirmation,
+explicit confirmation for unlinking, and an inline saved-revision review that retains the draft. The Versions
+view reuses the table and status badges, with separate upload, security, availability
+and publication fields in the selected version's details. Restore confirmation reuses
+the task sheet and links to progress in Uploads.
+
+Batches use the existing file picker, review fields and table. Item state and
+whole-batch counts stay separate. Show retry guidance beside the affected file, retain
+documented results across pagination, and keep the original-file selection transient.
+
+Recovery shows the restore deadline and reassessment separately. The Application
+access editor groups the independent rights under each provisioned application ID.
+Contribute labels saved acknowledgements and uses the shared file input for exact
+source re-selection. Activity tables retain the event, actor and request identifier.
+
+Processing cards show the exact version and run, with separate active-result and
+index badges. Coverage states show counts and warnings in text. The Content viewer
+pages source units, tabular cells and OCR words and keeps source labels with their
+values. Render extracted strings and search snippets as text with wrapping. Search
+results link directly to the matched version, run and source.
+
+Validation pairs the finite coverage table with a directly selectable operation inspector. The card
+keeps expected readback, HTTP status, observed outcome and request correlation distinct.
+Show private operator surfaces as coverage entries and keep diagnostic actions to the
+existing protected read controls.

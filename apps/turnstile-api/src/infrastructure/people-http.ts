@@ -6,7 +6,7 @@ import {
   type PeopleErrorDto,
   peopleErrorSchema,
   peopleIdSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { FastifyInstance } from 'fastify';
 
 declare module 'fastify' {

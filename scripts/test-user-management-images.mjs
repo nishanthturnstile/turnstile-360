@@ -101,7 +101,7 @@ try {
           kind === 'api'
             ? `
           const {ACCESS_RELEASE_VERSION}=await import('./dist/modules/access/release-state.js');
-          assert.equal(ACCESS_RELEASE_VERSION,1);
+          assert.equal(ACCESS_RELEASE_VERSION,2);
           for(const path of ['/api/people/catalog','/api/structure/units','/api/invitations/context'])
             assert.ok([401,503].includes((await get(path)).status));
           const {spawnSync}=await import('node:child_process');

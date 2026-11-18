@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { fork, spawn, spawnSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { lstat, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { request as httpRequest, createServer as httpServer } from 'node:http';
 import { createServer } from 'node:https';
@@ -14,8 +14,11 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { chromium } from '@playwright/test';
 import { Pool } from 'pg';
 import { parse } from 'yaml';
+import { documentsDraftIngress } from './fixtures/documents-draft-ingress.mjs';
+import { verifyDocumentsRestore } from './fixtures/documents-release-restore.mjs';
 import { prepareModuleAccess } from './fixtures/module-access.mjs';
 import { prepareCutoverBrowser } from './fixtures/module-cutover-browser-setup.mjs';
+import { testDocuments } from './test-documents-browser.mjs';
 import { testModuleCutover } from './test-module-cutover-browser.mjs';
 import { testModuleAccess } from './test-modules-browser.mjs';
 import { testOnboarding } from './test-onboarding-browser.mjs';
@@ -33,6 +36,15 @@ const runtimeContainers = [];
 let productMaintenanceArgs;
 let cutoverPreparation;
 let productRuntimeArguments;
+const documentsMode = process.argv.includes('--documents');
+const documentsUpload = process.argv.includes('--documents-upload');
+const documentsVersions = process.argv.includes('--documents-versions');
+const documentsBatches = process.argv.includes('--documents-batches');
+const documentsLifecycle = process.argv.includes('--documents-lifecycle');
+const documentsProcessing = process.argv.includes('--documents-processing');
+const documentsRelease = process.argv.includes('--documents-release');
+let draftIngress;
+let transferOrigin;
 const fullImages = process.env.AUTH_BROWSER_FULL_IMAGES === 'true';
 assert.ok(
   !fullImages ||
@@ -53,10 +65,13 @@ let authorityPort = 0;
 let productPort = 0;
 let webPort = 0;
 let fault = 'none';
+let documentsReadHeld = false;
 const browserNetwork = `${web}-network`;
 let networkCreated = false;
 const faultFile = join(temporary, 'browser-fault');
+const heldFile = join(temporary, 'documents-response-held');
 writeFileSync(faultFile, fault, { mode: 0o600 });
+writeFileSync(heldFile, 'no', { mode: 0o600 });
 const setFault = (value) => {
   fault = value;
   writeFileSync(faultFile, value, { mode: 0o600 });
@@ -119,14 +134,19 @@ const gateway = createServer({}, async (request, response) => {
     const port =
       identity || path.startsWith('/v1')
         ? authorityPort
-        : path.startsWith('/api')
-          ? productPort
-          : webPort;
+        : draftIngress && path === '/api/documents/operations' && request.method === 'POST'
+          ? draftIngress.port
+          : path.startsWith('/api')
+            ? productPort
+            : webPort;
     if (port) {
       if (
         (fault === 'bulk-invitation-before-forward' &&
           path === '/api/people/invitations' &&
           request.method === 'POST') ||
+        (fault === 'documents-lose-edit-before-write' &&
+          request.method === 'PATCH' &&
+          /^\/v1\/documents\/[^/]+$/.test(path)) ||
         (fault === 'structure-before-forward' &&
           path.startsWith('/api/structure/units') &&
           ['POST', 'PATCH', 'DELETE'].includes(request.method))
@@ -142,7 +162,11 @@ const gateway = createServer({}, async (request, response) => {
           port,
           path: request.url,
           method: request.method,
-          headers: { ...request.headers, connection: 'close' },
+          headers: {
+            ...request.headers,
+            connection: 'close',
+            ...(port === draftIngress?.port ? { 'x-forwarded-proto': 'https' } : {}),
+          },
         },
         (incoming) => {
           if (path === '/identity/oauth2/introspect')
@@ -172,6 +196,67 @@ const gateway = createServer({}, async (request, response) => {
             incoming.once('end', () => response.destroy());
             return;
           }
+          if (
+            incoming.statusCode >= 200 &&
+            incoming.statusCode < 300 &&
+            ((request.method === 'PATCH' &&
+              fault === 'documents-lose-edit' &&
+              /^\/v1\/documents\/[^/]+$/.test(path)) ||
+              (request.method === 'DELETE' &&
+                fault === 'documents-lose-batch-cancel' &&
+                /^\/v1\/upload-batches\/[^/]+$/.test(path)) ||
+              (request.method === 'DELETE' &&
+                fault === 'documents-lose-delete' &&
+                /^\/v1\/documents\/[^/]+$/.test(path)) ||
+              (request.method === 'PUT' &&
+                fault === 'documents-lose-grants' &&
+                /^\/v1\/documents\/[^/]+\/permissions$/.test(path)) ||
+              (request.method === 'POST' &&
+                ((['documents-lose-begin', 'documents-crash-begin'].includes(fault) &&
+                  path === '/v1/uploads') ||
+                  (fault === 'documents-lose-complete' &&
+                    /^\/v1\/uploads\/[^/]+\/complete$/.test(path)) ||
+                  (fault === 'documents-lose-restore' &&
+                    /^\/v1\/documents\/[^/]+\/versions\/[^/]+\/restore$/.test(path)) ||
+                  (fault === 'documents-lose-reprocess' &&
+                    /^\/v1\/documents\/[^/]+\/versions\/[^/]+\/reprocess$/.test(path)) ||
+                  (fault === 'documents-lose-logical-restore' &&
+                    /^\/v1\/documents\/[^/]+\/restore$/.test(path)) ||
+                  (fault === 'documents-lose-batch-create' && path === '/v1/upload-batches') ||
+                  (fault === 'documents-lose-batch-close' &&
+                    /^\/v1\/upload-batches\/[^/]+\/close$/.test(path)) ||
+                  (fault === 'documents-lose-batch-item' && path === '/v1/uploads') ||
+                  (fault === 'documents-lose-draft' && path === '/api/documents/operations'))))
+          ) {
+            const crash = fault === 'documents-crash-begin';
+            setFault('none');
+            incoming.resume();
+            incoming.once('end', () => {
+              if (crash) product.kill('SIGKILL');
+              response.destroy();
+            });
+            return;
+          }
+          if (
+            fault === 'documents-held-response' &&
+            path.startsWith('/v1/documents/') &&
+            incoming.statusCode === 200
+          ) {
+            documentsReadHeld = true;
+            const started = Date.now();
+            const timer = setInterval(() => {
+              if (fault !== 'documents-held-response' || Date.now() - started > 5000) {
+                clearInterval(timer);
+                response.writeHead(incoming.statusCode, incoming.headers);
+                incoming.pipe(response);
+              }
+            }, 25);
+            response.once('close', () => {
+              clearInterval(timer);
+              incoming.destroy();
+            });
+            return;
+          }
           response.writeHead(incoming.statusCode ?? 503, incoming.headers);
           incoming.pipe(response);
         },
@@ -196,7 +281,9 @@ const gateway = createServer({}, async (request, response) => {
               ? 'font/woff2'
               : 'text/html',
         'referrer-policy': 'no-referrer',
-        'content-security-policy': csp,
+        'content-security-policy': transferOrigin
+          ? csp.replace("connect-src 'self'", `connect-src 'self' ${transferOrigin}`)
+          : csp,
         'cache-control': 'no-store',
       })
       .end(body);
@@ -321,12 +408,23 @@ dns.lookup = function(host, options, callback) {
   };
   if (
     process.argv.includes('--people-ui') ||
+    documentsMode ||
     process.argv.includes('--modules') ||
     process.argv.includes('--module-cutover') ||
     process.argv.includes('--structured-onboarding')
   ) {
     environment.IDENTITY_SERVICE_CLIENT_ID = 'bff-fixture-service';
     environment.IDENTITY_SERVICE_RESOURCE_URL = `${origin}/identity/services/accounts`;
+  }
+  if (documentsMode) {
+    environment.AUTH_BROWSER_DOCUMENTS = 'true';
+    if (documentsLifecycle) environment.AUTH_BROWSER_DOCUMENTS_LIFECYCLE = 'true';
+    if (documentsProcessing) environment.AUTH_BROWSER_DOCUMENTS_PROCESSING = 'true';
+    if (documentsUpload) {
+      environment.AUTH_BROWSER_DOCUMENTS_UPLOAD = 'true';
+      environment.AUTH_BROWSER_TRANSFER_KEY_FILE = join(temporary, 'key.pem');
+    }
+    environment.DMS_DOCUMENTS_SCOPES = 'dms:documents:read dms:documents:write dms:audit:read';
   }
   stage = 'authority fixture startup';
   authority = fork('apps/dms-api/test/bff-authority-fixture.mjs', [], {
@@ -352,21 +450,35 @@ dns.lookup = function(host, options, callback) {
     });
   });
   authorityPort = fixture.port;
-  function command(action) {
+  if (documentsUpload) {
+    assert.ok(fixture.transferOrigin);
+    transferOrigin = fixture.transferOrigin;
+    environment.DMS_DOCUMENTS_TRANSFER_ORIGIN = transferOrigin;
+  }
+  function command(action, fields = {}, onAssessmentReady) {
     const requestId = randomUUID();
     return new Promise((done, reject) => {
-      const timer = setTimeout(() => {
-        authority.off('message', listener);
-        reject(new Error('Fixture operation deadline'));
-      }, 10000);
+      const timer = setTimeout(
+        () => {
+          authority.off('message', listener);
+          reject(new Error('Fixture operation deadline'));
+        },
+        ['documents-assess', 'documents-processing-setup', 'documents-process'].includes(action)
+          ? 150000
+          : 10000,
+      );
       function listener(message) {
         if (message.requestId !== requestId) return;
+        if (message.assessmentReady && onAssessmentReady) {
+          void onAssessmentReady().catch(reject);
+          return;
+        }
         clearTimeout(timer);
         authority.off('message', listener);
         message.ok ? done(message) : reject(new Error('Fixture operation failed'));
       }
       authority.on('message', listener);
-      authority.send({ action, requestId });
+      authority.send({ ...fields, action, requestId });
     });
   }
   stage = 'machine enrollment';
@@ -407,6 +519,7 @@ dns.lookup = function(host, options, callback) {
   }
   if (
     process.argv.includes('--people-ui') ||
+    documentsMode ||
     process.argv.includes('--modules') ||
     process.argv.includes('--module-cutover') ||
     process.argv.includes('--structured-onboarding')
@@ -421,6 +534,7 @@ dns.lookup = function(host, options, callback) {
   }
   if (
     process.argv.includes('--people-ui') ||
+    documentsMode ||
     process.argv.includes('--modules') ||
     process.argv.includes('--module-cutover')
   ) {
@@ -433,6 +547,7 @@ dns.lookup = function(host, options, callback) {
   const moduleFixture = process.argv.includes('--modules')
     ? await prepareModuleAccess(environment)
     : undefined;
+  if (documentsRelease) await prepareModuleAccess(environment);
   if (process.argv.includes('--module-cutover'))
     cutoverPreparation = await prepareCutoverBrowser(environment, browserNetwork);
   const reservation = httpServer();
@@ -455,6 +570,7 @@ dns.lookup = function(host, options, callback) {
     )
       delete productEnvironment[name];
   async function imageRuntime(kind, image, configuration, port) {
+    stage = `${kind} image container startup`;
     const runtime = {};
     const mounts = new Set();
     for (const [key, raw] of Object.entries(configuration)) {
@@ -588,6 +704,7 @@ dns.lookup = function(host, options, callback) {
         name,
       ]),
     );
+    stage = `${kind} image health readiness`;
     await waitFor(async () => (await fetch(`http://127.0.0.1:${exposed}/health/live`)).ok);
     return exposed;
   }
@@ -681,6 +798,7 @@ dns.lookup = function(host, options, callback) {
       3002,
     );
     const ingress = `${web}-canonical`;
+    stage = 'packaged canonical ingress startup';
     run('docker', [
       'run',
       '--detach',
@@ -709,12 +827,15 @@ dns.lookup = function(host, options, callback) {
       '--mount',
       `type=bind,source=${faultFile},target=/qualification/browser-fault,readonly`,
       '--mount',
+      `type=bind,source=${heldFile},target=/qualification/documents-response-held`,
+      '--mount',
       `type=bind,source=${resolve('scripts/fixtures/customer-browser-ingress.mjs')},target=/ingress.mjs,readonly`,
       process.env.AUTH_BROWSER_API_IMAGE,
       'node',
       '/ingress.mjs',
     ]);
     runtimeContainers.push(ingress);
+    stage = 'packaged identity discovery through canonical ingress';
     await waitFor(async () => {
       const probe = run('docker', [
         'exec',
@@ -918,8 +1039,11 @@ dns.lookup = function(host, options, callback) {
       await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
       return;
     }
-    product.kill('SIGTERM');
-    await once(product, 'exit');
+    if (product.exitCode === null && product.signalCode === null) {
+      const exited = once(product, 'exit');
+      product.kill('SIGTERM');
+      await exited;
+    }
     product = spawn(process.execPath, ['apps/turnstile-api/dist/main.js'], {
       env: productEnvironment,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -930,7 +1054,44 @@ dns.lookup = function(host, options, callback) {
       });
     await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
   }
-  if (process.argv.includes('--module-cutover')) {
+  if (documentsMode) {
+    stage = 'Documents compatibility, private validator and read-only journeys';
+    if (documentsBatches) draftIngress = await documentsDraftIngress(temporary, () => productPort);
+    await testDocuments({
+      page,
+      context,
+      origin,
+      login,
+      fixture,
+      environment,
+      activateFeature: activatePeopleFeature,
+      temporary,
+      productMaintenanceArgs: fullImages ? productMaintenanceArgs : undefined,
+      restartProduct,
+      clearRateLimits: () => command('clear-rate-limits'),
+      setFault,
+      documentReadHeld: () => documentsReadHeld || readFileSync(heldFile, 'utf8') === 'yes',
+      machineScope: (state) => command(state ? 'restore-machine-scope' : 'deny-machine-scope'),
+      ...(documentsUpload ? { uploadCommand: command } : {}),
+      documentsVersions,
+      documentsBatches,
+      documentsLifecycle,
+      documentsProcessing,
+      ...(documentsRelease
+        ? {
+            verifyReleaseRestore: (input) =>
+              verifyDocumentsRestore({
+                ...input,
+                environment,
+                temporary,
+                network: browserNetwork,
+                candidate: productRuntimeArguments,
+                clearRateLimits: () => command('clear-rate-limits'),
+              }),
+          }
+        : {}),
+    });
+  } else if (process.argv.includes('--module-cutover')) {
     stage = 'actual selected module cutover';
     await testModuleCutover({
       page,
@@ -1543,6 +1704,18 @@ dns.lookup = function(host, options, callback) {
       'Production Nginx assets/CSP served the requested browser journeys over the local HTTPS gateway.',
     );
 } catch (error) {
+  if (documentsMode && error instanceof Error)
+    console.error(
+      'Documents failure callsites:',
+      error.stack?.match(
+        /(?:test-documents(?:-upload|-versions|-batches|-lifecycle|-processing)?-browser|documents-release-restore)\.mjs:\d+:\d+/g,
+      ),
+      'name:',
+      error.name,
+      'numeric expected/actual:',
+      typeof error.expected === 'number' ? error.expected : undefined,
+      typeof error.actual === 'number' ? error.actual : undefined,
+    );
   console.error('Introspection status counts:', Object.fromEntries(introspectionStatuses));
   if (process.argv.includes('--people-ui') && error instanceof Error) {
     const callsite = error.stack?.match(/test-people-browser\.mjs:\d+:\d+/)?.[0];
@@ -1550,6 +1723,29 @@ dns.lookup = function(host, options, callback) {
   }
   // Browser exceptions may contain signed or recovery URLs. Do not print raw failures/traces.
   if (page) {
+    if (documentsRelease) {
+      const summary = await page
+        .evaluate(async () => {
+          try {
+            const response = await fetch('/api/auth/session', {
+              headers: { 'x-turnstile-access-contract': '3' },
+            });
+            const value = await response.json();
+            return {
+              session: response.status,
+              code: /^[A-Z_]{1,64}$/.test(value.code ?? '') ? value.code : undefined,
+              entryScripts: document.querySelectorAll('script[type="module"]').length,
+              loadedAssets: performance
+                .getEntriesByType('resource')
+                .filter((item) => new URL(item.name).pathname.startsWith('/assets/')).length,
+            };
+          } catch {
+            return { session: 'unavailable' };
+          }
+        })
+        .catch(() => ({}));
+      console.error('Packaged browser status:', JSON.stringify(summary));
+    }
     const path = new URL(page.url()).pathname;
     const allowed = [
       '/',
@@ -1627,6 +1823,7 @@ dns.lookup = function(host, options, callback) {
   process.exitCode = 1;
 } finally {
   await browser?.close();
+  await draftIngress?.close();
   for (const name of runtimeContainers.reverse())
     spawnSync('docker', ['rm', '--force', name], { stdio: 'ignore' });
   for (const child of [product, authority])

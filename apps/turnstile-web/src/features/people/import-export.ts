@@ -1,4 +1,4 @@
-import type { ImportRowDto } from '@thaarei/turnstile-contracts';
+import type { ImportRowDto } from '@thaarei/turnstile-contracts/runtime';
 export const importReasonLabel = (reason: ImportRowDto['reason']) =>
   reason
     ? {

@@ -8,6 +8,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./documents": {
+      "types": "./dist/documents.d.ts",
+      "import": "./dist/documents.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js"
     }
   },
   "files": [
@@ -24,6 +32,7 @@
   "description": "Shared API contracts for the Turnstile 360 frontend and backend",
   "author": "Thaarei",
   "dependencies": {
+    "@thaarei/dms-contracts": "workspace:*",
     "zod": "4.6.7"
   }
 }

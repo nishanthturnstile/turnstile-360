@@ -1,4 +1,4 @@
-import { invitationEmailSchema, PEOPLE_IMPORT_LIMITS } from '@thaarei/turnstile-contracts';
+import { invitationEmailSchema, PEOPLE_IMPORT_LIMITS } from '@thaarei/turnstile-contracts/runtime';
 import { peopleFailure } from './people-store.service.js';
 
 export type CsvRecipient = {

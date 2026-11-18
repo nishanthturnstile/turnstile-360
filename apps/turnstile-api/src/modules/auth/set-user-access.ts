@@ -4,7 +4,7 @@ import {
   accessAssignmentSchema,
   CONFIGURATION_LIMITS,
   TURNSTILE_PERMISSIONS,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { withProductOperator } from '../../infrastructure/database/product-operator.js';
 import { AccessInvariantError, replaceLegacyAccess } from '../access/access-transactions.js';
 

@@ -10,10 +10,11 @@ from ocr_fixtures import TRUTH, mixed_pdf, printed
 parser = argparse.ArgumentParser()
 parser.add_argument("--output", required=True)
 parser.add_argument("--pdf", action="store_true")
+parser.add_argument("--partial-pdf", action="store_true")
 args = parser.parse_args()
 path = Path(args.output)
-if args.pdf:
-    mixed_pdf(path)
+if args.pdf or args.partial_pdf:
+    mixed_pdf(path, incomplete=args.partial_pdf)
 else:
     with printed(TRUTH["texts"][0]) as image:
         image.save(path, format="PNG")

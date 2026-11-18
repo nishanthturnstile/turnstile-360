@@ -1,4 +1,4 @@
-import { CONFIGURATION_LIMITS, type UserSessionDto } from '@thaarei/turnstile-contracts';
+import { CONFIGURATION_LIMITS, type UserSessionDto } from '@thaarei/turnstile-contracts/runtime';
 import { createMoveValidator } from '../configuration/structure-model.ts';
 import { canManageUnit, company } from './client.ts';
 import type { HierarchyNode } from './structure-hierarchy.ts';

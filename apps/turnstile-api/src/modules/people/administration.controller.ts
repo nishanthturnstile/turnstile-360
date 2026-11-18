@@ -16,7 +16,7 @@ import {
   PEOPLE_FEATURES_HEADER,
   PEOPLE_IMPORT_FEATURE,
   peopleEmptySchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { RequirePermissions } from '../../infrastructure/access-policy.js';
 import { productActor } from '../../infrastructure/configuration-http.js';

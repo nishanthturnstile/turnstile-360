@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "audit": "DV-AUDIT-02",
+  "date": "2026-11-18",
+  "priorEvidence": "documents-release-20261118.json",
+  "sourceDigest": "5ac16e7f621d51c30dec0d4f2a4ad284d18f0bb89ab68b4f23f23f88ea8e320b",
+  "exactCore": {
+    "platform": "linux/amd64",
+    "profileDigest": "70bb0589f38f6a58250933fb52349c0aed37b932543c68bc2e3e87736d8fc9a6",
+    "releaseId": "830175ac656949caa5e440a1198b74871aebea4b6d7279dbf18b9446956ae4c1",
+    "images": [
+      {
+        "role": "turnstile-api",
+        "digest": "d8cb80d0be713c5467c1d148c9273f649b74013a5da99a10ce7b4a16c7386a5e"
+      },
+      {
+        "role": "turnstile-web",
+        "digest": "2a5293748a34e76ce3f591e6995ae41c49ad6e32ef2b271f0f191c0f72dd2601"
+      }
+    ],
+    "archiveDigest": "99913681108b9478bc16cc7db384e899ea0ea016f7d8c00acfa36ae9499c8b15",
+    "dmsImage": "sha256:65e80e095927c0883166c44904fae3db2a0e10da9753b4eb232b58d305409cd4",
+    "verified": [
+      "Signed selected image archive startup, identity, tamper rejection and reuse.",
+      "Actual legacy bundle upgrade, supported sign-in recovery and private first-validator handover.",
+      "Compound ordinary permissions and independent no-READ contribution draft eligibility with a partial company role.",
+      "Disposable PostgreSQL archive restore preserves setup, identities, grants, documents and operation IDs. The recovery marker, v3 rollback fence, receipt retention and pruning pass."
+    ]
+  },
+  "sourceBrowser": {
+    "test:browser:documents:batches": "Batch and upload controls, policy denial and renewal, lost acknowledgements, native assessment, intermediate byte progress and original download pass.",
+    "test:browser:documents:lifecycle": "Lifecycle, application sharing, no-READ contributor and separate owner verification pass.",
+    "test:browser:documents:processing": "The open Uploads view advances from queued and not indexed to succeeded and ready. Native processing, verified content, OCR and search pass."
+  },
+  "workspace": {
+    "pnpm check": "pass",
+    "pnpm build": "pass",
+    "pnpm test": "pass",
+    "pnpm test:integration": "pass with pinned native OCR enabled"
+  },
+  "customerTargetAccepted": false,
+  "separateQualification": [
+    "Customer-specific images and coordinated database/object recovery",
+    "Optional structured processing where configured"
+  ]
+}

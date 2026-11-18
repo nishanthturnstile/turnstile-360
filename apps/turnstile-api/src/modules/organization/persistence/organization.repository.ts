@@ -8,7 +8,7 @@ import {
   configurationSnapshotSchema,
   type OrganizationUnitDto,
   type WorkspaceStatusDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { PoolClient } from 'pg';
 import { AccessContextChangedException } from '../../../infrastructure/access-context-exception.js';
 import { authError } from '../../../infrastructure/access-error.js';

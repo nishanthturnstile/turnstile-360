@@ -5,7 +5,7 @@ import {
   normalizeConfigurationName,
   organizationPatchSchema,
   SUPPORTED_TIME_ZONES,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ButtonLink } from '@/components/button-link';

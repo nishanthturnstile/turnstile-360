@@ -1,6 +1,6 @@
 import { ArrowRight01Icon, Shield01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import type { MemberDto, UserSessionDto } from '@thaarei/turnstile-contracts';
+import type { MemberDto, UserSessionDto } from '@thaarei/turnstile-contracts/runtime';
 import { AppLink } from '@/components/navigation';
 import { Notice } from '@/components/notice';
 import { Badge } from '@/components/ui/badge';

@@ -5,7 +5,7 @@ import {
   type ResolvedRoleAssignmentDto,
   type RoleAssignmentRequestDto,
   resolvedRoleAssignmentsSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { PoolClient } from 'pg';
 import {
   type AccessGrant,

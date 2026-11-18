@@ -6,7 +6,7 @@ import {
   configurationActorSchema,
   configurationIdSchema,
   configurationQuerySchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ConfigurationActor } from './configuration-context.js';
 import { ConfigurationException } from './configuration-exception.js';

@@ -1,7 +1,7 @@
 // Trusted source ownership, never supplied by staff or release request free text.
 export const foundationFeatures = Object.freeze({
   'turnstile-api': [],
-  'turnstile-web': ['auth', 'configuration', 'onboarding', 'people', 'settings'],
+  'turnstile-web': ['auth', 'configuration', 'onboarding', 'people', 'settings', 'documents'],
 });
 
 import { ACTIVE_MODULE_REGISTRY } from '../packages/turnstile-contracts/src/module-registry.ts';

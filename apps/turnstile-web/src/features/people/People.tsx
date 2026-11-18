@@ -13,7 +13,7 @@ import {
   type RoleDefinitionDto,
   roleListResponseSchema,
   type UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { ContentLoading } from '@/components/content-loading';

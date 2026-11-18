@@ -9,7 +9,7 @@ import {
   permissionCatalogSchema,
   type RoleAssignmentRequestDto,
   type UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { useEffect, useRef, useState } from 'react';
 import { Notice } from '@/components/notice';
 import { Button } from '@/components/ui/button';

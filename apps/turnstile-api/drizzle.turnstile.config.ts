@@ -13,6 +13,7 @@ export default defineConfig({
     './src/modules/people/persistence/invitation.schema.ts',
     './src/modules/people/persistence/people.schema.ts',
     './src/modules/people/persistence/import.schema.ts',
+    './src/modules/documents/documents-intent.schema.ts',
   ],
   out: './database/migrations',
   migrations: { schema: 'turnstile_migrations' },

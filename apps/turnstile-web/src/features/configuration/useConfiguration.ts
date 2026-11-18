@@ -1,4 +1,4 @@
-import type { ConfigurationSnapshotDto } from '@thaarei/turnstile-contracts';
+import type { ConfigurationSnapshotDto } from '@thaarei/turnstile-contracts/runtime';
 import { useEffect, useRef, useState } from 'react';
 import { loadConfiguration } from './api';
 export function useConfiguration(reloadKey?: string) {

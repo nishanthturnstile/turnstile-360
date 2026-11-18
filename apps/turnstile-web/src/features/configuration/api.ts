@@ -10,7 +10,7 @@ import {
   type UnitRename,
   unitCreateResponseSchema,
   workspaceStatusSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { ProductError, productRequest } from '../auth/product';
 
 let statusRequest: { userId: string; promise: ReturnType<typeof fetchStatus> } | undefined;

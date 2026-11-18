@@ -274,6 +274,55 @@
       "when": 1794646517747,
       "tag": "0038_people_import_tenant",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1794965848131,
+      "tag": "0039_documents_access_barrier",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1794966022264,
+      "tag": "0040_documents_validator_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1794974568425,
+      "tag": "0041_documents_upload_intent",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1794976430701,
+      "tag": "0042_documents_version_intents",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1794979149525,
+      "tag": "0043_documents_batch_intents",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1794981906461,
+      "tag": "0044_documents_lifecycle_contribution",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1794984770738,
+      "tag": "0045_documents_processing_intent",
+      "breakpoints": true
     }
   ]
 }

@@ -31,6 +31,12 @@ classification/publication and independently provisioned public release trust.
 The [assignment runbook](deployment/thaarei_ecosystem_guide.md#assignment) covers MOD-I03 per-product
 selection, dependency confirmation, desired-state approval and current-state recovery.
 
+Turnstile Documents validation workspace: [implementation-ready specification and endpoint matrix](turnstile/documents/documents_validation_specification.md)
+and [implementation plan](turnstile/documents/documents_validation_implementation_plan.md) —
+dedicated Documents navigation, complete consumer API integration and staged real-path
+validation. The coverage register records the locally qualified increments and pending
+release evidence.
+
 Discovery and design proposals remain beside their feature's specification and plans.
 They preserve rationale and earlier decisions; the accepted specification, architecture
 and current progress take precedence over historical descriptions.
@@ -103,3 +109,5 @@ DMS deployment approval/setup and combined customer profiles: [deployment contro
 
 [Local module qualification](turnstile/modules/module_installation_qualification.md) records
 historical evidence separately from the two current deployment guides.
+
+- [Documents workspace and validator runbook](runbooks/documents-validation.md)

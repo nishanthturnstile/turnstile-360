@@ -11,7 +11,7 @@ import {
   scopedUnitDetailSchema,
   scopedUnitsResponseSchema,
   type UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Notice } from '@/components/notice';
 import { Badge } from '@/components/ui/badge';

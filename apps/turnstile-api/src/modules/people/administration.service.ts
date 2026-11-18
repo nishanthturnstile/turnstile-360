@@ -13,7 +13,7 @@ import {
   permissionCatalogSchema,
   roleListQuerySchema,
   roleListResponseSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { z } from 'zod';
 import type { ConfigurationActor } from '../../infrastructure/configuration-context.js';
 import { IdentityClientService } from '../../integrations/identity/identity-client.service.js';

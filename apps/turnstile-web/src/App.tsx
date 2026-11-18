@@ -7,7 +7,7 @@ import {
   moduleCapabilitiesSchema,
   type UserSessionDto,
   type WorkspaceStatusDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { lazy, type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
@@ -41,6 +41,7 @@ import {
 } from './features/auth/product';
 import { loadWorkspaceStatus } from './features/configuration/api';
 import { settingsPaths, setupPaths } from './features/configuration/routes';
+import { Documents, isDocumentsPath } from './features/documents/Documents';
 import { OnboardingJourney } from './features/onboarding/OnboardingJourney';
 import { canReuseUsersContext, type UsersContextStamp } from './features/people/navigation-state';
 import { People, peoplePaths } from './features/people/People';
@@ -186,6 +187,7 @@ export function Workspace() {
   }, [routePath, navigate]);
   const knownPath =
     path === '/' ||
+    isDocumentsPath(path) ||
     selectedModuleRoutes.some((module) => module.path === path) ||
     peoplePaths.includes(path) ||
     path === '/auth-unavailable' ||
@@ -651,7 +653,10 @@ export function Workspace() {
     <WorkspaceLayout
       structure={state === 'ready' && path === '/structure'}
       pending={state === 'ready' && routePath !== path}
-      nestedNavigation={routePath.startsWith('/people/') && path.startsWith('/people/')}
+      nestedNavigation={
+        (routePath.startsWith('/people/') && path.startsWith('/people/')) ||
+        (isDocumentsPath(routePath) && isDocumentsPath(path))
+      }
       header={header}
       destinations={
         state === 'ready'
@@ -690,6 +695,15 @@ export function Workspace() {
               onCheck={refreshWorkspace}
             />
           </Suspense>
+        ) : isDocumentsPath(path) ? (
+          <Documents
+            key={`${session.user.id}:${session.access.fingerprint}`}
+            session={session}
+            path={path}
+            active={state === 'ready'}
+            onCheck={refreshWorkspace}
+            verification={verification}
+          />
         ) : peoplePaths.includes(path) ? (
           <People
             key={session.user.id}

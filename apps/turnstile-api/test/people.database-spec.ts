@@ -1901,4 +1901,111 @@ describe('People administration HTTP with real PostgreSQL and linked authority p
     expect(legacy.safeParse(newPage.json()).success).toBe(false);
     expect((await get(`members/${members.operator}`)).statusCode).toBe(200);
   });
+  it('DV-I02 serializes legacy reads/writes with v3 activation and preserves retained command identities', async () => {
+    const key = randomUUID();
+    const original = await mutate(
+      'roles',
+      await createCommand('Retained before v3'),
+      null,
+      'operator',
+      key,
+    );
+    expect(original.statusCode).toBe(201);
+    const retained = original.json().current;
+    const legacyCatalog = await get('catalog');
+    expect(permissionCatalogSchema.safeParse(legacyCatalog.json()).success).toBe(true);
+    const holder = await owner.connect();
+    try {
+      await holder.query('BEGIN');
+      await holder.query("SELECT set_config('app.tenant_id',$1,true)", [tenant]);
+      await holder.query('SELECT turnstile.lock_access_context($1::uuid)', [tenant]);
+      const patch = {
+        operation: 'role.patch',
+        change: 'permissions',
+        ...(await versions()),
+        id: retained.id,
+        expectedVersion: retained.version,
+        permissions: ['turnstile:access'],
+      };
+      let settled = false;
+      const racing = mutate(
+        `roles/${retained.id}`,
+        patch,
+        null,
+        'operator',
+        randomUUID(),
+        'PATCH',
+      ).then((result) => {
+        settled = true;
+        return result;
+      });
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      expect(settled).toBe(false);
+      await holder.query(
+        'UPDATE turnstile.access_context SET revision=revision+1,documents_contract_required=true WHERE tenant_id=$1',
+        [tenant],
+      );
+      await holder.query('COMMIT');
+      expect((await racing).statusCode).toBe(401);
+    } finally {
+      await holder.query('ROLLBACK').catch(() => {});
+      holder.release();
+    }
+    const newRole = randomUUID();
+    await owned(async (db) => {
+      await db.query(
+        "INSERT INTO turnstile.access_role(tenant_id,id,name,name_key) VALUES($1,$2,'Documents fixture','documents fixture')",
+        [tenant, newRole],
+      );
+      await db.query(
+        "INSERT INTO turnstile.access_role_permission(tenant_id,role_id,permission) VALUES($1,$2,'turnstile:access'),($1,$2,'turnstile:documents:read')",
+        [tenant, newRole],
+      );
+    });
+    for (const path of [
+      'catalog',
+      'members',
+      'roles',
+      'eligible-roles',
+      'invitations',
+      'imports',
+      `commands/${key}`,
+    ]) {
+      const denied = await get(path);
+      expect(denied.statusCode).toBe(401);
+      expect(denied.json().code).toBe('LOGIN_REQUIRED');
+    }
+    const headers = { 'x-test-user': uid(), 'x-turnstile-access-contract': '3' };
+    const current = await app.inject({ url: '/api/people/catalog', headers });
+    expect(current.statusCode).toBe(200);
+    expect(current.json().catalogVersion).toBe(3);
+    expect(
+      current.json().permissions.some((p: { id: string }) => p.id === 'turnstile:documents:read'),
+    ).toBe(true);
+    const role = await app.inject({ url: `/api/people/roles/${newRole}`, headers });
+    expect(role.statusCode).toBe(200);
+    expect(role.json().permissions).toContain('turnstile:documents:read');
+    const receipt = await app.inject({ url: `/api/people/commands/${key}`, headers });
+    expect(receipt.statusCode).toBe(200);
+    expect(receipt.json().current).toEqual(retained);
+    await expect(
+      owned((db) =>
+        db.query(
+          'UPDATE turnstile.access_context SET documents_contract_required=false WHERE tenant_id=$1',
+          [tenant],
+        ),
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+    expect(
+      await owned(
+        async (db) =>
+          (
+            await db.query(
+              'SELECT release_version=1 AS old_api_ready FROM turnstile.access_context WHERE tenant_id=$1',
+              [tenant],
+            )
+          ).rows[0].old_api_ready,
+      ),
+    ).toBe(false);
+  });
 });

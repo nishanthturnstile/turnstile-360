@@ -3,5 +3,11 @@ set -eu
 for upstream in "${TURNSTILE_API_UPSTREAM:?}" "${TURNSTILE_WEB_UPSTREAM:?}" "${DMS_API_UPSTREAM:?}"; do
   case "$upstream" in ''|*[!a-zA-Z0-9.-]*) exit 1;; esac
 done
-envsubst '${TURNSTILE_API_UPSTREAM} ${TURNSTILE_WEB_UPSTREAM} ${DMS_API_UPSTREAM}' < /opt/customer/nginx.conf.template > /tmp/nginx.conf
+DMS_DOCUMENTS_TRANSFER_ORIGIN=${DMS_DOCUMENTS_TRANSFER_ORIGIN:-}
+if [ -n "$DMS_DOCUMENTS_TRANSFER_ORIGIN" ]; then
+  case "$DMS_DOCUMENTS_TRANSFER_ORIGIN" in *[!a-z0-9:./-]*) exit 1;; esac
+  printf '%s\n' "$DMS_DOCUMENTS_TRANSFER_ORIGIN" | grep -Eq '^https://[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:[1-9][0-9]{0,4})?$' || exit 1
+fi
+export DMS_DOCUMENTS_TRANSFER_ORIGIN
+envsubst '${TURNSTILE_API_UPSTREAM} ${TURNSTILE_WEB_UPSTREAM} ${DMS_API_UPSTREAM} ${DMS_DOCUMENTS_TRANSFER_ORIGIN}' < /opt/customer/nginx.conf.template > /tmp/nginx.conf
 exec nginx -c /tmp/nginx.conf -g 'daemon off;'

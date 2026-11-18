@@ -1,5 +1,5 @@
 import { Global, Injectable, Module } from '@nestjs/common';
-import { type ResolvedRoleAssignmentDto } from '@thaarei/turnstile-contracts';
+import { type ResolvedRoleAssignmentDto } from '@thaarei/turnstile-contracts/runtime';
 import type { PoolClient } from 'pg';
 import { descendant, impliedPermissions } from '../access/access-evaluator.js';
 import {

@@ -7,7 +7,7 @@ import {
   peopleAuditQuerySchema,
   peopleAuditResponseSchema,
   peopleIdSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { z } from 'zod';
 import type { ConfigurationActor } from '../../infrastructure/configuration-context.js';
 import { covers, hasShell, readAccess } from '../access/access-evaluator.js';

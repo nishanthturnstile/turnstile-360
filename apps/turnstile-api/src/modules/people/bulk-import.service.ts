@@ -15,7 +15,7 @@ import {
   type ResolvedRoleAssignmentDto,
   type RoleAssignmentRequestDto,
   resolvedRoleAssignmentsSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { ConfigurationActor } from '../../infrastructure/configuration-context.js';
 import { featureWritesOpen } from '../access/release-state.js';
 import { AdministrationService, peopleParse } from './administration.service.js';

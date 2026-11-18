@@ -1,5 +1,5 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import type { PeoplePermission, UserAccessContextDto } from '@thaarei/turnstile-contracts';
+import type { PeoplePermission, UserAccessContextDto } from '@thaarei/turnstile-contracts/runtime';
 import type { Session } from 'fastify';
 import type { EffectiveAccess } from '../../access/access-evaluator.js';
 

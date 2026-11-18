@@ -13,7 +13,7 @@ import {
   type RestrictedInvitationContextDto,
   recipientAccountSetupContextSchema,
   recipientAccountSetupResultSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import Fastify, { type FastifyRequest } from 'fastify';
 import { Pool, type PoolClient } from 'pg';
 import { createApplication } from '../src/bootstrap.js';

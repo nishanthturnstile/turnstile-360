@@ -3,7 +3,7 @@ import {
   organizationResponseSchema,
   permissionCatalogSchema,
   type UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { useMemo, useRef, useState } from 'react';
 import { ButtonLink } from '@/components/button-link';
 import { Notice } from '@/components/notice';

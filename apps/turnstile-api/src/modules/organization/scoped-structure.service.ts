@@ -6,7 +6,7 @@ import {
   peopleListQuerySchema,
   scopedUnitDetailSchema,
   scopedUnitsResponseSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { z } from 'zod';
 import type { ConfigurationActor } from '../../infrastructure/configuration-context.js';
 import { StructureException } from '../../infrastructure/structure-http.js';

@@ -1,4 +1,4 @@
-import type { BusinessModuleId } from '@thaarei/turnstile-contracts';
+import type { BusinessModuleId } from '@thaarei/turnstile-contracts/runtime';
 import type { ComponentType, LazyExoticComponent } from 'react';
 import type { ModulePageProps } from './components/module-entry';
 export type SelectedModuleRoute = {

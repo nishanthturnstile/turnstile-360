@@ -1,4 +1,4 @@
-import type { PeopleAuditEventDto } from '@thaarei/turnstile-contracts';
+import type { PeopleAuditEventDto } from '@thaarei/turnstile-contracts/runtime';
 
 /** Quote all fields and neutralize spreadsheet formulas, including whitespace prefixes. */
 export function auditCsv(events: PeopleAuditEventDto[]) {

@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import type { UserSessionDto } from '@thaarei/turnstile-contracts';
+import type { UserSessionDto } from '@thaarei/turnstile-contracts/runtime';
 import {
   createContext,
   type ReactNode,
