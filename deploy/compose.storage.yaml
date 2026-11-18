@@ -1,0 +1,47 @@
+name: thaarei-dms-storage
+
+# Optional secured I04 boundary. Dokploy sends the transfer hostname only to dms-transfer.
+# Private S3 is never an ingress target. No installed volume is adopted automatically.
+services:
+  storage:
+    build:
+      context: ..
+      dockerfile: deploy/storage/Dockerfile
+    secrets:
+      - storage-identities
+    volumes:
+      - storage-data:/data
+    networks:
+      - storage
+    healthcheck:
+      test:
+        [
+          CMD-SHELL,
+          "wget -S -O /dev/null http://127.0.0.1:8333/dms-auth-required-probe/object 2>&1 | grep -Eq 'HTTP/1.1 403' ",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  dms-transfer:
+    image: thaarei-dms-storage:local
+    build:
+      context: ..
+      dockerfile: apps/dms-api/Dockerfile
+    command: [node, dist/main.transfer.js]
+    env_file: [{ path: ../.env.storage-transfer, format: raw }]
+    depends_on:
+      storage:
+        condition: service_healthy
+    networks:
+      - storage
+      - ingress
+
+networks:
+  storage:
+    internal: true
+  ingress: {}
+volumes:
+  storage-data: {}
+secrets:
+  storage-identities:
+    file: ../.env.storage-identities.json

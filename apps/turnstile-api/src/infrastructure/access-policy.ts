@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import type { PeoplePermission } from '@thaarei/turnstile-contracts';
+import type { PeoplePermission } from '@thaarei/turnstile-contracts/runtime';
 
 export const PUBLIC_ENDPOINT = Symbol('publicEndpoint');
 export const REQUIRED_PERMISSIONS = Symbol('requiredPermissions');

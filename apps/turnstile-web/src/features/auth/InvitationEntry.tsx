@@ -7,7 +7,7 @@ import {
   recipientFlowResultSchema,
   recipientNavigationSchema,
   restrictedInvitationContextSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { type FormEvent, useEffect, useState } from 'react';
 import { ButtonLink } from '@/components/button-link';
 import { LoadingStatus } from '@/components/content-loading';

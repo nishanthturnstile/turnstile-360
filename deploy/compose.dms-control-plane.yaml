@@ -1,0 +1,66 @@
+x-public-control: &id001
+  CONTROL_PLANE_INSTALLATION_ID: ${CONTROL_PLANE_INSTALLATION_ID:-}
+  CONTROL_PLANE_PRODUCT_ID: ${CONTROL_PLANE_PRODUCT_ID:-}
+  CONTROL_PLANE_ORIGIN: ${CONTROL_PLANE_ORIGIN:?Canonical central HTTPS origin required}
+  CONTROL_PLANE_VERIFICATION_KEYS_FILE: /run/deployment-trust.json
+  CONTROL_PLANE_RECOVERY_MARKER_FILE: /run/deployment-marker
+  NODE_EXTRA_CA_CERTS: /run/customer-ca.pem
+services:
+  dms-api:
+    environment: *id001
+    volumes:
+      - ${CONTROL_PLANE_TRUST_HOST_FILE:?Protected public trust file required}:/run/deployment-trust.json:ro
+      - ${CONTROL_PLANE_RECOVERY_HOST_FILE:?Independent host marker required}:/run/deployment-marker:ro
+      - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+    networks:
+      - default
+      - storage
+      - work
+      - ingress
+      - authority-egress
+    image: thaarei-dms-api:tcp-i05
+    build:
+      context: ..
+      dockerfile: apps/dms-api/Dockerfile
+      args:
+        DMS_RELEASE: 0.20.0-tcp-i05
+  coordinator:
+    environment:
+      CONTROL_PLANE_INSTALLATION_ID: ${CONTROL_PLANE_INSTALLATION_ID:-}
+      CONTROL_PLANE_PRODUCT_ID: ${CONTROL_PLANE_PRODUCT_ID:-}
+      CONTROL_PLANE_ORIGIN: ${CONTROL_PLANE_ORIGIN:?Canonical central HTTPS origin
+        required}
+      CONTROL_PLANE_VERIFICATION_KEYS_FILE: /run/deployment-trust.json
+      CONTROL_PLANE_RECOVERY_MARKER_FILE: /run/deployment-marker
+      CONTROL_PLANE_MACHINE_SECRET_FILE: /run/deployment-private/product.json
+      NODE_EXTRA_CA_CERTS: /run/customer-ca.pem
+    volumes:
+      - ${CONTROL_PLANE_PRIVATE_HOST_DIRECTORY:?Private setup credential directory required}:/run/deployment-private:ro
+      - ${CONTROL_PLANE_TRUST_HOST_FILE:?Protected public trust file required}:/run/deployment-trust.json:ro
+      - ${CONTROL_PLANE_RECOVERY_HOST_FILE:?Independent host marker required}:/run/deployment-marker:ro
+      - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+    image: thaarei-dms-api:tcp-i05
+    build:
+      context: ..
+      dockerfile: apps/dms-api/Dockerfile
+      args:
+        DMS_RELEASE: 0.20.0-tcp-i05
+  dms-maintenance:
+    environment:
+      CONTROL_PLANE_INSTALLATION_ID: ${CONTROL_PLANE_INSTALLATION_ID:-}
+      CONTROL_PLANE_PRODUCT_ID: ${CONTROL_PLANE_PRODUCT_ID:-}
+      CONTROL_PLANE_ORIGIN: ${CONTROL_PLANE_ORIGIN:?Canonical central HTTPS origin
+        required}
+      CONTROL_PLANE_VERIFICATION_KEYS_FILE: /run/deployment-trust.json
+      CONTROL_PLANE_RECOVERY_MARKER_FILE: /run/deployment-marker
+      CONTROL_PLANE_MACHINE_SECRET_FILE: /run/deployment-private/product.json
+      NODE_EXTRA_CA_CERTS: /run/customer-ca.pem
+    volumes:
+      - ${CONTROL_PLANE_PRIVATE_HOST_DIRECTORY:?Private setup credential directory required}:/run/deployment-private
+      - ${CONTROL_PLANE_TRUST_HOST_FILE:?Protected public trust file required}:/run/deployment-trust.json:ro
+      - ${CONTROL_PLANE_RECOVERY_HOST_FILE:?Independent host marker required}:/run/deployment-marker:ro
+      - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+    env_file:
+      - path: ../.env.coordinator
+        format: raw
+    image: thaarei-dms-api:tcp-i05

@@ -1,6 +1,13 @@
 import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import type { UserSessionDto, WorkspaceStatusDto } from '@thaarei/turnstile-contracts';
+import {
+  type DeploymentStatusDto,
+  deploymentStatusSchema,
+  type ModuleCapabilitiesDto,
+  moduleCapabilitiesSchema,
+  type UserSessionDto,
+  type WorkspaceStatusDto,
+} from '@thaarei/turnstile-contracts/runtime';
 import { lazy, type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
@@ -25,13 +32,22 @@ import { cn } from '@/lib/utils';
 import { ForgotPassword, ResetPassword, SignIn } from './features/auth/AuthForms';
 import { beginSignIn, captureResetToken, identity } from './features/auth/client';
 import { InvitationEntry } from './features/auth/InvitationEntry';
-import { endSession, loadCapabilities, loadSession, ProductError } from './features/auth/product';
+import {
+  endSession,
+  loadCapabilities,
+  loadSession,
+  ProductError,
+  productRequest,
+} from './features/auth/product';
 import { loadWorkspaceStatus } from './features/configuration/api';
 import { settingsPaths, setupPaths } from './features/configuration/routes';
+import { Documents, isDocumentsPath } from './features/documents/Documents';
 import { OnboardingJourney } from './features/onboarding/OnboardingJourney';
+import { canReuseUsersContext, type UsersContextStamp } from './features/people/navigation-state';
 import { People, peoplePaths } from './features/people/People';
 import { LegacyUnitPrompt } from './features/settings/LegacyUnitPrompt';
 import { Settings } from './features/settings/Settings';
+import { selectedModuleRoutes } from './module-composition';
 
 const DesignSystem = import.meta.env.DEV
   ? lazy(() => import('./design-system/DesignSystem'))
@@ -156,7 +172,10 @@ export function Workspace() {
   const checks = useRef(0);
   const identityId = useRef<string | undefined>(undefined);
   const [checking, setChecking] = useState(false);
+  const [verification, setVerification] = useState(0);
   const [session, setSession] = useState<UserSessionDto>();
+  const [modules, setModules] = useState<ModuleCapabilitiesDto>();
+  const [deployment, setDeployment] = useState<DeploymentStatusDto>();
   const [workspace, setWorkspace] = useState<WorkspaceStatusDto>();
   const { pathname: routePath } = useLocation();
   const [path, setPath] = useState(routePath);
@@ -168,13 +187,22 @@ export function Workspace() {
   }, [routePath, navigate]);
   const knownPath =
     path === '/' ||
+    isDocumentsPath(path) ||
+    selectedModuleRoutes.some((module) => module.path === path) ||
     peoplePaths.includes(path) ||
     path === '/auth-unavailable' ||
     path === '/waiting-for-setup' ||
     setupPaths.some((value) => value === path) ||
     settingsPaths.some((value) => value === path);
   const [state, setState] = useState<
-    'loading' | 'ready' | 'expired' | 'denied' | 'unavailable' | 'setup-unavailable' | 'signed-out'
+    | 'activation'
+    | 'loading'
+    | 'ready'
+    | 'expired'
+    | 'denied'
+    | 'unavailable'
+    | 'setup-unavailable'
+    | 'signed-out'
   >('loading');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -182,6 +210,13 @@ export function Workspace() {
   const [connection, setConnection] = useState('');
   const [logout, setLogout] = useState<{ csrf: string; retryUntil: number }>();
   const freshCheck = useRef<Promise<boolean>>(undefined);
+  const verifiedContext = useRef<
+    | (UsersContextStamp & {
+        workspace: WorkspaceStatusDto;
+        modules: ModuleCapabilitiesDto | undefined;
+      })
+    | undefined
+  >(undefined);
   const check = useCallback(
     (fresh = false): Promise<boolean> => {
       // Focus/navigation joins a pending post-mutation check instead of superseding it.
@@ -196,23 +231,81 @@ export function Workspace() {
           if (current !== generation.current || checkId !== checks.current) return false;
           const subjectChanged = !!identityId.current && identityId.current !== value.user.id;
           if (subjectChanged) {
+            verifiedContext.current = undefined;
+            setModules(undefined);
             setWorkspace(undefined);
             setState('loading');
           }
           identityId.current = value.user.id;
           if (!fresh || subjectChanged) setSession(value);
+          const activation = await productRequest('/api/deployment/status', {
+            schema: deploymentStatusSchema,
+          });
+          if (current !== generation.current || checkId !== checks.current) return false;
+          setDeployment(activation);
+          if (activation.access === 'closed') {
+            verifiedContext.current = undefined;
+            setSession(value);
+            setModules(undefined);
+            setState('activation');
+            return false;
+          }
+          const previous = verifiedContext.current;
+          if (
+            !fresh &&
+            previous &&
+            canReuseUsersContext(previous, requestedPath, value, activation, Date.now())
+          ) {
+            setSession(value);
+            setWorkspace(previous.workspace);
+            setModules(previous.modules);
+            setPath(requestedPath);
+            setState('ready');
+            setVerification(checkId);
+            // Do not extend the comprehensive-check expiry on each tab switch.
+            verifiedContext.current = { ...previous, path: requestedPath };
+            return true;
+          }
           const status = await loadWorkspaceStatus(value.user.id);
           if (current !== generation.current || checkId !== checks.current) return false;
           setSession(value);
           setWorkspace(status);
+          let capabilities: ModuleCapabilitiesDto | undefined;
+          if (status.status === 'complete' && selectedModuleRoutes.length) {
+            try {
+              capabilities = await productRequest('/api/modules', {
+                schema: moduleCapabilitiesSchema,
+              });
+            } catch (error) {
+              if (error instanceof ProductError && error.status === 401) throw error;
+            }
+          }
+          if (current !== generation.current || checkId !== checks.current) return false;
+          setModules(capabilities);
           // Navigation may have joined this fresh check while it was draining a prior read.
-          setPath(fresh ? window.location.pathname : requestedPath);
+          const committedPath = fresh ? window.location.pathname : requestedPath;
+          verifiedContext.current = {
+            path: committedPath,
+            userId: value.user.id,
+            fingerprint: value.access.fingerprint,
+            checkedAt: Date.now(),
+            complete:
+              status.status === 'complete' &&
+              (!selectedModuleRoutes.length || capabilities !== undefined),
+            deployment: activation,
+            workspace: status,
+            modules: capabilities,
+          };
+          setPath(committedPath);
           setState('ready');
+          setVerification(checkId);
           if (window.location.pathname === '/auth-unavailable')
             void navigate('/', { replace: true });
           return true;
         } catch (error) {
           if (current !== generation.current || checkId !== checks.current) return false;
+          verifiedContext.current = undefined;
+          setModules(undefined);
           if (error instanceof ProductError && error.status === 401) {
             // Keep the last subject's mounted draft owners hidden during in-page recovery.
             setState('expired');
@@ -288,6 +381,7 @@ export function Workspace() {
     setMessage('');
     const retryUntil = logout?.retryUntil ?? Date.now() + 300000;
     setSession(undefined);
+    setModules(undefined);
     setLogout({ csrf, retryUntil });
     try {
       const result = await endSession(csrf);
@@ -321,9 +415,13 @@ export function Workspace() {
     setBusyAction('connection');
     setConnection('');
     try {
-      await loadCapabilities();
+      const capabilities = await loadCapabilities();
       if (current !== generation.current) return;
-      setConnection('Connected. Document features will appear here when available.');
+      setConnection(
+        capabilities.deploymentAccess && capabilities.deploymentAccess !== 'full'
+          ? 'The document service is restricted. Its administrator must restore DMS approval independently.'
+          : 'Connected. Document features will appear here when available.',
+      );
     } catch (error) {
       if (current !== generation.current) return;
       if (error instanceof ProductError && error.status === 401) {
@@ -423,7 +521,11 @@ export function Workspace() {
       <AuthLayout>
         <AccountState
           kind={
-            state === 'ready' ? 'expired' : state === 'setup-unavailable' ? 'unavailable' : state
+            state === 'ready'
+              ? 'expired'
+              : state === 'setup-unavailable' || state === 'activation'
+                ? 'unavailable'
+                : state
           }
           retry={() => void check()}
           pending={checking}
@@ -449,6 +551,24 @@ export function Workspace() {
       </div>
     </header>
   );
+  if (state === 'activation')
+    return (
+      <EntryLayout header={header}>
+        <EntryContent>
+          <h1 className="page-title">Installation activation required</h1>
+          <p className="intro">
+            This installation is{' '}
+            {deployment?.state === 'unavailable'
+              ? 'temporarily unavailable'
+              : 'waiting for approval or recovery'}
+            . Contact your installation administrator. Signing in does not approve the installation.
+          </p>
+          <Button disabled={checking} onClick={() => void check()}>
+            {checking ? 'Checking…' : 'Check activation'}
+          </Button>
+        </EntryContent>
+      </EntryLayout>
+    );
   const unavailable =
     state === 'expired' || state === 'denied' ? (
       <div className="flex flex-col gap-5">
@@ -472,6 +592,7 @@ export function Workspace() {
     ) : state === 'unavailable' ? (
       <AccountState kind="unavailable" retry={() => void check()} pending={checking} />
     ) : null;
+  const ModulePage = selectedModuleRoutes.find((module) => module.path === path)?.Component;
   const notFound = (
     <div className="flex flex-col gap-5">
       <h1 className="page-title">Page not found</h1>
@@ -530,11 +651,23 @@ export function Workspace() {
     );
   return (
     <WorkspaceLayout
+      structure={state === 'ready' && path === '/structure'}
       pending={state === 'ready' && routePath !== path}
+      nestedNavigation={
+        (routePath.startsWith('/people/') && path.startsWith('/people/')) ||
+        (isDocumentsPath(routePath) && isDocumentsPath(path))
+      }
       header={header}
       destinations={
         state === 'ready'
-          ? workspaceDestinations(routePath, workspace.canManageConfiguration, session)
+          ? workspaceDestinations(
+              routePath,
+              workspace.canManageConfiguration,
+              session,
+              modules?.modules.filter((module) =>
+                selectedModuleRoutes.some((route) => route.id === module.id),
+              ),
+            )
           : []
       }
       settings={
@@ -544,12 +677,33 @@ export function Workspace() {
         settingsPaths.some((value) => value === path)
       }
     >
+      {deployment?.access === 'existing-reads' && (
+        <Notice message="Installation restricted: existing authorized reads remain available. Changes require renewed approval." />
+      )}
       {unavailable}
       <div className="workspace-view" hidden={state !== 'ready'} inert={state !== 'ready'}>
         {!knownPath ? (
           notFound
         ) : setupPaths.some((value) => value === path) || path === '/waiting-for-setup' ? (
           <ContentLoading label="Opening workspace…" />
+        ) : ModulePage ? (
+          <Suspense fallback={<ContentLoading label="Opening module…" />}>
+            <ModulePage
+              key={`${session.user.id}:${path}`}
+              session={session}
+              capabilities={modules}
+              onCheck={refreshWorkspace}
+            />
+          </Suspense>
+        ) : isDocumentsPath(path) ? (
+          <Documents
+            key={`${session.user.id}:${session.access.fingerprint}`}
+            session={session}
+            path={path}
+            active={state === 'ready'}
+            onCheck={refreshWorkspace}
+            verification={verification}
+          />
         ) : peoplePaths.includes(path) ? (
           <People
             key={session.user.id}
@@ -558,6 +712,7 @@ export function Workspace() {
             requestedPath={routePath}
             onCheck={refreshWorkspace}
             active={state === 'ready'}
+            verification={verification}
           />
         ) : settingsPaths.some((value) => value === path) ? (
           workspace.canManageConfiguration ? (
@@ -590,17 +745,36 @@ export function Workspace() {
             <h1 className="page-title">Welcome, {session.user.name}.</h1>
             <p className="intro">You’re signed in to Turnstile 360.</p>
             <div className="flex flex-col gap-6">
-              <Empty>
-                <EmptyHeader>
-                  <EmptyTitle>
-                    <h2>Your workspace is ready</h2>
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    Business features will appear here as they become available to your
-                    organization.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
+              {modules?.modules.length ? (
+                modules.modules
+                  .filter((module) => selectedModuleRoutes.some((route) => route.id === module.id))
+                  .map((module) => (
+                    <Card key={module.id}>
+                      <CardHeader>
+                        <CardTitle>
+                          <h2>{module.title}</h2>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardFooter>
+                        <ButtonLink href={module.path} variant="outline">
+                          Open {module.title}
+                        </ButtonLink>
+                      </CardFooter>
+                    </Card>
+                  ))
+              ) : (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyTitle>
+                      <h2>Your workspace is ready</h2>
+                    </EmptyTitle>
+                    <EmptyDescription>
+                      Business features will appear here as they become available to your
+                      organization.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              )}
               {workspace.canManageConfiguration && (
                 <>
                   <Card>
@@ -675,6 +849,34 @@ export default function App() {
       </Suspense>
     );
   }
+  if (path === '/setup-preparation')
+    return (
+      <AuthLayout>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h1>Sign-in preparation</h1>
+            </CardTitle>
+            <CardDescription>
+              Your administrator is preparing sign-in for this installation.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {new URLSearchParams(window.location.search).has('error') ? (
+              <Notice message="That verification link could not be completed. Request a new verification email before continuing." />
+            ) : (
+              <p>
+                Complete the steps in your verification or password email. Return to sign in when
+                your administrator confirms setup is ready.
+              </p>
+            )}
+          </CardContent>
+          <CardFooter>
+            <ButtonLink href="/sign-in">Continue to sign in</ButtonLink>
+          </CardFooter>
+        </Card>
+      </AuthLayout>
+    );
   if (path === '/invitations/join')
     return (
       <AuthLayout>

@@ -1,0 +1,1 @@
+CREATE INDEX "restore_source_reference" ON "dms"."binary_restore" USING btree ("tenant_id","application_id","source_candidate_id");

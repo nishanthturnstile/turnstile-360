@@ -1,0 +1,4 @@
+{
+  "incident-management": "turnstile:incidents:read",
+  "risk-management": "turnstile:risks:read"
+}

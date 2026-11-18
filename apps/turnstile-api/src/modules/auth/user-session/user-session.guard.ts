@@ -1,6 +1,6 @@
 import { type CanActivate, type ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { type PeoplePermission, peopleIdSchema } from '@thaarei/turnstile-contracts';
+import { type PeoplePermission, peopleIdSchema } from '@thaarei/turnstile-contracts/runtime';
 import type { FastifyRequest } from 'fastify';
 import {
   PUBLIC_ENDPOINT,

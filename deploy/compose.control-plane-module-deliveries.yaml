@@ -1,0 +1,8 @@
+# Optional POC overlay with compose.control-plane.yaml and compose.control-plane-modules.yaml.
+# References are separately signed, verified by the external pipeline and provisioned read-only.
+services:
+  control-plane:
+    environment:
+      CONTROL_PLANE_MODULE_REFERENCE_DIRECTORY: /run/module-deliveries
+    volumes:
+      - ${CONTROL_PLANE_MODULE_REFERENCE_HOST_DIRECTORY:?Supply the absolute verified reference directory}:/run/module-deliveries:ro

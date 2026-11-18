@@ -1,0 +1,5 @@
+ALTER TABLE "dms"."backup_catalog" DROP CONSTRAINT "backup_catalog_bounds";--> statement-breakpoint
+ALTER TABLE "dms"."backup_catalog" ALTER COLUMN "manifest_sha256" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "dms"."backup_catalog" ALTER COLUMN "bytes" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "dms"."backup_catalog" ALTER COLUMN "verified_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "dms"."backup_catalog" ADD CONSTRAINT "backup_catalog_bounds" CHECK ("dms"."backup_catalog"."expires_at">="dms"."backup_catalog"."recovery_point"+interval '7 days' AND "dms"."backup_catalog"."repository_id" ~ '^[A-Za-z0-9_-]{1,64}$' AND (("dms"."backup_catalog"."manifest_sha256" IS NULL AND "dms"."backup_catalog"."bytes" IS NULL AND "dms"."backup_catalog"."verified_at" IS NULL AND NOT "dms"."backup_catalog"."confirmed_off_host") OR ("dms"."backup_catalog"."manifest_sha256" IS NOT NULL AND "dms"."backup_catalog"."manifest_sha256" ~ '^[a-f0-9]{64}$' AND "dms"."backup_catalog"."bytes">0 AND "dms"."backup_catalog"."bytes" IS NOT NULL AND "dms"."backup_catalog"."verified_at" IS NOT NULL)));

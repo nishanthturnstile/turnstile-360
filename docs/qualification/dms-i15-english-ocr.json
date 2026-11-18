@@ -1,0 +1,68 @@
+{
+  "dataset": "english-print-v1",
+  "scope": "Generated clean printed English, one pinned font, 200 DPI; rotated and mixed-document coverage. Not a general handwriting/table or real-world corpus guarantee.",
+  "normalization": "lowercase ASCII letters and digits as words; punctuation ignored; Levenshtein word distance / expected word count",
+  "fontSha256": "ae7b7855e115a5966d8b1b3f80f254ccc117ec86f9965e202ee2940453837280",
+  "provenance": {
+    "engine": "tesseract",
+    "engineVersion": "5.5.4",
+    "dataVersion": "87416418657359cb625c412a48b6e1d6d41c29bd",
+    "englishSha256": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2",
+    "orientationSha256": "9cf5d576fcc47564f11265841e5ca839001e7e6f38ff7f7aacf46d15a96b00ff",
+    "language": "eng",
+    "configurationVersion": "english-ocr-v1"
+  },
+  "maximumWordErrorRate": 0.1,
+  "cases": [
+    {
+      "case": "png",
+      "wordErrorRate": 0.0,
+      "wallSeconds": 3.764,
+      "outputBytes": 12129,
+      "parserScratchPeakBytes": 53248,
+      "cpuSeconds": 3.495,
+      "maximumObservedProcessRssKiB": 63432,
+      "status": "SUCCEEDED"
+    },
+    {
+      "case": "jpeg",
+      "wordErrorRate": 0.0,
+      "wallSeconds": 3.6,
+      "outputBytes": 12139,
+      "parserScratchPeakBytes": 188416,
+      "cpuSeconds": 3.323,
+      "maximumObservedProcessRssKiB": 63868,
+      "status": "SUCCEEDED"
+    },
+    {
+      "case": "rotated",
+      "wordErrorRate": 0.0,
+      "wallSeconds": 4.004,
+      "outputBytes": 12130,
+      "parserScratchPeakBytes": 94208,
+      "cpuSeconds": 3.687,
+      "maximumObservedProcessRssKiB": 63480,
+      "status": "SUCCEEDED"
+    },
+    {
+      "case": "mixed-pdf",
+      "wordErrorRate": 0.0,
+      "wallSeconds": 7.328,
+      "outputBytes": 23513,
+      "parserScratchPeakBytes": 204800,
+      "cpuSeconds": 7.05,
+      "maximumObservedProcessRssKiB": 66080,
+      "status": "SUCCEEDED"
+    }
+  ],
+  "cpuSeconds": 17.555,
+  "maximumObservedProcessRssKiB": 66080,
+  "enforcedBounds": {
+    "parserScratchBytes": 134217728,
+    "artifactBytes": 26214400,
+    "rasterPixels": 25000000,
+    "pageSeconds": 60,
+    "documentSeconds": 480,
+    "threadsPerEngine": 1
+  }
+}

@@ -197,6 +197,132 @@
       "when": 1793770437369,
       "tag": "0027_user_management_release",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794017001923,
+      "tag": "0028_deployment_state",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1794017003669,
+      "tag": "0029_deployment_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1794380262319,
+      "tag": "0030_module_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794380263114,
+      "tag": "0031_module_scope_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794382136229,
+      "tag": "0032_module_grant_receipts",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794489538375,
+      "tag": "0033_powerful_tomorrow_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794636384353,
+      "tag": "0034_deployment_clock_serialization",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1794640918440,
+      "tag": "0035_people_audit_reader",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794641884984,
+      "tag": "0036_people_directory_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1794646292700,
+      "tag": "0037_people_import_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794646517747,
+      "tag": "0038_people_import_tenant",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1794965848131,
+      "tag": "0039_documents_access_barrier",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1794966022264,
+      "tag": "0040_documents_validator_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1794974568425,
+      "tag": "0041_documents_upload_intent",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1794976430701,
+      "tag": "0042_documents_version_intents",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1794979149525,
+      "tag": "0043_documents_batch_intents",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1794981906461,
+      "tag": "0044_documents_lifecycle_contribution",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1794984770738,
+      "tag": "0045_documents_processing_intent",
+      "breakpoints": true
     }
   ]
 }

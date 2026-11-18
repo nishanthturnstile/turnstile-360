@@ -1,7 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CONFIGURATION_LIMITS, configurationActorSchema } from '@thaarei/turnstile-contracts';
+import {
+  CONFIGURATION_LIMITS,
+  configurationActorSchema,
+} from '@thaarei/turnstile-contracts/runtime';
 import { z } from 'zod';
 import { lockConfiguration } from '../../infrastructure/database/configuration-lock.js';
 import { withProductOperator } from '../../infrastructure/database/product-operator.js';

@@ -1,0 +1,1571 @@
+{
+  "version": 1,
+  "status": "DV-I01–08 and DV-AUDIT-02 locally qualified. Customer target acceptance remains separate.",
+  "contract": "../../api/turnstile-documents.contract.json",
+  "legacyFixtures": "../../../packages/turnstile-contracts/test/documents-legacy-v2.fixture.json",
+  "operations": [
+    {
+      "evidenceId": "DV-E01",
+      "operationId": "searchDmsDocuments",
+      "dms": {
+        "method": "POST",
+        "path": "/v1/search",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/search"
+      },
+      "action": "turnstile:documents:read",
+      "mode": "authorized_read",
+      "ui": "Search",
+      "increment": "DV-I07",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Exact filters/full-text, source snippets, active result/index state, filtered pagination and immediate visibility loss after revocation/delete.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-processing-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Browser and product HTTP verify exact filename and empty metadata value, and English word stemming from native CSV extraction. The match opens the exact cell in its version and run. Cursor paging is bound to the original filters. Soft deletion removes the match before a held artifact transfer finishes. The owning DMS integration verifies shared READ revocation and source invalidation."
+      },
+      "imageEvidence": "DV-I07 disposable qualification with actual customer Nginx, Chromium, DMS, PostgreSQL, SeaweedFS, RabbitMQ, native assessment and pinned OCR. Exact-image scope and optional-profile qualification are tracked separately.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E02",
+      "operationId": "getDmsProcessing",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/documents/{documentId}/processing",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/{documentId}/processing"
+      },
+      "action": "turnstile:documents:read",
+      "mode": "authorized_read",
+      "ui": "Processing",
+      "increment": "DV-I07",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Current/explicit version, exact active run, all history pages, partial/failed runs.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-processing-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Real worker results show exact-version active, retained and failed runs, source warnings and PARTIAL coverage from a mixed PDF. A successful replacement promotes a new result while an explicit selector opens the older accepted run. A failed replacement keeps the old active run. The DMS cursor rejects a different version."
+      },
+      "imageEvidence": "DV-I07 disposable qualification with actual customer Nginx, Chromium, DMS, PostgreSQL, SeaweedFS, RabbitMQ, native assessment and pinned OCR. Exact-image scope and optional-profile qualification are tracked separately.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E03",
+      "operationId": "getDmsContent",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/documents/{documentId}/content",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/{documentId}/content"
+      },
+      "action": "turnstile:documents:read",
+      "mode": "authorized_read",
+      "ui": "Content",
+      "increment": "DV-I07",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Current/explicit version/run, unavailable result, artifact transfer, schema/hash/size verification.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-processing-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Browser renders native text, paged CSV cells and OCR word provenance from verified bytes. A same-length corruption is rejected and a fresh authorized load succeeds. Wrong version/run selectors fail, and a transfer held across soft deletion cannot display the artifact."
+      },
+      "imageEvidence": "DV-I07 disposable qualification with actual customer Nginx, Chromium, DMS, PostgreSQL, SeaweedFS, RabbitMQ, native assessment and pinned OCR. Exact-image scope and optional-profile qualification are tracked separately.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E04",
+      "operationId": "reprocessDmsVersion",
+      "dms": {
+        "method": "POST",
+        "path": "/v1/documents/{documentId}/versions/{versionId}/reprocess",
+        "scopes": ["dms:documents:read", "dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "version.reprocess"
+      },
+      "action": "turnstile:documents:reprocess",
+      "mode": "full_both_products",
+      "ui": "Processing",
+      "increment": "DV-I07",
+      "recovery": "same_intent_receipt_window",
+      "resourceAuthority": "owner_only",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Supported searchable/structured profile, stable replay, concurrent run denial and previous accepted result retention.",
+      "failurePath": "Lost acknowledgement, same-ID replay, intervening change and receipt expiry; current authorization and both-product policy rechecked",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-processing-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Real owner reprocess commits before reply loss. Browser reload retries the saved receipt and gets the same run without duplicating work. A concurrent run is rejected. A failed native OCR replacement preserves the previous accepted result and the original bytes. Structured is hidden when the runtime is absent."
+      },
+      "imageEvidence": "DV-I07 disposable qualification with actual customer Nginx, Chromium, DMS, PostgreSQL, SeaweedFS, RabbitMQ, native assessment and pinned OCR. Exact-image scope and optional-profile qualification are tracked separately.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E05",
+      "operationId": "getDmsDocumentLifecycle",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/documents/{documentId}/lifecycle",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/{documentId}/lifecycle"
+      },
+      "action": "turnstile:documents:lifecycle",
+      "mode": "authorized_read",
+      "ui": "Recovery",
+      "increment": "DV-I06",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "owner_only",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Owner-only state, revision, restore deadline and fresh reassessment counts.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-lifecycle-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "The owner reads current lifecycle for a known ID after ordinary detail is withdrawn, then observes pending and complete reassessment. A shared edit-only caller is denied."
+      },
+      "imageEvidence": "DV-I06 disposable qualification with actual customer Nginx, Chromium, DMS, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E06",
+      "operationId": "deleteDmsDocument",
+      "dms": {
+        "method": "DELETE",
+        "path": "/v1/documents/{documentId}",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "document.delete"
+      },
+      "action": "turnstile:documents:lifecycle",
+      "mode": "full_both_products",
+      "ui": "Lifecycle",
+      "increment": "DV-I06",
+      "recovery": "revision_readback_review",
+      "resourceAuthority": "owner_only",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Current If-Match, immediate withdrawal, queued/late work cannot resurrect visibility.",
+      "failurePath": "Lost acknowledgement, stale revision, denied current rights; preserve draft and review readback",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-lifecycle-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "The browser loses the committed deletion reply during a concurrent completion attempt. Active detail and upload status deny. Recovery retries the recorded operation, the superseded upload settles cancelled, and audit records one deletion."
+      },
+      "imageEvidence": "DV-I06 disposable qualification with actual customer Nginx, Chromium, DMS, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E07",
+      "operationId": "editDmsDocument",
+      "dms": {
+        "method": "PATCH",
+        "path": "/v1/documents/{documentId}",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "document.edit"
+      },
+      "action": "turnstile:documents:edit",
+      "mode": "full_both_products",
+      "ui": "Overview / Contribute",
+      "increment": "DV-I04",
+      "recovery": "revision_readback_review",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Typed metadata/tags/title, replacement semantics, latest revision and uncertain-write readback.",
+      "failurePath": "Lost acknowledgement, stale revision, denied current rights; preserve draft and review readback",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-versions-browser.mjs and scripts/test-documents-lifecycle-browser.mjs DV-I06 verifies EDIT_METADATA-only edits via the separate DMS owner; reply loss becomes manual review with no browser document read."
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Two browser tabs preserve the title draft and the other tab’s saved tags. A committed reply loss confirms the exact UTF-8 metadata by readback without incrementing the revision. An unmatched edit enters manual review."
+      },
+      "imageEvidence": "docs/qualification/documents-release-20261118.json: exact candidate Core and DMS API images, ordinary login and real product HTTP. Additional variants are listed in source evidence.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E08",
+      "operationId": "getDmsDocument",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/documents/{documentId}",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/{documentId}"
+      },
+      "action": "turnstile:documents:read",
+      "mode": "authorized_read",
+      "ui": "Overview",
+      "increment": "DV-I02",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Authorized detail, ETag/revision, owner/shared distinction and unavailable/not-found behavior.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": [
+          "scripts/test-documents-browser.mjs (real identity/DMS/product HTTP and ordinary login)",
+          "apps/turnstile-api/src/integrations/dms/transport.spec.ts (bounded real HTTP client)"
+        ]
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Implemented finite typed DMS client and guarded Documents controller/service; ordinary browser verifies current permissions, fixed machine authority, typed denials/outage and late local revocation. Synthetic metadata-only document; no file publication claim."
+      },
+      "imageEvidence": "docs/qualification/documents-release-20261118.json: exact candidate Core and DMS API images, ordinary login and real product HTTP. Additional variants are listed in source evidence.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E09",
+      "operationId": "restoreDmsDocument",
+      "dms": {
+        "method": "POST",
+        "path": "/v1/documents/{documentId}/restore",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "document.restore"
+      },
+      "action": "turnstile:documents:lifecycle",
+      "mode": "full_both_products",
+      "ui": "Recovery",
+      "increment": "DV-I06",
+      "recovery": "same_intent_receipt_window",
+      "resourceAuthority": "owner_only",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Same logical ID, replay after intervening delete, deadline expiry and independent original availability.",
+      "failurePath": "Lost acknowledgement, same-ID replay, intervening change and receipt expiry; current authorization and both-product policy rechecked",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-lifecycle-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "The browser loses the committed logical restore reply and replays the saved operation. Native reassessment restores the same document and version, and the original matches byte for byte. Advancing the stored deletion and deadline on a separate fixture exercises typed restore expiry."
+      },
+      "imageEvidence": "DV-I06 disposable qualification with actual customer Nginx, Chromium, DMS, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E10",
+      "operationId": "getDmsDocumentPermissions",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/documents/{documentId}/permissions",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/{documentId}/permissions"
+      },
+      "action": "turnstile:documents:share",
+      "mode": "authorized_read",
+      "ui": "Application access",
+      "increment": "DV-I06",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "owner_only",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Owner-only current grants and revision.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-lifecycle-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "The owner opens Application access and reads back the exact configured grant. A shared edit-only caller is denied the owner grant view."
+      },
+      "imageEvidence": "DV-I06 disposable qualification with actual customer Nginx, Chromium, DMS, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E11",
+      "operationId": "setDmsDocumentPermissions",
+      "dms": {
+        "method": "PUT",
+        "path": "/v1/documents/{documentId}/permissions",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "permissions.replace"
+      },
+      "action": "turnstile:documents:share",
+      "mode": "full_both_products",
+      "ui": "Application access",
+      "increment": "DV-I06",
+      "recovery": "revision_readback_review",
+      "resourceAuthority": "owner_only",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Full replacement/revoke-all, valid registered targets, current revision and live revocation.",
+      "failurePath": "Lost acknowledgement, stale revision, denied current rights; preserve draft and review readback",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-lifecycle-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "The owner grants READ to a separately enrolled registration. The real PUT commits before its reply is lost, the saved intent reconciles the exact set, and audit records one grant change. Independent fixture-owner grant changes verify live revocation for Contribute."
+      },
+      "imageEvidence": "DV-I06 disposable qualification with actual customer Nginx, Chromium, DMS, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E12",
+      "operationId": "linkDmsDocumentReference",
+      "dms": {
+        "method": "POST",
+        "path": "/v1/documents/{documentId}/references",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "reference.link"
+      },
+      "action": "turnstile:documents:edit",
+      "mode": "full_both_products",
+      "ui": "Overview / Contribute",
+      "increment": "DV-I04",
+      "recovery": "revision_readback_review",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Complete namespace/type/externalId tuple, caller attribution, duplicate behavior and If-Match.",
+      "failurePath": "Lost acknowledgement, stale revision, denied current rights; preserve draft and review readback",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-versions-browser.mjs and scripts/test-documents-lifecycle-browser.mjs DV-I06 verifies that the separately enrolled owner and the contributing app can each link the same reference tuple in their respective namespaces."
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "The owned-document sheet links the namespace, type and external ID using the saved revision. Product detail reads back the committed reference."
+      },
+      "imageEvidence": "DV-I04 source-built product with real Chromium, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E13",
+      "operationId": "unlinkDmsDocumentReference",
+      "dms": {
+        "method": "DELETE",
+        "path": "/v1/documents/{documentId}/references/{referenceId}",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "reference.unlink"
+      },
+      "action": "turnstile:documents:edit",
+      "mode": "full_both_products",
+      "ui": "Overview / Contribute",
+      "increment": "DV-I04",
+      "recovery": "revision_readback_review",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Reference UUID differs from externalId; caller namespace/ownership and stale revision.",
+      "failurePath": "Lost acknowledgement, stale revision, denied current rights; preserve draft and review readback",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-versions-browser.mjs and scripts/test-documents-lifecycle-browser.mjs DV-I06 verifies that the contributor cannot unlink the owner’s reference and can unlink its own reference under EDIT_METADATA."
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "The browser confirms unlinking the selected reference, and product detail reads back the authoritative absence."
+      },
+      "imageEvidence": "DV-I04 source-built product with real Chromium, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E14",
+      "operationId": "beginDmsVersionUpload",
+      "dms": {
+        "method": "POST",
+        "path": "/v1/documents/{documentId}/versions/uploads",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "version.begin"
+      },
+      "action": "turnstile:documents:upload",
+      "mode": "full_both_products",
+      "ui": "Versions / Contribute",
+      "increment": "DV-I04",
+      "recovery": "same_intent_receipt_window",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Current logical revision, stable begin identity and previous current original retained until publication.",
+      "failurePath": "Lost acknowledgement, same-ID replay, intervening change and receipt expiry; current authorization and both-product policy rechecked",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-versions-browser.mjs and scripts/test-documents-batches-browser.mjs and scripts/test-documents-lifecycle-browser.mjs DV-I06 verifies an ADD_VERSION-only signed browser upload and owner-observed publication after native assessment. Revocation blocks new admission."
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "A text version stages via signed browser PUT, completes through the saved operation and awaits native assessment. A later candidate publishes first and the previous current version remains available while new bytes are pending. The mixed batch also admits a saved new-version descriptor against the owned current document revision."
+      },
+      "imageEvidence": "DV-I04 source-built product with real Chromium, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E15",
+      "operationId": "listDmsVersions",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/documents/{documentId}/versions",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/{documentId}/versions"
+      },
+      "action": "turnstile:documents:read",
+      "mode": "authorized_read",
+      "ui": "Versions",
+      "increment": "DV-I04",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "All pages, security/availability separate, restored-from relation and current marker.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-versions-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "The owning product API traverses two DMS history pages using the returned cursor. Pending, historical and current versions are projected independently."
+      },
+      "imageEvidence": "DV-I04 source-built product with real Chromium, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E16",
+      "operationId": "getDmsVersion",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/documents/{documentId}/versions/{versionId}",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/{documentId}/versions/{versionId}"
+      },
+      "action": "turnstile:documents:read",
+      "mode": "authorized_read",
+      "ui": "Versions",
+      "increment": "DV-I04",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Explicit version binding, wrong-document rejection and upload-state projection.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-versions-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Version detail reads the exact document/version tuple and separates security, availability and publication. A missing version is denied."
+      },
+      "imageEvidence": "DV-I04 source-built product with real Chromium, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E17",
+      "operationId": "restoreDmsVersion",
+      "dms": {
+        "method": "POST",
+        "path": "/v1/documents/{documentId}/versions/{versionId}/restore",
+        "scopes": ["dms:documents:read", "dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "version.restore"
+      },
+      "action": "turnstile:documents:restore",
+      "mode": "full_both_products",
+      "ui": "Versions",
+      "increment": "DV-I04",
+      "recovery": "same_intent_receipt_window",
+      "resourceAuthority": "owner_only",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "New reassessed binary revision, original expected revision on replay, no in-place rollback.",
+      "failurePath": "Lost acknowledgement, same-ID replay, intervening change and receipt expiry; current authorization and both-product policy rechecked",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-versions-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "DMS commits restore admission and loses its reply. Replay after an intervening title edit uses the original intent and yields one new candidate. Native assessment publishes it with the historical digest and source version ID."
+      },
+      "imageEvidence": "DV-I04 source-built product with real Chromium, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E18",
+      "operationId": "getDmsDocumentDownload",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/documents/{documentId}/download",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/{documentId}/download"
+      },
+      "action": "turnstile:documents:read",
+      "mode": "authorized_read",
+      "ui": "Download",
+      "increment": "DV-I03",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Live entitlement, versionId selection, short expiry, exact bytes/hash and range behavior.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-upload-browser.mjs and scripts/test-documents-versions-browser.mjs and scripts/test-documents-lifecycle-browser.mjs DV-I06 verifies original-byte equality after logical restore and confirms download denial for an ADD_VERSION-only contributor."
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Current and historical originals use the product read gate and exact HTTPS storage origin. The browser verifies size and SHA-256 and saves the original bytes. A pending version returns an unavailable conflict."
+      },
+      "imageEvidence": "DV-I03 source-built product and actual Gateway/SeaweedFS/scanner runtime fixtures pass. Exact selected product image and target repetition remains DV-I08.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E19",
+      "operationId": "beginDmsUpload",
+      "dms": {
+        "method": "POST",
+        "path": "/v1/uploads",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "upload.begin"
+      },
+      "action": "turnstile:documents:upload",
+      "mode": "full_both_products",
+      "ui": "Uploads",
+      "increment": "DV-I03",
+      "recovery": "same_intent_receipt_window",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Descriptor bounds, profile/type policy, quota, stable key, metadata and batch/item binding.",
+      "failurePath": "Lost acknowledgement, same-ID replay, intervening change and receipt expiry; current authorization and both-product policy rechecked",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-upload-browser.mjs (ordinary verified browser and real DMS/product/ClamAV/SeaweedFS handlers) and scripts/test-documents-batches-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Durable draft acknowledgement precedes DMS dispatch. Lost draft creates no upload. Lost DMS begin replays the original key, with a separate committed-effect SIGKILL case for expiry and private binding review. Batch admission drops a committed reply, reuses the saved item key and resumes after a capacity delay. Protected review verifies an expired item on a later page."
+      },
+      "imageEvidence": "DV-I03 source-built product and actual Gateway/SeaweedFS/scanner runtime fixtures pass. Exact selected product image and target repetition remains DV-I08.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E20",
+      "operationId": "getDmsUpload",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/uploads/{uploadId}",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/uploads/{uploadId}"
+      },
+      "action": "turnstile:documents:read",
+      "mode": "authorized_read",
+      "ui": "Uploads",
+      "increment": "DV-I03",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Completion requested versus published; independent upload/security/availability/processing.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-upload-browser.mjs (ordinary verified browser and real DMS/product/ClamAV/SeaweedFS handlers) and scripts/test-documents-lifecycle-browser.mjs DV-I06 verifies ADD_VERSION-only status denial and absence of a browser status poll during upload and receipt reopen."
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Real DMS upload status is checked through the ordinary read gate on reopen and poll. Upload, security, availability and processing remain distinct."
+      },
+      "imageEvidence": "DV-I03 source-built product and actual Gateway/SeaweedFS/scanner runtime fixtures pass. Exact selected product image and target repetition remains DV-I08.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E21",
+      "operationId": "cancelDmsUpload",
+      "dms": {
+        "method": "DELETE",
+        "path": "/v1/uploads/{uploadId}",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "upload.cancel"
+      },
+      "action": "turnstile:documents:upload",
+      "mode": "full_both_products",
+      "ui": "Uploads / Contribute",
+      "increment": "DV-I03",
+      "recovery": "revision_readback_review",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Eligible-session-only cancellation, contributor control and race with completion.",
+      "failurePath": "Lost acknowledgement, stale revision, denied current rights; preserve draft and review readback",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-upload-browser.mjs (ordinary verified browser and real DMS/product/ClamAV/SeaweedFS handlers) and scripts/test-documents-batches-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Ordinary browser cancellation of a second staged file reports cancellation from a current read. Ambiguous cancel uses status readback. The batch scheduler completes each transferred file independently through the existing operation."
+      },
+      "imageEvidence": "DV-I03 source-built product and actual Gateway/SeaweedFS/scanner runtime fixtures pass. Exact selected product image and target repetition remains DV-I08.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E22",
+      "operationId": "completeDmsUpload",
+      "dms": {
+        "method": "POST",
+        "path": "/v1/uploads/{uploadId}/complete",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "upload.complete"
+      },
+      "action": "turnstile:documents:upload",
+      "mode": "full_both_products",
+      "ui": "Uploads / Contribute",
+      "increment": "DV-I03",
+      "recovery": "same_intent_receipt_window",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Durable intent/202, lost acknowledgement, same-key replay and poll; no immediate success claim.",
+      "failurePath": "Lost acknowledgement, same-ID replay, intervening change and receipt expiry; current authorization and both-product policy rechecked",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-upload-browser.mjs (ordinary verified browser and real DMS/product/ClamAV/SeaweedFS handlers) and scripts/test-documents-lifecycle-browser.mjs DV-I06 verifies that contribution mode is required to complete a contributed upload. The browser shows only the acknowledgement after reload; the separate owner verifies publication."
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Real 202 completion reply loss replays the same intent. Independent suspended, closed and expired deployment policies fence public writes. Accepted private assessment can finish while DMS permits existing reads."
+      },
+      "imageEvidence": "DV-I03 source-built product and actual Gateway/SeaweedFS/scanner runtime fixtures pass. Exact selected product image and target repetition remains DV-I08.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E23",
+      "operationId": "refreshDmsUpload",
+      "dms": {
+        "method": "POST",
+        "path": "/v1/uploads/{uploadId}/refresh",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "upload.refresh"
+      },
+      "action": "turnstile:documents:upload",
+      "mode": "full_both_products",
+      "ui": "Uploads / Contribute",
+      "increment": "DV-I03",
+      "recovery": "revision_readback_review",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Same immutable staging identity, expiry, no revival after completion/terminal state.",
+      "failurePath": "Lost acknowledgement, stale revision, denied current rights; preserve draft and review readback",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-upload-browser.mjs (ordinary verified browser and real DMS/product/ClamAV/SeaweedFS handlers)"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "A reopened exact file receives a fresh signed capability. Loss after the real storage commit followed by a conditional PUT returns 412 and preserves the original bytes."
+      },
+      "imageEvidence": "DV-I03 source-built product and actual Gateway/SeaweedFS/scanner runtime fixtures pass. Exact selected product image and target repetition remains DV-I08.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E24",
+      "operationId": "createDmsUploadBatch",
+      "dms": {
+        "method": "POST",
+        "path": "/v1/upload-batches",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "batch.create"
+      },
+      "action": "turnstile:documents:upload",
+      "mode": "full_both_products",
+      "ui": "Batches",
+      "increment": "DV-I05",
+      "recovery": "same_intent_receipt_window",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "At most 100 unique items, descriptor/manifest bounds; creates no file sessions itself.",
+      "failurePath": "Lost acknowledgement, same-ID replay, intervening change and receipt expiry; current authorization and both-product policy rechecked",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-batches-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "A genuine 100-item manifest traverses customer Nginx, Turnstile and DMS without allocating sessions. Exact and over-limit envelope, media type and forwarded attribution bounds are exercised. A committed lost response resolves by saved key. Expiry blocks a replacement and protected review attaches the independently verified batch binding."
+      },
+      "imageEvidence": "DV-I05 disposable qualification with real customer Nginx, Chromium, PostgreSQL, storage and native assessment. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E25",
+      "operationId": "getDmsUploadBatch",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/upload-batches/{batchId}",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/batches/{batchId}"
+      },
+      "action": "turnstile:documents:read",
+      "mode": "authorized_read",
+      "ui": "Batches (manifest only without DMS READ)",
+      "increment": "DV-I05",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "All item pages, whole-manifest counters, isolated delays and current authorization.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-batches-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "The browser traverses item pages and reads whole-manifest counts independently of the page. It reopens an interrupted operation from the saved receipt and verifies capacity delays and per-item outcomes."
+      },
+      "imageEvidence": "DV-I05 disposable qualification with real customer Nginx, Chromium, PostgreSQL, storage and native assessment. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E26",
+      "operationId": "cancelDmsUploadBatch",
+      "dms": {
+        "method": "DELETE",
+        "path": "/v1/upload-batches/{batchId}",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "batch.cancel"
+      },
+      "action": "turnstile:documents:upload",
+      "mode": "full_both_products",
+      "ui": "Batches",
+      "increment": "DV-I05",
+      "recovery": "revision_readback_review",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Cancels eligible sessions/unstarted items, preserves published documents.",
+      "failurePath": "Lost acknowledgement, stale revision, denied current rights; preserve draft and review readback",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-batches-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "DMS commits cancellation and loses its reply. The same product operation confirms cancelled state by authorized readback. Cancelling a completed batch preserves all three published versions."
+      },
+      "imageEvidence": "DV-I05 disposable qualification with real customer Nginx, Chromium, PostgreSQL, storage and native assessment. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E27",
+      "operationId": "closeDmsUploadBatch",
+      "dms": {
+        "method": "POST",
+        "path": "/v1/upload-batches/{batchId}/close",
+        "scopes": ["dms:documents:write"]
+      },
+      "product": {
+        "method": "POST",
+        "path": "/api/documents/operations/{intentId}/execute",
+        "command": "batch.close"
+      },
+      "action": "turnstile:documents:upload",
+      "mode": "full_both_products",
+      "ui": "Batches",
+      "increment": "DV-I05",
+      "recovery": "same_intent_receipt_window",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "No new unstarted items, bound sessions retain deadlines, stable replay after state changes.",
+      "failurePath": "Lost acknowledgement, same-ID replay, intervening change and receipt expiry; current authorization and both-product policy rechecked",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-batches-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Close races with genuine item admission. The authoritative batch counts show settled unstarted items and the exact surviving bindings. The original close key replays after a subsequent cancellation."
+      },
+      "imageEvidence": "DV-I05 disposable qualification with real customer Nginx, Chromium, PostgreSQL, storage and native assessment. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E28",
+      "operationId": "getDmsDocumentAudit",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/documents/{documentId}/audit",
+        "scopes": ["dms:documents:read", "dms:audit:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/{documentId}/audit"
+      },
+      "action": "turnstile:documents:audit",
+      "mode": "authorized_read",
+      "ui": "Activity",
+      "increment": "DV-I06",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "owner_only",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Document ownership plus read/audit scopes, all pages and correct application-asserted attribution.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-lifecycle-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Owner document audit pages contain one grant change, deletion and restoration. The Activity view labels download authorization. A document cursor is rejected when supplied to the application stream, and a shared edit-only caller is denied."
+      },
+      "imageEvidence": "DV-I06 disposable qualification with actual customer Nginx, Chromium, DMS, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E29",
+      "operationId": "listDmsDocuments",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/documents",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents"
+      },
+      "action": "turnstile:documents:read",
+      "mode": "authorized_read",
+      "ui": "All documents",
+      "increment": "DV-I02",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Exact filename/title/tag/reference filters, authorized paging, no invented total/sort/trash filters.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": [
+          "scripts/test-documents-browser.mjs (real identity/DMS/product HTTP and ordinary login)",
+          "apps/turnstile-api/src/integrations/dms/transport.spec.ts (bounded real HTTP client)"
+        ]
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Implemented finite typed DMS client and guarded Documents controller/service; ordinary browser verifies current permissions, fixed machine authority, typed denials/outage and late local revocation. Synthetic metadata-only document; no file publication claim."
+      },
+      "imageEvidence": "docs/qualification/documents-release-20261118.json: exact candidate Core and DMS API images, ordinary login and real product HTTP. Additional variants are listed in source evidence.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E30",
+      "operationId": "getDmsAdmissionPolicy",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/admission-policy",
+        "scopes": ["dms:documents:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/connection/policy"
+      },
+      "action": "any_documents_permission",
+      "mode": "authorized_read",
+      "ui": "Connection",
+      "increment": "DV-I02",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Effective enabled/paused/not-configured/not-installed policy and current limits.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": [
+          "scripts/test-documents-browser.mjs (real identity/DMS/product HTTP and ordinary login)",
+          "apps/turnstile-api/src/integrations/dms/transport.spec.ts (bounded real HTTP client)"
+        ]
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "The DV-I08 checklist calls the direct admission policy product route and shows a verified HTTP status and request ID. The Connection workspace presents the effective policy and limits."
+      },
+      "imageEvidence": "docs/qualification/documents-release-20261118.json: exact candidate Core and DMS API images, ordinary login and real product HTTP. Additional variants are listed in source evidence.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E31",
+      "operationId": "getDmsAudit",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/audit",
+        "scopes": ["dms:audit:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/audit"
+      },
+      "action": "turnstile:documents:audit",
+      "mode": "authorized_read",
+      "ui": "Activity",
+      "increment": "DV-I06",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "owner_only",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Current application's owner stream; no installation-wide audit claim.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "scripts/test-documents-lifecycle-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "The application audit endpoint returns events for the installation’s configured DMS registration. Its query rejects a document audit cursor."
+      },
+      "imageEvidence": "DV-I06 disposable qualification with actual customer Nginx, Chromium, DMS, PostgreSQL, SeaweedFS and native assessment where applicable. Customer-selected image evidence remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E32",
+      "operationId": "getDmsServiceInfo",
+      "dms": {
+        "method": "GET",
+        "path": "/v1",
+        "scopes": []
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/connection/identity"
+      },
+      "action": "turnstile:documents:validate",
+      "mode": "authorized_read",
+      "ui": "Connection diagnostic",
+      "increment": "DV-I02",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Service identity is distinct from dependency, scanner or processing readiness.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": [
+          "scripts/test-documents-browser.mjs (real identity/DMS/product HTTP and ordinary login)",
+          "apps/turnstile-api/src/integrations/dms/transport.spec.ts (bounded real HTTP client)"
+        ]
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "The protected checklist calls the finite service identity route and distinguishes the verified identity from availability. Browser verifies permission denial, request correlation and observation reset."
+      },
+      "imageEvidence": "docs/qualification/documents-release-20261118.json: exact candidate Core and DMS API images, ordinary login and real product HTTP. Additional variants are listed in source evidence.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E33",
+      "operationId": "getDmsCapabilities",
+      "dms": {
+        "method": "GET",
+        "path": "/v1/capabilities",
+        "scopes": ["dms:capabilities:read"]
+      },
+      "product": {
+        "method": "GET",
+        "path": "/api/documents/connection"
+      },
+      "action": "any_documents_permission",
+      "mode": "authorized_read",
+      "ui": "Connection",
+      "increment": "DV-I02",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "current_dms_rights",
+      "owner": "Turnstile Documents / public DMS owning service",
+      "readback": "Scopes, installed formats/profiles and optional deployment status; preserve existing readers.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": [
+          "scripts/test-documents-browser.mjs (real identity/DMS/product HTTP and ordinary login)",
+          "apps/turnstile-api/src/integrations/dms/transport.spec.ts (bounded real HTTP client)"
+        ]
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Implemented finite typed DMS client and guarded Documents controller/service; ordinary browser verifies current permissions, fixed machine authority, typed denials/outage and late local revocation. Synthetic metadata-only document; no file publication claim."
+      },
+      "imageEvidence": "docs/qualification/documents-release-20261118.json: exact candidate Core and DMS API images, ordinary login and real product HTTP. Additional variants are listed in source evidence.",
+      "targetEvidence": "pending: separate target acceptance"
+    },
+    {
+      "evidenceId": "DV-E34",
+      "operationId": "enrollDmsApplication",
+      "dms": {
+        "method": "POST",
+        "path": "/v1/application-enrollments",
+        "scopes": []
+      },
+      "product": null,
+      "action": "private_provisioning",
+      "mode": "private_provisioning",
+      "ui": "Provisioning only",
+      "increment": "DV-I02",
+      "recovery": "reauthorize_each_read",
+      "resourceAuthority": "private_operator",
+      "owner": "DMS private enrollment / Turnstile operator",
+      "readback": "Existing protected backend/operator flow verifies enrollment/replay. No ordinary Documents enrollment form or browser credential entry.",
+      "failurePath": "Current-right denial, policy restriction, paging/selector mismatch and late-response isolation",
+      "automatedTest": {
+        "contract": "packages/turnstile-contracts/test/documents.test.mjs",
+        "runtime": "apps/dms-api/test/bff-authority-fixture.mjs and scripts/test-documents-browser.mjs"
+      },
+      "sourceEvidence": {
+        "contract": "implemented; finite mapping and schemas tested by DV-I01",
+        "runtime": "Existing private enrollment workflow exercised with independently explicit issuer/DMS scopes. No new product enrollment route; fixed application/client and existing capabilities-only partition preserved."
+      },
+      "imageEvidence": "Disposable owning DMS enrollment before exact-image startup. The selected Core runtime verifies the same registration. Target provisioning remains separate.",
+      "targetEvidence": "pending: separate target acceptance"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "DV-R01",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I02 verifies the directory and exact filters. DV-I07 verifies DMS discovery with English matches, exact file filters, source links, cursor binding, and visibility withdrawal on deletion.",
+      "owner": "DV-I02/DV-I07",
+      "operations": ["DV-E29", "DV-E01"]
+    },
+    {
+      "id": "DV-R02",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I03 verifies upload lifecycle and transfer recovery for secure-only text. DV-I07 adds policy-advertised formats and searchable profiles. DV-AUDIT-02 verifies an intermediate byte percentage during a throttled real signed PUT, credential omission, lost storage acknowledgement and conditional retry.",
+      "owner": "DV-I03",
+      "operations": ["DV-E18", "DV-E19", "DV-E20", "DV-E21", "DV-E22", "DV-E23"]
+    },
+    {
+      "id": "DV-R03",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I05 locally qualifies mixed secure-only text manifests, per-item capacity retry and integrity, paged status, close/cancel and durable reopen.",
+      "owner": "DV-I05",
+      "operations": ["DV-E19", "DV-E24", "DV-E25", "DV-E26", "DV-E27"]
+    },
+    {
+      "id": "DV-R04",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I04 locally qualifies the owned-document overview, typed details, reference changes, two-tab conflict and ambiguous edit readback.",
+      "owner": "DV-I04",
+      "operations": ["DV-E07", "DV-E08", "DV-E12", "DV-E13"]
+    },
+    {
+      "id": "DV-R05",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I04 locally qualifies paged history, version detail, text uploads, historical originals and native assessed restore after lost acknowledgement.",
+      "owner": "DV-I04",
+      "operations": ["DV-E14", "DV-E15", "DV-E16", "DV-E17", "DV-E18"]
+    },
+    {
+      "id": "DV-R06",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I07 verifies exact-version/run history, active and failed results, coverage and index state, native text/CSV/OCR, integrity and live result authority, and same-intent reprocessing. DV-AUDIT-02 verifies that a searchable CSV advances from queued and not indexed to succeeded and ready in the open Uploads view without a refresh.",
+      "owner": "DV-I07",
+      "operations": ["DV-E02", "DV-E03", "DV-E04"]
+    },
+    {
+      "id": "DV-R07",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I06 browser qualification covers owner-only application grant read and replacement, exact readback after a lost reply and live revocation for the independently registered contributor.",
+      "owner": "DV-I06",
+      "operations": ["DV-E10", "DV-E11"]
+    },
+    {
+      "id": "DV-R08",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I06 browser qualification covers known-ID and recorded Recovery, delete racing completion, lost delete and restore acknowledgement, native reassessment, original-byte equality and typed restore expiry.",
+      "owner": "DV-I06",
+      "operations": ["DV-E05", "DV-E06", "DV-E09"]
+    },
+    {
+      "id": "DV-R09",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I06 browser qualification covers document and application owner Activity, paged document events, cursor scoping and explicit download authorization.",
+      "owner": "DV-I06",
+      "operations": ["DV-E28", "DV-E31"]
+    },
+    {
+      "id": "DV-R10",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I02 connection/admission/identity finite reads pass through real product/DMS HTTP. DV-AUDIT-02 verifies that a partial company role loses compound ordinary capabilities requiring READ while new-file upload remains available. Product permission, DMS machine scope and resource rights remain independent.",
+      "owner": "DV-I02",
+      "operations": ["DV-E30", "DV-E32", "DV-E33"]
+    },
+    {
+      "id": "DV-R11",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I08 validates all 34 checklist entries, explicit validator authorization, request correlation, response outcome and reload clearing. DV-AUDIT-02 verifies complete ordinary company permissions on compound command rows and independent eligibility for an explicit no-READ contribution draft.",
+      "owner": "DV-I08",
+      "operations": [
+        "DV-E01",
+        "DV-E02",
+        "DV-E03",
+        "DV-E04",
+        "DV-E05",
+        "DV-E06",
+        "DV-E07",
+        "DV-E08",
+        "DV-E09",
+        "DV-E10",
+        "DV-E11",
+        "DV-E12",
+        "DV-E13",
+        "DV-E14",
+        "DV-E15",
+        "DV-E16",
+        "DV-E17",
+        "DV-E18",
+        "DV-E19",
+        "DV-E20",
+        "DV-E21",
+        "DV-E22",
+        "DV-E23",
+        "DV-E24",
+        "DV-E25",
+        "DV-E26",
+        "DV-E27",
+        "DV-E28",
+        "DV-E29",
+        "DV-E30",
+        "DV-E31",
+        "DV-E32",
+        "DV-E33"
+      ]
+    },
+    {
+      "id": "DV-R12",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "Owning browser and HTTP journeys verify current company permissions, read and write reauthorization, fixed DMS machine and resource authority, separate no-READ Contribute checks, and the credential-free signed transfer boundary.",
+      "owner": "DV-I02\u201308",
+      "operations": [
+        "DV-E01",
+        "DV-E02",
+        "DV-E03",
+        "DV-E04",
+        "DV-E05",
+        "DV-E06",
+        "DV-E07",
+        "DV-E08",
+        "DV-E09",
+        "DV-E10",
+        "DV-E11",
+        "DV-E12",
+        "DV-E13",
+        "DV-E14",
+        "DV-E15",
+        "DV-E16",
+        "DV-E17",
+        "DV-E18",
+        "DV-E19",
+        "DV-E20",
+        "DV-E21",
+        "DV-E22",
+        "DV-E23",
+        "DV-E24",
+        "DV-E25",
+        "DV-E26",
+        "DV-E27",
+        "DV-E28",
+        "DV-E29",
+        "DV-E30",
+        "DV-E31",
+        "DV-E32",
+        "DV-E33",
+        "DV-E34"
+      ]
+    },
+    {
+      "id": "DV-R13",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I03–05 locally qualify upload, version, conditional changes and durable batch intents. DV-AUDIT-02 verifies independent assessment, processing and indexing updates in the open Uploads view.",
+      "owner": "DV-I03\u201306",
+      "operations": [
+        "DV-E04",
+        "DV-E06",
+        "DV-E07",
+        "DV-E09",
+        "DV-E11",
+        "DV-E12",
+        "DV-E13",
+        "DV-E14",
+        "DV-E17",
+        "DV-E19",
+        "DV-E21",
+        "DV-E22",
+        "DV-E23",
+        "DV-E24",
+        "DV-E26",
+        "DV-E27"
+      ]
+    },
+    {
+      "id": "DV-R14",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "All 32 DMS consumer operations have evidence through a real Turnstile backend. Service identity, private enrollment and signed/private surfaces have assigned evidence. Local and customer image acceptance are tracked separately.",
+      "owner": "DV-I08",
+      "operations": [
+        "DV-E01",
+        "DV-E02",
+        "DV-E03",
+        "DV-E04",
+        "DV-E05",
+        "DV-E06",
+        "DV-E07",
+        "DV-E08",
+        "DV-E09",
+        "DV-E10",
+        "DV-E11",
+        "DV-E12",
+        "DV-E13",
+        "DV-E14",
+        "DV-E15",
+        "DV-E16",
+        "DV-E17",
+        "DV-E18",
+        "DV-E19",
+        "DV-E20",
+        "DV-E21",
+        "DV-E22",
+        "DV-E23",
+        "DV-E24",
+        "DV-E25",
+        "DV-E26",
+        "DV-E27",
+        "DV-E28",
+        "DV-E29",
+        "DV-E30",
+        "DV-E31",
+        "DV-E32",
+        "DV-E33",
+        "DV-E34"
+      ]
+    },
+    {
+      "id": "DV-R15",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I08 reruns the captured old and exact candidate Core bundles against the packaged backend. The migrated and restored v3 state rejects the older API at readiness and old clients through the supported 401 path. Retained nested records and current login pass.",
+      "owner": "DV-I02",
+      "operations": [],
+      "reviewGate": "RF-01"
+    },
+    {
+      "id": "DV-R16",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I08 runs the packaged private tool, proof, revision and rollback checks and verifies real ordinary first-validator login, revocation and handover on the exact Core images.",
+      "owner": "DV-I02",
+      "operations": [],
+      "reviewGate": "RF-02"
+    },
+    {
+      "id": "DV-R17",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I03 and DV-I05 verify scoped controls, actual ingress and batch envelope limits. DV-I07 verifies the independent bounded artifact path and rejects a same-size digest mismatch before rendering.",
+      "owner": "DV-I02\u201305",
+      "operations": [
+        "DV-E01",
+        "DV-E02",
+        "DV-E03",
+        "DV-E04",
+        "DV-E05",
+        "DV-E06",
+        "DV-E07",
+        "DV-E08",
+        "DV-E09",
+        "DV-E10",
+        "DV-E11",
+        "DV-E12",
+        "DV-E13",
+        "DV-E14",
+        "DV-E15",
+        "DV-E16",
+        "DV-E17",
+        "DV-E18",
+        "DV-E19",
+        "DV-E20",
+        "DV-E21",
+        "DV-E22",
+        "DV-E23",
+        "DV-E24",
+        "DV-E25",
+        "DV-E26",
+        "DV-E27",
+        "DV-E28",
+        "DV-E29",
+        "DV-E30",
+        "DV-E31",
+        "DV-E32",
+        "DV-E33"
+      ],
+      "reviewGate": "RF-03"
+    },
+    {
+      "id": "DV-R18",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I03–07 qualify lost replies, bounded same-intent replay, expiry and private review. DV-I08 restores the exact Core database, rejects a rotated marker, confirms a preserved resolution and held draft, then compacts and prunes aged fixture records without permitting replay.",
+      "owner": "DV-I03",
+      "operations": [
+        "DV-E04",
+        "DV-E06",
+        "DV-E07",
+        "DV-E09",
+        "DV-E11",
+        "DV-E12",
+        "DV-E13",
+        "DV-E14",
+        "DV-E17",
+        "DV-E19",
+        "DV-E21",
+        "DV-E22",
+        "DV-E23",
+        "DV-E24",
+        "DV-E26",
+        "DV-E27"
+      ],
+      "reviewGate": "RF-04"
+    },
+    {
+      "id": "DV-R19",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-I06 verifies EDIT_METADATA-only and ADD_VERSION-only contribution with receipt-only reload, forbidden reads, READ-only write denial, revocation, and independent DMS owner verification of changes and publication.",
+      "owner": "DV-I06",
+      "operations": ["DV-E07", "DV-E12", "DV-E13", "DV-E14", "DV-E21", "DV-E22", "DV-E23"],
+      "reviewGate": "RF-05"
+    },
+    {
+      "id": "DV-R20",
+      "contract": "docs/api/turnstile-documents.contract.json",
+      "runtime": "DV-AUDIT-02 verifies real draft and execute denials for upload refresh, complete and cancel and batch create, item admission, close and cancel under independent restrictions, closure, decision and licence expiry, and joint restriction. Authorized reads follow each policy. Same-ID renewal resumes eligible work. DV-I03 also verifies that an accepted private scanner operation publishes under DMS existing-reads policy.",
+      "owner": "DV-I03",
+      "operations": [
+        "DV-E04",
+        "DV-E06",
+        "DV-E07",
+        "DV-E09",
+        "DV-E11",
+        "DV-E12",
+        "DV-E13",
+        "DV-E14",
+        "DV-E17",
+        "DV-E19",
+        "DV-E21",
+        "DV-E22",
+        "DV-E23",
+        "DV-E24",
+        "DV-E26",
+        "DV-E27"
+      ],
+      "reviewGate": "RF-06"
+    }
+  ],
+  "reviewGates": [
+    {
+      "id": "RF-01",
+      "contractTest": "installed v2 hashes/examples; v3 nested DTO and company scope tests",
+      "pending": "Repeat on the reviewed customer profile and target.",
+      "owner": "DV-I02",
+      "automatedTest": [
+        "packages/turnstile-contracts/test/documents.test.mjs",
+        "apps/turnstile-api/test/people.database-spec.ts",
+        "apps/turnstile-api/test/documents-upgrade.database-spec.ts",
+        "scripts/test-documents-browser.mjs"
+      ],
+      "status": "Exact local Core compatibility, retained v3 barrier and legacy readiness gates qualified"
+    },
+    {
+      "id": "RF-02",
+      "contractTest": "private validator input/scope/permission/proof presence tests",
+      "pending": "Reviewed customer provisioning and target acceptance remain separate.",
+      "owner": "DV-I02",
+      "automatedTest": [
+        "packages/turnstile-contracts/test/documents.test.mjs",
+        "scripts/test-documents-browser.mjs"
+      ],
+      "status": "Packaged Core private tool and ordinary first-validator login qualified"
+    },
+    {
+      "id": "RF-03",
+      "contractTest": "UTF-8/envelope/forwarded-body budget and error schemas",
+      "pending": "Customer ingress acceptance on the reviewed deployment and image/profile. Source product and actual local Nginx fixture evidence are recorded.",
+      "owner": "DV-I02\u201305",
+      "automatedTest": [
+        "packages/turnstile-contracts/test/documents.test.mjs",
+        "apps/turnstile-api/src/infrastructure/documents-http.spec.ts",
+        "apps/turnstile-api/src/integrations/dms/transport.spec.ts",
+        "scripts/test-documents-ingress.mjs",
+        "scripts/test-documents-upload-browser.mjs",
+        "scripts/test-documents-versions-browser.mjs",
+        "scripts/test-documents-batches-browser.mjs"
+      ],
+      "status": "DV-I02–05 scoped limits qualify, including a valid 100-item manifest across actual customer Nginx, Turnstile and DMS"
+    },
+    {
+      "id": "RF-04",
+      "contractTest": "draft/execute separation; finite replay deadline and unresolved status",
+      "pending": "Customer coordinated database and object recovery; the local exact-image rehearsal restores PostgreSQL.",
+      "owner": "DV-I03",
+      "automatedTest": [
+        "packages/turnstile-contracts/test/documents.test.mjs",
+        "scripts/test-documents-upload-browser.mjs",
+        "scripts/test-documents-versions-browser.mjs",
+        "scripts/test-documents-batches-browser.mjs"
+      ],
+      "status": "Source reconciliation and exact Core database restore, marker, retention and replay gates qualified"
+    },
+    {
+      "id": "RF-05",
+      "contractTest": "Contribute finite commands, validate plus mutation action without READ",
+      "pending": "Repeat independent contributor and owner verification on the reviewed customer profile. DV-I08 repeated the source product lifecycle browser journey.",
+      "owner": "DV-I06",
+      "automatedTest": [
+        "packages/turnstile-contracts/test/documents.test.mjs",
+        "scripts/test-documents-lifecycle-browser.mjs"
+      ],
+      "status": "DV-I06 source-built product browser gate qualified with separate DMS owner verification"
+    },
+    {
+      "id": "RF-06",
+      "contractTest": "All public command policies require both products full; GET search mapping",
+      "pending": "Repeat on the reviewed customer target.",
+      "owner": "DV-I03",
+      "automatedTest": [
+        "packages/turnstile-contracts/test/documents.test.mjs",
+        "scripts/test-documents-upload-browser.mjs",
+        "scripts/test-documents-batches-browser.mjs"
+      ],
+      "status": "DV-AUDIT-02 real independent product/DMS upload and batch control restrictions and renewal pass. The DV-I03 accepted private-work boundary also passes."
+    }
+  ],
+  "additionalSurfaces": [
+    {
+      "surface": "Direct signed PUT / original GET",
+      "owner": "DV-I03",
+      "evidence": "DV-I03 and DV-AUDIT-02 browser and transfer ingress verify exact CORS, credential omission, byte progress, conditional 412 after a lost storage reply and exact original bytes. Customer Nginx verifies the exact CSP origin and bounded ingress."
+    },
+    {
+      "surface": "Extraction artifact GET",
+      "owner": "DV-I07",
+      "evidence": "DV-I07 browser verifies direct signed artifact transfer, bounded size, SHA-256, schema and exact source identity. Native text, CSV, OCR and partial PDF render as text. Corrupted bytes and a held transfer across deletion fail before presentation. DV-I08 also verifies exact preflight allow/deny at the real transfer ingress."
+    },
+    {
+      "surface": "Private scanner/extractor/publisher",
+      "owner": "DV-I03/DV-I07",
+      "evidence": "DV-I03 and DV-I07 use real private DMS scanner, publisher, extractor and heavy worker routes with native ClamAV, the pinned English OCR runtime, RabbitMQ and SeaweedFS. Existing DMS integration covers worker grants, freshness, generation fencing and late or revoked work."
+    },
+    {
+      "surface": "Identity/enrollment/private operators",
+      "owner": "DV-I02",
+      "evidence": "DV-I02 real ordinary identity sessions, independent explicit machine scopes, fixed enrollment and private product grant/revoke/handover exercised. docs/runbooks/documents-validation.md owns provisioning procedure; no live credentials/grants changed."
+    },
+    {
+      "surface": "Selected foundation profiles",
+      "owner": "DV-I02/DV-I08",
+      "evidence": "docs/qualification/documents-audit-20261118.json pins the selected Core and DMS API images after the audit corrections, including the partial-role browser test. The DV-I02 readonly record retains its earlier Core/Incident/Risk/both inventory evidence."
+    },
+    {
+      "surface": "Upgrade/backup/restore/ledger pruning/v3 rollback fence",
+      "owner": "DV-I08",
+      "evidence": "docs/qualification/documents-audit-20261118.json repeats the exact legacy-to-candidate migration, actual pg_dump/pg_restore, retained owning state, rotated-marker quarantine, v3 rollback fence and receipt pruning with the audit corrections. Object recovery belongs to the owning DMS release rehearsal and customer handoff."
+    }
+  ]
+}

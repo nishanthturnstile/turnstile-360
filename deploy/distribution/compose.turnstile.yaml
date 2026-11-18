@@ -1,0 +1,161 @@
+services:
+  turnstile-api:
+    build:
+      context: ..
+      dockerfile: apps/turnstile-api/Dockerfile
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3002"
+      AUTH_PROFILE: ${AUTH_PROFILE:-production}
+      AUTH_PUBLIC_ORIGIN: ${AUTH_PUBLIC_ORIGIN:-}
+      AUTH_ISSUER_URL: ${AUTH_ISSUER_URL:-}
+      AUTH_LOGIN_CALLBACK_URL: ${AUTH_LOGIN_CALLBACK_URL:-}
+      AUTH_LOGIN_CLIENT_ID: ${AUTH_LOGIN_CLIENT_ID:-}
+      DMS_MACHINE_CLIENT_ID: ${DMS_MACHINE_CLIENT_ID:-}
+      IDENTITY_SERVICE_CLIENT_ID: ${IDENTITY_SERVICE_CLIENT_ID:-}
+      IDENTITY_SERVICE_RESOURCE_URL: ${IDENTITY_SERVICE_RESOURCE_URL:-}
+      INSTALLATION_TENANT_ID: ${INSTALLATION_TENANT_ID:-}
+      INSTALLATION_CUSTOMER_KEY: ${INSTALLATION_CUSTOMER_KEY:-}
+      AUTH_LOGIN_CLIENT_SECRET: ${AUTH_LOGIN_CLIENT_SECRET:-}
+      DMS_MACHINE_CLIENT_SECRET: ${DMS_MACHINE_CLIENT_SECRET:-}
+      IDENTITY_SERVICE_CLIENT_SECRET: ${IDENTITY_SERVICE_CLIENT_SECRET:-}
+      IDENTITY_SERVICE_API_URL: ${IDENTITY_SERVICE_API_URL:-}
+      DMS_RESOURCE_URL: ${DMS_RESOURCE_URL:-}
+      DMS_API_URL: ${DMS_API_URL:-}
+      TURNSTILE_DATABASE_URL: ${TURNSTILE_DATABASE_URL:-}
+      TURNSTILE_COOKIE_SECRET: ${TURNSTILE_COOKIE_SECRET:-}
+      TURNSTILE_TOKEN_ENCRYPTION_KEY: ${TURNSTILE_TOKEN_ENCRYPTION_KEY:-}
+      TURNSTILE_DATABASE_POOL_MAX: ${TURNSTILE_DATABASE_POOL_MAX:-5}
+      TURNSTILE_APPLICATION_ID: ${TURNSTILE_APPLICATION_ID:-}
+      TURNSTILE_INVITATION_ENCRYPTION_KEY: ${TURNSTILE_INVITATION_ENCRYPTION_KEY:-}
+      TURNSTILE_INVITATION_RECOVERY_EPOCH: ${TURNSTILE_INVITATION_RECOVERY_EPOCH:-}
+      TURNSTILE_SMTP_HOST: ${TURNSTILE_SMTP_HOST:-}
+      TURNSTILE_SMTP_PORT: ${TURNSTILE_SMTP_PORT:-1025}
+      TURNSTILE_MAIL_FROM: ${TURNSTILE_MAIL_FROM:-}
+      NODE_EXTRA_CA_CERTS: /run/customer-ca.pem
+    expose:
+      - "3002"
+    stop_grace_period: 45s
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3002/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))
+      interval: 15s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    networks:
+      - default
+      - ingress
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    volumes:
+      - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+  turnstile-web:
+    build:
+      context: ..
+      dockerfile: apps/turnstile-web/Dockerfile
+    expose:
+      - "8080"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - -q
+        - --spider
+        - http://127.0.0.1:8080/health/live
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - default
+      - ingress
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+  dms-api:
+    environment:
+      AUTH_MODE: combined
+      AUTH_PUBLIC_ORIGIN: ${AUTH_PUBLIC_ORIGIN:?Customer Turnstile origin required}
+      AUTH_ISSUER_URL: ${AUTH_ISSUER_URL:?Customer identity issuer required}
+      AUTH_LOGIN_CALLBACK_URL: ${AUTH_LOGIN_CALLBACK_URL:?Exact customer callback
+        required}
+      AUTH_LOGIN_CLIENT_ID: ${AUTH_LOGIN_CLIENT_ID:?Local login client required}
+      IDENTITY_SERVICE_CLIENT_ID: ${IDENTITY_SERVICE_CLIENT_ID:?Private identity-service
+        client required}
+      IDENTITY_SERVICE_RESOURCE_URL: ${IDENTITY_SERVICE_RESOURCE_URL:?Local identity-service
+        audience required}
+      NODE_EXTRA_CA_CERTS: /run/customer-ca.pem
+    volumes:
+      - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+  coordinator:
+    environment:
+      DMS_WORK_ISSUER_URL: ${AUTH_ISSUER_URL:?Customer identity issuer required}
+      DMS_WORK_ALLOW_HTTP: "false"
+      NODE_EXTRA_CA_CERTS: /run/customer-ca.pem
+    volumes:
+      - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+  work-publisher:
+    environment:
+      DMS_WORK_ISSUER_URL: ${AUTH_ISSUER_URL:?Customer identity issuer required}
+      DMS_WORK_ALLOW_HTTP: "false"
+      SSL_CERT_FILE: /run/customer-ca.pem
+    volumes:
+      - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+  scan-worker:
+    environment:
+      DMS_WORK_ISSUER_URL: ${AUTH_ISSUER_URL:?Customer identity issuer required}
+      DMS_WORK_ALLOW_HTTP: "false"
+      SSL_CERT_FILE: /run/customer-ca.pem
+    volumes:
+      - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+  extract-worker:
+    environment:
+      DMS_WORK_ISSUER_URL: ${AUTH_ISSUER_URL:?Customer identity issuer required}
+      DMS_WORK_ALLOW_HTTP: "false"
+      SSL_CERT_FILE: /run/customer-ca.pem
+    volumes:
+      - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+  heavy-worker:
+    environment:
+      DMS_WORK_ISSUER_URL: ${AUTH_ISSUER_URL:?Customer identity issuer required}
+      DMS_WORK_ALLOW_HTTP: "false"
+      SSL_CERT_FILE: /run/customer-ca.pem
+    volumes:
+      - ${CUSTOMER_EXTRA_CA_HOST_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/customer-ca.pem:ro
+  turnstile-maintenance:
+    build:
+      context: ..
+      dockerfile: apps/turnstile-api/Dockerfile
+    profiles:
+      - tools
+    entrypoint:
+      - node
+    command:
+      - --version
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - default
+      - ingress
+    env_file:
+      - path: ../.env.turnstile.migrate
+        format: raw
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

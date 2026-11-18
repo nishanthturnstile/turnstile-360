@@ -1,7 +1,7 @@
 # Onboarding upgrade and release
 
 Use this procedure for ONB-I08 with the [authentication operations](authentication.md)
-and [Dokploy deployment](dokploy.md) runbooks. The owning roles, fixed installation,
+and [Dokploy deployment](../deployment/customer_deployment_guide.md#ingress) runbooks. The owning roles, fixed installation,
 command contracts and recovery boundaries are defined in
 [architecture.md](../../architecture.md#onboarding-operations-and-upgrade).
 Actual verification and remaining target acceptance belong in [IN_PROGRESS.md](../../IN_PROGRESS.md).

@@ -5,7 +5,7 @@ import {
   PEOPLE_PERMISSIONS,
   type PeoplePermission,
   type UserAccessContextDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { PoolClient } from 'pg';
 
 export type AccessGrant = UserAccessContextDto['grants'][number];
@@ -180,7 +180,12 @@ export async function readAccess(
     workspaceComplete: row.workspace_complete,
     status: row.status,
     protectedAdministrator: row.status === 'active' && row.protected_administrator,
-    context: { catalogVersion: 1, accessRevision: row.revision, fingerprint, grants },
+    context: {
+      catalogVersion: 2,
+      accessRevision: row.revision,
+      fingerprint,
+      grants,
+    },
     units,
   };
 }

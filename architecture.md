@@ -1,8 +1,9 @@
 # Turnstile 360 and Thaarei DMS architecture
 
-**Updated:** 2026-11-04
+**Updated:** 2026-11-14
 
-**Status:** Accepted technical design with workspace foundations implemented.
+**Status:** Accepted technical design with workspace foundations implemented. The explicitly
+marked Thaarei central control-plane proposal below awaits adoption.
 
 **Owner:** Thaarei. Confidential and proprietary under [LICENSE](LICENSE).
 
@@ -22,11 +23,12 @@ feature implementation.
 | [DMS product blueprint](docs/dms/headless_dms_product_blueprint_v1.md)                           | Product promise, included/deferred scope, product correctness, deployment inputs, and product decision history                                                                           |
 | [DMS functionality requirements](docs/dms/headless_dms_functionality_requirements_v1.md)         | Stable FR/NFR IDs and capability dependency order                                                                                                                                        |
 | [Standalone DMS implementation plan](docs/dms/dms_implementation_plan.md)                        | Requirement-mapped delivery, independent installation/integration, API explorer and standalone verification gates; planned work is not implementation                                    |
+| [Thaarei control-plane specification](docs/thaarei/control-plane-specification.md)               | Owner-adopted central approval/reporting scope; runtime delivery remains pending                                                                                                         |
 | [Onboarding specification](docs/turnstile/onboarding/onboarding_specification.md)                | Accepted ONB-R01–13 product scope and acceptance; delivery packages remain in the linked implementation plans                                                                            |
 | [User-management specification](docs/turnstile/user-management/user_management_specification.md) | Accepted UM-R01–22 product requirements and D01–03 decisions; the proposal preserves discovery and the linked plan sequences delivery                                                    |
 | [Workspace standards](docs/standards/workspace.md)                                               | Coding, formatting, configuration, and verification conventions                                                                                                                          |
 | [Workspace implementation plan](docs/workspace/workspace_implementation_plan.md)                 | Workspace setup sequence, CLI provenance, and original validation                                                                                                                        |
-| [Dokploy runbook](docs/runbooks/dokploy.md)                                                      | Deployment commands and operator steps                                                                                                                                                   |
+| [Dokploy runbook](docs/deployment/customer_deployment_guide.md#ingress)                          | Deployment commands and operator steps                                                                                                                                                   |
 | [IN_PROGRESS.md](IN_PROGRESS.md)                                                                 | Actual implementation, verification, active work, gaps, and agent handoffs                                                                                                               |
 
 Keep technical design changes here and link from other documents. Update affected
@@ -38,7 +40,7 @@ production-readiness, or compliance claims.
 Navigation: [status](#implementation-status), [system picture](#system-context),
 [repository](#repository-and-package-dependencies), [installed stack](#installed-toolchain-and-libraries),
 [Turnstile](#turnstile-application-architecture), [DMS components](#module-and-contract-boundaries),
-[identity](#tenancy-identity-and-authorization), [upload](#seaweedfs-storage-and-upload-protocol),
+[central proposal](#thaarei-central-control-plane-proposal), [identity](#tenancy-identity-and-authorization), [upload](#seaweedfs-storage-and-upload-protocol),
 [processing](#processing-provenance-and-ai-readiness), [jobs](#durable-jobs-events-and-reconciliation),
 [deployment](#development-and-current-deployment), [recovery](#backups-recovery-and-controlled-disposal).
 
@@ -192,7 +194,11 @@ Future process entry points and feature files are added with their capabilities.
 │   │   ├── src/{public,internal,events,artifacts}/
 │   │   └── generated/ fixtures/
 │   ├── dms-client/src/
-│   └── turnstile-contracts/src/
+│   ├── turnstile-contracts/src/
+│   ├── control-plane-contracts/src/
+│   ├── module-catalog/src/
+│   ├── deployment-control/src/
+│   └── installation-engine/src/
 ├── patches/                               # pinned dependency corrections
 ├── tooling/
 │   ├── typescript/{base,library}.json
@@ -202,6 +208,7 @@ Future process entry points and feature files are added with their capabilities.
 │   ├── compose.local.yaml, compose.dev.yaml, compose.dokploy.yaml, compose.mailpit.yaml
 │   ├── Dockerfile.dev, development-ports.json
 │   ├── nginx/nginx.conf
+│   ├── installation/{Dockerfile,installer}
 │   └── artifacts/
 ├── tests/system/
 ├── .github/workflows/workspace.yml
@@ -215,11 +222,15 @@ Future process entry points and feature files are added with their capabilities.
 `apps/turnstile-mobile` is a possible future path and does not exist. `turnstile_processing`
 is the current Python import name; its responsibility is reusable DMS processing.
 
-| Package                        | Intended contents / consumers                                                                                                                    | Boundary                                                                                                                                          |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@thaarei/dms-contracts`       | Public DMS requests/responses, separate private job payloads, events, artifact schemas, errors/statuses; API/client and generated Python schemas | Schemas/types only; no Nest, database, Turnstile domain logic, or credentials. Keep private contracts separate from public exports as implemented |
-| `@thaarei/dms-client`          | Typed HTTP calls, transport configuration, machine-token attachment, stable errors, idempotency-aware retries for trusted backends               | Depends on DMS contracts; no DMS repositories/services or Turnstile user authorization; never bundled into a frontend                             |
-| `@thaarei/turnstile-contracts` | Product requests/responses, schemas, errors, pagination for Turnstile API, web, and future mobile                                                | Platform-independent; no DOM, Node-only runtime, UI framework, Nest, database, or DMS internal-job dependencies                                   |
+| Package                            | Intended contents / consumers                                                                                                                    | Boundary                                                                                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@thaarei/dms-contracts`           | Public DMS requests/responses, separate private job payloads, events, artifact schemas, errors/statuses; API/client and generated Python schemas | Schemas/types only; no Nest, database, Turnstile domain logic, or credentials. Keep private contracts separate from public exports as implemented |
+| `@thaarei/dms-client`              | Typed HTTP calls, transport configuration, machine-token attachment, stable errors, idempotency-aware retries for trusted backends               | Depends on DMS contracts; no DMS repositories/services or Turnstile user authorization; never bundled into a frontend                             |
+| `@thaarei/turnstile-contracts`     | Product requests/responses, schemas, errors, pagination for Turnstile API, web, and future mobile                                                | Platform-independent; no DOM, Node-only runtime, UI framework, Nest, database, or DMS internal-job dependencies                                   |
+| `@thaarei/control-plane-contracts` | Platform-independent signed machine/status/report contracts                                                                                      | No Nest, databases, server state or credentials                                                                                                   |
+| `@thaarei/module-catalog`          | Pure module catalogue, profile, intent and decision schemas/validation                                                                           | No Node-only runtime or application/database imports                                                                                              |
+| `@thaarei/deployment-control`      | Server-only signing verification, durable deployment client/store and private preparation primitives                                             | Public contracts and authenticated HTTP; no cross-application database imports; never a browser dependency                                        |
+| `@thaarei/installation-engine`     | Versioned private operator orchestration and strict release/input/result contracts                                                               | Only the transient operator gets Docker authority; invokes owning packaged commands/public HTTP, never application source or repositories         |
 
 The current manifest dependency graph is:
 
@@ -287,8 +298,9 @@ at root. AUTH-02 also installs `nodemailer` 10.3.1 with development `@types/node
 explicit Fastify 5.12.7 in both APIs and root development `pg` 8.23.1 for isolated database
 tooling. Authority/BFF and real browser-to-DMS evidence are recorded in progress; actual
 deployment and customer provisioning remain separate. Python currently has no runtime dependencies.
-The S3 SDK, Celery/processing engines, OpenAPI generation, OpenTelemetry and
-React Testing Library remain later additions. The web design system is now selected
+DMS-I02 adds the contract/explorer and development-only JSON Schema tooling documented
+in [its owning section](#consumer-api-contract-and-explorer-dms-i02). The S3 SDK,
+Celery/processing engines, OpenTelemetry and React Testing Library remain later additions. The web design system is now selected
 and installed as documented below; React Router owns web navigation. No client-state/form library, mobile library,
 or Turnstile domain dependency has been added.
 
@@ -393,6 +405,434 @@ The consumer backend checks user permissions before each document action and kee
 machine credentials/enrollment keys private. An audit user identifier asserted to the DMS
 does not delegate user permissions. Other applications consume the same DMS contract;
 the DMS never imports Turnstile business rules.
+
+### Documents validation workspace proposal
+
+2026-11-18 DV-I02 adds the guarded read-only runtime workspace to DV-I01's executable
+contract baseline. Actual qualification is tracked in IN_PROGRESS.md; no live deployment
+or startup grant is implied. DV-I03 adds the ordinary secure-only text upload slice and
+current-original download through the intent ledger.
+The six DMS-WEB-REVIEW-01 findings are resolved by the decisions below; executable contracts and their tests are delivered in DV-I01–03/DV-I06.
+Product scope and DV-R/DV-E IDs are in the
+[Documents validation specification](docs/turnstile/documents/documents_validation_specification.md);
+delivery sequencing is in the
+[implementation plan](docs/turnstile/documents/documents_validation_implementation_plan.md).
+DV-I01 encodes this baseline before any runtime route, permission or grant is enabled.
+The isolated `@thaarei/turnstile-contracts/documents` export constructs the v3 graph;
+the package root preserves exact v2 schemas and the runtime subpath adopts v3 with an
+explicit legacy wire projection before activation. Both versions use shared
+schema factories, including nested People, import, invitation, impact and receipt shapes.
+The [generated contract](docs/api/turnstile-documents.contract.json) records the finite
+catalogue and budgets; the [coverage register](docs/turnstile/documents/documents_validation_coverage.json)
+separates contract, runtime, image and target evidence. The immutable
+legacy fixture records 85 schema hashes and checked synthetic examples captured from
+the installed API package, with exact API/web image IDs and seven web asset hashes.
+The capture supplies the actual legacy assets for DV-I02 ordinary-browser compatibility
+qualification; the capture alone does not prove that release gate. Shared public DMS validators are reused through the public
+contracts package only; no server/private DMS imports enter product contracts.
+
+
+Use a feature-owned Turnstile Documents service/controller and web feature, with
+`integrations/dms` translating to typed `@thaarei/dms-client` methods over authenticated
+HTTP. Platform-independent product DTOs belong in `@thaarei/turnstile-contracts`;
+browser code does not import the server client or DMS private contracts. DMS retains
+all document, binary, security, processing, grant and search authority. Turnstile stores
+only necessary product operation/linking records in its own persistence.
+
+Extend the existing foundation DMS integration for this explicit validation workspace;
+DV-I02 updates the source-owned foundation inventory and verifies all selected build
+profiles. Documents is not a newly selectable commercial module. Signed installation/
+module policy and independent DMS approval still apply. All Documents permissions are
+explicit company-wide grants, with no implicit grants to members or system administrator
+templates. Unit-scoped libraries/business workflows remain separate scope.
+
+The new permission names are `turnstile:documents:read`, `:upload`, `:edit`, `:restore`,
+`:lifecycle`, `:share`, `:reprocess`, `:audit` and `:validate`, all using the same
+`turnstile:documents` prefix. Read covers directory/detail/history/content/search and
+ordinary status; upload covers creation/new-version and eligible session/batch controls;
+edit covers metadata/tags/references; the remaining names cover binary restore, logical
+lifecycle, application grants, reprocessing, owner audit and validation diagnostics.
+None implies READ or another action. Connection/bootstrap requires shell entry and at
+least one company Documents permission, with each subsequent route checking its action.
+Contribute requires validate plus edit/upload as applicable; no document READ is added.
+
+The authorization intersection is current product session/access context, explicit action
+permissions, readiness and Turnstile deployment/module policy, DMS deployment policy,
+machine registration/token scope ceilings and DMS resource rights. Product and DMS grants
+are distinct. Consumer audit attribution is not a DMS human principal. All actions use
+server-derived actor attribution; browser inputs cannot select an audit actor, tenant or
+calling application. DMS actor fields must use their defined bounded syntax. Owner-only
+actions remain owner-only; shared rights are independent. Do not infer effective shared
+mutation rights from global capabilities. Normal shared document tabs are read-only.
+Shared writes use the explicit Contribute flow below; no new effective-rights DMS API is
+required for this baseline.
+
+#### Access contract rollout and first validator
+
+Retain the exact current catalogue-v2 permission set/schemas as legacy wire contracts;
+the Documents permission catalogue is v3. The new web client sends
+`X-Turnstile-Access-Contract: 3` on session and permission-bearing product requests.
+This header declares response compatibility only; it never grants authority. DV-I01
+catalogues all affected routes, including session, catalogue, role/member/access views,
+eligible roles, invitations/import previews/results, impact and command readback. Any
+nested permission-bearing payload participates in this gate, not only the catalogue.
+
+Use a staged cutover. First deploy the dual-contract API and negotiating web with
+Documents grants/role creation disabled. Requests without the header keep exact legacy
+v2 shapes and the old permission enumeration; negotiated requests use v3. Then verify
+the actual pre-upgrade bundle and new bundle against this API. Before the first Documents
+role/grant is committed, atomically enable a private durable v3-required release barrier.
+Thereafter legacy permission-bearing reads and writes return the existing supported
+401 LOGIN_REQUIRED recovery envelope, before emitting incompatible data or executing a
+write. Check the barrier and produce the legacy projection or commit the command under
+the same owning access-context fence as activation/grants; a check before entering the
+transaction is insufficient. Serialize in-flight legacy reads/writes with activation so
+they either finish against v2 state or take supported recovery. Never strip new rights
+out of role snapshots or accept legacy role replacement
+commands that could erase unseen permissions. Current clients keep their existing
+session; an older open page uses its supported sign-in/full-navigation recovery to load
+the current no-store entry document. Do not revoke all sessions to perform this cutover.
+
+Identity login/recovery/logout, health and the unchanged capabilities DTO retain their
+existing contracts. Old-bundle tests must prove the explicit 401 recovery reaches the new
+bundle without a false 503 or partial write, and that current People/catalogue/session
+behavior still works after new grants exist. Test newly assigned and unassigned users,
+nested roles/invitations/imports, lost activation acknowledgement and concurrent old
+writes. Retained pre-upgrade invitations, import jobs and command receipts must remain
+readable under their captured versions; wire migration cannot rewrite historical grant
+snapshots, command hashes or receipt identities. Include those retained records in the
+old/new-client evidence. DV-I02 cannot open Documents without this evidence. On rollback, keep the v3
+barrier closed to legacy clients while v3 roles/grants/receipts remain; an old API cannot
+be restarted against new permission data without an owning coordinated rollback/restore.
+
+DV-I02 implements a private product-owned Documents grant/handover command, separate
+from HTTP role management and DMS operators. Protected JSON stdin supplies an operation
+key, expected access revision, reviewed reason, verified current administrator/operator
+session proof, active target-user proof, custom role ID and an explicit subset of the
+nine Documents permissions plus shell entry. Use the existing private product-operator
+boundary; ordinary HTTP anti-escalation rules remain unchanged. Reject foreign/inactive
+members, invalid proof, stale revision, unexpected permissions and system-role changes.
+The command creates/updates only the reviewed custom company role/assignment, commits
+the v3 barrier before any new grant becomes visible, and records atomic audit/receipt
+and access-context revision. Same-input retry is safe; changed input conflicts. Revocation
+and deliberate handover are supported without changing protected administrator counts.
+Verify real ordinary login/session-v3, action access and subsequent revocation before
+calling the first validator provisioned. No startup or migration creates such a grant.
+
+Keep `/api/dms/capabilities` compatible. Add a separate versioned Documents bootstrap
+projection with effective operations, format capabilities and admission limits, plus
+typed domain errors, request correlation and retry/readback guidance. Extend the machine
+token configuration and private issuer/registration provisioning explicitly for only the
+required read/write/audit scopes; changing a client request alone grants nothing. Use
+operation-specific finite control-response bounds rather than the current universal
+16 KiB client response ceiling. Keep token/enrollment bounds unchanged.
+
+DV-I02 runtime adoption uses `@thaarei/turnstile-contracts/runtime` in the API/web;
+the root export remains the frozen v2 contract. Request-local negotiation fences session
+access reads and every owning People/invitation transaction under `lock_access_context`.
+Readiness, identity/recovery and auth logout stay independent. Catalogue projection removes
+only static v3 definitions from pre-barrier legacy responses; saved rights are never
+stripped. The access row gains `documents_contract_required`; its private monotonic trigger
+and a deferred Documents-permission guard are verified by readiness. Access release version
+2, including the owning lock helper, closes old API startup against the upgraded database.
+Retained-row migration advances revision without rewriting roles or receipt digests.
+Private Documents commands use current administrator/target product cookies, provider live
+verification and the owning operator role. Barrier activation shares the existing revision
+update with grant/audit/receipt commit. Reviewed reasons are inserted into append-only audit;
+handover audits both subjects. No operator changes system templates or administrator counts.
+
+The separate server-only Documents token provider explicitly reads private
+`DMS_DOCUMENTS_SCOPES`, preserving the existing capabilities-only token cache. Required
+issuer/registration changes are independent private provisioning. Finite named client GETs
+validate path/query/response contracts, use the Documents response budget and the remaining
+handler deadline, and replay only one explicit expired machine token. Product service reads
+verify tenant/application capabilities and current company permissions before dispatch and
+again before exposing a late result. No database transaction spans remote HTTP. Product
+projections derive owned/shared status and omit calling-application identity selectors.
+
+The foundation web feature owns All documents, saved Overview and Connection/policy with
+its own contextual navigation. Per-scope query clients partition identity/fingerprint,
+revision and URL; retired scopes cancel and clear, and only stale active reads refetch after
+verified checks. No cache or local receipt grants DMS resource authority. The customer
+Nginx template owns scoped Documents request ceilings and typed 413/415 errors with
+correlation and no-store headers. Counter-upstream ingress evidence remains distinct from
+real product parser/authorization evidence. Operator/qualification workflow is in the
+[Documents runbook](docs/runbooks/documents-validation.md).
+
+#### Documents HTTP budgets
+
+DV-I01 defines these Documents-only limits in the public product contract; DV-I02
+registers Fastify parser/error hooks before the routes are enabled. Limits apply to
+actual UTF-8 bytes, including envelope fields; also enforce the independent upstream
+body/manifest limits after server-derived actor fields and canonicalization.
+
+| Boundary                                                        | Maximum / deadline                                                                                    |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Ordinary Documents JSON request                                 | 16,384 bytes                                                                                          |
+| Upload/new-version/metadata-edit/known-ID contribution envelope | 36,864 bytes; inner forwarded DMS control remains at most 32,768 bytes                                |
+| Batch creation envelope                                         | 270,336 bytes; forwarded DMS control at most 266,240 bytes and manifest at most 262,144 bytes         |
+| Documents control JSON response                                 | 1,048,576 bytes; schema-level item/count bounds still apply                                           |
+| Extraction artifact                                             | Existing DMS 26,214,400-byte ceiling; separate transfer/parse path, never the control-response helper |
+| Control request deadlines                                       | Upstream 8 seconds, product handler 10 seconds, browser 15 seconds                                    |
+
+Headers carry operation ID, If-Match and CSRF where applicable. The 4 KiB envelope
+allowance does not expand DMS descriptor/metadata limits or admit arbitrary wrapper keys.
+The intent-creation route uses the same per-command budget as its eventual execution.
+Product/gateway request limits for these exact JSON routes must admit their listed
+envelopes, while rejecting larger requests; direct file bytes bypass product JSON routes.
+Preserve global auth/People limits. Parser/ingress 413 and media-type 415 map to typed
+Documents errors with correlation; test exact bounds, one byte over, multibyte strings,
+actor/envelope overhead and the real gateway path, not only controller validation.
+
+Classify product operations by domain semantics before exposing them. Bounded product
+GET search translates to DMS POST search. All public Documents mutations, including
+upload complete/refresh/cancel and batch controls, continue to require full access in
+both products. DMS public write-scope transactions already enforce full access; its
+private worker completion exception is not public consumer authority. If either product
+is existing-reads, preserve known IDs/intent, allow only currently authorized reads and
+show that user writes are paused. Already accepted private work can continue under its
+existing fences. Resume public commands only after both policies are full and original
+intent/revision/replay eligibility is reauthorized. Neither a new key nor an expired
+licence bypasses this gate. No public completion exception or blanket exemption is added.
+
+#### Intent identity and bounded reconciliation
+
+Create a product-owned draft intent and return its server-minted UUID before sending
+any DMS mutation. Draft creation alone has no DMS effect; loss of that response may leave
+an unused draft. Execution/retry must name an existing intent UUID and exact canonical
+command/digest, actor, expected revision and stored upstream key. A missing, pruned,
+expired or resolved-conflicting ID returns a typed 410/conflict and never becomes a new
+execution implicitly. Forwarded actor attribution and keys are server-derived. No DB
+transaction spans HTTP; remote success followed by local-link failure is uncertain.
+
+For receipt-backed commands, reconciliation is allowed only while currently authorized
+and before the earlier of first dispatch plus 23 hours or a returned replayUntil minus
+60 seconds. Use stored server time and stop under the existing clock/recovery quarantine.
+Retry uses the same key/body/revision, with no changed actor or descriptor. On re-entry,
+reauthorize before any replay; a deadline is not authority to replay as an expired user.
+Known upstream IDs can be inspected after that deadline using ordinary read authority.
+If IDs were lost and the deadline passes, upstream returns 410, or a policy denial
+prevents timely recovery, persist UNRESOLVED_REQUIRES_REVIEW. Do not create a new key,
+report failure as rolled back, or claim automatic ID recovery after the DMS window.
+Manual private inspection can attach a verified binding or leave the case unresolved;
+it cannot synthesize a receipt or extend the upstream replay deadline.
+
+Command payloads expire 30 days after execution becomes terminal or unresolved; compact
+unresolved ID/digest/key/status evidence survives until explicit disposition. Reserve
+one of 100 installation-wide unreconciled-operation slots atomically before dispatch;
+pending uncertain and unresolved intents share this bound. Release only after a verified
+terminal binding/outcome or manual disposition, not merely on timeout/expiry. Reject new
+execution with a typed capacity error when full. Keep resolved key/digest tombstones for
+90 days after resolution.
+Unknown IDs remain non-executable after tombstone pruning because only draft creation
+mints IDs, and retry/execution never recreates missing records. Do not reuse IDs/keys.
+Pending/unresolved intents cannot silently fork a replacement; a new reviewed command
+requires explicit disposition of the original uncertainty. Revision-only writes use
+readback/conflict review, not receipt replay or assumed success.
+
+Turnstile stores one product-owned intent per reviewed command in
+`turnstile.documents_intent`. The draft UUID is also the stable upstream key for
+upload begin and complete, new-version admission, binary restore, batch creation,
+batch-item admission and batch closure.
+A 15-second dispatch lease separates an in-flight claim from its
+recovery, while the handler and upstream deadlines bound the attempt itself.
+The owning access lock serializes admission against the 100 uncertain-operation slots.
+Unstarted drafts expire after one day and are limited to 1,000 per installation. A pending
+or unresolved command reserves its subject for that action. Upload begin uses the file
+digest, upload controls use the upload ID, edits and reference commands use the document
+ID, and version admission and restore use the document ID plus the file digest or source
+version ID. Batch creation uses the reviewed set of file digests and targets, item
+admission uses the batch and item IDs, and batch controls use the batch ID. A changed
+descriptor cannot silently replace that operation. The browser can
+reopen its latest 100 authorized local operation receipts or read a known receipt by ID.
+
+Authorized replay uses live policy in both products. Refresh and cancel are checked
+through a current status read after an ambiguous attempt. Only confirmed cancellation
+can resolve that way. A private reviewed decision can attach a DMS-verified upload,
+restore, batch or item binding or dispose of an independently accounted-for outcome. It records the reason
+and current protected administrator without reopening a dispatch window. Each draft
+carries the independent product recovery marker digest, so a restored in-flight intent
+or draft from a prior marker goes to review. Payload retention starts at the initial
+terminal state, while the 90-day tombstone period starts at resolution or disposition.
+
+The ledger stores neither signed URLs, credentials, file bytes nor extracted content. Ledger reads
+recheck product permissions and DMS resource authority before projecting fresh upstream
+data; local operation ownership is not document READ authority. The ledger supplies
+Turnstile-initiated activity/known-ID recovery, not a complete DMS directory. Test lost
+response plus local crash across the replay deadline, pruning, restore and delayed retries.
+
+#### Ordinary document details and versions
+
+The owned-document Overview uses conditional title, tag, metadata and namespaced reference
+writes. Each command carries the reviewed document revision as the DMS `If-Match` value.
+A definitive stale-revision response closes that intent and the task retains the draft
+for explicit review against the latest revision. After an ambiguous response, a fresh
+authorized read confirms the requested fields or reference state. An unmatched state
+requires private review. Recovery for these mutations uses readback only.
+
+The Versions tab reads the DMS version directory and individual details using the current
+document READ authority. DMS owns the current pointer and exposes upload, security and
+availability independently. Original download can target the current version or a selected
+authorized version. New text binaries use the secure-only upload flow, including the same
+file checks, explicit completion and private assessment. DMS checks the new-version
+descriptor's title and metadata against the document at the reviewed revision.
+Binary restore creates a new assessed revision from the selected historical version
+under the owning registration.
+It requires explicit company restore permission and full access in both products. The browser
+receives an admission acknowledgement and can read assessment progress with current READ
+authority. DMS controls when that version becomes current.
+
+#### Ordinary batch manifests and saved activity
+
+Turnstile records the reviewed batch command before calling DMS. The submitting actor
+can reopen its batch receipts and the retained manifest's item identifiers, filenames,
+byte counts and digests. DMS owns the batch ID, item bindings, capacity, closure and
+independent state counts. The product reads each DMS status page through current
+Documents READ and preserves DMS's per-item session omissions. The local manifest view
+requires the submitting actor and current upload permission.
+
+An item admission carries only the saved batch ID and item ID at the browser boundary.
+The API derives the descriptor and attribution from the saved manifest. Ordinary
+new-version items also reauthorize READ and verify application ownership. Each item
+reuses its original operation key. The browser transfers one selected secure-only text
+file at a time, verifies the reselected file against its saved name, size and digest,
+and requests completion through the existing upload intent. A capacity delay pauses
+the remaining selection. A closed batch can finish already started eligible sessions.
+Cancellation preserves published versions and uses authorized readback after a lost reply.
+
+The gateway admits the 270,336-byte ceiling only on the exact operations creation
+route. The parser applies the smaller raw limits to each other command. Forwarding
+checks the 266,240-byte DMS control and the 262,144-byte item array after adding server
+attribution and version selectors. The ledger reserves a bounded 400 KiB JSONB storage
+limit for batch creation commands to account for PostgreSQL serialization whitespace.
+
+#### Owner recovery, application grants and activity
+
+Recovery reads the owner-only DMS lifecycle endpoint for a known document ID. The
+product ledger retains the actor's recorded lifecycle IDs and receipts so they can
+be reopened when the active document detail is unavailable. Logical deletion uses
+the reviewed revision. After a lost deletion response, the product confirms the
+expected lifecycle transition through authorized readback. Logical restore replays
+the original DMS receipt key within its window. DMS owns restore deadlines, generation
+fences, reassessment and current-original availability.
+
+Application access replaces a reviewed grant set by conditional DMS request. The
+editor accepts provisioned application IDs and independent READ, EDIT_METADATA and
+ADD_VERSION flags. DMS validates active same-installation targets and owner authority.
+Activity reads owner application or document audit using DMS cursors. It labels the
+recorded actor and any application-asserted subject separately and presents download
+authorization as the audited event.
+
+#### Processing, extracted content and discovery
+
+Turnstile reads DMS history by current or explicit version, with the upstream cursor
+bound to that version. History shows the accepted active run, retained runs, coverage,
+warnings and index state. Run selection keeps the exact version and run identity fixed.
+Search maps typed product GET filters to the DMS discovery POST and presents English
+matches and index state. Each matched source links to its exact version, run and unit.
+Neither response exposes a tenant or calling-application selector.
+
+Ordinary file and new-version admission offer formats and profiles from current
+capabilities and admission policy. DMS still assesses every original and owns profile
+compatibility, publication, generation and indexing. Owner-only reprocessing requires
+current Documents READ and reprocess access, full policy in both products and the
+applicable machine scopes. Migration 0045 records the exact version and acknowledged
+run with the stable intent key. A replacement only becomes active when DMS accepts
+the result. A failed run leaves the prior accepted extraction and secure original
+available under current authority.
+
+#### Shared contribution without document READ
+
+Documents → Validation → Contribute offers explicit known document ID, owner-supplied
+current revision and intended edit/reference/new-version inputs. New-version descriptors
+include owner-supplied title/metadata and a file SHA-256; no automatic document detail,
+history or status read is performed. Require current product validate plus edit/upload
+permission, full deployment access and the DMS mutation right. Normal shared read tabs
+link to this form rather than infer mutation rights. A submitted intended command is
+not a write probe for permissions; DMS remains the final check and denied commands show
+the normal bounded error without discovering other documents.
+
+Render only the caller-submitted fields and minimal acknowledgement/IDs/revision actually
+authorized by the mutation response. ADD_VERSION-only can receive begin/refresh/complete/
+cancel acknowledgements but cannot GET upload status; after 202 show completion accepted,
+publication not observable with current rights. Do not poll/read with an owner credential,
+fall back to another application, or infer success from a local receipt. A stale revision
+requires new owner-supplied inputs and reviewed intent, not a hidden refetch. After reload,
+the ledger exposes only local submission/acknowledgement state absent a permitted DMS
+read; it cannot become a read bypass. No-READ batch reads retain only the submitting
+application's permitted manifest and omit unauthorized live session projections.
+
+The ledger stores each operation's immutable mode. Contribution receipts, upload
+control bindings and retries inherit that mode and its current company permissions.
+Version admission and completion use their original keys. A lost non-receipted
+contribution outcome enters protected review because its product flow has no
+authorized recovery read. Definitive refusals release the subject for a corrected
+review. The mutation response is reduced to a local acknowledgement, known upload
+binding and any transient transfer capability before reaching the browser.
+
+DV-I06 browser tests use one installed Turnstile registration and a separately provisioned
+fixture owner backend. The latter supplies nonsecret revision/descriptor inputs and
+independently verifies persisted effects/publication. Explicitly assert successful
+EDIT_METADATA-only and ADD_VERSION-only contribution plus denied detail/status/content/
+download and owner-only actions; READ-only must still deny edits/add-version. Evidence
+distinguishes contributor acknowledgements from owner-observed outcomes.
+
+Keep direct signed storage transfer at the configured DMS transfer origin. The deployment
+must derive an exact CSP `connect-src` allowlist from validated installation configuration,
+coordinate it with `DMS_STORAGE_BROWSER_ORIGINS`, retain the signed Host/path/query and
+verify production ingress headers. DV-I03 uses the exact HTTPS `DMS_DOCUMENTS_TRANSFER_ORIGIN` in the customer gateway
+and product API configuration. The storage ingress uses its own exact browser-origin
+allowlist and keeps the signed request target intact. Operations creation applies the
+per-command JSON budgets defined above.
+The configured origin is nonsecret; no service credential enters Vite or browser assets. No wildcard CSP/CORS,
+arbitrary URL proxy or extra host-port allocation is proposed. Browser PUT uses known-size
+File/Blob with the returned Content-Type and If-None-Match; the browser sets Content-Length.
+Storage requests omit cookies, product CSRF/actor headers and machine Authorization.
+The upload client uses XHR progress events on the separate transfer origin with
+credentials disabled and the product's no-referrer policy. The owning ingress drops
+upstream Location headers. Bytes sent and storage acknowledgement are separate from
+the product's completion and assessment states.
+
+Original download and extraction-artifact GET are distinct capabilities. Validate an
+artifact's declared maximum size, exact bytes/hash and public extraction schema before
+rendering. Bind the manifest to the declared source hash, version and run and check
+the same selection through a fresh authorized product read after transfer. The browser
+holds extracted bytes only in the active viewer and pages source units, tabular cells,
+OCR words and installed structured-layout artifacts. It renders formulas, extracted
+text and search snippets as untrusted text. Signed capabilities are short-lived and
+ephemeral. An already issued storage capability can remain usable until expiry.
+
+Reuse the established web shell, semantic primitives and scoped query patterns, with
+document-specific cache keys containing verified identity/access context and relevant
+document/version/run/filter. Invalidate after writes and on authority/session changes;
+discard extracted content/capabilities when access changes. Preserve distinct upload,
+security, availability, processing and index states. Foreground upload monitoring
+uses the service's upload retry hint, then continues polling queued/running processing
+and pending index status at bounded intervals. No preview capability, filesystem
+folder model, general operator UI or private worker endpoint becomes browser-accessible.
+
+#### Documents validation diagnostics and release evidence
+
+The company Documents validate permission protects the runtime checklist and the
+service identity read. Checklist entries use the finite contract inventory and
+the expected readback descriptions generated from the coverage register. A role
+action indicator evaluates the same complete company permission set as ordinary command
+execution. Connection lists operations for the ordinary workflow, filtered for current
+deployment access and advertised DMS operations. Explicit Contribute eligibility is
+evaluated separately without READ. DMS still checks resource rights. The browser records one
+sanitized observation per operation during the current verified Documents visit.
+An observation contains a finite operation identifier, HTTP status, request
+correlation and a typed outcome. It keeps neither request targets, payloads nor
+transfer capabilities. Verified identity/access changes retire observations.
+Private provisioning remains a coverage row with no public execution path.
+
+Release qualification uses the existing signed selected-image builder and the
+captured legacy package. Exact-image compatibility evidence records migrations,
+bootstrap, runtime image identities, browser verification and the v3 rollback
+fence. The disposable database archive rehearsal restores all schemas into an
+isolated database, compares selected owning table snapshots and verifies recovery
+marker quarantine before applying new fixture approval. Artifact/object recovery,
+optional processing profiles and customer acceptance keep their owning evidence.
 
 ### Onboarding implementation baseline
 
@@ -1190,7 +1630,7 @@ provide the browser evidence. Actual target backup/migration/administrator hando
 separate operator actions and evidence; this baseline does not execute them.
 
 Operator procedures are linked from the [authentication runbook](docs/runbooks/authentication.md#onboarding-release-boundary)
-and [deployment runbook](docs/runbooks/dokploy.md#onboarding-release-boundary). The
+and [deployment runbook](docs/deployment/customer_deployment_guide.md#ingress). The
 [I08 release procedure](docs/runbooks/onboarding-release.md) supplies executable local
 and one-off production-image commands and phase-specific recovery. Local-only helpers
 capture a protected coherent backup outside the checkout, rehearse restore/migration and
@@ -1760,7 +2200,7 @@ credential in transient memory only. Reload after losing the exchange reopens cu
 acceptance still requires explicit review. Members/Invitations/Roles and Structure have
 independent workspace routes/loaders; company configuration remains in Settings.
 
-Existing `/api/auth/login`, `/callback`, `/session`, `/logout`, `/api/workspace/status`,
+Existing `/api/auth/{login,callback,session,logout}`, `/api/workspace/status`,
 `/api/setup`, `/api/setup/complete`, `/api/organization` and `/api/organization/units`
 routes keep their established policy. Extend auth login/callback only with server-held
 purpose discrimination; existing exact registered callback is unchanged. Fixed `/sign-in`
@@ -2417,10 +2857,118 @@ or application transport/request deadlines. Rate-boundary fixtures seed current/
 or explicit future/expired metadata rather than relying on a slow scenario finishing within
 the same wall-clock minute.
 
+Catalog capability evolution preserves already-open strict browser clients. The catalog
+omits durableImports unless X-Turnstile-People-Features requests imports-v1. Current Users
+clients send this opt-in only to the catalog route; no authorization derives from it.
+All existing fields and strict response validation remain intact. A successful HTTP response
+rejected by a current browser schema is reported locally as PEOPLE_RESPONSE_INVALID with
+refresh/draft-preservation guidance, rather than being described as a service outage.
+Such mutation outcomes remain uncertain and never trigger automatic write replay.
+
+#### Durable CSV invitation jobs (UE-08)
+
+PeopleModule owns CSV invitation imports; no DMS queue or identity database is accessed.
+The API accepts one UTF-8 `email` column (BOM/quoted fields/CRLF/LF), at most 128 KiB and
+500 nonblank recipient records. Record numbers count nonblank CSV records with the
+header as record 1; quoted multiline fields stay in one record. Only the create route
+permits a 256 KiB JSON envelope;
+other People limits/deadlines are unchanged. Each job has one shared reviewed assignment
+snapshot, organization revision, creator, normalized rows and durable per-row command IDs.
+No raw CSV, browser session, authority token or invitation link is stored in job records.
+There are at most ten active jobs and 100 retained jobs per installation, retained up to
+90 days. Tenant-prefixed keys/RLS and runtime CRUD permissions apply to both owning tables.
+
+States are draft, queued, running, paused, completed and cancelled. Draft review expires
+in ten minutes. Start/resume requires the original creator's current normal session and
+People/grant coverage; any current company People manager can inspect or cancel a job.
+Starting authorizes bounded background continuation after the browser closes. The worker
+uses only the persisted creator ID, never a stored login credential; each row rechecks
+current Access, a present verified creator at the owning identity authority, assignment
+versions, organization context, deployment and release opening.
+Changed authority/context pauses the job; changed assignments require a new reviewed
+import, with completed rows retained. Existing members/actionable invitations are skipped.
+
+Each API process runs one nonoverlapping timer worker. Due jobs are claimed under the
+existing installation/access lock with a 60-second fenced lease and one row per drain;
+rows are paced at seven seconds and honor the unchanged actor ten/minute and installation
+100/hour invitation budgets. Rate waits use the budget boundary instead of consuming
+new attempts. Bounded transient retries reuse the exact persisted command/key, read
+existing operation receipts first and never generate a new key for an uncertain result.
+An uncommitted command invalidated by intervening Access changes fails explicitly; it
+cannot silently adopt revised authority. At most five transient attempts precede a pause.
+The invitation owner saves the success row receipt inside its commit transaction, so
+lost acknowledgements/restarts cannot reissue a completed row. Cancellation and final
+validation use the same locks; a committed invitation remains valid while uncommitted
+rows become cancelled. Existing SMTP delivery independently owns retries/uncertain mail.
+Graceful shutdown waits for one in-flight row. A later process reclaims expired leases.
+
 #### People and scoped structure UI (UM-I10)
 
+Users enhancements retain the existing authority boundaries. `GET /api/people/audit`
+requires company People management and uses the narrow SECURITY DEFINER
+`turnstile.read_people_audit` reader (migration 0035), with a pinned search_path, PUBLIC
+execution revoked, tenant-setting equality, live People coverage and bounded page size.
+Runtime access_audit permissions remain append-only; no direct SELECT is granted.
+The reader combines user-attributed access events and invitation lifecycle events within
+the existing 90-day retention, omitting private operator-only access events. Filters cover
+source/action/subject/from/to. Ordering uses timestamp, ID and source, preserving PostgreSQL
+microseconds in filter/fingerprint-bound cursors. The UI exports only its displayed page
+as quoted/formula-neutralized CSV and does not reconstruct absent historical field values.
+Actor/subject display names resolve only from linked product records and are marked as
+current/last verified context. Stable identifiers remain available in disclosure/export;
+role-name resolution additionally requires Roles authority. Ambiguous cross-record IDs
+retain their identifiers rather than receiving an inferred label. Runtime readiness checks
+the audit reader's owner, definer mode, pinned search path and non-public execution grant.
+`GET /api/people/members/{id}/access` requires People management and actor unit-read
+coverage for an optional exact-unit target. It uses readAccess/covers and returns matching
+saved grant sources, suspension precedence and explanatory reasons. The result describes
+workspace authorization, not a promise that identity authentication or deployment is open.
+Offboarding guidance uses existing suspension/reactivation commands; identity-wide sessions,
+credentials and provisioning remain at the identity authority. API schemas/examples and
+generated OpenAPI own the public contracts. The permission catalog advertises usersInsights=1.
+Directory search/status/role/coverage/delivery/sort filters live in URL parameters and
+reset pagination on changes or browser navigation. Member sorting captures normalized
+name and stable ID; invitation sorting captures the exact created/expiry instant and ID.
+Cursor bindings include filters, sort and current access. Role counts link to matching
+members and actionable invitations. Delivery filtering uses the same effective expired
+delivery state as detail reads. Migration 0036 adds tenant-prefixed creation-order and
+accepted-subject indexes. Member dates project only recorded invitation acceptance and/or
+legacy access import; creation and last-active dates are never inferred. Invitation dates
+include recorded acceptance, cancellation and invalidation where applicable. Bulk preflight
+errors identify the recipient; copying unsent addresses excludes saved/uncertain outcomes.
+Expanded role/coverage filters use aligned columns when their container has sufficient
+width and stack on smaller screens. Unit results scroll within a bounded filter area.
+Search forms size to their controls; only direct horizontal-toolbar searches receive a
+flex basis, so vertical role/unit pickers never reserve empty toolbar-sized height.
+
+Users server data uses TanStack React Query 5.107.1 within the People/Structure session
+boundary. Query keys contain the subject, live Access fingerprint, caller revision and
+canonical full URL (filters/sort/cursor included). Only bounded read responses are cached
+in memory, for 30 seconds fresh and five minutes unobserved; each consumer validates its
+own wire-response projection. No session, CSRF, impact proof, command receipt, mutation,
+secret or persisted browser store enters this cache. Subject/unavailable-session/fingerprint
+transitions cancel and discard old queries while retaining same-subject local draft owners.
+Denied reads hide their cached data, clear inactive protected results and recheck live auth.
+Writes have no automatic retries. Successful owning commands invalidate affected directory,
+metadata, usage/activity and structure keys without replaying a write; previews do not.
+Invalidation cancels preceding matching reads so a late pre-write reply cannot mark
+obsolete data fresh after an intervening edit.
+Import progress invalidates dependent invitation/usage/activity reads when saved rows grow.
+Global Access revision changes also invalidate scoped read metadata even when the actor's
+grant fingerprint is unchanged. Only stale active queries refetch after the workspace owner
+completes its live authority checks; inactive tabs refresh when visited. Window focus and
+reconnect do not independently start query requests ahead of those authority checks.
+
+Users subtab changes keep the common header/navigation mounted and visible. Navigation
+still verifies a live session and deployment status before committing the destination;
+only completed setup/module context may be reused for up to 30 seconds between different
+Users tabs, with identical subject/fingerprint/deployment and a fixed expiry. Focus,
+post-mutation checks, other destinations and failures take the full verification path.
+Cold tab reads show loaders only inside their content area; cached/stale reads keep data
+visible with background update status. Filter changes never show another filter's rows.
+
 The completed-workspace shell composes independent `/people/members`,
-`/people/invitations`, `/people/roles` and `/structure` routes. Navigation uses the live
+`/people/invitations`, `/people/roles`, `/people/activity` and `/structure` routes. Navigation uses the live
 normal session; each route loads only its owning authorized API. Permission refresh updates
 the existing shell. People-only and role-only screens do not request company configuration
 or structure snapshots. The permission catalog additionally projects the current organization
@@ -2429,43 +2977,113 @@ These additive fields guide drafts; transactional backend checks remain authorit
 Eligible role definitions and unit choices are fetched independently, with bounded paging;
 unit context contains canonical ancestor paths and does not confer management access.
 
-Completed-workspace navigation groups Members, Invitations and Roles under People & access;
-Structure is a separate destination. The requested route drives visible active states in
+Completed-workspace navigation has one Users entry under People & access, with Members,
+Invitations, Roles and Activity available as permission-filtered internal sections. Users opens
+Members for People managers and Roles for role-only managers, and stays active across
+the People routes. Structure is a separate destination. The requested route drives visible active states in
 both navigation areas while owning loaders still wait for session authorization. The old
 Settings Structure URL redirects to `/structure`; the old Workspace settings URL redirects
 to General settings, which edits organization name/time zone together. Setup overview
 links to the canonical Structure editor. Onboarding retains its dedicated configuration
 journey; company-only profile data is never loaded for scoped structure users.
-Structure offers chart/outline presentations over the same authorized page and one reviewed
-command flow. Read-only units open details without mutation controls. Company unit managers
+Structure offers chart/outline presentations over one complete authorized hierarchy and one reviewed
+command flow. The dedicated hierarchy read query assembles the existing 100-unit cursor
+pages within the configured 500-node/eight-level boundary, publishing only when organization
+revision, Access revision, total and explicit ancestor paths agree. Cancellation, duplicate
+units/cursors, inconsistent context or an incomplete batch cannot publish a fresh tree.
+The owning Query cache uses the current subject/Access scope and a hierarchy projection
+discriminator; no unrestricted configuration snapshot is fetched. Background reads keep the
+previous verified hierarchy visible and local errors require deliberate Reload. Canonical
+ancestors supply presentation geometry but never become actionable unit records.
+Read-only units open details without mutation controls. Company unit managers
 can add sites under the root. New unit-scope assignments default child coverage on; saved
 assignments are retained verbatim. Custom role editing selects one intended action at a
 time (details, permissions, copy or deletion), preserving separate backend authorization.
 
-Members Invite person carries a one-shot router-state compose intent to Invitations.
-Only the authorized owning route opens the empty composer; it consumes the intent with
-history replacement, so ordinary tab navigation/Back does not reopen a discarded draft.
-It does not issue invitations, choose a role or bypass the ordinary loader/command checks.
-Access inspectors use the shared Card panel variant: task header/close, independently
-scrolling body and persistent action footer, with natural document scrolling on narrow
-screens. Impact/recovery actions render into the same footer while the owning Review
+Users has a stable header and permission-filtered Members/Invitations/Roles link row.
+Member invitation tasks open directly within Members or Invitations. The older router-state
+compose intent remains compatible and is consumed once. All task owners retain the owning
+People permission gate; composing never sends mail or grants access. Invitations use a
+compact table separating approval state, email delivery and expiry. SMTP acceptance is not
+claimed as recipient delivery. Role directories show permission summaries; role editing
+uses a wider dedicated task with explicit details/permissions/duplicate/delete actions.
+New roles can start from an authorized built-in permission template without copying its
+protected system identity. Permission groups include the registered business-module actions.
+
+Member search supports roleId and unitId filters against one saved assignment. Coverage
+matches company-wide assignments, exact unit anchors, or current descendant coverage.
+Unit filtering requires current read authority for that unit; filter values are included
+in revision/fingerprint-bound cursors and counts apply to the full authorized result set.
+The permission catalog advertises memberAssignmentFilters; clients omit these controls
+when an older API does not advertise support, rather than sending unsupported queries.
+Imported independent access is still displayed separately and is not a role assignment.
+Role-list usage counts distinct saved members and unexpired pending/reapproval invitations;
+counts are returned only to actors with both company Roles and People powers. Role-only
+responses omit usage and never enumerate membership or invitation identities.
+
+Bulk invitation composition is bounded to ten distinct normalized recipient addresses and
+one explicit common assignment set. It orchestrates independent existing owning commands,
+not an atomic transaction. Initial review validates every recipient; explicit confirmation
+sends sequentially with a fresh session/current impact proof per item. The reviewed recipient,
+role versions, scope and organization revision remain fixed. Each item retains its own
+idempotency key; failures stop later items and saved results remain visible. A lost response
+offers command-status readback and explicit re-review/retry of the identical command/key;
+neither receipt lookup nor UI refresh replays a write. Definite readiness rejection stays
+failed, rather than uncertain. Drafts and batch receipts stay in memory and clear on subject change.
+
+Users task sheets compose the shared Base UI Sheet and Card panel variant: task
+header/close, independently scrolling body and persistent action footer at every viewport.
+The overlay leaves directory widths unchanged and occupies the full screen on phones.
+Base UI manages focus containment; closing returns to the initiating control. Escape and
+outside dismissal use the same draft guard as Close, with an accessible discard dialog.
+Portal keepMounted plus the current People activity gate retains same-subject drafts while
+keeping unauthorized or expired-session tasks hidden and inert. Structure opens a nonmodal
+unit overview over the unchanged desktop canvas, or a modal overview on phones. Explicit
+create/rename/move/delete tasks use the same guarded Sheet composition; Close, Cancel,
+Escape and outside dismissal preserve pending/uncertain commands and confirm dirty discard.
+Impact/recovery actions render into the same footer while the owning Review
 component retains its state and idempotency key. Closing is disabled during pending or
 uncertain writes; dirty close and role-action switches require deliberate discard.
 Permissions are grouped by purpose with company-only/required labels. New assignments
-start with no role selected. Saved invitations expose their approved roles/coverage and
-lifecycle rather than an editable-looking disabled form. No authorization semantics change.
+start with no role selected. Saved invitations expose their approved roles/coverage, creation/expiry dates and
+lifecycle, with state-specific close/actions. New invitation tasks begin with one
+unselected role row; single and bounded batch recipients have associated inline errors.
+Coverage choices retain selected canonical paths during search and explain loading or
+empty results. Role View opens a read-only overview; creation may use built-in templates.
+Duplication is an explicit new custom-role draft with editable copied permissions and the
+ordinary current grant ceiling; it does not patch the original role or copy protected identity.
+Permission edits and member assignment reviews show additions/removals relative to the
+opened saved record; the server assessment and version/revision checks remain authoritative.
+Review expiry removes the proof from the UI and offers reassessment. No authorization
+semantics change.
 
-Roles and scoped Structure share a compact directory surface, search/filter/reload toolbar
-and adjacent non-modal editor. Wide workspace pages use up to 82rem; at 70rem and below
-the selected editor precedes its directory. Roles use the shared semantic table with
-permission summaries and explicit system/protected labels; narrow screens retain role
-identity/actions and expose permissions through the editor. Structure reconstructs a
-nested outline from only the current authorized page and its supplied ancestor paths.
-Path-only ancestors have collapse controls but no management action; collapsed units keep
-their own label/action visible. Search/page changes expand the new result ancestry and do
-not infer missing siblings or fetch full configuration. The unit editor selects one
-rename/create/move/delete operation at a time. Both editors retain existing owning APIs,
-permission gates, version capture, impact review and confirmation.
+Users directories retain their compact directory surfaces and search/filter/reload toolbars.
+They remain full width while member, invitation and role tasks open in modal sheets. Wide
+directory pages use up to 82rem. Structure owns the available workspace canvas beneath one
+compact heading, search/view/action toolbar and path/count row, without a second page
+scrollbar. Its scoped adapter reuses the native pointer/touch/keyboard camera and automatic
+layout helpers from configuration presentation, rather than the unrestricted onboarding
+controller. Connected cards and a dense outline share selection/collapse state. Search
+matches authorized units and retains explicit ancestry; branch focus/breadcrumbs never
+infer hidden siblings. Camera transforms and branch state remain transient. A desktop
+overview reserves unobscured camera space without relaying out nodes. Phone defaults to
+outline and uses the shared full-viewport sheets. No diagram dependency or saved positions
+are introduced. Eligible department move handles use native pointer capture and indexed
+destination checks. A drop opens the ordinary move draft and impact review; it never
+writes directly. Invalid drops, pointer cancellation and Escape do not send commands.
+The same action remains available through the keyboard-accessible Move chooser.
+Root-only management reads organization context only through the existing
+authorized company endpoint. Unit task forms infer legal types, omit known invalid move
+destinations and explain visible non-leaf restrictions; transactional backend checks remain
+authoritative for hidden references, complete subtree coverage and current limits.
+Drafts capture their opened versions; explicit stale-context reload preserves intended
+fields and requires a new review. Uncertain writes retain their exact command/key and
+offer uncached receipt or full scoped-hierarchy readback, including root creation. Confirmed
+saves never become uncertain because a subsequent refresh fails. Permission-gated Members
+links reuse advertised assignment filters; no employee/headcount or unit-wide access metrics
+are invented. Roles retain their semantic tables and permission summaries, with narrow
+details in the owning editor. Existing APIs, authorization, impact proofs and receipts
+remain unchanged by this presentation work.
 
 The Members directory uses compact person/status/role-and-coverage rows, with a direct
 Invitations link. Selecting a member opens a saved-access overview; role editing is an
@@ -2486,8 +3104,9 @@ After a successful mutation, a fresh session/access read drains any preceding in
 read before checking current state. Focus/interval checks join that refresh, and dependent
 list reloads wait for it. This sequences cookie/context changes without retrying writes.
 Assignment controls show actual permissions, company-only constraints and explicit child-unit
-coverage. Shared-role and member/invitation changes obtain server impact proofs before an
-explicit confirmation. A command keeps one idempotency key; an uncertain response offers
+coverage. Shared-role and member/invitation changes obtain server impact proofs automatically upon
+entering review, before an explicit operation-specific confirmation. Failed/stale reviews
+have an explicit retry; uncertain writes remain in readback recovery and never auto-review. A command keeps one idempotency key; an uncertain response offers
 authorized readback and never automatically replays a write. Structure moves use their
 own impact API. Loading and failures remain local to the section; authoritative confirmation
 precedes refreshed saved data. The restricted invitation entry displays approved permission
@@ -2630,6 +3249,988 @@ Tika and Calamine are selected for the included Office/spreadsheet scope. Instal
 Use the NestJS Fastify adapter and compatible Fastify plugins, with exact package/container versions pinned in the implementation. Maintain the lockfile and bill of materials as part of ordinary dependency management. [NestJS adapters](https://docs.nestjs.com/techniques/performance)
 
 The monorepo uses pnpm/Turborepo, Biome, and uv. Turnstile 360 is the consumer product: its Vite/React frontend and separate NestJS/Fastify backend live beside the reusable DMS and Python processing project. Turnstile business functionality and data migration are specified separately. The [workspace implementation plan](docs/workspace/workspace_implementation_plan.md) records setup provenance; [workspace standards](docs/standards/workspace.md) define coding rules. Workspace setup precedes capability implementation.
+
+## Thaarei central control plane proposal
+
+**Adopted design, 2026-11-06 (TCP-I01):** The owner authorized implementation and explicitly
+accepted the remaining restriction, staff-access, reporting/retention and two-host defaults.
+Use the technical design below for sequenced delivery. Adoption changes the product
+baseline; it does not claim runtime implementation or change deployed DMS behavior. The
+[specification](docs/thaarei/control-plane-specification.md) owns TCP requirement IDs and
+policy decisions; the [delivery plan](docs/thaarei/control-plane-implementation-plan.md)
+owns execution and acceptance gates. Actual implementation and verification live in IN_PROGRESS.md.
+The earlier registry-only draft is superseded by this proposal.
+
+### Components and deployment boundaries
+
+Use one `apps/thaarei-control-plane` Next.js App Router application: staff UI,
+server-only domain services, Better Auth staff sessions and HTTP Route Handlers in one
+Node container. It has its own PostgreSQL database, owning migrations/runtime roles,
+SMTP configuration and protected entitlement signing key. No separate Nest API, Redis,
+broker, telemetry platform, remote agent or customer inbound network access is needed
+for v1. The existing DMS and Turnstile backends remain NestJS/Fastify.
+
+Use the monorepo for code ownership but deploy the central app independently in Thaarei
+infrastructure, behind Dokploy TLS. Keep build context at the repository root.
+Select Next.js and create-next-app **16.4.5** together for TCP-I02; registry metadata
+checked on 2026-11-06 requires Node >=20.9 and accepts React 19. Retain existing React/DOM
+19.3.1 and TypeScript 6.0.3. TCP-I02 installs these exact versions for the central application.
+Use Better Auth, its Drizzle adapter and `auth` CLI **1.7.14**, preserving the workspace
+patch, Drizzle ORM 0.45.4, drizzle-kit 0.31.11 and pg 8.23.1. Use the built-in two-factor
+plugin and Next handler integration; the central app does not install an OAuth provider.
+TCP-I02 generates scaffolding and staff auth/MFA schema with those installed CLIs;
+real build and HTTP verification is recorded in IN_PROGRESS.md.
+Do not upgrade other applications incidentally. Retain Node/pnpm pins and
+Biome. Development uses an isolated machine/environment with the reserved port bindings;
+all 23600–23608 assignments in the current local stack remain intact. On the separate
+central development machine/environment, reserve loopback 23600 for
+Next (container 3000), 23603 for PostgreSQL (5432), and 23604/23605 for fixture SMTP/inbox
+(1025/8025). Start no central stack on this active customer development machine. Production
+publishes only Dokploy HTTPS; PostgreSQL/SMTP stay private. Reusing fixed port numbers on
+an isolated machine does not authorize concurrent bindings here, fallback ports or changes
+to deploy/development-ports.json. A central local runtime here needs a separately isolated
+environment first; TCP-I02 build/tests may use disposable fixtures under the existing test rule.
+
+Selected public packages are `@thaarei/control-plane-contracts` for platform-independent
+schemas/DTOs and `@thaarei/deployment-control` for the server-only HTTP client, signed
+approval verifier and bounded sync logic. The latter contains no application repositories,
+Nest wiring or credentials and cannot be imported by browser code. Each product supplies
+its own persistence, scheduler and summary provider. No application imports another's
+source or database schema; HTTP is the only runtime integration.
+
+```mermaid
+flowchart TB
+  Staff[Thaarei employee browser] -->|Staff session| CP[Central Next.js UI and server endpoints]
+  CP --> CPDB[(Thaarei control-plane database)]
+  subgraph Customer[Customer infrastructure — one tenant per installation]
+    Browser[Customer browser] --> T[Turnstile backend]
+    T -->|Existing local machine token and DMS enrollment| D[DMS API]
+    D --> Coord[DMS coordinator and local processing]
+    T --> TDB[(Turnstile-owned data)]
+    D --> DDB[(DMS-owned data and storage)]
+  end
+  T -->|Outbound HTTPS: own credential and own summaries| CP
+  Coord -->|Outbound HTTPS: DMS credential and DMS summaries| CP
+  CP -.->|Signed approval in response to sync| T
+  CP -.->|Signed DMS approval in response to sync| Coord
+```
+
+Each customer is a central registry record with installations such as production/test.
+Each installation has separate **deployed product** records for DMS and Turnstile, each
+bound to that installation, customer tenant and product. DMS can also be sold alone.
+A DMS application's local registration remains a different entity: additional customer
+backends enroll with their local DMS, not with Thaarei unless they are separately managed
+Thaarei products. A DMS-wide approval gates its consumers without issuing their tokens.
+Replicas and restarts share the deployed product's durable identity; they are not new
+installations. A genuinely separate environment needs separate product records.
+
+### Two Linux hosts and customer configuration
+
+The owner-confirmed topology has two independent Linux hosts: a Thaarei central host and
+one customer host per installation. Containers do not span those hosts and Docker service
+names resolve only inside their owning host/network. Customer runtime databases never
+move to Thaarei. The central API receives reports, not access to customer databases.
+
+| Host          | Required components                                                                                                                                    | Persistence and ingress                                                                                                                                                |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Thaarei       | Next.js app with integrated endpoints, central PostgreSQL, staff SMTP integration                                                                      | Independent central auth/registry/report/audit database and signing-key recovery; own Dokploy HTTPS hostname                                                           |
+| Each customer | Turnstile Vite/Nginx frontend, Turnstile Nest/Fastify backend, DMS API with local identity; DMS coordinator/transfer and installed processing services | Customer PostgreSQL with separately owned auth, DMS and Turnstile data; customer-only storage, broker, signatures and enabled workers/parsers; own Dokploy domains/TLS |
+
+The three customer applications are not the entire DMS runtime. PostgreSQL, SeaweedFS,
+RabbitMQ, coordinator/publisher/workers and scanning/parsing dependencies required by the
+selected DMS profile also stay on the customer host. Separate application data ownership
+currently uses separate schemas/roles in a customer PostgreSQL database; it does not
+require three PostgreSQL server containers. No central shared database or cross-host
+SQL integration is introduced. Provisioning/migration credentials remain private one-off
+operator inputs on the owning host; never pass customer migrator URLs to the central app.
+
+Current source anchors are [production app Compose](deploy/compose.dokploy.yaml),
+[frontend server](deploy/nginx/nginx.conf), [development proxy](apps/turnstile-web/vite.config.ts),
+[Turnstile auth configuration](apps/turnstile-api/src/infrastructure/auth-environment.ts),
+[identity transport configuration](apps/turnstile-api/src/integrations/identity/identity-environment.ts)
+and [DMS authority configuration](apps/dms-api/src/modules/platform-auth/authority-configuration.ts).
+Development Vite proxies do not provide production routing. Nginx serves static assets;
+Dokploy must route the APIs/authority explicitly. The committed three-app Compose is not
+a complete customer distribution, and the separate I18 complete DMS distribution must be
+composed into a customer product release rather than mistaken for a Turnstile release.
+
+For the existing supported combined customer flow, use customer-owned origins, for example:
+
+| Configuration or route           | Customer combined deployment contract                                                                                                                            |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_PUBLIC_ORIGIN`             | Customer Turnstile HTTPS origin, e.g. `https://turnstile.customer.example`; never the Thaarei control-plane origin                                               |
+| `AUTH_MODE` on DMS               | `combined` for this established shared-origin Turnstile flow                                                                                                     |
+| `AUTH_ISSUER_URL`                | That customer origin plus `/identity`                                                                                                                            |
+| `AUTH_LOGIN_CALLBACK_URL`        | That customer origin plus `/api/auth/callback`; exact registered callback                                                                                        |
+| `AUTH_LOGIN_CLIENT_ID` / secret  | Customer-local login client; confidential secret only in Turnstile backend                                                                                       |
+| `DMS_RESOURCE_URL`               | Exact customer DMS audience, e.g. `https://dms.customer.example/v1`                                                                                              |
+| `DMS_API_URL`                    | Private customer transport, e.g. `http://dms-api:3001/v1`; same logical DMS resource, not central API                                                            |
+| `DMS_MACHINE_CLIENT_ID` / secret | Separate local DMS consumer identity, plus its existing registration/enrollment                                                                                  |
+| `IDENTITY_SERVICE_RESOURCE_URL`  | Customer authority origin plus `/identity/services/accounts`                                                                                                     |
+| `IDENTITY_SERVICE_API_URL`       | Private customer DMS origin, e.g. `http://dms-api:3001`, using its dedicated identity-service client/secret                                                      |
+| Fixed installation IDs           | `INSTALLATION_TENANT_ID`, `INSTALLATION_CUSTOMER_KEY` and Turnstile's `TURNSTILE_APPLICATION_ID` match owned bootstrap; never selected from browser/report input |
+| Database/secret settings         | Auth and DMS URLs/secrets stay in DMS owning processes; Turnstile URL/cookie/token/invitation keys stay in Turnstile; no runtime gets migrator credentials       |
+
+Route customer `/` and SPA paths to `turnstile-web:8080`; give `/api` priority to
+`turnstile-api:3002`; route `/identity` and its exact well-known metadata alias to
+`dms-api:3001`. The customer DMS domain exposes only approved `/v1` and controlled transfer
+routes. Keep `/internal/identity`, private job/operator routes and databases off public
+routing; the product's private identity adapter still uses its authenticated local HTTP
+service. Provision `IDENTITY_SERVICE_CLIENT_ID` separately from the login and DMS clients,
+with its own secret and only `identity:invitation:prepare` / `identity:subjects:read` scopes.
+The private transport must reach both `/identity/oauth2/token` and `/internal/identity/v1/*`;
+registering a login callback alone does not make invitations/account projection work.
+Both authorities must agree on the identity-service audience. Private HTTP transport does
+not change the canonical HTTPS issuer/audience.
+Customer API containers must resolve/reach their own canonical issuer over trusted TLS
+through customer ingress; configure DNS/hairpin routing and CA trust explicitly. Replacing
+the issuer with the central origin, localhost or a Docker service URL is not a repair.
+
+The standalone DMS distribution uses `AUTH_MODE=standalone` and may publish its authority on
+a DMS origin. Its explicit `AUTH_LOGIN_CLIENTS` policy does not by itself remove Turnstile's
+current same-origin issuer/callback checks. TCP-I05/I06 must supply and test a combined
+customer overlay with the above bindings; do not point the existing Turnstile BFF at a
+different-origin standalone issuer without a separately reviewed auth-contract change.
+The DMS-only distribution remains a separate profile. Standalone `AUTH_LOGIN_CLIENTS=[]`
+provides no combined-mode login fallback: any deliberately supported standalone login
+consumer needs explicit login/consent/callback/logout/verification/reset policy and actual
+client provisioning. Merely adding a JSON screen policy creates no OAuth client. Qualify
+both login and full invitation/account workflows in the combined customer overlay. No
+user auth setting is repurposed as a central activation or staff login setting.
+
+New product-owned central settings use this selected namespace; they are not implemented env vars yet:
+`CONTROL_PLANE_ORIGIN` (fixed canonical HTTPS Thaarei origin), `CONTROL_PLANE_INSTALLATION_ID`,
+`CONTROL_PLANE_PRODUCT_ID`, `CONTROL_PLANE_MACHINE_SECRET_FILE` and
+`CONTROL_PLANE_VERIFICATION_KEYS_FILE`. Expected product type and local tenant/application
+binding come from validated owning installation state. Pin approval issuer/audience/type
+independently of customer OAuth. Central settings include its own public origin, database,
+staff auth secret/SMTP and `CONTROL_PLANE_SIGNING_KEY_FILE`; no customer database or OAuth
+secret appears there. The configuration contract below freezes their meaning; TCP-I05/I06 wire validation,
+private environment examples, explicit Compose mappings, package/runtime entrypoints and
+operator commands. An env variable absent from a Compose mapping is not delivered merely
+because it appears in an example file.
+
+Persist product machine secrets in protected owner-managed host files mounted read-only
+into only their reporter/setup processes. Keep plaintext out of application tables,
+images, Compose text and browser builds. Setup/rotation commands durably write a candidate
+file before calling Thaarei, along with its operation ID, expected credential generation
+and exact binding. Serialize setup/rotation with a product-owned lock shared by reporter
+and operator commands; reporter election alone does not fence private rotation commands.
+Centrally compare-and-swap the expected generation, digest and binding in one transaction;
+a concurrent stale rotation conflicts rather than replacing the winner. After acknowledged
+replacement or authenticated recovery with that candidate, atomically promote the candidate
+only if the local operation/generation still matches, then reload the reporter. API replicas need only verified decision
+state and public keys; they do not need the reporter's central secret. Product databases
+store credential metadata and applied-decision/report state, not a second competing copy
+of the credential. Include protected files in encrypted owning-host recovery procedures.
+Central verification keys are public trust configuration, provisioned out of band; the
+private signing key exists only at Thaarei and in its protected recovery material.
+
+Allow outbound DNS and HTTPS to the pinned central host only from the Turnstile reporter
+and DMS coordinator. Explicitly configure and qualify that coordinator egress path in the
+customer Compose overlay. The inspected coordinator already joins `default`, `storage` and
+`work`; `work` is internal but `default` is not declared internal. Do not infer either no
+egress or verified central DNS/TLS reachability merely from these network declarations.
+Keep broker/storage/scanner/parser networks private and parser egress denied. TLS
+verification stays enabled, redirects fail closed and any required corporate proxy/CA
+must be explicit operator configuration. Do not relax frontend CSP/CORS or expose a
+customer callback port for central reporting. Central staff URLs are not customer
+login/recovery URLs. No reporter uses a caller-supplied central URL.
+
+Keep process/dependency health independent of approval: ingress and Compose startup use
+liveness/local dependency readiness, while business readiness reports approval state.
+Never require approval before launching the reporter or obtaining the first approval, and
+never withdraw identity/recovery/read routes merely because business readiness is 503.
+Reporter activation/sync continues in pending, suspended and expired states. A backend
+report is not evidence that customer Nginx, DNS, browser delivery or another service is
+healthy; frontend release metadata may be supplied by the deployment manifest and must
+be labelled as configured/reported, not an independently observed browser uptime check.
+
+### Authentication and authorization boundaries
+
+| Caller                                   | Credential and verifier                                                       | Permitted authority                                                                    |
+| ---------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Thaarei employee browser                 | Central Better Auth database-backed session; host-only Secure HttpOnly cookie | Staff role checked on every server entry; never customer administration by implication |
+| Deployed Turnstile backend               | Unique central machine bearer secret, SHA-256 digest stored centrally         | Activate/sync/rotate only its product record                                           |
+| Deployed DMS coordinator                 | Different unique central machine secret                                       | Activate/sync/rotate only its DMS product record                                       |
+| Customer browser                         | Existing local product session                                                | Local product permissions; no direct central machine API access                        |
+| Turnstile or another backend calling DMS | Existing local OAuth machine token and active DMS registration                | Existing scopes, ownership/grants and tenant checks, plus DMS installation approval    |
+| Workers, publisher, storage              | Existing private local identities                                             | No central staff or product credential; local work policy still applies                |
+
+Staff identity, fixed roles, MFA/session limits and mutation authorization follow the
+[selected central staff access policy](#central-staff-access-policy). Live authorization
+applies to Server Components, Route Handlers and Server Actions; a redirect or cookie
+presence is insufficient. Use the pinned Better Auth Next adapter and two-factor plugin
+without importing customer authority code. No shared cookies, auth tables or signing keys
+with customer deployments. Qualify actual plugin/adapter behavior in TCP-I02.
+
+Machine endpoints reject staff cookies as credentials. Resolve scope from the authenticated
+product record, not IDs in a payload. A machine cannot change approval, client identity,
+product, environment, grants or any other installation. Keep HTTPS strict, bodies bounded,
+responses no-store and credentials out of URLs, browser bundles, audit and logs.
+
+### Pairing and signed approvals
+
+Before registration, the customer operator exports a nonsecret setup manifest from the
+local bootstrap command: durable local installation ID, tenant UUID, product name, local
+application ID where applicable, environment label and build version. Staff uses this
+manifest to register expected bindings. Contact details come from staff entry; measured
+status and usage arrive only in later authenticated reports. Bootstrap and this export
+work before approval; neither opens business access. Where the current schema has no
+separate durable deployment ID, the implementing setup slice must persist one before
+export; it must not infer identity from a transient container ID or change the existing
+OAuth audience/tenant/application identity as a shortcut.
+
+1. Staff creates the client, installation and expected deployed products. For each product,
+   staff issues a random, one-use 24-hour pairing code, bound to the expected installation,
+   product and tenant. Deliver it through a protected installer file; an authorized staff
+   download is transient and has no customer service credentials. Keep only a digest
+   centrally; never put it in a URL or ordinary browser storage.
+2. A local private setup command durably persists a fresh 256-bit central machine secret,
+   operation/request ID and exact binding before its first request. It submits the pairing
+   code, secret and exact binding over TLS.
+   Central pairing atomically consumes the code, stores only the machine-secret digest,
+   binds the product and returns a nonsecret receipt. A paired product remains pending;
+   it has no entitlement to run business operations yet. No general central signup exists.
+3. Staff reviews the bound deployment and explicitly approves it. Approval, reason, actor,
+   revision and audit commit together. Approved initial activation requires a successful
+   machine sync; record first issued approval separately from first applied activation
+   acknowledged by the product. Pairing is not local DMS consumer enrollment.
+4. Machine sync returns a signed discriminated product decision with `state` equal to
+   `approved`, `pending`, `rejected` or `suspended`. All variants contain exact issuer,
+   product audience, customer/installation/local-installation/tenant/product-record IDs,
+   local application binding where applicable, binding epoch, policy revision, monotonic
+   `decisionSequence`, issue/not-before/expiry times and decision ID. Approved variants
+   additionally carry the permitted product entitlement. No unsigned outer `status`,
+   telemetry field or HTTP success may authorize product operation. Sign with a separate
+   central RS256 key and explicit JWT type `thaarei-deployment+jwt`, using maintained JOSE
+   tooling; this is neither a DMS access token nor a staff session.
+5. Validate signature, pinned algorithm/type/issuer/audience, full binding and time bounds
+   including at most seven days of validity. Initially accept a denial only while its
+   signed envelope is valid; persist its verified denial/revision as durable policy after
+   application. Subsequent envelope expiry never clears that denial or falls back to a
+   previously approved grant. Within the current binding epoch, order by policy revision
+   then decision sequence, both centrally allocated atomically. A policy transition raises
+   revision; a renewal within the same revision preserves state/binding and raises sequence.
+   Identical sequence/content is replay; conflicting content or state at the same revision
+   is a protocol error. Reject lower ordering values and stale responses. Only a strictly
+   newer signed `approved` revision can clear an applied suspension/rejection. A new epoch
+   is adopted only through explicit authenticated rebind, never ordinary grant acceptance.
+   Use only provisioned trusted public keys/key IDs and never fetch a token-selected URL.
+6. Bootstrap/readiness/recovery stay available before approval; normal business operations
+   require a valid local decision. Turnstile checks its own decision and user rights;
+   DMS checks its own decision and existing caller/resource policy. Independent approval
+   of Turnstile cannot bypass an unapproved DMS. No synchronous central lookup is made
+   on each business request, and no network call is held inside a business transaction.
+
+A lost pairing response is recovered with the same request ID, code, binding and locally
+persisted machine secret within a 24-hour receipt window. After that receipt expires, an
+authenticated sync using the candidate secret can still recover its current exact binding,
+credential generation and decision, if pairing committed and that credential remains live.
+This authenticates the current product; it does not replay an expired pairing code or old
+grant. If that candidate is unrecognized or revoked, require staff-reviewed replacement;
+never silently regenerate a secret or bind a second product. Changed inputs conflict;
+replay cannot return old approval after suspension/replacement. Sync uses a durable report
+ID and payload digest; identical retries preserve receipt identity and do not duplicate
+usage. It can return a newer current decision, never resurrect a recorded older one.
+
+### Proposed timing and restriction policy
+
+The owner selected seven-day renewable approval with daily renewal on 2026-11-06.
+On the same date the owner explicitly adopted the remaining defaults and restriction
+exceptions below. The historical heading is retained for links. Staff session limits are configured by TCP-I02. Product sync/approval/report/retention
+limits remain selected delivery policy for their owning increments.
+
+| Setting                  | Selected value and meaning                                                                                                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Outbound product sync    | Every 15 minutes with jitter; one elected reporter per product installation                                                                                                                                  |
+| Approval renewal         | Renew when less than 6 days remain, normally once daily                                                                                                                                                      |
+| Signed approval lifetime | 7 days from issuance; no additional implicit grace after expiry                                                                                                                                              |
+| Reporting freshness      | Fresh within 45 minutes; afterwards report “not recently seen,” not “down”                                                                                                                                   |
+| Transport                | 5-second timeout; bounded backoff with jitter up to 15 minutes; respect Retry-After                                                                                                                          |
+| Report size              | 32 KiB maximum, strict schema; numeric aggregates, no document/user payloads                                                                                                                                 |
+| History                  | 90 days of report snapshots; one year of staff/security audit; preserve durable decision/recovery evidence independently                                                                                     |
+| Staff session            | At most 8 hours absolute, 30 minutes idle; recent MFA within 10 minutes for sensitive changes                                                                                                                |
+| Central machine rotation | Product-owned lock plus generation compare-and-swap; durable candidate/operation journal; recover by candidate-authenticated sync before atomic local promotion; old secret denied after central replacement |
+
+Central `CONTROL_PLANE_DECISION_SECONDS` defaults to 604800 and may only shorten issuance
+within 60–604800 seconds for an explicit deployment policy or isolated expiry rehearsal.
+Renewal uses the lesser of six days and six-sevenths of that lifetime. Cached decisions
+longer than a newly selected lifetime are not reused on the next sync; existing offline
+grants retain their signed expiry until a new decision is applied. Reporter cadence is
+unchanged: a rehearsal lifetime below fifteen minutes intentionally expires between
+ordinary renewals. Restore the default after the rehearsal. No test clock or auth bypass
+is involved.
+
+Missing approval blocks initial business use. During a central outage, previously approved
+products keep normal operation until their signed grant expires, including ordinary
+restarts. An outage is not a signed suspension. The following read/recovery exception is owner-adopted for implementation.
+
+| Local state                                                                                                       | Business access under the selected restriction policy                                                                                            |
+| ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Current verified approval                                                                                         | Normal operations, subject to existing user/resource rights                                                                                      |
+| Naturally expired approval, or verified signed suspension, with verified prior activation for the current binding | No new business writes/uploads/processing admission; retain only already-authorized existing reads/downloads and specified recovery/safety paths |
+| Pending, rejected before activation, suspended before activation, or no verified prior activation                 | No business reads or writes, even if restored document data exists                                                                               |
+| Invalid incoming signature, unknown verification key or malformed response                                        | Reject the candidate without changing usable retained verified state; it creates no approval or prior-activation evidence                        |
+| Corrupt/unverifiable stored decision, explicitly revoked trust key, or backward-clock error                       | Close business reads/writes and reconcile; an uncertain clock or invalid stored proof is not ordinary expiry                                     |
+| Supported restore/rebind quarantine                                                                               | Close business access until explicit online reconciliation; cached history alone cannot reopen it                                                |
+
+Eligibility for the read exception requires retained signed approval plus evidence that it
+was validated and applied while valid for this exact binding/epoch. Existing documents or
+an unsigned `previouslyApproved` flag are not evidence. Local identity, diagnostics,
+operator-controlled backup/recovery and safety cleanup remain available without granting
+business data access. Rejection is a pending-product decision; an approved product is
+suspended, not silently reset to pending. Reapproval is an explicit higher revision.
+
+Subject to the completion/quarantine classification below, previously admitted work
+completes under existing generation/lease and security rules;
+periodic dispatch admits no new work after restriction except safety/cleanup and completion
+of already admitted work. Issued transfer capabilities retain their bounded lifetime.
+Restriction never rewrites security outcomes, discards data or retroactively cancels commits.
+No read exception overrides local account/application disablement, resource grants,
+lifecycle, retention or security denial. Keep liveness/local dependency readiness separate
+from business readiness and expose precise pending/expired/suspended/clock/recovery states.
+
+Central suspension applies at the next successful sync, normally within 15 minutes, or
+last approval expiry when disconnected. Product credential revocation prevents sync/renewal;
+it does not invalidate an offline approval before expiry unless a signed denial has been
+applied. Neither operation is an instantaneous remote kill switch. Ordinary registry edits
+and staff disablement cannot alter product entitlement. Persist revision/sequence fences,
+last trusted time and backward-clock detection across ordinary restarts; a restart or
+missing cached approval never creates a fresh approval window.
+
+### Operation classification and decision types
+
+TCP-I04 contracts use signed policy states `pending`, `approved`, `rejected`, `suspended`
+with exact binding/epoch, revision and decision sequence. Local evaluation additionally
+represents `unpaired`, `expired`, `invalid-proof`, `clock-error` and `restore-quarantine`;
+these are derived states, never unsigned substitutes for signed policy. Invalid incoming
+candidates are rejected while usable retained proof remains authoritative. Rejected is
+only a pre-activation state; use suspension after approval. Preserve denial high-water
+marks even after the denial envelope expires. A current approval is required for admission;
+prior activation plus expired approval/suspension permits only the read exception above.
+No approval or prior activation crosses a binding epoch. TCP-I04 delivers strict executable
+schemas and TCP-I05/I06 bind classification to actual routes/services; this table changes
+no current handler.
+
+Classify operations by effects, not HTTP method or an existing `PublicEndpoint` annotation.
+`full` means current verified approval; `read` means full or the qualified prior-activation
+read exception; `recovery` means available in every state under existing local permissions,
+without business data; `completion` means only previously admitted bounded work plus
+security/cleanup, with no new business admission. Business completion/publication is allowed
+under current approval or qualified expiry/suspension restriction. Unpaired/pending/rejected,
+invalid stored proof, clock error and restore quarantine permit only safety containment/
+cleanup that does not publish or open business access; reconcile before resuming publication.
+Unknown operations default to `full`.
+
+| Owning surface                                                                                                                                                      | Class and boundary                                                                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Turnstile root `/api`, `/health/live`, `/health/ready/auth`                                                                                                         | recovery; dependency readiness is independent of product business readiness                                                                                                   |
+| `/api/auth/{login,callback,session,logout}`                                                                                                                         | recovery; safe identity/session/activation status only, no new product grant                                                                                                  |
+| `/api/workspace/status`                                                                                                                                             | recovery; safe readiness/activation summary without organization/business records                                                                                             |
+| GET `/api/setup`, `/api/organization`, `/api/organization/units`, `/api/structure/units[/:id]`, People catalog/member/role/invitation reads and command receipts    | read; existing scoped local authorization still applies; suppress invitation tokens and mutation capabilities                                                                 |
+| POST `/api/setup/complete`, all organization/unit/structure mutations, structure move impact, People impact and all role/member/invitation administration mutations | full, including apparently read-only impact POSTs; no new grants or workflow admission in restricted mode                                                                     |
+| GET `/api/dms/capabilities`                                                                                                                                         | full; invokes a separate DMS business integration and is not a diagnostic exception                                                                                           |
+| `/api/invitations/{exchange,context,start,setup}` and customer identity invitation-setup exchange/context/complete                                                  | recovery only for bounded credential/identity setup and continuation; never acceptance or product membership; context returns only the recipient's safe identity/continuation |
+| `/api/invitations/accept` and private identity invitation preparation                                                                                               | full; accepting/issuing an invitation grants new product access; existing captured mail delivery pauses while restricted                                                      |
+| `/api/invitations/{decline,cancel,switch-account,logout}`; identity setup cancel                                                                                    | recovery for self cancellation, credential/continuation retirement and sign-out; cannot create or extend a business grant                                                     |
+| Local identity verification/password recovery/reset, discovery/JWKS/token/session/logout and private subject projection                                             | recovery under existing scopes/client policy; safe identity projection cannot reveal product business data or bypass product approval                                         |
+| DMS `/v1`, `/v1/capabilities`, liveness/dependency readiness and private diagnostic/backup operations                                                               | recovery; safe capability/status metadata only, never documents or transfer capabilities                                                                                      |
+| DMS `/v1/audit`                                                                                                                                                     | read under existing audit authorization; operational diagnostics use a separate redacted recovery projection                                                                  |
+| DMS `/v1/application-enrollments`                                                                                                                                   | full; independent local consumer activation does not substitute for central approval; private registration/central setup may precede approval                                 |
+| DMS existing document/version/metadata/search/artifact retrieval and fresh existing-file download capabilities                                                      | read; exact authorized existing resources only, security/lifecycle/access checks remain live, with bounded capability expiry                                                  |
+| DMS upload/new-version admission, upload capabilities, metadata/sharing/lifecycle mutations, restore/reprocess/retry/new jobs                                       | full, even when an API uses GET to issue a capability; no new user processing while restricted                                                                                |
+| DMS private job result/lease/outbox/publication/security/cleanup paths                                                                                              | completion only for durable work admitted before restriction; no scheduler admission of new business work; rescanning/security containment may continue as safety work        |
+| Central pairing/sync/credential repair/trust and supported restore reconciliation                                                                                   | recovery, authenticated with their own authorities; never staff/customer session interchange or an unsigned business bypass                                                   |
+
+TCP-I05/I06 must enumerate every then-current handler and private command against this
+matrix, including upstream DMS additions; verify route coverage and enforcement at owning
+transaction/admission points. A method-wide read allowlist is insufficient. Completing
+admitted work does not allow unrestricted private dispatch, and already issued capabilities
+retain only their original bounded lifetime. Initial pairing/reporting, identity and
+recovery must start when central HTTPS is unavailable; business readiness can remain closed
+without causing ingress or reporter startup to deadlock.
+
+### Central staff access policy
+
+Use explicitly admitted verified email/password staff accounts with mandatory TOTP MFA and
+single-use recovery codes through Better Auth's pinned two-factor plugin. Enrollment/reset
+sessions can reach only identity/MFA setup; staff data requires completed MFA. Do not enable
+trusted-device MFA bypass. All three roles see the complete client fleet; no assigned-client
+hierarchy in v1. Viewer reads safe registry/report/activity data; Operator additionally
+maintains registry, issues initial pairing and approves/rejects/reapproves deployments;
+Admin additionally suspends and manages staff, recovery, credential replacement/revocation
+and trust operations. Only authorized operators/admins receive a newly issued pairing secret,
+once through protected delivery; Viewer and ordinary read responses never receive secrets.
+
+Require MFA verified within ten minutes for approval/rejection/reapproval, suspension,
+pairing issuance/replacement and staff/credential administration. Reauthentication updates
+server-side session evidence; do not infer recent MFA from account enrollment or a cookie.
+Enforce eight-hour absolute and thirty-minute idle sessions, no cached-role authorization,
+and live active-staff/role checks on every render, action and handler. Last-active-admin
+protection and staff mutation/audit are transactional. Public signup is disabled; private
+bootstrap/recovery uses separate maintenance authority and cannot be a public action.
+MFA reset revokes sessions, requires explicit recovery proof and returns to MFA enrollment;
+password reset alone does not bypass MFA or restore a removed staff role. Persistent rate
+limits, exact configured origin/CSRF checks, secure host-only HttpOnly cookies and trusted
+proxy handling apply at the auth/Next boundary. Customer identity is never admitted staff.
+
+### Central foundation implementation (TCP-I02)
+
+#### Staff workspace presentation (TCP-UX-01)
+
+The central staff UI uses a shared responsive workspace shell with persistent Overview,
+Clients & installations, Module catalogues and Usage & health navigation; Staff access
+is visible to Administrators. `/account` owns staff session/security actions. Each owning
+page still performs live server-side staff/role authorization before rendering; navigation
+visibility and presentation guidance are not authorization. `/access` has a separate
+staff sign-in, enrollment, MFA and recovery presentation with unchanged auth endpoints.
+
+Client and Turnstile module pages project their existing registry/assignment/handover
+facts into visible task progress, next-action guidance and explicit prerequisites.
+Pairing, product policy, desired modules, package availability, installed inventory,
+central module authority and current signed acknowledgement remain distinct facts.
+No persisted wizard state, new backend authority or central remote installer is added.
+Anchored sections and native disclosures retain both fresh-reservation and existing
+registration/adoption paths, exact evidence and protected transient file downloads.
+Competing module reviews lock mutation inputs; retry operations retain their payload
+identity in page memory. Research, screen/state inventory and reviewed implementation
+plan: [control-plane UI redesign](docs/thaarei/control-plane-ui-redesign.md).
+
+The central app uses Next Route Handlers and server-rendered protected pages, with no
+Server Actions or separate API service. `src/server` is marked server-only; browser
+components use relative authenticated HTTP and never import database/auth runtime code.
+The owning `control_plane` schema contains only implemented auth/MFA, staff membership,
+per-session MFA/idle evidence and append-only staff audit. Generated Better Auth/Drizzle
+migrations and a reviewed privilege migration are checked in with checksum-checked private
+migration tooling. `control_plane_migrator` owns schema; `control_plane_runtime` has only
+needed DML and cannot own schema or rewrite/delete audit. Each process uses a five-connection
+pool and bounded query/connect deadlines. Staff is bounded to 200 records, including disabled
+accounts; lists are bounded to that same capacity.
+
+Recovery SMTP availability checks run in the native auth before hook after persistent
+HTTP rate limiting and before account lookup; rejected floods never probe the relay and
+relay failures still consume the budget. Private bootstrap preserves its committed safe
+receipt even when delivery runtime initialization fails; cleanup closes only a successfully
+initialized runtime.
+
+Auth has an explicit HTTP allowlist for verified password login/logout, email verification,
+password reset and TOTP/backup enrollment/verification. Native get-session/token-bearing
+responses and public signup/MFA-disable are unavailable. `/api/session` exposes only a safe
+staff DTO after live membership, verified email, completed MFA and session-time checks.
+Successful factor verification records server-side proof for the actual native session;
+account enrollment or an existing cookie never implies verified MFA. All role/access changes
+serialize under the owning transaction lock, recheck the acting staff session/role/recent
+MFA, enforce another verified MFA administrator before last-admin removal, revoke target
+sessions and append audit with reason, revision and before/after access metadata atomically.
+Private first-admin bootstrap and proof-bound maintenance recovery use separate owning
+maintenance authority and bounded JSON stdin. No signing/pairing/report/business tables
+are created by this foundation.
+
+The independent `deploy/compose.control-plane.yaml` supplies the Node Next image and its
+own PostgreSQL volume, read-only application filesystem, protected host-file staff secret,
+private service ports and explicit central-only environment. Runtime never receives the
+migration/provisioning URL. Host secret ownership must permit the image node UID to read
+a mode-0600/0400 file. The image packages production Next configuration and reconstructs Next 16.4 hashed
+external-module aliases against version-matched deployed dependencies after `pnpm deploy`,
+which omits nested node_modules. It also packages private source/migration entrypoints for
+explicit one-off use; they are not HTTP routes or startup hooks. Next telemetry is disabled
+in build/CI/production images. Ingress must strip sensitive query/body/cookie logging and
+own TLS. Proxy-derived client IP is used only with explicit trusted ingress that overwrites
+a single address; otherwise rate limits use a shared bucket. Canonical origin and secure
+cookies never depend on forwarded host/proto. Central deployment steps and qualified limits
+are in the [staff operator runbook](docs/deployment/thaarei_ecosystem_guide.md#central); actual source/container/
+target evidence remains in IN_PROGRESS.md.
+
+### Central registry and policy records (TCP-I03)
+
+The same Next application owns registry contracts under `src/contracts/registry.ts`,
+server-only registry commands/reads, staff HTTP handlers and Clients pages. This is an
+app-owned, platform-independent Zod contract; it is not the machine protocol or a client
+SDK. Viewer reads the fleet; Operator/Admin maintain clients/installations/products and
+approve/reject/reapprove policy. Only Admin suspends. Policy mutations require recent MFA;
+ordinary registry edits require an active verified MFA session. Backend checks apply at
+every entry and again within the owning mutation transaction.
+
+`control_plane.registry_client` owns permanent normalized client code, bounded name/
+optional contact, archive state and revision. `registry_installation` owns client-bound
+immutable environment/local-installation/tenant UUID identities. `registry_product` owns
+immutable installation/product/application binding, pending/approved/rejected/suspended
+policy, revision, reason/actor and distinct registration/first/latest approval dates.
+A composite installation/client foreign key prevents cross-record bindings; each installation
+has at most one DMS and one Turnstile product. Turnstile requires an application UUID;
+DMS product identity is not a local consumer registration. Environment codes are lowercase
+slugs, including production/test, with identical approval terms. No customer tenant selection
+or customer SQL access is added to the central registry.
+
+`registry_receipt` stores actor-bound request UUID, canonical-input digest and immutable safe
+receipt; `registry_audit` stores safe attributed before/after data, reason and event time.
+All mutations serialize against live staff changes using the existing owning advisory lock,
+then use owning row/revision checks, write domain/audit/receipt and commit together. No
+remote call or password hashing is held inside that transaction. Policy row locks also fence
+future pairing/issuance writers. Duplicate request/inputs return the same historical receipt;
+changed inputs/actor conflict. Readback is a fresh consistent snapshot, never a historical
+receipt interpreted as current policy or permission. Repeated policy state fails without a
+new mutation; reapproval is explicit and advances revision. Rejection is pending-only;
+archive has no implicit policy effect. Archived clients reject new deployment registration
+but existing products retain independent policy commands.
+
+Verified pairing time is owning metadata for the approval prerequisite, tied to immutable
+binding. A database check prevents approval without it. TCP-I03 runtime column grants cannot
+insert/update that metadata or initial approved state; no public field/command bypass exists.
+TCP-I04 adds the owning pairing update grant and actual protocol; the registry fixture now
+uses that HTTP protocol. First issued approval, first/current-epoch application acknowledgement
+and authenticated contact come from its owning machine records. Activity, version and health
+remain unavailable until reporting is implemented. No customer enforcement is implied.
+
+Configured staff registry limits: code/environment 32 characters; client name 160;
+contact/installation label 100; contact email 254; mutation reason 300. List pages contain
+50 clients using immutable code keyset pagination and literal substring search. Each client
+has at most 100 immutable installation records and each installation at most two products.
+Detail readback includes those bounded records and the latest 50 audit events; stored audit
+history is not deleted by that display bound. Dates are rendered explicitly in UTC. Update
+inputs require a saved revision and explicit nullable contacts, preventing accidental clears.
+
+The existing central migrator applies additive registry schema/privilege migrations with
+its checksum ledger; prior staff SQL is unchanged. Runtime can read/insert the needed rows
+and update editable client/policy columns, but cannot change codes/bindings,
+hard-delete identities, rewrite receipts or rewrite/delete audit. Readiness checks registry
+persistence too. Existing custom privilege migrations are tracked in the Drizzle journal
+without changing their SQL, preserving CLI sequence ordering. The operator workflow is in
+the [central runbook](docs/deployment/thaarei_ecosystem_guide.md#central-client-and-deployment-registry); actual
+implementation/verification and any unavailable runtime checks stay in IN_PROGRESS.md.
+
+### Machine protocol implementation (TCP-I04)
+
+`@thaarei/control-plane-contracts` owns strict version-1 local/expected setup manifests,
+pairing-file, activation/sync/rotation requests, safe receipts and discriminated signed
+decisions. Zod generates the committed [machine OpenAPI](docs/api/control-plane.openapi.json);
+`check:contracts` checks regeneration. Contracts import no server, database or framework.
+The local manifest exports product-owned durable installation/tenant/application identity,
+environment and safe build version before registration. The expected central manifest adds
+central client/installation/product IDs and canonical origin after staff registration.
+Neither manifest contains machine credentials. Product-specific bootstrap identity exporters,
+database adapters and route enforcement belong to the TCP-I05/I06 owning integrations.
+
+Central Route Handlers are `/api/machine/v1/activate`, `/sync`, `/rotate`. JSON is streamed
+with a 32-KiB bound, strict schemas and no-store responses; errors use a safe versioned code.
+Only exact `Bearer <256-bit base64url secret>` authenticates sync/rotation. A unique digest
+index prevents cross-product credential reuse. Resolve the product
+from its digest-verified registration and require the complete submitted immutable binding;
+staff cookies, customer JWTs and unsigned response fields provide no machine authority.
+Sync carries report UUID, binding/epoch, optional strict product aggregate snapshots and an
+optional exact applied-decision acknowledgement, including valid application time. Central
+aggregate/history projections remain TCP-I07.
+
+The owning additive migrations create `machine_authority`, `machine`, `pairing`, immutable
+`machine_receipt` and `machine_decision` evidence. Pairing and machine secrets are SHA-256
+digests centrally; plaintext exists only transiently in the HTTPS request/private delivery.
+Staff generates random pairing codes transiently in browser memory, with actor/input-bound
+retry receipts containing safe metadata only. Admin/Operator with recent MFA can issue/revoke
+unused codes. Admin alone replaces/revokes machines, retaining preexisting denial or suspending
+an approval with a new revision; replacement requires new pairing and explicit approval.
+Pairing consumption, candidate digest, fresh binding epoch/generation and receipt commit
+atomically under product-row locking. Exact retries check current credential and a 24-hour
+receipt window. After it expires, candidate-authenticated sync confirms the current operation,
+epoch and generation; it never replays an expired code or grants an old approval.
+
+Decision signing uses pinned `jose` 6.2.14, RS256, exact `thaarei-deployment+jwt` header type
+and provisioned key ID. Audience is `urn:thaarei:deployment:<productId>`; issuer is the canonical
+central HTTPS origin. Signing reserves a monotonic sequence under the product lock, releases
+the transaction for cryptography, then fences revision/state/epoch/generation/sequence and
+current signing-key ID before storing/returning the decision. Renew when less than six days
+remain; key changes force fresh signing. Denial envelopes use the same bounded validity as
+approval. Immutable issued evidence lets central distinguish issuance from product-reported
+valid application; this is not measured uptime or first business activity. Report retries
+retain receipt identity/input digest while obtaining the current decision.
+
+`@thaarei/deployment-control` supplies the Node-only maintained JOSE verifier, durable decision
+application/evaluation, five-second HTTPS transport, bounded response parsing and retry delays.
+The verifier pins the entire binding/epoch, issuer/audience/type/algorithm/key/time/entitlement,
+orders revision then sequence, checks renewal state consistency and retains applied denial
+beyond expiry. A valid-at-application signed approval is required for the qualified read
+exception. Corrupt stored evidence, trust revocation/downgrade, backward clock or recovery
+quarantine close all business access. Invalid incoming candidates cannot replace usable
+retained proof. Trust revision survives rebind; only the protected operator flow adopts a new
+epoch and resets prior activation. Public-key trust is a protected independently delivered
+bundle, never token-selected URLs or key-signed trust replacement.
+
+Private setup saves exact request/binding/candidate secret before HTTPS. Rotation journals
+operation/current/candidate, centrally compares expected generation, then confirms the
+candidate via authenticated sync before one atomic local promotion/decision commit and
+journal clearing. Every setup/operator/reporter write shares a product lock. The supplied
+Linux private-file adapter uses kernel `flock` (30-second acquisition bound; release on process
+death), owner-only state, fsynced temporary files/atomic rename and directory fsync. It is a
+private reporter/setup adapter, never an API credential mount. Product DB adapters must
+provide equivalent locking/durability without holding a database transaction over HTTP.
+
+Central signing JSON is `{kid, privateKey}` (PKCS8); public trust is version 1 with revision,
+issuer and explicit `{kid,pem,status,lastIssuedAt}` keys. Retired keys accept only issuance
+at/before the cutoff; revoked keys cannot verify even cached proof. Generate/distribute new
+public keys first, then switch the protected signer, retain old public keys for outstanding
+seven-day proofs, and retire using a cutoff. Emergency compromise needs independently
+authenticated replacement trust for all verifiers, including disconnected installations;
+short grant lifetimes alone do not constrain an attacker holding a trusted signing key.
+
+`machine:operator` initializes the separate signing material and authority marker or performs
+protected central restore reconciliation using the migrator only. The host marker lives
+outside the DB restore set; missing/mismatched marker quarantines issuance and approval.
+Reconciliation revokes old credentials/pairing codes and suspends saved approvals, requiring
+fresh epochs and staff approval. The customer file adapter similarly checks a separate
+host marker and persisted quarantine before cached business evaluation. Rotate markers and
+stop issuance/customer business before supported restore; arbitrary rollback of root-owned
+files/VM snapshots together remains outside this guarantee. Exact recovery/release rehearsal
+is TCP-I08; local checks never constitute target qualification.
+
+### DMS deployment control integration (TCP-I05)
+
+The DMS integrates the shared protocol using its own coordinator/runtime roles and schemas.
+Bootstrap persists `dms.deployment_control.local_installation_id` once, alongside the fixed
+single installation tenant/customer key. CLI-generated migrations 0054/0056 and reviewed
+0055/0057 privileges add public binding/verified decision and safe credential/report metadata,
+plus a separate durable clock/quarantine row. No plaintext machine secret is stored in SQL.
+API roles can read only and invoke narrow tenant-bound security-definer clock/quarantine/read
+functions; they cannot rewrite bindings, decisions, credentials or clock high-water values.
+The clock fence commits before rejected business requests and does not contend with the
+shared decision row held through ordinary business transactions. Both tables force RLS.
+
+`DmsDeploymentStore` composes the server-only client with the owning DMS store and protected
+private-file journal. Every private/reporting operation shares the same PostgreSQL session
+advisory lock, with no SQL transaction held across HTTPS. Private file writers additionally
+share the kernel file lock. Candidate/request/binding are durable before transmission; only
+candidate-authenticated confirmation permits promotion. DB decision publication precedes
+file promotion and cannot regress the DB policy high water. Lost promotion resumes the
+candidate, not the old key. A persisted reviewed setup intent authorizes continuation of an
+explicit rebind; merely preparing that journal cannot clear old quarantine. A fresh verified
+online epoch is required, and trust revision survives. Marker mismatch/clock/trust failures
+stay closed until protected reconciliation. The read-only reporter updates safe SQL report
+receipts/decisions and reloads owner-promoted credentials without writing its credential mount.
+
+`main.coordinator.ts` starts the reporter after its private listener and includes it in bounded
+shutdown. A durable per-product schedule plus shared operation lock elect one due reporter
+across replicas. Attempts use the shared five-second HTTPS transport/backoff policy; no
+central call occurs in API requests, identity startup or health. Outbound summaries filter
+`dms.operations_snapshot()` through strict version-1 machine contracts: build/observation,
+processing readiness, aggregate pending/failed/outbox gauges and fresh capacity only. Stale
+capacity is null and per-application details/content are excluded. Report UUID/payload survives
+retry; central snapshot retention/dashboard interpretation follows the Reporting and central storage section below.
+
+API transaction boundaries require current approval for enrollment/admission/mutations, and
+qualified prior activation for restricted reads. All local consumer/resource checks remain.
+Private operator commands explicitly distinguish business reads/full changes from authorized
+identity/key/backup/diagnostic recovery. Dispatch/new attempts require full approval. Already
+admitted leases may complete under generation/security/lifecycle fences; later stages are
+held durably without new dispatch while restricted and resume without consuming an execution
+attempt after reapproval. Never-approved/invalid-proof/clock/restore states cannot publish
+business results; safety containment and cleanup remain available. Business errors expose
+`DEPLOYMENT_RESTRICTED`; no-store `/health/deployment` exposes only derived access/state.
+
+`deploy/compose.dms-activated.yaml` composes complete DMS-only activation.
+`deploy/compose.customer-complete.yaml` adds the complete Turnstile/customer-local authority
+and private identity transport overlay. Both retain I18 broker/storage/parser isolation and
+Dokploy ingress. The TCP overlay uses candidate `thaarei-dms-api:tcp-i05`, gives API processes
+public trust/marker only and mounts the private credential directory read-only into the
+coordinator, writable only in private tools. Combined worker issuer and Node/Python CA
+settings match customer TLS; deployment URLs are never customer OAuth values or browser
+configuration. Actual target/release/restore qualification remains TCP-I08. Use the
+[DMS deployment runbook](docs/runbooks/dms-deployment-control.md); actual acceptance is tracked
+in IN_PROGRESS.md, not inferred from configuration or historical I18 image results.
+
+### Turnstile deployment control integration (TCP-I06)
+
+Turnstile owns additive migrations 0028–0029, its durable local installation binding,
+verified decisions, clock/quarantine fence and safe credential/report journal. The private
+bootstrap requires `INSTALLATION_LOCAL_ID` from the nonsecret DMS installation manifest,
+with the same tenant/customer identity. Both products therefore register under one central
+installation while retaining independent product IDs, credentials and owned SQL state.
+Bootstrap rejects later identity replacement; runtime/reporters cannot insert or rewrite it. The independent
+reporter role can update only deployment state and invoke a bounded security-definer active
+member aggregate. API runtime cannot rewrite approval or read machine credentials. Both
+new tables force tenant RLS; reporting reads no DMS database or application source.
+
+A separate `main.reporter.ts` process uses the shared server-only protocol with a distinct
+Turnstile credential. Its PostgreSQL product operation lock, durable cadence, protected
+file journal, generation recovery and reviewed rebind follow the same protocol as DMS.
+No SQL transaction spans HTTPS. Public verifier configuration is prefixed
+`TURNSTILE_CONTROL_PLANE_*`, independently of DMS settings. Reports contain only version,
+observation time and active-member count from canonical owning membership status; customer
+names, subjects, sessions, emails and per-user activity are excluded. Unimplemented metrics
+are unavailable. Central history/projections follow the Reporting and central storage section below.
+
+Local sessions, CSRF, current permissions and readiness remain authoritative. Business
+HTTP checks and owning transactions require current approval for changes and verified prior
+activation for qualified reads. Identity/session and safe deployment-status endpoints are
+explicit exemptions, independent of workspace-readiness exemptions. Invitation identity
+setup/recovery is independent of full-approval membership acceptance and new mail dispatch.
+The Turnstile clock fence samples database time only after locking its durable clock row
+(migration 0034). A request queued behind a newer legitimate clock-floor update must not
+mistake its earlier start time for rollback. A clock sampled after that lock which is
+below the durable floor still quarantines the installation and requires reviewed recovery.
+Signed-in customers see activation/recovery guidance or a restricted-read notice, plus
+separate DMS restriction from its authenticated local capabilities response. The client
+explicitly opts into `Prefer: include-deployment-status`; ordinary version-1 capability
+responses retain their original shape for existing strict consumer decoders. Safe responses
+contain no central token or registry binding; browser code imports no server package.
+
+`compose.turnstile-control-plane.yaml` extends the complete combined customer entry with
+public-only API mounts, a read-only credential mount for a separate reporter, and a writable
+private tools mount. The owning `.env.turnstile.reporter` contains its dedicated SQL role
+and fixed installation/application identities only; neither DMS machine credentials nor
+customer OAuth credentials belong there. The reporter pool has three connections; its
+Compose limits are 0.5 CPU, 256 MiB and a 45-second stop grace. Linux UID 1000, shared bounded
+HTTPS/backoff and customer CA delivery apply. Dokploy retains ingress/TLS; reporter egress never needs browser
+CORS/CSP access. Exact operations are in the
+[Turnstile deployment runbook](docs/runbooks/turnstile-deployment-control.md); actual
+qualification and remaining work are recorded in IN_PROGRESS.md.
+
+### Control-plane configuration contract
+
+TCP-I02 implements staff origin/runtime database/auth-secret/SMTP/proxy validation; TCP-I04
+implements central signing/authority-marker delivery and public key/manifest/decision schemas.
+Customer settings are consumed by their TCP-I05/I06 integration, and reporting by TCP-I07.
+Never derive a canonical origin or trust authority from forwarded request headers.
+
+| Setting                                                     | Validation and owning delivery                                                                                                                                                                               |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CONTROL_PLANE_ORIGIN`                                      | Canonical absolute HTTPS origin only: no path except `/`, credentials, query or fragment; pinned central issuer/base URL; local HTTP only in explicit isolated development/test profile                      |
+| `CONTROL_PLANE_INSTALLATION_ID`, `CONTROL_PLANE_PRODUCT_ID` | UUIDs fixed by paired setup manifest; validate against local tenant/application/product binding; reporter and local verifier use the same binding                                                            |
+| `CONTROL_PLANE_MACHINE_SECRET_FILE`                         | Absolute protected file path; secret delivered only to owning reporter/setup process; candidate/journal and atomic promotion under product operation lock                                                    |
+| `CONTROL_PLANE_VERIFICATION_KEYS_FILE`                      | Absolute read-only public trust bundle path; every product verifier; explicit key IDs, issuer/audience/type, key status and trust version; replacement uses independent protected operator/release authority |
+| `CONTROL_PLANE_PUBLIC_ORIGIN`                               | Central-only canonical HTTPS staff/API origin, same strict origin rules; local development origin fixed to `http://localhost:23600` on the separate central environment                                      |
+| `CONTROL_PLANE_DATABASE_URL`                                | Central runtime PostgreSQL URL; least-privilege role, bounded pool, owning central database only; never customer SQL                                                                                         |
+| `CONTROL_PLANE_MIGRATION_DATABASE_URL`                      | Central private provisioning/migration commands only, absent from app runtime and reporter environments                                                                                                      |
+| `CONTROL_PLANE_AUTH_SECRET_FILE`                            | Central-only absolute protected file with independent high-entropy staff session/MFA encryption secret, at least 32 random bytes; separate from entitlement signing and customer auth secrets                |
+| `CONTROL_PLANE_PUBLIC_KEYS_OUTPUT_FILE`                     | Private central operator output path for public trust only; never required by runtime or supplied to the browser                                                                                             |
+| `CONTROL_PLANE_SIGNING_KEY_FILE`                            | Central-only absolute protected private signing-key path, separate from staff secret; key generation/delivery is private, never a database report field                                                      |
+| `CONTROL_PLANE_SMTP_URL`, `CONTROL_PLANE_SMTP_FROM`         | Central-only authenticated TLS SMTP transport and validated sender; private configuration, no credential logging; local capture transport only in explicit dev/test profile                                  |
+| `CONTROL_PLANE_PROFILE`, `CONTROL_PLANE_TRUST_PROXY`        | Central runtime defaults to production and untrusted forwarding; dev/test permits explicit local HTTP/plain SMTP; trusted ingress must overwrite a single validated client address                           |
+| `CONTROL_PLANE_RECOVERY_MARKER_FILE`                        | Central issuance or customer business quarantine marker outside database restore set; missing recovery handover never opens a replacement/restored host                                                      |
+
+Thaarei's central operator owns DNS/TLS, SMTP, central role provisioning, encrypted database/
+auth/signing backup and independent decision-evidence retention. Customer operators own
+customer data, protected reporter files and public trust bundle/recovery delivery. Configure
+actual production hostname, relay and backup destinations privately at deployment; choosing
+placeholder domains is not target qualification. Production/test installations use the same
+approval terms with distinct binding/credentials. Linux container deployment is the supported
+runtime; air-gapped/manual activation remains outside v1. Report only the bounded fields in
+Reporting and central storage below; absent source metrics remain unavailable. Retention
+pruning never removes durable policy/activation/denial fences or evidence needed to recover
+current decisions. TCP-I08 qualifies the external evidence and trust recovery procedures.
+
+### Supported restore and signing trust recovery
+
+Cached revision/time/approval records may all roll back together in a snapshot. They cannot
+prove that an intervening suspension existed. Supported restore is therefore an explicit
+operator workflow, distinct from an ordinary restart:
+
+1. On the customer host, stop opening business access and create a protected host recovery
+   marker outside the database restore set before restoring data. Start in restore
+   quarantine, with only diagnostics, identity, recovery and outbound reconciliation.
+   Do not honor restored grants or prior-activation history to reopen business access.
+2. Reconcile online with Thaarei under the existing authenticated product binding or a
+   staff-reviewed replacement if credentials are stale. Obtain a fresh binding epoch,
+   reconcile current approval/suspension and apply the current signed decision. Clear the
+   recovery marker only through this verified flow; no unsigned `allowWrites` flag exists.
+3. On the central host, stop decision issuance/approval mutation and write an external
+   issuance-quarantine marker before restore. Restore the database and protected signing
+   state, then reconcile against independently retained audit/decision evidence. Evidence
+   exports must be stored outside the restored database snapshot and have a known recovery
+   point. Incomplete evidence is not proof that a deployment remained approved.
+4. When central evidence cannot establish the latest decisions, set restored products to
+   recovery-pending and require explicit fresh staff approvals/rebind. Do not renew cached
+   active rows by default. Reconcile binding epochs and rotate trust/signing state before
+   reopening issuance. Existing customer approvals remain bounded by their original expiry;
+   a disconnected customer cannot learn of central recovery immediately.
+
+New recovery hosts start quarantined until the operator completes this handover. A normal
+restart with intact state and no restore event does not require reapproval. Arbitrary
+root-level/VM snapshot rollback outside this supported workflow cannot be reliably detected
+by records inside that same snapshot and is outside this enforcement guarantee. Customer
+root can also modify code/keys/clocks. These controls govern supported software behavior;
+usage is operational evidence rather than tamper-proof billing evidence.
+
+Routine signing-key rotation provisions new public keys first and retains normal overlap
+until old approvals expire. Retain public historical key/validation metadata for prior
+activation evidence after routine retirement; that does not permit new grants under a
+retired key. Explicit compromise revocation invalidates its trust for business access and
+requires reconciliation. A compromised signing key is different: an attacker retaining
+it can forge successive seven-day grants while an offline verifier still trusts it. A
+maximum grant lifetime does not independently bound that compromise. Emergency recovery
+must replace the authenticated trust bundle and explicitly revoke that key on affected
+installations, through a protected operator/release channel whose authority does not rely
+only on the compromised entitlement key. Provision the new private key only at Thaarei;
+customers receive only public trust state. A disconnected installation needs operator
+trust-bundle delivery before a compromise can be addressed there. Do not promise automatic
+offline emergency revocation or use a new entitlement signed solely by the compromised key
+as authority to replace trust. Qualify read-only-container key reload/restart and encrypted
+key/credential-file recovery in the owning-host release procedures.
+
+### Isolated release qualification tooling
+
+`scripts/qualify-control-plane.mjs` runs workspace gates, inventories immutable central/DMS/
+Turnstile API/web images and fingerprints production inputs, packaging and verification
+helpers. Container qualification runs central HTTPS ingress with production profile and
+verified STARTTLS, and separately networked customer clusters/private files. Only central
+ingress joins customer networks; the central runtime/database do not. Shipped coordinator/
+reporter entrypoints perform actual outbound container DNS/TLS and owning SQL; health alone
+is not report acknowledgement or browser availability. Disposable ports stay outside the
+persistent development-port contract.
+
+Full-image auth and People journeys use the DMS/Turnstile/Nginx candidates with separate
+fixture provisioning processes. Public browser ingress blocks private identity/work paths;
+backend identity uses private canonical transport. Candidate private release commands run
+in dedicated maintenance containers, without delivering migration credentials or machine
+journals to API containers. Real central signer rollover, offline compromised-key revocation
+and rebind/reapproval are tested through DMS image HTTP. Turnstile separately exercises
+owning database/journal restore and production preflight/rebind, plus image HTTP trust
+rollover/revocation in the browser fixture. Network-disabled packaged-verifier checks use
+controlled clocks for grant expiry. Each coverage boundary remains explicit in the evidence.
+
+Local Docker networks model separate hosts; actual Dokploy ingress, external DNS/TLS/SMTP/
+time, independent off-host recovery and target acceptance remain deployment work. No prior
+published enforcing image exists for historical image downgrade qualification; local rollback
+coverage is owning upgrade tests, candidate restart and quarantined database/journal restore.
+The [qualification handover](docs/runbooks/control-plane-qualification.md) records operator
+compatibility/recovery boundaries. Actual checks and remaining work belong in IN_PROGRESS.md.
+
+### Reporting and central storage
+
+DMS coordinator reports DMS state only; the Turnstile backend reports Turnstile state only.
+Use each product's own backend stores and authoritative commit points. Reuse DMS-I18's
+local operational projections once available instead of building a second DMS metrics
+engine. Turnstile exposes no raw business rows to Thaarei. No direct cross-database queries,
+central inbound polling of customer URLs, remote shell, command queue or central document
+traffic is introduced.
+
+The central server records received-at time; a report supplies observed-at time, report ID,
+product version, applied grant revision, local approval state and a bounded self-reported
+health summary. Store first activation acknowledgement, first actual activity if available,
+latest contact and latest report independently of registration/approval dates. Use snapshot
+fields such as active logical document count and retained original bytes for DMS, active
+member count for Turnstile, and owning-product cumulative operation counts with a counter
+epoch. Do not sum repeated gauges or cumulative totals, combine overlapping DMS/Turnstile
+counts, use created-at as actual go-live, or infer zero usage from missing reports.
+
+Capture uploads/processing counters once at authoritative successful publication/completion,
+not on each HTTP retry or queue delivery. Counter reset/restore advances an epoch; history
+labels a reset rather than producing a negative delta. Unknown/unimplemented metrics stay
+null/unavailable, never fabricated zero. Store latest product status and bounded historical
+snapshots; calculate stale/reporting/version alerts on reads initially, with no alert worker.
+The configured product version/support policy is explicit, not a guessed security verdict.
+No document names, contents, OCR text, contact/user lists, tokens or arbitrary logs are sent.
+
+TCP-I07 persists `report_snapshot` and `report_latest` in the authenticated sync receipt
+transaction under the existing product lock. The owner allocates a safe-integer sequence
+from durable product metadata for each machine binding epoch. The exact report ID/body is
+journaled before HTTPS; retries retain it across process restart and intervening policy
+changes. Later receipt time does not let a lower sequence replace latest data. Legacy
+unsequenced snapshots remain readable but cannot overwrite an ordered projection. Sequence
+exhaustion fails reporting closed and requires a reviewed new binding epoch; it never wraps.
+Unavailable/invalid source metrics are omitted without preventing policy contact or a newer
+denial from being applied. Historical payloads remain stale; missing data never becomes zero.
+Backoff delays are bounded integer milliseconds so both owning PostgreSQL schedules persist
+failure/retry cadence correctly.
+The digest receipt retains its sequence fence beyond historical payload retention. Rebinding
+makes the new epoch's projection unknown until that product reports again.
+
+DMS owns an RLS-protected usage stream and local deduplication ledger. The first successful
+AVAILABLE transition counts each version and logical document once; a restored revision
+may count as a version, never another logical document. Each non-scan job counts once on
+committed SUCCEEDED, independently of attempts/transport. Trigger updates share the business
+transaction and roll back with it. Existing published/completed records establish a ledger
+baseline without fabricating historical totals. Reviewed binding epoch changes reset the
+named counter stream and baseline; retained ledger entries prevent old work from becoming
+new activity. Overflow makes cumulative values unknown until an explicit epoch reset.
+Active documents and original-byte accounting remain independent gauges. Turnstile reports
+only its canonical active-member gauge; unimplemented health/activity is unknown. No tenant,
+application, document or member identities leave these usage providers.
+
+Staff `/reports` and `/api/reports` use live MFA/role fencing and central projections only.
+Lists have client/environment/product filters and 50-row UUID pagination; per-product history
+has 96-row receipt-time/UUID pagination over 90 days. Policy, server receipt freshness
+(overdue after 45 minutes), local observation time, reported local policy, self-reported
+health and version review are independent. Gauges are charted with gaps at missing intervals
+or epoch changes; cumulative totals are labeled by baseline/epoch and never summed. Optional
+`CONTROL_PLANE_DMS_SUPPORTED_VERSIONS` and `CONTROL_PLANE_TURNSTILE_SUPPORTED_VERSIONS`
+are exact version allowlists (JSON arrays of at most 20). Empty means unconfigured, with no
+guessed support/security verdict. All notices are computed on reads and never alter approval.
+
+Private `reports:prune` (`src/server/report-maintenance.ts`) uses only the owning migrator,
+removing at most 1,000 snapshots older than 90 days and 1,000 events from each central audit
+stream older than 365 days per invocation. It also clears expired latest metric payloads,
+while retaining minimal sequence/counter high-water fences, binding/approval/activation,
+immutable receipts/decisions and unfinished operations. Staff reads hide metric payloads past
+90 days even before pruning. Runtime has no pruning execute/delete privilege. Schedule this
+bounded host maintenance externally; it introduces no alert worker or customer polling.
+
+Central conceptual records are staff/auth sessions, clients, installations, product bindings,
+pairing/credential digests, approval revisions/grant metadata, sync receipts, report snapshots
+and append-only audit. Pruning report/audit history must never remove a current binding's
+policy high-water mark, applied denial, prior-activation evidence or unfinished credential
+operation state. Create actual schema/columns/indexes only with the relevant feature.
+Database ownership is exclusive to the central app; customer IDs are external references,
+not foreign keys across databases. Enforce client/installation/product binding integrity,
+uniqueness and receipt atomicity in owning transactions. Runtime has no schema ownership,
+migration credentials or audit rewrite privilege. No signing private key is stored in an
+ordinary report/registry row. Use bounded pools and keep signing/transport outside long
+transactions while fencing approval revision before response.
+
+### Protocol surface and compatibility
+
+Proposed versioned HTTP surface, independent of Next internals:
+
+| Surface                                  | Authentication                              | Purpose                                                                              |
+| ---------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `/api/auth/*`                            | Native staff auth policy                    | Staff sign-in, MFA, recovery and logout                                              |
+| `/api/staff/*`                           | Live staff session/role and CSRF for writes | Client/installation/product registry, approval, suspension, pairing, staff and audit |
+| `POST /api/machine/v1/activate`          | Bound pairing code plus generated secret    | Pair exact expected product; returns pending state/receipt                           |
+| `POST /api/machine/v1/sync`              | Product machine bearer secret               | Accept bounded summary, return receipt/server time/current signed decision           |
+| `POST /api/machine/v1/rotate-credential` | Current machine secret                      | Replace only its own secret; never approval or product binding                       |
+| `/health/live`, `/health/ready`          | Minimal public output                       | Central liveness/dependency readiness, without registry data                         |
+
+Typed contracts include binding, protocol/schema version, idempotency/report identity,
+signed decision state, binding epoch, policy revision/decision sequence, credential generation,
+safe retry classification and health/usage snapshot fields. Bound all strings, numeric ranges and body sizes, and classify 400 invalid,
+401 invalid machine identity, 403 forbidden staff action, 409 binding/revision/idempotency
+conflict, 429 throttling and retryable 503 separately. A valid machine sync can succeed with
+a pending/denied decision; it must not be mistaken for granted product approval. Return
+no-store safe errors, never echoed credentials. Unknown/incompatible protocol versions fail
+explicitly; invalid telemetry cannot erase a valid local grant. Renewal can be retried with
+a minimal valid report when an optional metric is unavailable.
+
+Allocate the decision sequence and store a signed decision against the exact current policy
+revision, then recheck/fence that revision before returning it. Never label a stale active grant with a suspension or newer
+revision. An already issued response can still arrive after a central suspension; the
+normal sync/expiry bound applies until the product learns that newer revision. Product
+persistence serializes decision application, so a delayed active response cannot overwrite
+a newer suspension or epoch state that it has already applied.
+Global approval is an additional gate, never a substitute for local DMS enrollment or
+Turnstile permissions, and central approval cannot re-enable a locally disabled consumer.
+
+This introduces central activation and recurring approval availability into the supported
+customer distribution. It changes the earlier no-required-cloud-control expectation while
+preserving headless DMS independence from Turnstile, local customer identity and tenant
+isolation. TCP-I01 reconciles this scope in FR-02.10–14, FR-19, NFR-09, the product blueprint
+and standalone installation/recovery documentation. TCP-I05 must still integrate the
+DMS-I18 distribution contract through development after its owning handoff is ready.
+Existing installations require explicit coordinated registration/recovery and a staged
+release; adding the new guard without that handover would lock out an operating customer.
+No silent feature flag defaults or automatic changes to the current DMS branch are implied.
+
+Version selection sources (checked 2026-11-06): [Next.js installation and Node minimum](https://nextjs.org/docs/app/getting-started/installation),
+[Next.js 16.4.5 manifest](https://github.com/vercel/next.js/blob/v16.4.5/packages/next/package.json),
+[Better Auth two-factor plugin at v1.7.14](https://github.com/better-auth/better-auth/blob/v1.7.14/docs/content/docs/plugins/2fa.mdx).
+Registry metadata for next/create-next-app 16.4.5 was also inspected without installing them.
+
+Technical support: [Next.js Route Handlers and backend pattern](https://nextjs.org/docs/app/guides/backend-for-frontend),
+[Next.js server authorization](https://nextjs.org/docs/app/guides/authentication),
+[self-hosting](https://nextjs.org/docs/app/guides/self-hosting),
+[Better Auth Next adapter at v1.7.14](https://github.com/better-auth/better-auth/blob/v1.7.14/docs/content/docs/integrations/next.mdx),
+[Better Auth sessions at v1.7.14](https://github.com/better-auth/better-auth/blob/v1.7.14/docs/content/docs/concepts/session-management.mdx)
+and [JWT validation guidance RFC 8725](https://www.rfc-editor.org/rfc/rfc8725.html).
+These support framework/security mechanisms; the approval/telemetry policy above is a
+selected project policy, not a framework guarantee. Exact CLI generation and runtime
+configuration compatibility are verified in TCP-I02 and the owning integration increments.
 
 ## Module and contract boundaries
 
@@ -2880,7 +4481,8 @@ SMTP uses fixed configured transport/from values and plain-text templates. Produ
 requires implicit TLS or STARTTLS; plain SMTP is loopback-only for local/test profiles.
 Transport connections/greetings are bounded to five seconds and sockets to 10 seconds;
 file/URL attachment access and SMTP debug logging are disabled. Verification and reset
-links expire in 30 minutes; callback paths are fixed to `/sign-in` and `/reset-password`.
+links expire in 30 minutes; combined-mode callbacks remain `/sign-in` and `/reset-password`.
+Standalone consumer and private-operator returns follow the DMS-I01 policy below.
 Mail availability is checked before account lookup for known/unknown recovery addresses,
 after rate limiting. Request-local delivery tracking also detects the pinned library's
 caught background callback failures; failed sends return controlled unavailability.
@@ -2927,7 +4529,7 @@ Three managed client purposes are supported (the third is staged in UM-I06):
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Turnstile login            | Confidential `client_secret_basic`; code/refresh only; required S256 PKCE; exact configured callback and `/sign-in` logout destination; explicit first-party consent skipping | UserInfo resource only; `openid profile email offline_access`; no DMS machine scopes                                     |
 | Authority identity service | Confidential `client_secret_basic`; client credentials only; fixed configured client/installation/application; no redirect/refresh/login grants or DMS enrollment             | Exact identity-service resource; `identity:invitation:prepare identity:subjects:read`; live client/resource/scope fences |
-| DMS machine application    | Confidential `client_secret_basic`; client credentials only; explicit operator-assigned scopes and persisted client-resource link; no login callback                          | Exact DMS resource; current catalog is `dms:capabilities:read`, enforced by the AUTH-05 capability endpoint              |
+| DMS machine application    | Confidential `client_secret_basic`; client credentials only; explicit operator-assigned scopes and persisted client-resource link; no login callback                          | Exact DMS resource; current catalog is `dms:capabilities:read` and `dms:audit:read`, with live owning-route policy       |
 
 Every authorize/token request validates a server-owned approval record, installation
 ownership, purpose and resource in addition to the provider's grant, scope, secret and
@@ -3098,10 +4700,11 @@ private authority account/client commands durably record an attempt before cross
 the independent authority pool, then record completion. A pending outcome requires operator
 inspection; it cannot promise atomicity across pools. Audit retention defaults to 90 days;
 expired receipt/key/session cleanup remains an explicit maintenance follow-up, with no
-scheduler or public audit API in this increment.
+scheduler in AUTH-05. DMS-I03 adds the separate owning resource audit API described below.
 
-`GET /v1/capabilities` requires `dms:capabilities:read` and reports only enrollment and
-capability-read operations; formats, profiles and languages are empty. Shared Zod schemas
+`GET /v1/capabilities` requires `dms:capabilities:read` and reports enrollment,
+capability-read and, for tokens granted `dms:audit:read`, application-audit reads; formats,
+profiles and languages remain empty. Shared Zod schemas
 in `@thaarei/dms-contracts` author enrollment/capability/error DTOs once and export JSON
 Schema. `pnpm docs:dms-auth` generates the [OpenAPI contract](docs/api/dms-auth.openapi.json).
 Responses use stable error codes, server-generated request IDs and `private, no-store`;
@@ -3466,6 +5069,175 @@ Require signed `If-None-Match: *` on staging PUTs to prevent replacement and sig
 
 Configure authentication before exposing SeaweedFS: `weed mini` otherwise permits unauthenticated access when credentials are absent. Keep filer, volume, master, administrative, and non-S3 interfaces private. Disable or block automatic archive extraction and vendor-specific write extensions on the transfer ingress; test unsigned header/query injection. Do not expose a path that bypasses S3 authorization. [SeaweedFS authentication defaults](https://github.com/seaweedfs/seaweedfs/wiki/Quick-Start-with-weed-mini), [SeaweedFS S3 API](https://github.com/seaweedfs/seaweedfs/wiki/Amazon-S3-API)
 
+### Implemented I04 boundary
+
+The owning storage module uses AWS SDK for JavaScript v3 `@aws-sdk/client-s3` and
+`@aws-sdk/s3-request-presigner` 3.1162.0, SigV4, mandatory explicit region and path-style
+endpoints. Credentials are supplied explicitly per role; there is no environment/default
+AWS credential-chain fallback. Configuration separates private S3 and public transfer
+origins. Public HTTP is allowed only for explicitly enabled loopback fixtures; customer
+transfer origins require HTTPS. Internal HTTP requires explicit opt-in on an isolated hop.
+Transfer ingress accepts the finite standard proxy metadata headers (Forwarded,
+X-Forwarded-For/Host/Port/Proto/Server and X-Real-IP), discards them before forwarding
+to storage, and continues to use the socket peer for its rate limit. Signed headers
+and storage extension restrictions remain enforced.
+
+| Identity      | Exact allowed S3 object actions                  | Bucket boundary                           |
+| ------------- | ------------------------------------------------ | ----------------------------------------- |
+| upload        | PutObject                                        | staging                                   |
+| originalRead  | GetObject (including HEAD)                       | originals                                 |
+| artifactRead  | GetObject (including HEAD)                       | artifacts                                 |
+| snapshot      | GetObject staging/originals; PutObject originals | private snapshot coordinator              |
+| artifactWrite | PutObject                                        | artifacts                                 |
+| cleanup       | DeleteObject                                     | three configured buckets, exact keys only |
+| bootstrap     | installation administration                      | private explicit provisioning only        |
+
+SeaweedFS coarse Write also permits deletion, so these roles use attached exact-action IAM
+policies instead. Secret pairs and buckets must be distinct. Private ListBuckets returns an
+empty authorized list for these object-only identities; bucket/object enumeration and
+administration are unavailable. Public transfer ingress rejects all listing/bucket requests.
+The API module initializes clients lazily for owning use cases; it neither provisions
+storage at startup nor adds an unguarded capability-issuing endpoint. Admission/issuance
+and resource authorization remain I05–I06; document capabilities remain unadvertised.
+
+The optional `deploy/compose.storage.yaml` profile uses the pinned SeaweedFS 4.51 image
+and a wrapper: mini's master/filer/volume listeners bind container loopback, and a separate
+S3 listener in the same namespace binds only the isolated storage network. WebDAV, admin
+UI and embedded IAM API are off. No backend ports are published. A separate Nest/Fastify
+`main.transfer` process holds only nonsecret signer IDs and forwards permitted signed
+requests unchanged to private S3. Dokploy routes the transfer hostname only to that
+process. The profile uses a new volume; it does not migrate or weaken existing local
+storage. Explicit local transfer binding uses reserved 23608 and fails on conflict.
+
+Transfer paths contain only bucket/tenant UUID/application UUID/object UUID. A strict
+query/header/method allowlist rejects unsigned semantic extensions, ACL/copy/archive and
+multipart operations. PUT requires signed exact length/type/create-only condition; chunked
+or unknown-length bodies fail before S3. Streaming preserves backpressure; files are never
+buffered in the API/ingress. Limits are 50 MiB per object, PUT expiry at most 900 seconds,
+GET expiry at most 120 seconds, eight active transfers, 120 requests per remote address
+per minute and at most 2,048 rate-limit entries. Proxy sources share the same remote-address
+budget unless separately isolated; caller-supplied forwarding headers never supply identity.
+Every adapter operation and ingress forward first verifies that a direct anonymous object
+probe receives 403; missing/unusable authentication fails closed even after backend restart.
+Transfer responses are no-store/attachment/nosniff/sandboxed, expose only bounded transfer
+headers and suppress provider error bodies. CORS uses exact configured origins, GET/PUT,
+content-type/if-none-match/range and no credentials. GET permits a single byte range.
+
+The snapshot primitive allocates a fresh unpredictable original key per attempt, requires
+source ETag match and destination If-None-Match, then HEADs the private candidate. An uncertain copy/HEAD error retains its exact candidate
+reference for owning-use-case cleanup. Exact
+cleanup has separate credentials and accepts only validated structured object references;
+there is no prefix/bucket deletion API. Domain state/CAS selection and recovery-aware
+retention belong to later owning features. The [storage runbook](docs/runbooks/dms-storage.md)
+describes private identity-file generation and bucket setup. `pnpm test:storage` verifies
+provider and ingress behavior with disposable storage and real Node/Chromium/Python clients;
+the lane is included in workspace integration. No parser/browser receives general keys.
+
+### Assessment and publication implementation (I08)
+
+The I08 initial matrix was `text/plain` + `secure-only`; I14 extends it with the selected
+format-routed paths documented below. At the I08 boundary no other family was
+advertised. Candidate destination intent is persisted before I/O; one create-only,
+source-conditional snapshot is selected per upload. Failed/ambiguous copies retain their
+exact references and reservations rather than retrying into an uncertain destination.
+Scanner-role private APIs expose short-lived original-read capabilities under the current
+attempt fence. Strict evidence records streamed SHA-256, measured size, scanner engine,
+signature generation/time, coverage and namespace inspection outcomes. New publication
+requires signatures at most 48 hours old, complete isolated format-specific assessment
+(UTF-8 validation for the initial text path) and exact candidate/
+size/declared-hash binding. Rejected and inconclusive candidates remain quarantined.
+The logical pointer, availability, terminal upload state and audit/outbox are changed in
+the lease-fenced PostgreSQL transaction; measured quarantine accounting is reconciled
+separately without discarding retained physical bytes. Invalidation closes eligibility.
+
+The trusted Python supervisor streams candidate bytes and ClamAV INSTREAM; an unchanged
+VERSION before/after scanning binds signature evidence. Bubblewrap isolates the bounded
+plain-text validator with fresh user/mount/PID/network namespaces, cleared environment,
+read-only interpreter libraries and stdin-only input. No credentials, application mounts,
+parser network or general storage keys are provided. Limits: 50 MiB input, 256 MiB virtual
+memory, ten CPU seconds, 15 wall seconds and fixed small output. No isolation fallback.
+The processing image pins Bubblewrap 0.8.0-2+deb12u1 and util-linux 2.38.1-5+deb12u3.
+The optional assessment overlay pins ClamAV 1.5.1 by digest, isolates the daemon from
+internet/application networks and supplies signatures through a distinct updater.
+Host/container namespace compatibility must be qualified before enabling this lane;
+repository/native qualification is distinct from rollout. Operational instructions are in
+[the assessment runbook](docs/runbooks/dms-assessment.md).
+
+### Authorized current-original transfer implementation (I09)
+
+The first usable increment is secure text/plain + secure-only document transfer, not full
+DMS v1 or production acceptance. GET /v1/documents/{documentId}/download returns a JSON
+capability for current by default; I10 adds explicit authorized historical selection. The current
+application registration/scope ceiling, owner, ACTIVE lifecycle, AVAILABLE current version
+and PASSED exact protected candidate are rechecked in one owning transaction. The same SQL
+predicate projects downloadable in detail/list reads. Publication/invalidation takes an
+exclusive per-tenant/document advisory fence; issuing a URL holds its shared fence through
+signing and audit commit. Future lifecycle/grant mutations must participate in this fence.
+No new runtime publication/update privilege is introduced. Valid assessments do not expire
+merely because scanner signatures age or enrichment is unavailable.
+
+Signed original GETs last at most 120 seconds. A separate API original-read signer adds
+signed response type/disposition overrides. Ingress forces attachment/octet-stream,
+UTF-8/ASCII safe filenames bounded to 180 UTF-8 bytes, nosniff, private no-store and
+no-referrer. It permits a single prefix/open-ended/suffix byte range and rejects listing,
+unsigned extensions and multiple ranges. It logs no signed URL/body or transfer capability.
+Already issued URLs remain usable until expiry after disablement/invalidation; revocation
+stops new capabilities. Audit/outbox action document.download-authorized records issuance
+separately from actual byte retrieval. Current history selection is deliberately closed.
+
+The optional downloads overlay adds only the API original-read credential; deployment
+preserves existing storage/project/volume bindings. Consumer capability projections include
+the current installed policy's text/plain and secure-only catalog plus token-permitted
+read/download/control operations. A standalone stdlib backend verifies begin/direct PUT,
+completion/poll, native security publication and full SHA-256-matching GET without importing
+application code. See [secure transfer operations](docs/runbooks/dms-secure-transfer.md).
+
+### Version history and binary restoration implementation (I10)
+
+I10 adds guarded POST documents/{id}/versions/uploads, GET versions and version status,
+explicit download?versionId, and POST versions/{versionId}/restore. Mutation headers require
+If-Match and Idempotency-Key. Binary numbers are allocated transactionally and never reused;
+failed candidates remain separate from the highest available current pointer. Publication,
+allocation/restoration, invalidation and download issuance share the canonical per-document
+fence. Allocation takes usage before that fence/document row; scanner acceptance never
+waits on usage, and accounting settlement follows the established usage/session order.
+New-version descriptors preserve logical title/metadata. Metadata/reprocessing features
+must not call binary allocation merely to change metadata or derived output.
+Restore retry fingerprints bind the operation, document, expected revision, profile and
+immutable source candidate. Logical title/metadata are captured once in the original
+descriptor; subsequent metadata edits do not change an identical restore retry.
+
+Historical restoration creates a normal new highest candidate under current policy,
+referencing a previously published protected object; it never copies old approval. A
+read-only HEAD checks existence/ETag/size, then fresh scanner work re-streams the exact
+object and checks the historical SHA-256 with current signatures and format inspection.
+The current available version survives pending/failed replacements; a late lower-number
+success cannot displace a higher current version. History uses bounded signed per-document
+number cursors and current security predicates; historical reads remain explicit.
+
+Immutable binary_restore intents bind source candidates in the same document/application,
+retain their source via composite foreign keys, and capture invalidation generations.
+Candidate object IDs may repeat only through the validated reuse path. Invalidation or
+negative assessment fences every version sharing those bytes, including pending materialized
+restores; a stale intent cannot create fresh apparently approved work after invalidation.
+A later explicit restoration can request reassessment of previously invalidated historical
+bytes, while only its newly passed revision becomes available. No implicit older fallback.
+
+REUSE admissions reserve zero additional physical storage and normal bounded scratch/work.
+Measured staging/original counters remain with the retained physical source; terminal reuse
+work settles with zero new bytes and releases only its own work reservation. Source-reference
+foreign keys and all live candidate object references must be honored by I19's recovery-aware
+collector; no physical purge or premature quota release is introduced. Each version has
+at most one owning admission. Runtime can insert immutable restore intents but has no
+candidate approval/job/publication mutation privilege. Only the coordinator materializes
+and assesses references; no worker receives general database/storage credentials.
+
+New-version batch manifests carry the document and expected revision but allocate nothing.
+Their item is admitted/bound exactly once through the new-version upload route. Other items'
+admission/cancellation cannot undo published versions. The matrix remains text/plain and
+secure-only; versioning does not install a format/parser or enrichment. See the
+[version operations runbook](docs/runbooks/dms-versions.md) for protected HTTP procedures.
+
 ### Upload and immutable publication
 
 1. The consumer backend calls `POST /v1/uploads` with metadata, declared size/type, optional SHA-256, processing profile, and an idempotency key.
@@ -3522,6 +5294,223 @@ Soft deletion immediately hides the document from normal listing/search/retrieva
 Restore checks the deadline, object existence/integrity, and current policy, then advances the lifecycle generation. Needed work is rescheduled under that new generation; old jobs cannot resume themselves. A restored document with an invalidated security assessment remains unavailable until reassessed. There is no restore after `PURGING` begins.
 
 If security status later changes to rejected/inconclusive, stop new reads and hide its derived content immediately. Invalidate affected runs and apply the new assessment to every version sharing those bytes. V1 does not automatically select an older revision as a replacement current version; an authorized restore creates a new revision.
+
+## Permission-aware discovery (I17)
+
+POST /v1/search is a machine READ operation with a strict bounded JSON body. It provides
+English PostgreSQL FTS over accepted source chunks, pg_trgm title/filename similarity and
+literal substring matching, exact title/name/tags/application-owned reference filters and
+string-only category/status metadata filters. No arbitrary JSON index, FTS expression,
+language selector or historical text search exists. Response order is document-ID ascending;
+there is no relevance/accuracy promise or unfiltered total. Limits are 1–50 (default 20),
+query text 3–128 characters, snippets at most 480 characters, statement timeout two seconds.
+HMAC cursors bind installation/application/filters/limit and reauthorize every live page.
+
+Migrations 0042–0043 add forced-RLS search_generation/search_chunk, generated English
+vectors with GIN, and pg_trgm in the DMS schema with title/name GIN and two explicit metadata
+expression indexes. Trusted validated artifact acceptance writes immutable-stage-bound
+index generations: 4,096 Unicode characters/chunk, at most 8,192 chunks/stage, original unit
+ID/kind/provenance retained. Partial source or index coverage is explicit. RLS and query
+predicates require live READ, active owner/caller, current available version, current epoch,
+active accepted final run and matching passed source hash before any snippet/result/cursor.
+Physical deindexing can lag without visibility. Original security approval remains separate.
+
+Acceptance builds generations transactionally and existing final-stage promotion makes the
+replacement visible atomically. Pending/failed work keeps the previous active result/index;
+intermediate native OCR stages cannot replace the required final result. Index status is
+PENDING/READY/PARTIAL/NOT_INDEXED independently of original availability and extraction
+coverage. Document searchable reports an eligible active index, including empty indexes.
+Existing pre-I17 artifacts remain NOT_INDEXED until explicit owner/private reprocessing;
+metadata-only discovery still works for secure-only and not-yet-indexed originals. Historical
+chunks are retained privately until I19 disposal. Text/snippets are untrusted data, not HTML,
+policy/tool instructions or authoritative business fields. See the
+[discovery runbook](docs/runbooks/dms-discovery.md) for filters, lag and independent testing.
+
+## Results, reprocessing and optional structure (I16)
+
+I16 introduces a tenant/application/version/source-bound processing_run with monotonic
+per-version run numbers, immutable accepted-stage identity, actor-bound 24-hour replay
+receipts and at most one active accepted result per version. Work jobs retain separate
+identities and generations; non-scan jobs reference their run, while the scan/legacy
+partial unique index remains independent. Migrations 0040–0041 force RLS, restrict grants,
+bind accepted-stage provenance and fence final results/promotion. Existing evidence is
+backfilled without rewriting original or artifact bytes. Runtime cannot directly write
+jobs, run state or accounting, nor directly read the private extraction-stage table.
+The optional compose.dms-results.yaml overlay supplies only artifact-read GET signing
+credentials to the API, separately from worker artifact writes. A narrowly authorized
+security-definer projection exposes only accepted metadata after
+current document/version/source/security checks.
+
+Public /processing provides signed keyset-paginated run history (1–50, default 20), active
+run identity, completion versus manifest coverage and independent I17 indexStatus. /content selects the exact current or explicit version/run and returns an
+untrusted-data manifest plus at most one 120-second read-only artifact capability. READ
+rights, active applications/lifecycle, current available version and matching passed source
+SHA-256 are rechecked under the original fence through signing and audit commit. Explicit
+history never falls back; retained pre-delete run history becomes readable only after the
+same version/hash is freshly available, and cannot automatically become active. Public
+ExtractionArtifact v1 covers native/tabular/OCR data and optional versioned structure.
+All issued outputs of one run, including abandoned attempts/native-to-OCR stages, are
+bounded together to 25 MiB and remain physically charged until trusted I19 disposal.
+
+Owner applications with current read/write API scopes and freshly authorized private
+operators can request searchable or enabled structured reprocessing through the same
+restricted database admission function. Shared read/add-version rights cannot do so.
+The run supplies the new processing window without changing lifecycle reassessment or
+contributor upload authority. The function fences lifecycle/policy/application/source/accounting,
+checks current file,
+profile, storage/scratch/capacity and queued-work ceilings, reserves one work slot and
+256 MiB scratch, and atomically commits the run, fixed dispatch, replay identity and
+attributed audit. It allocates no binary/revision. Pending or failed replacement preserves
+the previous active result; only the latest eligible current-epoch accepted final stage
+can switch it atomically. Immutable artifacts and attempt/generation/lifecycle fences
+prevent late or duplicate replacement. Native fallback from a failed heavy stage is not
+promoted as success. Index generation/promotion remains the I17 extension of this boundary.
+
+The optional structured Docker target installs locked Docling 2.146.0, CPU-only torch
+2.15.0 and torchvision 0.29.2, Heron layout revision
+8f39ad3c0b4c58e9c2d2c84a38465abf757272d8 and TableFormer fast revision
+fc0f2d45e2218ea24bce5045f58a389aed16dc23. A versioned SHA-256 file manifest and its pinned
+canonical contract hash bind the offline safetensors/config/card bundle. Model and code
+licenses/notices accompany it. The default image excludes these dependencies/models;
+compose.dms-structure.yaml selects a separate heavy image tag and explicitly enables
+API/coordinator/heavy support with DMS_STRUCTURE_ENABLED. Current operator policy must
+also permit each PDF/image/profile pair. Disabled or unsupported pairs reject explicitly.
+No language/model/tool/config selector is consumer input.
+
+Structured PDF/image/TIFF processing runs one source page/frame per isolated process,
+using PDFium for PDF input and the existing pinned English Tesseract CLI where necessary.
+Docling remote services, external plugins, extra enrichment models and runtime download
+paths are disabled; offline settings and a no-network secret-free namespace fail closed.
+Each page has 120 seconds; the document loop has at most 480 seconds including inspection,
+the outer namespace 510 seconds, with lease-aware reduction reserving 120 seconds for
+output/acceptance. Native/PyTorch/BLAS threads are one. Heavy container memory is 4 GiB,
+virtual-address space 8 GiB, scratch tmpfs 128 MiB, intermediate-file ceiling 100 MiB,
+with the existing 50 MiB input,
+100-page/frame and 25-million-pixel bounds. Mandatory scanners and ordinary extractors
+retain independent identities/resources. Failed or skipped pages retain usable native
+text and explicit warnings; no successful structure page means a failed replacement.
+
+Layout/table JSON uses original page/frame indices and top-left-normalized-page boxes
+(0–1 fractions of the Docling page frame), separate from OCR raster pixel coordinates.
+Cells preserve text, row/column offsets/spans, header flags and nullable source boxes;
+approximate layout, clipping, OCR and reading order are disclosed. Extracted content is
+untrusted data, cannot choose tools or change policy/business fields, and promises no
+exact table reconstruction. See the [results runbook](docs/runbooks/dms-results.md) for
+consumer/private operations, packaging and offline qualification.
+
+## English OCR and mixed pages (I15)
+
+I15 adds English OCR for PDF pages requiring recognition and JPEG/PNG/TIFF/BMP/static WebP.
+Current operator policy still gates every accepted format/profile; existing settings are
+not changed. Effective capabilities include per-format OCR and English only when an
+OCR-supported searchable path is enabled. secure-only omits all enrichment. Structural
+assessment validates actual bounded image decoding before the independent security pass;
+recognition never asserts or substitutes for malware/security approval.
+
+Images queue document.heavy after their security pass. PDFs retain ordinary native
+extraction first; acceptance atomically creates heavy work only when source pages remain
+OCR-needed. Native-only/blank pages are retained without rendering or recognition. Heavy
+work reuses the original source hash, immutable stage artifact kernel, identity/lease and
+lifecycle fences, exact output reservation and hash/schema acceptance. It preserves native
+units, recognizes selected source pages, and keeps work/scratch charged until all stages
+terminate. Migration 0039 makes the authorized processing-status projection prefer an
+existing current-epoch heavy job; prior native stage artifacts remain immutable history.
+No I16 result/promotion/reprocessing API or I17 search surface is added here.
+
+The processing image compiles Tesseract 5.5.4 from SHA-256-pinned source, without OpenMP,
+and bundles linked codecs/notices. tessdata_fast commit
+87416418657359cb625c412a48b6e1d6d41c29bd supplies checksum-verified eng/osd data; exact
+SHA-256 values live in the framework-independent OCR_RUNTIME contract. Models and the
+engine identity are verified in the isolated runtime, with no network or auto-downloads.
+Tika OCR remains disabled. Ordinary and heavy workers have separate one-process budgets;
+the heavy worker has one CPU and 1536 MiB container memory. Mandatory scanning retains its
+independent workers and authority.
+
+PDFium rendering and Tesseract/Pillow processing use a separate process per selected page,
+with at most 60 seconds including rendering/orientation/recognition. The OCR document loop
+is bounded to 480 seconds including inspection, and the lease-issued deadline reserves
+120 seconds for output/acceptance; the outer namespace is capped at 510 seconds, 480 CPU seconds,
+768 MiB virtual address space, 128 MiB tmpfs and 25 MiB output. Native/OpenMP thread ceilings
+are one. Limits remain 100 PDF/TIFF pages, 25 million raster pixels, 32 KiB text and 5,000
+OCR words per source unit. Rendering is 200 DPI. OSD has 15 seconds and an orientation-score
+threshold of 5; recognition uses the remaining per-page budget. Unknown orientation,
+low-confidence recognition, missing text, resource limits and skipped pages are explicit
+partial/failure outcomes; failed pages retain usable native text and other completed pages.
+
+Pillow applies EXIF orientation and alpha compositing before grayscale recognition.
+Artifacts identify native/OCR/mixed origin, one-based page/frame indices, clockwise
+rotation, raster dimensions/DPI and word boxes in top-left oriented-raster pixels. Native
+PDF rectangles map through PDFium's device transform and the same raster rotation before
+OCR overlap suppression. Native text is retained; OCR contributes only words outside its
+occupied rectangles. Native-only text receives no invented confidence. Tesseract word
+scores (0–100, low-confidence threshold 50) and its separate orientation score are reported
+as engine-specific measurements, not probabilities or universal quality. Only genuinely
+uniform near-white image pages are blank; missing image text remains explicit. Original
+bytes are immutable and a failed OCR stage never revokes an existing security pass.
+
+The [OCR runbook](docs/runbooks/dms-ocr.md) documents operation and coordinate conventions.
+A versioned repository-owned clean-print ground-truth set with pinned font/hash measures
+the accepted 10% maximum word-error target under its stated normalization and rendering
+conditions. Actual qualification includes native/scanned/mixed PDFs, rotated pages, TIFF
+order and model/limit failures, with CPU, per-process RSS, scratch and artifact measurements.
+Its [record](docs/qualification/dms-i15-english-ocr.json) is scoped evidence, not a general
+handwriting/table, multilingual or arbitrary real-world accuracy guarantee.
+
+## Native extraction and private artifacts (I14)
+
+I14 installs the selected bounded native/text, Office/email and tabular paths from the
+[supported format matrix](#supported-format-and-capability-matrix). AdmissionFeatures now
+supports those I14 families with secure-only/searchable; existing operator policies are
+unchanged and actual capability discovery intersects installed support with current policy.
+Image OCR, optional structured profiles, result history/reprocessing and search remain
+I15–I17. The first secure text transfer profile remains supported.
+
+Security and extraction are separate stages. The scanner requires fresh ClamAV coverage,
+immutable source integrity and isolated format/structure assessment before publication.
+Required structural inspection discards enrichment output (Tika uses metadata-only
+traversal), so text-output limits cannot substitute for a security decision. The original
+can publish before enrichment completes. A searchable pass atomically enqueues
+one private document.extract job; secure-only creates none. Work accounting stays reserved
+until both stages finish. Extraction failures never alter original security/availability.
+Normal upload/batch projections expose independent processing outcomes; private stage
+acceptance does not install the I16 consumer content or active-result promotion surface.
+
+The Python image pins pypdfium2 5.14.0, python-calamine 0.9.1, Pillow 13.0.0, defusedxml 0.7.1,
+olefile 0.47 and Tika 4.2.0 with the verified distribution SHA-512 recorded in its Dockerfile.
+It copies Temurin 21.0.13 from a digest-pinned image and preserves Tika/PDFium/native notices.
+Tika uses an explicit parser registry, no OCR recognizers and no fetcher/emitter plugins.
+A fresh JVM is forked per ordinary task with a 384 MiB heap, bounded metadata/embedded
+traversal, no network, 120-second parser deadline and one concurrent fork. PDFium runs in
+separate processes. The outer parser supervisor enforces namespace isolation, no secrets,
+read-only input/runtime mounts, 180 CPU seconds, 240 wall seconds, 25 MiB output, bounded
+file descriptors and 768 MiB address space (4 GiB virtual space for the JVM). Containers
+have a separate 1 GiB memory limit, one extraction CPU and bounded scratch/pids. Parser
+namespaces have an additional 128 MiB scratch tmpfs. The independent two-process scanner
+worker has a 2 GiB container limit and 384 MiB outer scratch for required structural
+inspection; its at-most-two security JVMs do not consume the ordinary worker's one-fork
+concurrency budget. ClamAV remains in its separate container.
+
+Private attempt input/output routes authorize only the live extractor identity and exact
+lease. Source bytes and resulting manifests bind document/version/job, work generation,
+lifecycle epoch, profile/configuration/processor versions and the passed source SHA-256.
+Results retain actual line/page/paragraph/slide/sheet-cell/email references. Sparse OOXML
+and ODS ranges, macros/encryption, expansion and embedded counts are bounded before
+conversion. Formula values are cached with unavailable expressions disclosed; no formula
+recalculation, document script, markup rendering or external-resource fetch occurs. Mixed
+PDF pages remain partial/OCR-needed; Office elements and omitted attachments are explicit
+coverage warnings rather than invented pagination or complete-coverage claims.
+
+Migrations 0037–0038 add a forced-RLS extraction_stage with composite job/attempt/generation
+integrity, a narrow read-authorized status function and immutable accepted manifests. The
+coordinator reserves exact artifact size against storage policy/capacity before issuing a
+create-only, attempt-specific private PUT, streams size/hash verification outside locks,
+then rechecks current identity/lease, source security and generations on acceptance.
+Verified outputs move from reservation to artifact-byte usage once. Ambiguous or abandoned
+issued outputs retain their reservation until I19 can prove safe disposal. No file text,
+capability URL or credential is persisted in audit/outbox or sent through RabbitMQ. Consumer
+and operator roles receive neither artifact-table access nor arbitrary storage authority.
+The [extraction runbook](docs/runbooks/dms-extraction.md) specifies manual qualification,
+coverage, private deployment and the separation from I16 results and I17 search.
 
 ## Processing, provenance, and AI readiness
 
@@ -3624,6 +5613,317 @@ Constraints and transactions must enforce:
 
 Better Auth owns its user, session, account, OAuth-client, token, and signing-key tables in the separate `auth` schema. DMS tenant RLS rules do not get applied blindly to global identity tables. Separate roles and explicit identity-module authorization protect that schema; DMS records store verified identity mappings rather than foreign keys into mutable session state.
 
+## Document registry and admission foundation (I05)
+
+DMS-I05 extends the existing DmsDatabaseService transaction boundary with owning
+`document`, `document_version`, `upload_admission`, `admission_policy`,
+`admission_capacity` and tenant/application usage records. Migrations 0008–0009 force RLS,
+use composite tenant/application/document/version references and restrict request roles
+to candidate creation and admission accounting. Runtime cannot configure policy/capacity,
+settle usage, rewrite audit, publish a version or set a current pointer. Coordinator usage
+reconciliation has a separate narrowly privileged role and fixed installation verification;
+operator policy writes/registry inspection use fresh authority proof plus the live DMS grant.
+
+Documents are allocated only by the upload-begin use case, never by a manifest or a policy
+command. Each admission has stable document/candidate/operation UUIDs, a canonical request
+hash, a tenant/application-bound idempotency hash and a 24-hour retry window. Under the
+owning transaction it holds current registration/scopes, a shared policy advisory fence,
+the tenant accounting lock, application accounting lock and, for another candidate, the
+document row lock. Policy updates take the matching exclusive fence; no policy UPDATE
+privilege is granted to requests just to obtain a read lock. Allocated version numbers are
+unique and monotonic; stale expected revisions fail. Existing logical metadata is preserved.
+Failed admission/issuance callbacks roll back IDs, counters, audit and outbox together.
+Retries return the original current operation state and do not reactivate terminal work.
+
+Baseline lifecycle is ACTIVE with independently PENDING binary candidates and a null
+current pointer. DB checks and grants prevent availability/pointer transitions until the
+security/publication feature owns them. Registry responses explicitly report unavailable
+for download/search; no placeholder download/search endpoint or processing success exists.
+GET `/v1/documents`, `/v1/documents/{documentId}` and `/v1/admission-policy` require
+`dms:documents:read`. Lists are owner-only with limit 1–50 (default 20), descending
+creation-time/UUID order and domain-separated HMAC cursors bound to current tenant/app.
+Document reads emit strong quoted revision ETags. Document audit at the frozen
+`/v1/documents/{documentId}/audit` additionally requires `dms:audit:read`; private operators
+can inspect permitted installation document audit. Audit now has a composite document FK,
+fixed document/admission actions and an explicit machine/coordinator actor kind. Human
+context remains explicitly application-asserted. Cursor namespaces bind document filters;
+I05 invalidates older audit cursors, which can be restarted from the first page.
+
+Private `admission-policy-read`, revision-checked `admission-policy-set` and
+`document-inspect` extend the existing operator command registry. Mutations and attributed
+security evidence commit together; identical policy-update retries do not fabricate another
+change. The operator DB role gains only policy insertion/settings-revision updates and
+registry reads. The coordinator role gains only installation/candidate/accounting reads,
+capacity observation/accounting updates and attributed audit/outbox inserts. No new
+operator HTTP endpoint, auth-schema access, cross-customer provisioning or implicit
+DMS operator grant is introduced.
+
+Policy has no automatic enabled installation defaults: its absence closes admission.
+Operator-configured storage/application/scratch byte budgets are required; all quota values
+are safe integers capped at 1 PiB. Per-file maximum remains 50 MiB; active admissions are
+at most 4/application and 16/tenant, with 100 queued work reservations/tenant and at most
+25/application (or the lower configured tenant ceiling). Every admission reserves twice
+declared bytes for staging/candidate storage, 256 MiB scratch and one mandatory-work slot.
+Lower configured limits are supported. Existing physical bytes remain separately charged
+as staging/original/artifact/retained usage; metadata is not counted as binary object usage.
+Settled admissions release their upload slot/storage reservation into measured byte usage;
+scan scratch/work stays reserved until trusted terminal work release. Release/settlement
+are idempotent, auditable and cannot create availability. A cancelled admission cannot
+release its reservation before the maximum issued capability expiry plus 60 seconds;
+trusted physical measurements retain any remaining bytes as charged usage.
+
+A private explicit capacity observer samples native storage/scratch filesystems while
+holding accounting steady. Observations expire after 30 seconds and never renew on failure.
+Admission subtracts existing reservations and measured usage growth since the observation;
+this avoids spending a stale free-space observation twice. Storage/scratch default to a
+shared capacity pool; only an explicit private declaration of physically independent pools
+allows independent headroom, and matching device IDs always remain shared. Filesystem
+sampling is not an OS reservation against unrelated external writers, so provisioned budgets
+and host headroom remain necessary. The observer needs only a coordinator DB connection,
+fixed installation identity and trusted absolute mount roots; public callers supply none.
+No new scheduler/daemon starts in I05; recurring observation belongs to the coordinator.
+
+The feature catalog is implementation-owned and empty for upload/processing in I05.
+Configuring MIME/profile names does not install them: effective projection intersects the
+configured catalog with verified owning implementations and their route enablement.
+GET `/v1/admission-policy` is version 1 with revision 0 when unconfigured and states
+not-configured/paused/not-installed/enabled. It exposes effective limits/catalogs, not
+other applications' usage or private filesystem/budget data. Existing capability-response
+shape/version is retained; document read scopes add only their corresponding operation
+identifiers. New public write/upload/batch operations remain I06, and installed format/
+security/processing claims follow their owning implementations.
+
+Shared contracts bound metadata to 64 keys, primitive values or arrays of at most 20
+values, and 16 KiB encoded JSON. The internal upload-begin envelope permits 32 KiB;
+batch manifests are bounded to 256 KiB with a 260 KiB envelope. I06 applies those route
+body limits when its HTTP routes ship; the existing authority/enrollment control limit
+stays 16 KiB. No batch persistence is introduced in I05. The
+[admission runbook](docs/runbooks/dms-admission.md) covers private policy/capacity setup.
+
+## Soft deletion and logical restore (I13)
+
+Owner GET document lifecycle, DELETE document and POST document restore routes implement
+logical administration under the existing live machine scope/owner policy. Shared rights
+confer none of these powers. Fresh private document-lifecycle-read/delete/restore commands
+require the current DMS operator grant independently of authority admin status. Mutations
+require strong expected revisions; restore additionally uses actor/document-bound hashed
+24-hour idempotency receipts. Deleted identities have a 30-day deadline; PURGING/PURGED
+cannot restore. A repeat accepted key reports current state rather than resurrecting a
+subsequently deleted identity. Successful transitions append attributed audit/outbox atomically.
+
+Migrations 0035–0036 add document/admission/version/job lifecycle generations, deadlines,
+forced-RLS lifecycle_restore and lifecycle_receipt records, and append-only prior security
+assessment history. The purpose-limited migrator-owned lifecycle function validates fixed
+tenant, actual database session role and live owner/operator authority before state changes.
+Runtime/operator receive EXECUTE rather than arbitrary publication/job/candidate UPDATE
+privileges. Physical purge has no implementation or enabled transition in this increment.
+
+Lifecycle writes first hold the public installation sharing fence exclusively, then an
+installation lifecycle barrier, the original fence and document row. Coordinator transactions
+hold the lifecycle barrier shared before accounting/source/job locks. This lock order lets
+delete atomically cancel pending sessions/attempts/jobs, obsolete dispatches and increment
+job generations without racing a result or deadlocking source locks against publication.
+No physical-byte counters or object references are released by deletion. Previously issued
+storage URLs retain their existing bounded lifetime.
+
+Logical restore preserves logical/binary identities, metadata and grants. Retained versions
+with a historical pass queue bounded private verification, initially unavailable under the
+new document generation. A five-version coordinator selection checks exact original ETag,
+size and streaming SHA-256 (50 MiB and 30-second read bounds) outside database locks, then
+rechecks captured lifecycle/object generations before applying. Current installed policy,
+fresh capacity, tenant/application backlog and scratch budgets gate fresh work. Prior
+immutable security evidence is archived before a narrowly checked pending-state reset;
+expected original SHA-256 remains immutable. Every original is freshly assessed before
+current-generation download eligibility, including previously invalidated originals.
+
+Reassessment reuses retained bytes and the existing binary version, with a fresh job
+lifecycle/generation and three-execution/30-minute budget. Attempts are unique per job
+generation/execution. A separate 24-hour reassessment deadline never extends original
+upload/admission replay authority or issues another PUT. Shared contributors cannot control
+owner-requested lifecycle reassessment. Scratch/queue reservation is separate from retained
+physical usage; existing accounting settlement releases work once without double-charging
+bytes. Settlement rechecks terminal jobs after source locking to avoid settling a restarted
+assessment. Former results cannot commit after delete/restore, including terminal replays.
+
+Metadata may reappear after logical activation while originals remain unavailable. Lifecycle
+inspection reports bounded pending/scanning/completed/failed counts and aggregate outcome.
+Missing/changed originals fail closed; transient availability/policy/capacity waits retry.
+Only freshly passed current-generation versions become downloadable. A failed current
+original never automatically falls back to older history. Unfinished uploads are cancelled,
+not resumed into publication; a new authorized upload may allocate the next revision.
+The [lifecycle runbook](docs/runbooks/dms-lifecycle.md) documents owner/operator commands,
+receipt/deadline semantics, asynchronous recovery and retained accounting. I19 still owns
+recovery-aware physical disposal; no installed service is migrated automatically.
+
+## Explicit application sharing (I12)
+
+I12 installs owner GET/PUT `/v1/documents/{documentId}/permissions` and private
+`document-permissions-read`/`document-permissions-set` operator commands. PUT replaces
+up to 64 distinct active same-installation consumer grants under strong If-Match,
+increments the logical document revision and atomically attributes audit/outbox to the
+actual actor. Empty grants revoke all. Self grants, worker/pending/disabled/unknown/foreign
+targets and ownership transfer are rejected. Fresh private operator proof plus the current
+DMS operator authorization is required; authority admin status alone remains insufficient.
+
+Rights are independent: READ covers document/list/history/version/upload status and
+available original capabilities; EDIT_METADATA covers logical metadata and caller-owned
+reference changes; ADD_VERSION covers candidate admission and its own submitted upload
+controls. API scopes remain an additional live ceiling. Audit, permissions, binary/lifecycle
+restoration and reprocessing stay owner/operator-only. All implemented read queries filter
+current rights before selection/pagination, and every public mutation/replay rechecks its
+resource right. Future content/search surfaces must reuse this evaluator.
+
+Migrations 0032–0034 add forced-RLS document_grant with composite tenant/document-owner
+and recipient FKs plus a recipient access index. Narrow migrator-owned SECURITY DEFINER
+functions evaluate tenant-bound active consumer/owner/grant eligibility without recursive
+RLS, using fixed pg_catalog search_path, qualified objects and revoked PUBLIC execution.
+Supplemental policies expose only granted documents and related owning rows; public
+services still enforce the operation-specific right. Owner policies remain unchanged.
+Operator target validation is a bounded function returning only eligible IDs while holding
+registration share locks; no operator registration-update privilege is granted. Runtime
+still cannot change candidate approval/publication, grants for another owner or audit rows.
+
+A shared installation advisory fence is acquired by public transactions before registration
+and resource locks. Owner/private-operator grant replacement takes it exclusively. Thus
+revocation serializes with signing, reads, writes, batches and admission replays, including
+SQL-filtered list pages. Per-document original fences still serialize security/publication.
+Already issued bounded storage capabilities and accepted owning work retain their existing
+semantics; revocation does not recall delivered bytes or delete accepted candidates.
+
+Document, versions, candidates, storage paths and quota charges retain the owning
+application. Admission separately records immutable contributor_application_id; session
+batch_application_id and composite FKs bind manifests/receipts to that contributor rather
+than changing document ownership. Completion receipts retain caller-scoped idempotency and tenant-aware upload FKs, with a restrictive current-control insert policy; owners can complete a contributor upload without reading its private receipts. Admission idempotency is scoped to the contributor; owner quota
+and tenant capacity apply to shared admission. Only the owner or current ADD_VERSION
+contributor can control a session. Batch reads retain their own descriptors but project
+sessions only with live document rights; cancellation skips no-longer-controlled sessions.
+
+References carry creating applicationId; existing values are backfilled to the owner.
+Shared editors link/unlink within their own application namespace, while owners can remove
+any reference. Detail retains explicit source identities and exact reference filters use
+the caller namespace. References and common tenancy never confer resource rights.
+The [sharing runbook](docs/runbooks/dms-sharing.md) specifies the scope/right matrix,
+private commands, revocation and owner accounting behavior. No installed service is
+migrated automatically by this implementation.
+
+## Metadata, tags and references (I11)
+
+Logical edits use PATCH `/v1/documents/{documentId}`; POST/DELETE document reference
+routes link/unlink opaque source-system tuples. Existing fixed-installation/owner RLS and
+live scope ceilings apply. All mutations use strong If-Match, canonical document fence
+before row locking, monotonic logical revisions and atomic attributed audit/outbox.
+They never call binary allocation or processing. Pending uploads retain their admitted
+binary descriptors; logical edits remain on the document through publication.
+
+Metadata remains at most 64 named keys, scalars or arrays of at most 20 scalars, strings
+up to 2048 characters and 16 KiB UTF-8 encoded JSON. Title is 1–240 characters; tags are
+at most 32 distinct, case-sensitive labels of 1–64 characters, without controls. PATCH
+replaces supplied values and rejects unknown/empty/nested/unbounded shapes. Its envelope
+is at most 32 KiB. Existing immutable filenames and binary revision descriptors are unchanged.
+
+Each document retains at most 32 references, each with a generated UUID, namespace and
+type (ASCII identifiers up to 64 characters) and opaque externalId (1–128 characters,
+no controls). References live in the owning document's bounded JSON array; tenant and
+registered application IDs supply the mandatory source namespace boundary. Custom source
+labels are subordinate to that boundary, never global authorization identifiers. Identical
+IDs across applications do not collide. Multiple tuples may link a document, and one tuple
+may link several documents. No external lookup, entity validation or access grant occurs.
+
+List supports exact case-sensitive title/filename, tag containment and complete reference
+triple containment, combined with AND. GIN indexes cover tags and references; an owner/title
+index covers exact title selection. No arbitrary JSON metadata query language is exposed.
+Signed created-descending cursors bind every filter plus installation/application, with
+50-row maximum pages. Reads are live pages rather than filter snapshots. Document detail
+includes bounded metadata/references; list summaries include tags but omit metadata/references.
+
+Migrations 0030–0031 add default-empty arrays (preserving existing documents), bounds and
+indexes, audit actions and only title/metadata/tags/references UPDATE privilege to runtime.
+Existing forced owner RLS remains authoritative; runtime cannot edit publication state.
+The [metadata runbook](docs/runbooks/dms-metadata.md) and independent stdlib HTTP example
+cover read/edit/link/unlink and conflict reconciliation. Sharing remains I12.
+
+## Upload and batch lifecycle foundation (I06)
+
+I06 installs the owning upload control API and bounded batch manifest lifecycle through
+DMS migrations 0010–0012. `upload_session` binds one admission/candidate to one unpredictable
+staging identity, the validated descriptor (including optional declared SHA-256), session
+expiry and completion intent. `upload_receipt` stores namespaced canonical request hashes
+and stable operation/resource IDs for completion, batch creation and closure. Signed URLs
+never enter persistence, audit, outbox or telemetry. Upload begin uses the I05 receipt;
+identical retries reauthorize and preserve session identity. Changed bodies conflict and
+expired receipts return 410. In-flight admission contention uses retry guidance.
+
+Implemented machine routes are POST `/v1/uploads`, GET/DELETE `/v1/uploads/{uploadId}`,
+POST `/v1/uploads/{uploadId}/complete` and `/refresh`, POST `/v1/upload-batches`,
+GET/DELETE `/v1/upload-batches/{batchId}`, and POST `/v1/upload-batches/{batchId}/close`.
+Read routes require `dms:documents:read`; mutations require `dms:documents:write` with
+current registration and owner checks inside the transaction, including every retry.
+I10 now implements new-version HTTP admission and new-version manifest execution;
+I06 did not install a placeholder version-write route. Manifests may
+record that intended operation without granting authority or allocating a candidate.
+
+Begin reserves capacity, allocates identities, inserts the session, binds its batch item
+and authorizes a single PUT in one owning transaction. Signing failure rolls all of that
+back. Only upload-role staging credentials enter the API. The API never needs snapshot,
+original-write, parser or cleanup credentials. Issuance signs exact Content-Length,
+Content-Type and If-None-Match `*`, bounds expiry to 900 seconds and the session deadline,
+and records the maximum issued expiry for cleanup accounting. The signer calculates its
+remaining lifetime after backend authentication checks. Browser code sends a known-size
+Blob/File and lets the browser provide Content-Length; Node/Python send the same exact
+bytes and returned headers. Retrying a PUT may return 412; inspect and complete the same
+session. A fresh capability targets that same immutable staging identity, never a new file.
+
+Completion requires an idempotency key and `{}` body, persists accepted intent and its
+atomic audit/outbox record, and returns 202 with Location and Retry-After 2. Status reports
+independent upload, security, candidate availability and processing fields. I06 writes only
+INITIATED/EXPIRED/CANCELLED upload transitions; security remains PENDING, availability
+CANDIDATE and processing NOT_SCHEDULED. No HEAD, checksum match, snapshot, assessment or
+publication is implied by completion intent. The later coordinator discovers and verifies
+persisted staging references independently of callbacks, then owns subsequent transitions.
+No path in I06 can set a document current pointer or make a version available.
+
+Lock order is current application authorization, operation receipt advisory fence where
+needed, batch, tenant/application accounting for new admission, then session. All grouped
+creation, inspection, completion, refresh, closure and cancellation hold the batch fence;
+session locks are acquired in UUID order for a batch. Issuance then locks the admission
+row, verifies its reservation is still RESERVED, and holds it through signing/max-expiry
+recording so coordinator settlement/release cannot race a fresh capability. Cancellation may supersede accepted
+completion intent while the upload remains INITIATED; a concurrent completion returns the
+recorded terminal state if cancellation won first. Expiry checks use wall-clock time after
+lock acquisition. Refresh and replay never revive terminal or completion-requested sessions.
+Cancellation/expiry records no physical deletion and does not release reservations while
+issued capabilities or retained bytes may remain; trusted cleanup/reconciliation owns that.
+
+Batches have at most 100 unique immutable item IDs, a 24-hour start window, and 4 open
+batches/application or 16/tenant. A tenant advisory fence and bounded identity-only
+`upload_batch_slot` records enforce both ceilings without exposing another application's
+manifest. Expired slots no longer consume open-batch capacity. Batch creation creates no
+document/session or byte reservation. Each admitted item binds exactly once to an ordinary
+session and descriptor; another key cannot allocate another session for that item. A failed
+admission leaves the item unstarted with a bounded error/retry hint, without undoing other
+items. Status counts each independent stage across the whole bounded manifest and returns
+1–50 items (default 20) with an HMAC cursor bound to tenant/application/batch. Every page
+reauthorizes. Closed/expired batches settle unstarted items and preserve existing sessions'
+own deadlines. Cancellation additionally cancels eligible INITIATED sessions, never
+logical documents or a published version. Batch close/cancel and begin cannot create an
+unlisted session across their common row fence.
+
+All five lifecycle tables force RLS. Runtime can insert owned records and change only
+lifecycle/intent/binding fields; it cannot rewrite staging keys, descriptors or receipts,
+settle accounting, or publish versions. Coordinator gets read-only discovery for I07;
+operator inspection has grant-filtered reads and bounded attributed evidence only.
+Private `upload-inspect` and paginated `batch-inspect` use fresh authority proof and the
+current DMS operator grant; they never sign URLs. Batch audit has a composite owner FK;
+fixed upload/batch actions and identifier-only outbox records commit with state changes.
+
+The upload route permits 32 KiB control JSON and the batch route 260 KiB, with a separate
+256 KiB manifest bound and each metadata object capped at 16 KiB. Other authority and
+enrollment limits stay 16 KiB. Capabilities list installed lifecycle control/read operations
+for the token's scopes; the effective format/profile catalog stays empty until the owning
+security implementations are installed. No multipart, resumable or archive-import
+capability is installed. See the [lifecycle runbook](docs/runbooks/dms-uploads.md) for the
+backend/browser transfer protocol and the optional private storage network overlay.
+
 ## Public API and consumer contract
 
 Use `/v1` JSON/HTTP APIs. Public response schemas and examples are part of the release, not optional follow-up documentation. This table describes the selected surface; executable OpenAPI is produced during implementation from shared schemas.
@@ -3653,6 +5953,7 @@ Use `/v1` JSON/HTTP APIs. Public response schemas and examples are part of the r
 | `GET`                    | `/search`                                         | Authorized current-version search with bounded query/filter parameters                                        |
 | `POST`, `DELETE`         | `/documents/{id}/references[/{referenceId}]`      | Create or remove an authorized external reference                                                             |
 | `PUT`                    | `/documents/{id}/permissions`                     | Guarded replacement of same-tenant application grants                                                         |
+| `GET`                    | `/audit`                                          | Current owning-application audit access with bounded pagination                                               |
 | `GET`                    | `/documents/{id}/audit`                           | Owner/admin audit access with pagination                                                                      |
 | `GET`                    | `/capabilities`                                   | Active format/profile/limit/language and contract capabilities                                                |
 
@@ -3671,6 +5972,115 @@ Tenant/operator bootstrap, enrollment-key issuance/revocation, OAuth-client prov
 - Capability responses use `Cache-Control: private, no-store`. No capabilities in logs, telemetry, events, or browser analytics. Browser origins and transfer headers are explicitly allowed in CORS.
 
 Ship login/backend-session and machine-token examples, Thaarei enrollment/rotation/revocation examples, browser single-file/batch transfer through a consumer backend, a standalone backend integration, and contract fixtures validated from Python as well as TypeScript. Examples must never put service credentials or enrollment keys in browser code. SDK packaging and webhooks remain deferred.
+
+## Authoritative work and private execution foundation (I07)
+
+I07 owns DMS migrations 0013–0015 and the private `main.coordinator.js` process from the
+DMS image. It runs its own Nest/Fastify module/listener on private container port 3003;
+public API bootstrap does not import its controllers, providers or credentials. No work
+route or schema enters consumer Swagger. The versioned private contract is generated
+from `packages/dms-contracts/src/work.ts` into `docs/api/dms-work.contract.json` and the
+Python package's identical runtime artifact. Both generations are checked for drift.
+
+The shared authority issues explicit `work_publisher`, `work_scanner`, `work_extractor`
+and `work_heavy` confidential clients with client-secret Basic, RS256 JWTs lasting at
+most five minutes, one role-specific scope, and the distinct audience
+`{canonical-issuer}/services/work`. The actual private API base is
+`http://coordinator:3003/internal/work` on the isolated work network. Canonical issuer/JWKS
+validation, exact audience/subject/client ID, token type/algorithm and scope checks apply;
+private and consumer tokens are not interchangeable. Fresh DMS operators separately
+`work-authorize` an approved authority client/role or `work-disable` it. The tenant-bound
+`work_identity` grant is checked under a shared advisory fence on every private mutation;
+operator changes take the exclusive fence. Identity-admin status and broker possession
+confer no DMS work grant. Suspending an OAuth credential stops new tokens; disabling its
+DMS work grant also stops already-issued token authority immediately while disabled.
+
+`work_job` owns source upload/task identity, execution count, current generation/attempt,
+retry eligibility, recovery time and the single elapsed execution budget. `work_dispatch`
+is its transactional transport outbox, with a bounded leased publisher receipt;
+`work_attempt` owns opaque hashed fencing tokens, claimant client, lease and hard deadline,
+result hash and fixed outcome. All four work tables force RLS, are tenant-bound and owned
+by the DMS migrator. Public runtime has no access. Coordinator reads work authorization
+but cannot create or enable an identity; the operator role can insert an approved identity
+and update only its enabled flag. Current application-status checks use a shared row lock;
+coordinator gains only timestamp-column UPDATE authority to acquire that lock, never
+application-status, scope, enrollment, operator-grant or auth-schema mutation authority.
+No coordinator permission to publish a document/current pointer is introduced.
+
+Owning features call the internal enqueue kernel, which holds current source policy and
+creates the job, dispatch and bounded audit/outbox record atomically. There is no HTTP
+job-creation, executable-name, storage-destination or subscription-management interface.
+The I07 coordinator does not enqueue absent security/extraction implementations. Fixed
+worker entrypoints explicitly return UNSUPPORTED/HANDLER_NOT_INSTALLED until an owning
+implementation supplies a handler. I08 supplies the scanner-only evidence acceptance
+transaction described above; generic job SUCCEEDED cannot imply a security pass. Only
+plain-text secure-only assessment is installed; other format/enrichment capabilities stay empty.
+
+The private publisher leases at most ten due dispatches for 30 seconds. It sends Celery
+protocol 2 JSON through the fixed `document.scan`, `document.extract` and `document.heavy`
+queues on the durable `dms.work` topic exchange, with persistent messages, mandatory
+routing, Basic.Return handling and publisher confirms. The same ConfirmedTask producer
+path wraps first publication and Celery Task.retry; no implicit binding repair or ambiguous
+producer retry hides routing failures. Explicit installation provisions topology. Delivery
+is recorded only after routing/confirmation. A crash before that receipt permits duplicate
+transport after lease expiry, while the private claim transaction permits one active attempt.
+Dispatch candidate selection excludes terminal jobs and obsolete generations before its
+bounded limit, so lost delivery receipts for completed jobs cannot starve new work.
+
+A successful claim increments the job's persisted execution count (maximum three), starts
+one 30-minute budget on its first execution, and allocates a claimant-bound random lease.
+Each attempt has a hard deadline of at most ten minutes within that same budget, a
+90-second lease and 20-second worker heartbeats. Heartbeats cannot renew an expired lease
+or extend the hard deadline. Source authorization, held mandatory-work reservation, upload state, generation, current
+attempt, claimant and fence are rechecked before heartbeat/result acceptance. Repeated
+identical results are idempotent; conflicting or stale results cannot commit. Security
+pass fields are absent from this contract; scanner/extractor/heavy role checks are distinct.
+
+Temporary connection/timeouts and HTTP 408/429/500/502/503/504 from production worker
+transport enter the existing retry path. Authorization/content-validation failures
+and direct-transfer certificate verification failures remain terminal.
+
+Normal transient execution records RETRY_WAIT with a bounded 4–30 second jittered delay;
+Celery then owns its confirmed retry publication. Reconciliation does not schedule a
+second ordinary retry. It recovers a missing retry only after its recorded eligibility plus
+90 seconds, or a lost attempt after lease expiry plus 30 seconds; these conditions are
+rechecked under lock. A confirmed unclaimed dispatch has a ten-minute recovery deadline.
+Each job allows at most three recovery generations, retaining its existing execution and
+elapsed budget. Exhaustion becomes an explicit FAILED outcome. Cancellation/expiry/live
+application disablement fences affected work. Per-job recovery transactions and source
+lock ordering avoid retaining a batch lock while recovering a different source.
+
+The coordinator runs bounded five-second cycles with independent failure handling for
+capacity sampling, batch/session expiry, upload discovery and job recovery. A failed
+filesystem observation never renews capacity or prevents unrelated lease recovery. Upload
+discovery persists a 60-second lease before HEAD I/O and rechecks it/current source state
+before accepting the observation. It polls exact persisted staging references without
+requiring the completion callback. Matching size/type metadata advances only to
+OBJECT_VERIFIED; mismatch records FAILED with a bounded reason. ETags remain opaque
+concurrency tokens. Authoritative streamed hash/type, immutable snapshot selection,
+security assessment and publication remain I08. No callback, HEAD or job outcome makes a
+version downloadable/searchable. Cleanup/accounting release still requires trusted
+physical operations after all capabilities expire; this increment does not inventory or
+purge stored objects.
+
+Python uses Celery 5.6.3 and the exact locked dependency graph. Its image installs the
+locked non-editable production environment, including native wheels, rather than building
+only an application wheel. Worker execution is prefork, two scan/one ordinary/one heavy
+processes, prefetch one, JSON-only, late-acknowledged and without a result backend, remote
+control, gossip, dynamic tasks or unbounded worker-loss requeue. Fixed tasks are the only
+registered execution entries; expired attempts recover through PostgreSQL. Parser
+sandboxing and native assessment runtimes remain I08.
+
+The optional `compose.dms-work.yaml` overlay adds no host ports. Public API reaches the
+work network only for the existing OAuth endpoint; coordinator has private DB/storage/work
+connections. Publisher/workers have only work/broker networks, no DB or general storage
+credentials. Broker management binds loopback. Explicit protected broker definitions create
+separate per-role users, native queue/topic permissions, durable queues and dead-letter
+bindings; publisher cannot consume, and worker credentials cannot claim another queue or
+publish another role's routing key. RabbitMQ remains the existing pinned OSS image/digest.
+`work-inspect` provides fresh, grant-checked bounded job/dispatch/attempt diagnostics without
+lease secrets. See [the work runbook](docs/runbooks/dms-work.md) for installation, inspection
+and recovery boundaries. This foundation introduces no public job API or automatic redrive.
 
 ## Durable jobs, events, and reconciliation
 
@@ -3798,6 +6208,18 @@ Retained backups expire through their own documented policy; physical removal fr
 
 After recovery, discard broker authority over business state: rebuild/reconcile dispatch from current PostgreSQL jobs/outbox records and reject stale generations. Run an application-level restore drill covering original/history retrieval, extraction, grants, pending work, and deletion. A green database restore command alone is insufficient.
 
+### I19 implemented recovery and disposal boundary
+
+The 0.19.0 small distribution implements **sealed quiesced cohorts**, not arbitrary database-only point-in-time advancement. A private short-lived Docker-operator tool uses Engine API 1.52 through the Unix socket; this is Docker-administrator authority and is absent from all long-running services. It drains writers, persists a source fence, disables the six auth/DMS application-role logins and terminates existing backends, inventories all required object sizes/hashes, runs PostgreSQL 18 `pg_basebackup` with streamed WAL and `pg_verifybackup`, and archives the stopped entire SeaweedFS `/data`, signatures and private configuration. Recovery point coverage never advances beyond the quiesced object state. Source release restores the recorded login flags and previously running services before long image export/encryption/upload. A durable fence supports explicit release after controller interruption.
+
+Six streamed AES-256-GCM authenticated components (DB/WAL, storage, configuration, signatures, logical object inventory, pinned images) and a final encrypted version-1 manifest form a cohort. The independent 32-byte key and repository configuration are excluded from capture. A pending catalog horizon is reserved before capture, remains conservative through interrupted upload/authorization, and can be sealed with verified proof exactly once. An S3-compatible TLS repository receives immutable component keys and full ciphertext readback checks; the manifest is the last completion marker. Multipart uses at most 9,999 parts and a 5-TiB component limit. Retention is selected before capture, minimum seven days; the repository expires whole cohorts no earlier than the authenticated expiry. Independent failure-domain attestation is required in production. Explicit fixture-only repositories cannot provide disposal authority. HTTP runtime has no backup/recovery endpoint, repository credentials, key or Docker socket.
+
+Restore requires a distinct empty project and exact image inventory. Authenticate every component before import, verify base/WAL, preserve root/auth/DMS roles and key-encryption material, then invalidate sessions, OAuth tokens, verification transactions and signing keys to establish a new JWT verification epoch. Rotate every recovered S3 signing role and IAM coherently so old storage capabilities also fail. PostgreSQL recovery state and a host wrapper marker keep HTTP and coordinator work closed. Full restored S3 inventory/hash/system-identifier verification and import of retained authenticated recovery horizons precede a fresh authority-administrator plus DMS-operator proof and explicit independent access review. The empty broker gets dispatch rebuilt from PostgreSQL with new generations, original budgets/deadlines and inactive-source cancellation; terminal jobs do not reopen. Host `up` refuses a blocked recovery. The [recovery runbook](docs/runbooks/dms-recovery.md) defines command order, key custody, failure/retry handling and measured acceptance.
+
+Forced-RLS recovery state, immutable backup catalog and application-bound disposal intents are DMS-owned. Originals/accepted artifacts require the restore deadline plus nine days, a confirmed off-host cohort within 24 hours, no retained cohort covering the deadline, and every shared/restored reference independently permitting disposal. Durable object tombstones and advisory fences reject new original references. Private operator requests select at most 100 objects; the coordinator leases at most five for 120 seconds and retries after 60 seconds. Network calls run outside database transactions. Cleanup refuses Enabled/Suspended S3 versioning, deletes only the canonical exact key, and requires an independent authenticated absence check before atomic usage release and completion. Minimal identity/version/security/artifact provenance and tombstones survive physical disposal. PURGED is reached only when every physical reference is complete; searchable text is removed then. Unpublished terminal staging and abandoned output use capability expiry plus one day and 60-second skew grace, separately from retained originals. Terminal uploads without scanner jobs reconcile expired transfer reservations against authenticated exact-key observations; unconfirmed copy destinations are optional inventory objects until their existence is established. Binary restore retries transient storage failures, and disposal eligibility is applied before the bounded batch limit.
+
+Bounded private history pruning retains failed/unsupported work and referenced provenance, expires upload/lifecycle/enrollment receipts one day after their disclosed expiry, unreferenced successful attempt detail after 30 days, unreferenced successful/cancelled jobs and identifier-only audit/security history after 90 days, and unreferenced terminal batch details after 30 days. Expired enrollment keys are pruned after 90 days only when no receipt depends on them; active application identity mappings remain. Referenced session/batch bindings remain provenance; pending disposal retains its application audit. The I18 attestation report is operational information only; disposal authority comes from verified cohorts. Local fixture timings qualify only the recorded fixture dataset and limits. Actual off-host survival and RPO/RTO on declared target hardware/volume remain I20 target acceptance.
+
 ## Development and current deployment
 
 ### Local development
@@ -3902,6 +6324,92 @@ by the Dokploy deployment, not this development reservation.
 
 ### Standalone DMS delivery target
 
+DMS-I01 implements explicit `AUTH_MODE=standalone` (default remains `combined`) and
+`DATABASE_PROFILE=dms` private provisioning (default remains `combined`). Standalone
+startup requires auth/DMS runtime configuration only, with no configured default login
+callback/client or machine ID. Private client issuance requires explicit client IDs.
+The foundation Compose is `deploy/compose.dms.yaml`: DMS production image, isolated
+PostgreSQL volume/network and external TLS mail transport; Dokploy owns all ingress/TLS.
+No product schema/container/runtime dependency or document capability is introduced.
+Operator instructions and consumer integration are in the
+[standalone runbook](docs/deployment/customer_deployment_guide.md#standalone-dms).
+
+`AUTH_LOGIN_CLIENTS` is a bounded server-owned array (maximum 32) of exact per-client
+login/consent/callback/logout/verification/reset URLs. Production requires HTTPS;
+local/test requires loopback. Credential/recovery screens share the authority origin
+and are consumer-owned ingress routes; there is no cross-origin credential transport.
+Managed login clients retain required S256 PKCE, confidential Basic authentication and
+explicit first-party consent skipping. Persisted redirect/logout metadata must match
+configured policy. Combined mode retains its configured Turnstile policy.
+Provider interaction redirects become opaque browser-bound transactions for independent
+consumers. The existing authority verification store records the signed query with a five-minute
+expiry; only hashed transaction and browser binding form the lookup key; an authority-secret
+HMAC protects the stored client/query against substitution.
+GET `/identity/continue` atomically consumes it and resumes authorization internally.
+Each capture reclaims up to 100 expired namespace-only continuation rows with
+`FOR UPDATE SKIP LOCKED`; provider records and active transactions are preserved.
+The HttpOnly SameSite=Lax binding cookie is Secure for HTTPS. Replays, missing/substituted
+browser binding, expiry and removed client policy fail. No signed query is sent to an
+independent consumer screen. Recovery returns match exact registered URLs; machine-only
+private recovery uses the fixed `/identity/ok` return and existing reset API.
+
+`dms.operator_authorization` stores tenant/authority-subject grants and revocation state.
+Migration 0005 forces tenant RLS and excludes runtime privileges. Private
+`dms:manage-operator` authenticates a verified active authority identity freshly (60-second
+proof budget) on every invocation. Bootstrap/recovery require explicit maintenance
+credentials and administrator self proof; assign/revoke additionally require an active
+DMS operator grant. Installation creation remains exclusively `db:bootstrap`. An
+installation row lock and tenant command advisory fence serialize assignment/revocation,
+last-operator protection and concurrent inspection. Mutations and attributed bounded
+security events commit atomically. Authority administration alone grants no document
+operator powers; the explicit private recovery command is a separately authorized action.
+
+DMS-I03 adds `audit-read` on this same private stdin interface, using the distinct
+`thaarei_dms_operator` login, not migration authority. It has only schema usage, installation
+and own-operator-grant reads, permitted audit reads and attributed inspection-evidence
+inserts. Each invocation verifies installation identity, fresh verified authority identity
+and the current tenant-bound grant; every page/retry repeats verification. Its shared
+command fence prevents a supported revocation from completing during a read. Forced-RLS
+operator policies independently require the active grant. No operator HTTP endpoint exists.
+I05 extends this role with bounded policy writes and document inspection as described
+in the admission foundation section. The private registry/schema is generated separately as `docs/api/dms-operator.contract.json`.
+
+The owning DmsDatabaseService supplies transaction-local tenant/machine context on its
+existing bounded pool. Current registration, consumer principal kind and scope ceiling are
+rechecked under a shared registration lock through commit (enrollment uses UPDATE NOWAIT).
+All existing protected resource handlers use this boundary in addition to the HTTP guard.
+Each transaction clears and locally sets tenant, principal kind, application and actor; commit
+and rollback discard context before pooled reuse. Future owning routes load current
+resources/grants inside this transaction and use the resource-policy interface. Audit is
+owner/operator only; a future document read grant does not imply audit permission.
+
+Migrations 0006–0007 add forced-RLS, identifier-only `audit_event` and `outbox_intent` records
+with composite tenant/application references. The implemented application-enrollment change,
+audit record and outbox intent commit or roll back together; receipt replay adds no second
+state-change audit/intent. Runtime cannot update/delete audit, read operator grants, assume
+operator/coordinator roles or read auth SQL. Fixed action/resource fields, bounded actor and
+optional explicitly application-asserted human identity prevent arbitrary audit payloads;
+no file bytes, text, secrets or transfer URLs are accepted. End-user context supplies no
+authority. Security telemetry stays separate from consumer-visible resource audit.
+
+GET `/v1/audit` requires `dms:audit:read` and returns only the current consumer's application
+audit. The private `audit-read` returns permitted installation application audit, optionally
+filtered by application. Both use limit 1–100 (default 50), descending timestamp/UUID keyset
+pagination and opaque HMAC cursors bound to tenant/principal/filter. Every page reauthorizes;
+listings remain live views. Changing the authority secret invalidates outstanding cursors.
+I05 adds `document.admitted` and `admission.reconciled` alongside `application.enrolled`.
+GET `/v1/documents/{documentId}/audit` and the private document filter use the owning
+registry and document/operator audit policy described in the I05 foundation above.
+
+`thaarei_dms_coordinator` starts as a distinct tenant-filtered outbox reader in I03.
+I05 adds the constrained capacity/accounting and audit-insert privileges described above;
+registration, operator grants, auth, DDL and publication-state privileges remain absent. I03 supplies no dispatch
+process or broker publication; I07 adds only the privileges/use cases it implements. Private
+operator/coordinator URLs never enter long-running API environment references. Provisioning
+creates these roles as NOLOGIN unless separate protected credentials are provided. Existing
+installations provision just the two roles with `--dms-access-only` before owned migrations;
+no automatic role provisioning, installation migration or credential rotation occurs.
+
 The DMS must also be installable and usable without Turnstile API/web, product-owned
 schemas, product secrets or a product ingress proxy. Independently registered backends
 consume its public HTTP contract; the workspace TypeScript client is optional. Keep
@@ -3921,23 +6429,182 @@ proving code/PKCE, expiry/revocation and recovery while Turnstile is absent.
 
 Tenant-operator document administration uses private commands with fresh verified authority
 identity plus explicit active DMS operator authorization bound to the installation tenant.
-Bootstrap/assignment/revocation/recovery and attributed owning-use-case execution will be
-implemented in DMS-I01/I03 and extended with each feature. Authority-admin status alone,
+DMS-I01 implements private bootstrap/assignment/revocation/recovery. DMS-I03 implements
+attributed paginated application audit reads; each document feature extends the same
+execution context and live operator checks. Authority-admin status alone,
 ordinary consumer scopes and browser sessions never supply document operator powers.
 Keep maintenance credentials private, operator contracts outside consumer OpenAPI and
 public machine-resource checks separate. No DMS management UI or end-user ACL model is
 introduced by this operator interface.
 
-Provide generated public OpenAPI 3.1 plus a locally bundled Swagger-style explorer on
-the existing DMS listener. The planned Fastify static-document serving integration must
-consume the shared-schema-generated artifact, keep private contracts separate and prove
-compatible pinned packages during implementation. Documentation is off by default in
-production and enabled only under controlled operator access. Manual requests use a
-short-lived bearer token obtained outside the browser; never embed machine credentials,
-persist authorization, load external validators/assets or bypass resource policy. File
-bytes still use direct signed storage transfers. Exact routes/configuration and executable
-limits are frozen with the implementing capability; no docs service or new host port
-is introduced by this documentation decision.
+DMS-I02 implements the generated consumer OpenAPI 3.1 artifact and protected, locally
+bundled explorer on the existing DMS listener, as specified below. Private contracts
+remain separate, and documentation never substitutes for endpoint authorization. Signed
+file transfers remain the owning storage/upload increments; no docs service or new
+host port is introduced.
+
+### Operable standalone distribution (DMS-I18)
+
+The selected I18 distribution uses bundled Better Auth, one customer tenant and independent
+registered applications. External-authority support is not selected or claimed. Version
+0.18.0 composes the implemented storage/transfer/coordinator/broker/scanner and processing
+roles through `deploy/compose.dms-complete.yaml`; the structured variant adds the pinned
+optional image. Dokploy owns canonical HTTPS ingress to API:3001 and transfer:8333 only.
+No host ports are published. Trusted supervisors/coordinator can reach canonical TLS/JWKS;
+private broker/storage/scan/work networks and offline parser namespaces retain their
+boundaries. Development/testing email uses private Mailpit, including production-profile
+STARTTLS verification with a trusted test CA. Customer delivery uses its configured relay.
+
+The release builder emits exact local image IDs/archive, per-image SPDX/Syft inventories,
+actual license/notice archives including JAR legal material, source-access records and a
+covered-source offer using the owner's three Thaarei contacts. Lockfiles/build recipes,
+model manifests and root proprietary LICENSE accompany them. Syft 1.57.0 is pinned by
+archive hash. Unknown license declarations remain review items; candidate assembly is not
+customer-release approval. Initialization generates distinct private database/S3/AMQP/auth
+credentials and refuses an existing configuration. Runtime raw env files preserve literal
+values. The target wrapper uses Docker-only private tools with stdin/protected files,
+never automatic startup migration or plaintext credentials in arguments. Short-lived root
+volume tools initialize ownership; long-running application, storage, broker and scanner
+processes use their declared nonroot identities. All long-running services have fixed
+memory/CPU/PID budgets and bounded Docker log rotation; this single host is not HA.
+
+`/health/live` is process liveness, `/health/ready/api` checks auth and the 33 owning tables,
+and `/health/ready/processing` returns only availability through a fixed configured private
+coordinator origin. Missing workers/signatures/broker/capacity do not disable API reads.
+Authenticated role-bound private service observations arrive every 20 seconds and expire
+at 90 seconds. The coordinator checks authenticated storage access and capacity on its
+normal bounded cycle; private work database readiness checks 13 tables. Signature evidence
+must be at most 48 hours old, capacity observations at most 30 seconds old with the existing
+50 MiB storage/256 MiB scratch reserves. Backlog age above 300 seconds and outbox age
+above 120 seconds alert. Three consecutive coordinator failures alert. Backup evidence is
+only an attributed private operator attestation: missing or older-than-24-hour reports
+alert independently and do not prove recovery validity or block normal reads.
+
+Migrations 0044–0045 add a six-component forced-RLS observation table, constrained
+coordinator writes and live-grant operator reads/report/prune functions. No new consumer
+routes or HTTP operator surface exists. The private snapshot has bounded component/alert
+families and at most 32 oldest application backlogs. Dispatch ranks eligible work within
+each application before the batch limit, so a busy application's queue cannot fill every
+first-round slot. Eligibility still precedes the limit and dispatch does not authorize
+execution. Bounded fixed-label security events include server-generated correlation and
+latency buckets; supervisor logs contain only fixed endpoint/role/status/duration/request
+ID. Request/response/error serializers suppress request URLs, bodies and credential-bearing
+provider exception messages. Docker logs rotate at 10 MiB times three per service with a
+1 MiB nonblocking buffer; downstream collection/retention remains operator-managed.
+
+Shutdown fences new coordinator claims, stops publisher batches and drains active work
+within configured grace periods. Interrupted leases are recovered through current database
+authority. Private `work-redrive` creates an authorized new enrichment run from a failed
+job rather than resetting old attempt budgets; it cannot approve scanner failures.
+`operations-prune` uses the bounded separate I19 history-retention policies above. Required
+version/security/artifact/processing provenance and disposal tombstones survive. Physical
+cleanup and coherent backup/restore use the I19 boundary and recovery runbook above.
+
+Private signing-key stage/activate uses fresh verified authority admin plus the active DMS
+operator fence. RS256 private keys use the provider's encrypted storage format. Staged
+public keys are prepublished for at least 60 seconds before explicit activation, which
+must occur within 24 hours; retired public keys remain advertised for 24 hours, while
+machine JWT lifetime remains at most five minutes. Commands return only key metadata.
+There is no automatic root AUTH_SECRET replacement. Offline ClamAV imports require an
+exact three-file SHA-256 manifest plus real CVD signature validation, then an atomic active
+set switch preserving the previous set; freshness gates still apply.
+
+See the [distribution runbook](docs/deployment/customer_deployment_guide.md#standalone-dms) for assembly, installation,
+upgrade, operational commands, source-offer material and isolated qualification. Actual
+completion/evidence is tracked in IN_PROGRESS.md; target acceptance remains separate.
+
+### Qualification and handover boundary (DMS-I20)
+
+Release qualification binds the exact image IDs, bundle checksums, dependency/model locks,
+consumer contracts and migration inventory to an immutable source fingerprint for the run.
+The independent standard-library HTTP consumer has application credentials and canonical
+ingress only. Private read-only queue/resource observation runs separately, with no new
+consumer or operator HTTP surface. A dedicated CI lane builds/tests the standalone DMS
+without starting Turnstile services.
+
+The declared local synthetic profile measures metadata latency, original availability,
+processing completion, indexing lag, admission backpressure and sampled resource usage
+separately. It does not establish sustained monthly capacity or off-host survival. The
+requirement ledger records automated evidence separately from manual, deployed and target
+acceptance. Compatible application rollback is qualified only for an explicit previous
+image/schema boundary; incompatible recovery requires the complete matching coherent
+cohort. The current central-enforcing I20 candidate has no published enforcing
+predecessor qualified for downgrade. Its I19 upgrade source is not an authorized rollback
+target; qualify candidate restart and quarantined coherent recovery instead. Customer rollout,
+capacity, legal review and accountable sign-off remain separate.
+See the [handover runbook](docs/runbooks/dms-handover.md) and target acceptance template.
+
+### Consumer API contract and explorer (DMS-I02)
+
+The framework-independent `@thaarei/dms-contracts/public` entry owns consumer Zod
+schemas, finite error/status families, the implemented route/operation/security catalog
+and HTTP conventions. `/private` owns authority identity-service and reserved principal
+contracts; the root barrel remains compatible for existing trusted integrations. The
+public DMS client imports only `/public`, enforced by dependency checks. Owning controllers
+use `DmsOperation` metadata to select existing public/enrollment/machine guard policy;
+Integration tests observe every physical Fastify `/v1` route (including automatic HEAD),
+then compare Nest handlers and effective guard metadata with the catalog. Health,
+identity-protocol and docs routes remain separate. No future feature route is exported.
+
+`@thaarei/dms-contracts/openapi` builds one public OpenAPI 3.1.0 document from those
+schemas/catalogs. `docs/api/dms.openapi.json` is its drift-checked 1.1.0 artifact, with
+relative `/` server and explicit versioned paths (including exact `/v1` service identity).
+The legacy `dms-auth.openapi.json` and its `/v1` server/two paths remain compatible and
+are now included in root drift checks. Public artifacts do not include private identity,
+operator, job or dispatch contracts. Ajv 8.20.0/draft-2020-12 plus ajv-formats 3.0.1 check
+schemas/examples and fixture parity with Zod. Development-only Python jsonschema 4.26.0
+and regex 2026.9.29 check the same fixtures; regex handles exported Unicode properties.
+Shared identity/request/error and generated response examples contain no real credentials.
+
+Each versioned response has a server-generated UUID `X-Request-Id` and
+`Cache-Control: private, no-store`; error envelopes retain finite code/requestId/retryable.
+401 includes the Bearer challenge. 503 and `ENROLLMENT_IN_PROGRESS` include
+`Retry-After: 1`; a different-body idempotency conflict does not authorize blind retry.
+Enrollment retains its bounded 16–128-character idempotency key and 24-hour replay window.
+Reserved resource revisions use strong quoted positive decimal ETags (up to 19 digits)
+and `If-Match`. Future 202 operations must provide a status `Location` and bounded integer
+`Retry-After` (1–3600 seconds), with initial two-second polling/backoff/jitter. No current
+route emits a resource revision or 202; owning features implement those behaviors later.
+Existing control routes retain the 16 KiB body limit; feature-specific metadata/batch
+limits are introduced with their owning routes rather than permitting file bodies globally.
+
+The explorer is `/docs` (plus trailing-slash alias), with canonical schema
+`/docs/openapi.json`. The bundled UI's `/docs/json` and `/docs/yaml` aliases render the
+same public document. Static/configuration routes remain under `/docs/*`. Documentation
+is off by default in every profile. `DMS_DOCS_MODE=loopback` requires a loopback listener;
+`controlled` explicitly permits container/remote binding under operator-controlled
+ingress. Both enabled modes require a separate generated `DMS_DOCS_ACCESS_KEY` (32–256
+characters, at least 16 distinct characters, no colon/newline); reuse of configured
+authority or machine/login client secrets is rejected. Basic username `operator`
+and that key protect the entire encapsulated docs scope, including every static asset;
+production additionally requires configured HTTPS ingress. These credentials grant no
+machine or DMS-operator authority. No docs account, grant or client is seeded at startup.
+
+Pinned Fastify integrations are @fastify/swagger 9.9.3 in static mode and
+@fastify/swagger-ui 6.1.3, with explicit swagger-ui-dist 5.34.0 assets/license notices.
+Static mode preserves JSON Schema 2020-12/3.1 fields unchanged despite its older upstream
+TypeScript document typing. Asset, configuration and schema access are covered together;
+all are no-store. CSP allows self-hosted scripts/styles/fonts/connections and local/data
+images, with inline style attributes only; no unsafe script, CDN or remote validator.
+Only the hardened docs entries/schema and explicit static-asset allowlist are served.
+Stock index/directory aliases redirect to `/docs/`; stock top-level configuration and
+other wildcard paths are rejected after access checks. UI query overrides are discarded,
+bearer state is memory-only, persistence is disabled
+and reload clears authorization. Only implemented GETs can execute; enrollment is
+read-only documentation and its key input is excluded from the authorization dialog.
+A same-origin/read-only interceptor adds a browser guard; backend machine verification
+and current registration/scope checks remain authoritative. No service secret is supplied
+to browser code. The Scarf installation helper's script is explicitly disabled.
+
+The [explorer/manual-testing runbook](docs/runbooks/dms-api-explorer.md) supplies private
+operator-to-token/enrollment steps and HTTP-only Python-standard-library/curl examples
+that explicitly ignore ambient proxies (Python ProxyHandler({}), curl --noproxy).
+The standalone lane exercises the real browser and independent backend chain; with a
+built image it also exercises the packaged UI and actual authenticated capability HTTP.
+Docker Desktop uses private test IPC to carry browser requests to container HTTP without
+publishing a new host port. This is fixture transport, not a production proxy. The
+incremental [third-party notice inventory](THIRD_PARTY_NOTICES) accompanies the DMS image;
+lockfiles pin integrity. Complete distribution qualification remains the owning release gate.
 
 ### Linux, Dokploy, Traefik, and Nginx
 
@@ -3955,7 +6622,12 @@ flowchart LR
 ```
 
 Give `/api` routing priority over `/` on the Turnstile domain. Nginx serves the compiled
-Vite HTML/JavaScript/CSS and SPA fallback from the frontend image; Traefik owns ingress
+Vite HTML/JavaScript/CSS and SPA fallback from the frontend image. HTML and SPA entry
+responses use Cache-Control: no-store so a release cannot leave browsers on a cached
+application shell. Successful content-hashed /assets/ responses (including conditional
+304s) use a one-year immutable cache policy. Missing assets return an uncached 404,
+never the SPA document. Cache headers share server-level security-header inheritance.
+Traefik owns ingress
 and TLS. Nginx is inside the application container and does not proxy the product API
 or require a separate host installation. Private job/operator endpoints must not become
 public merely because the DMS API domain is routed; implement route-specific access and
@@ -3973,8 +6645,872 @@ The application Compose exposes container ports without publishing host ports or
 another Traefik. Configure Dokploy domains/networks, secrets and environment mapping
 explicitly. Keep databases, brokers, scanner/parser endpoints and internal SeaweedFS
 interfaces private. Persistent data and off-host backups must survive app redeployment.
-See the [Dokploy runbook](docs/runbooks/dokploy.md) for operator steps; the complete target
+See the [Dokploy runbook](docs/deployment/customer_deployment_guide.md#ingress) for operator steps; the complete target
 profile, sizing, upgrades and health semantics are defined above.
+
+## Proposed centrally managed Turnstile modules
+
+**Reviewed planning baseline, 2026-11-09; Astra findings resolved by the parent.** Central staff
+assignment, dependency visualization, controlled classification and actual selected delivery
+are part of this POC, superseding the earlier central-entitlement deferral. These documents
+do not change runtime policy/schema. The
+[specification](docs/turnstile/modules/module_delivery_specification.md) owns MOD-R01–20;
+the [plan](docs/turnstile/modules/module_delivery_implementation_plan.md) owns MOD-I01–10.
+Existing TCP/identity/recovery guarantees remain except the explicitly new module policy.
+The installation proposal below consumes these contracts.
+The [review/disposition record](docs/turnstile/modules/module_delivery_review.md) distinguishes
+the independent draft review from the parent's final corrections. Implemented increments
+are described below. MOD-I01–08 implement central desired assignment, selected customer
+delivery and reviewed activation; distributed installer and staff status integration remain
+with MOD-I09, and wider target acceptance remains with MOD-I10.
+
+### MOD-I01 implemented shared foundation
+
+`packages/module-catalog` implements strict catalogue/profile/assignment/intent/delivery/
+v2 decision payloads, dependency proposal and exact confirmation, canonical UTF-8 Web
+Crypto hashing, active dependant removal closure and catalogue/profile/release context
+checks. Root exports are framework/platform independent and dependency checks include
+this package, including an explicit no-Node-builtins rule. Central catalogue administration
+now consumes it through MOD-I02; current v1 issuance/verification and deployment remain unchanged.
+The fixed `foundation` metadata entry must exist and remain Core; catalogue reclassification
+cannot remove the existing identity/access base by substituting a different Core module.
+
+The [contract/ownership reference](docs/turnstile/modules/module_contracts.md) freezes the
+current foundation inventory, wire conventions, actor/retry matrix and compatibility
+handoff. Parsing/context validation is not signature/live-time/identity/epoch/order
+verification. MOD-I06 must implement those before runtime use. Only test catalogues
+mention the two unimplemented placeholders; no production catalogue is advertised.
+
+### MOD-I02 central catalogue implementation
+
+Central `/modules` and `/modules/[id]` provide Admin import/classification/publication
+and admitted Operator/Viewer read/export views. Staff-only `/api/module-catalogues`
+commands reuse canonical origin/CSRF, current staff admission/MFA and shared staff lock;
+`/api/module-catalogues/[id]` reads/exports the version, and `/code/[id]` reads verified
+source metadata. Categories alone can change; known code facts remain immutable. The
+fixed foundation cannot be demoted. Required-link views and impact review accompany the
+editor; customer assignment/dependency graph is MOD-I03.
+
+Owning Drizzle migration 0010 and private privilege migration 0011 introduce module_code,
+module_catalogue, module_receipt and module_audit in the central schema. Runtime cannot
+update/delete code, receipts or audit, change source identity, insert released versions,
+or rewrite a released catalogue. A database trigger fences released edits and exact
+revision progression. Successful mutation/receipt/audit are one transaction with live
+Admin/recent-MFA recheck under STAFF_LOCK. Crypto verification/hashing of candidates is
+performed before locking; no network calls/builds/customer database access occur.
+
+Release intake uses separate local public SPKI trust configured through
+CONTROL_PLANE_MODULE_RELEASE_TRUST_FILE, never the deployment signing key. The optional
+compose.control-plane-modules.yaml overlay supplies its explicit read-only mount. Missing
+trust blocks intake/publication, not staff read access or existing product operation.
+Known keys/issuer, RS256, fixed catalogue JWT type/audience and at most 24-hour validity
+are required. Code evidence carries a strict code catalogue; classification evidence
+binds candidate catalogue digest, code digest and exact draft revision. Only code-supported
+metadata is accepted; no code upload, URL-selected key or arbitrary command exists.
+Existing central recovery authority also gates publication.
+
+Exact committed receipts are recovered under current Admin/MFA before revalidating an
+expired token; they convey historical outcome only, with canonical readback remaining
+separate. Reused IDs with changed bodies conflict. Lists use independent 50-row cursors;
+request JSON is bounded to 256 KiB, stored documents 128 KiB, and public trust 32 KiB/eight
+keys. Raw signed tokens are not persisted; proof digests/key IDs and category/digest audit
+summaries retain safe provenance. See the [runbook](docs/deployment/thaarei_ecosystem_guide.md#catalogue)
+for exact wire payloads, custody, failure recovery and source/target verification limits.
+This increment does not seed a production catalogue, assign customer modules, issue v2
+module grants or change customer runtimes.
+
+### MOD-I03 central product assignments
+
+Each registered Turnstile product links to a staff Modules page under
+`/clients/[id]/products/[productId]/modules`; DMS has no assignment UI. Staff reads and
+Admin/Operator current-MFA writes use `/api/registry/products/[id]/modules`. A bounded
+published-only catalogue list uses `/api/module-catalogues/assignable`. Staff cannot add
+code facts, remove Core, mutate classification or submit unsigned installed/effective
+facts. Checkboxes, required/optional dependency graph and equivalent text links use the
+shared resolver. Additional dependencies and the complete resolved set require explicit
+confirmation for both draft save and approval; unsaved edits cannot approve an old draft.
+
+Owning migration 0012 adds append-only module_assignment_entry snapshots and a separate
+module_assignment_state with draft/desired pointers. Composite foreign keys bind each
+pointer to its product and draft/approved kind. Migration 0013 revokes runtime snapshot
+updates/deletes and permits only pointer columns to change. Stored documents are bounded
+to 64 KiB; commands to 32 KiB. Published immutable catalogue IDs/digests, full binding,
+requested/confirmed IDs, canonical profile, actor/reason and operation remain attributable.
+Customer catalogue publication never changes another product's saved assignment.
+
+The shared assignment command's expectedRevision is the registry product revision.
+Draft save and desired approval each consume one revision and immutable snapshot ID;
+approved assignment revisions can have gaps. This fences stale commands against registry
+policy/pairing changes using the existing STAFF_LOCK and product row lock. Profile/hash
+preparation precedes locks; live role/MFA, binding/revision, saved exact draft and recovery
+authority are rechecked in the owning transaction. Snapshot/pointer/revision/registry
+audit/module receipt commit atomically. Historical exact receipts remain recoverable under
+current writer/MFA but cannot rewrite canonical state after later narrowing/suspension.
+The registry policy state/approval dates and existing v1 protocol are not changed by a
+desired assignment. No client-wide default operation or customer database access exists.
+
+Draft and approved desired snapshots are persisted independently; observed/effective
+module views are explicitly null until their later owning inventory/v2 adapters exist.
+Legacy reports and ordinary product approvals do not synthesize module evidence. Actual
+current status can show Unassigned, Awaiting package, Upgrade required for existing v1
+pairing and Restricted for product denial. The projection defines Ready for setup,
+Awaiting activation, Active and Inventory mismatch from later verified owning facts;
+staff input cannot assert these facts. Desired targets can be prepared for a legacy
+product, but delivering/activating module authority waits for its reviewed compatible
+upgrade. Commands asserting active policy/removal remain closed until MOD-I06/08; this
+increment does not implement active transitions or grant modules from desired approval.
+See the [assignment runbook](docs/deployment/thaarei_ecosystem_guide.md#assignment) for workflow/recovery.
+
+### MOD-I04 selected artifacts and local-bundle delivery
+
+The owning source map in `scripts/module-source-map.mjs` maps known Individual IDs to
+Incident/Risk Nest and React entries; both require only Foundation and introduce no
+module-specific dependency package. Existing auth/configuration/onboarding/people/settings
+web features remain Foundation. Dependency rules fence each feature's private source from
+other features/foundation except the generated API composition. Placeholders have no HTTP
+routes, customer navigation or user/action authority before MOD-I06/07 enforcement.
+
+Selected Docker stages build the shared catalogue package, verify the exact resolver
+profile/source inventory/platform, then prune unselected feature source before Nest/Vite.
+Destructive composition requires the stage-created marker and /workspace. Unknown source
+ownership or public assets fail closed. A fixed allowlist assembles API dist/database/
+production dependencies/package metadata rather than copying all pnpm deploy output;
+Nginx receives only selected Vite output and nonsecret selection metadata. Source maps,
+chunk input ownership, complete runtime file/link hashes, dependency inventories, required
+notices and generated selected-profile documentation form the proof. Final runtime layers
+contain no build stage, host env, signing key or customer identity. Images retain pinned
+bases, non-root users and monorepo-root build contexts. Ordinary default builds are Core-only.
+
+The generic strict delivery request contains the released catalogue, exact canonical
+profile and digest. The source digest hashes a sorted explicit owning build-input inventory,
+including root manifests/patches/compiler options and release tooling; it is not an ad hoc
+Git ID. Source/code facts must match the known version/dependency map. Classification-only
+changes are supported through a new released catalogue/profile. Shared helpers bind the
+signed result to request/catalogue/source/profile/platform, require exactly API/web image
+roles and derive the release ID from exact archive/image/inventory/notices/docs identities.
+Results use RS256, separately provisioned release SPKI trust, fixed type
+`thaarei-module-delivery+jwt`, audience `urn:thaarei:module-delivery`, HTTPS issuer, known kid,
+no remote/embedded keys and at most 24-hour validity. Catalogue evidence cannot substitute
+for delivery evidence, and neither can grant module or product/user authority.
+
+The POC release adapter uses a configured private local bundle directory, atomic staging/
+commit and exact-profile verified reuse across customers. It builds/starts both production
+commands with no credentials/network/host bindings and checks non-root/read-only liveness
+and closed business access. Verification compares final ownership/inventory and the actual
+archive's OCI descriptors (legacy Docker config identity supported) with required content
+identities, rejecting missing/substituted images/files and unknown bundle content. Recipient
+load verifies the archive before Docker loading and then checks exact installed images.
+Private pipeline renewal revalidates original signatures and all artifacts on the pinned
+source; central/recipient ordinary verification never accepts expired results.
+
+Central exports the current approved generic request at
+`/api/registry/products/[id]/modules/build-request` under staff read authority. An optional
+read-only `CONTROL_PLANE_MODULE_REFERENCE_DIRECTORY` contains only provisioned signed
+`<profileDigest>.json` descriptors, not artifacts or pull credentials. The existing separate
+release trust file verifies each result on read, checks full resolver/current desired
+context and exposes only the matching inventory/reference. Missing/invalid/expired evidence
+projects Awaiting package; verified matching availability can project Ready for setup,
+with existing legacy upgrade restrictions. Observed/effective authority remains null.
+This filesystem reference index is the explicit POC persistence adapter; no new SQL ledger,
+staff arbitrary upload/build endpoint, central Docker socket or artifact proxy is added.
+Production private registry/HTTPS distribution and target rollout require their configured
+adapter/acceptance; no URL fetching is implemented by this local adapter. See the
+[delivery runbook](docs/deployment/thaarei_ecosystem_guide.md#delivery) for custody, commands and recovery.
+
+### Catalogue ownership and staff responsibilities
+
+Retain one modular Nest/Fastify backend and selected Vite/web composition. A business
+module does not create a tenant, DMS application, OAuth client or separate process.
+Freeze the current foundation inventory from actual source in MOD-I01. Initial Individual
+IDs are `incident-management` and `risk-management`, each requiring only the foundation.
+
+A platform-independent catalogue/resolver package (proposed `@thaarei/module-catalog`)
+owns strict metadata/deterministic resolution, with no Nest, repositories, credentials or
+executable import paths. Owning build adapters map known IDs to API/web entrypoints.
+Central Next services own catalogue/assignment/intent/audit/delivery records. Customer
+Nest services own installed inventory, verified module policy and runtime capabilities.
+Apps never import one another's code/databases; internal feature interfaces expose only
+approved services/projections. Import rules reject private repository access and cycles.
+
+Separate code capability from classification. Trusted release tooling supplies exact
+code-supported module versions/dependencies. Central Admin drafts Core/Individual changes
+for known IDs; an external trusted pipeline verifies the combined catalogue against the
+pinned source and supplies matching release evidence. Only then is the immutable catalogue
+released/assignable. A staff form cannot invent code, edit code dependencies or upload a
+plugin. Promotion/demotion preserves IDs/routes/data but creates a new catalogue digest;
+old catalogue/profile/customer records never change in place.
+
+Catalogue attestation and selected-profile inventory are distinct pipeline outputs.
+The first verifies code-supported declarations/classification against source without
+needing a customer assignment. The latter verifies actual built images for a resolved
+selection. This avoids a catalogue-publication/assignment/build dependency cycle. Only
+verified available artifacts can move a customer's delivery state past Awaiting package.
+
+Admin owns catalogue publication; Admin/Operator owns product assignment/activation;
+Viewer reads. Use existing live staff role/recent-MFA/reason/revision/receipt rules on
+committed policy changes. Assignment belongs to one Turnstile product, not the client
+globally. Core is required for that catalogue. Selecting Individual modules proposes a
+dependency closure; staff explicitly confirms every extra dependency before committing.
+Installation/dependency inclusion grants no customer membership, role or action right.
+Core classification is not editable per customer; a customer's bundle is an assignment.
+
+Use checkboxes plus an accessible dependency graph and equivalent text list. Distinguish
+required/optional edges, missing requirements and affected dependants. Drag-and-drop is
+not required and establishes no execution order. Customer settings cannot reclassify a
+feature to bypass policy. New classifications take effect only through a new verified
+release and deliberate existing-installation update.
+
+### Metadata, profiles and persistence ownership
+
+These are logical contracts, not SQL schema/migrations:
+
+| Record                 | Content and authority                                                                                                                                                                                                                                                                         |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Released catalogue     | Immutable ID/version/digest, source/release compatibility, exact module IDs/versions/category, required IDs, optional integrations and supported platform. Verified code inventory plus Admin classification.                                                                                 |
+| Assignment             | Product/installation binding, catalogue digest, explicitly requested Individual IDs, reviewed resolved IDs, revision, operation/receipt, reason and actor/time. Desired authority, separate from effective state.                                                                             |
+| Release profile        | Catalogue/source/platform/contract/migration compatibility plus canonical resolved module/version set. Generic reusable digest, without customer identity/secrets.                                                                                                                            |
+| Delivery inventory     | Profile, exact image/archive digests, notices/source inventory and private tools; signed release evidence checked against the expected source/catalogue/profile request.                                                                                                                      |
+| Installation intent    | Version, intent ID/revision, fresh/adoption mode, central client/installation/product IDs, reserved local installation/tenant/Turnstile application IDs, environment/customer key, assignment/catalogue/profile/release references and validity. Central-signed metadata, not a bearer grant. |
+| Effective module state | Installed immutable inventory/catalogue, verified decision/order, authorized active profile, allowed IDs, local-disable subset and attributed acknowledgement. Customer-owned durable state.                                                                                                  |
+
+Bounds: at most 64 modules and 512 total dependency/integration edges per catalogue;
+unique lowercase slug IDs of 3–64 characters; display labels of 1–100 characters. Resolve
+exact module versions within one catalogue, with no arbitrary version-range/mixed-catalogue
+solver in v1. Reject unknown fields/IDs, duplicate edges, cycles, incompatible platforms/
+contracts and Core requiring Individual. Optional references do not imply entitlement.
+Cycle detection applies to required edges; reciprocal optional-integration references
+are allowed metadata, not permission for circular code imports or implicit dependencies.
+
+Canonical profile input has fixed-version keys, catalogue/source/platform identifiers
+and sorted unique module IDs/exact versions. One shared serializer/SHA-256 helper and
+fixtures make property/declaration order irrelevant; any source/catalogue/platform
+change produces a new profile digest. Do not implement separate ad hoc hashes in UI,
+central and pipeline. Central/local persistence stay in their owning databases; define
+concrete schema/ACLs/migrations only in the owning implementation increment.
+Policy mutation, audit and receipts commit atomically. Reconcile exact receipts/current
+state after lost acknowledgement; changed payload/authority is a new operation. No secret
+inputs enter evidence. A success marker/journal is not current authorization.
+
+### MOD-I07 customer module access
+
+The platform-independent Turnstile contracts expose `GET /api/modules` (version 1 bounded
+links plus signed active context) and `GET /api/modules/{incident-management|risk-management}/entry`.
+Only selected Nest feature modules register their entry controllers/services. Selected Vite
+composition imports those same IDs lazily; excluded implementations and routes are absent.
+Shared navigation intersects the current backend projection with the installed route registry.
+Landing pages fetch backend messages, recheck admission on failures and discard obsolete
+subject/access/policy results. The foundation, setup and authentication flows retain their
+existing boundaries and components. No business-domain tables or DMS writes are introduced.
+
+People permission catalogue version 2 adds explicit company-only `turnstile:incidents:read`
+and `turnstile:risks:read`. The nine-action catalogue and existing scoped contracts, SQL
+permission constraint, deferred role/assignment guards and security-definer People mutation/
+coverage functions agree. Protected system templates and the three-action legacy import
+stay unchanged. Central module assignment and protected administrator status grant neither
+new permission. A private owning module operator creates/reuses exact custom reader roles
+and company assignments for an existing active, verified normal user; it uses existing
+installation/configuration/access locks, revision, audit and durable command receipts.
+A replay reports current state without reapplying an interveningly revoked assignment.
+Public normal role administration retains its existing authority ceiling.
+
+`ModuleAccessService` admits both controller and internal service calls. It commits the
+existing deployment clock/quarantine preflight, holds the real deployment snapshot and
+access-context locks, rereads active membership/fingerprint/setup, requires the existing
+private handover/release barrier, verifies the installed signed release and current signed
+v2 module authority, then intersects installed IDs, explicit user permission and local
+reductions before invoking feature code. Invalid proofs/configuration close admission;
+there is no v1 module authority or retained module-read exception. Controller user guards
+remain an additional layer. Module responses/errors, including excluded 404s, have
+`Cache-Control: private, no-store` and `Referrer-Policy: no-referrer`.
+
+Protected API environment `TURNSTILE_DISABLED_MODULES` is a JSON array of the two known
+business IDs, unique, maximum two, default `[]`. A process restart applies it. It removes
+those IDs and required dependants from signed authority, never expands it. DMS enrollment,
+machine scopes and product approval remain independent; a module grant does not establish
+a DMS connection. Staff activation/cutover uses the MOD-I08 flow below. See the
+[module access runbook](docs/runbooks/module-access.md) and generated
+[module OpenAPI](docs/api/turnstile-modules.openapi.json); completion belongs in IN_PROGRESS.
+
+### Central-first fresh setup and artifact delivery
+
+Keep the existing local-export adoption path. Add an explicit fresh central-first mode:
+central reserves nonsecret expected local installation/tenant/Turnstile application UUIDs
+before a host exists. This does not create a customer database, account or OAuth client.
+MOD-I05's combined private preparation adapter composes the owning DMS and Turnstile
+configuration commands, while standalone DMS initialization remains supported. It accepts a
+verified reserved intent once and generates distinct private configuration locally.
+Existing initialized state cannot be
+rebound by this path. Independent environments get independent reservations; replicas/
+recovery preserve their coherent identities.
+
+Sign intents with maintained RS256/JOSE, explicit type `thaarei-installation-intent+jwt`,
+fixed installer audience/configured issuer and provisioned trusted public keys. Maximum
+initial validity is 24 hours; no token-controlled key URL or untrusted embedded key.
+Intent metadata does not authorize pairing, private artifact access, activation or user
+access. Deliver existing protected one-use pairing files separately through staff HTTPS,
+never codes in URLs/localStorage. Renewing an expired unconsumed intent preserves IDs;
+expiry after successful preparation does not reset state or replace committed receipts.
+
+Staff confirms modules; central resolves a verified generic profile or shows Awaiting
+package. An external pipeline builds/verifies/publishes. Central stores only a bounded
+declarative request/result with known source/catalogue/profile IDs: no Docker socket,
+customer migrator, shell, arbitrary source URL/command/plugin or customer deployment key.
+The operator launcher retrieves the digest-pinned bundle through explicitly configured
+private distribution with local scoped credentials. POC can use a transferred local
+bundle. Production retrieval checks approved HTTPS origin/certificate/signature/digests,
+rejects unapproved redirects/locations and keeps credentials out of URLs/logs. Reuse
+existing artifact storage/release facilities; no new central registry/proxy by default.
+Provision release signing trust independently from central decision signing trust.
+
+Before affected setup/cutover compare retained intent/revision, current desired state
+and actual package. Changed assignment stops for reconciliation, preserving IDs/secrets/
+data, not silently choosing another profile. The initializer remains fresh-only; partial
+DMS/Turnstile pairing resumes independent durable candidates/receipts. Public intent
+metadata cannot claim a product; actual pairing enforces one-use credentials/generation.
+Root-level cloning remains outside existing supported rollback/enforcement guarantees;
+this is not hardware attestation.
+
+### MOD-I05 central-first private preparation
+
+`installation.reserve` extends the owning registry command
+with central-generated nonsecret local installation/tenant/application and two product UUIDs.
+The existing installation/product tables and unique constraints retain immutable bindings;
+under the staff/client lock, both pending products, reservation audit and ordinary registry
+receipt commit together. Exact retries require current writer/MFA and preserve all IDs.
+`installation.create` continues the existing local-export/adoption path. No schema migration,
+customer database, credential, pairing or approval is created by reservation.
+
+The staff POST `/api/registry/products/[id]/modules/installation-intent` requires current
+Admin/Operator MFA, recovery authority, expected product revision, a reservation audit,
+approved desired assignment and a matching verified package. Filesystem/release verification
+is prepared before mutation locks; the locked transaction rechecks product/desired context.
+An existing module receipt stores the strict nonsecret intent payload atomically with audit;
+signing occurs after commit with the maintained central RS256 key, distinct purpose/audience
+and 24-hour lifetime. Stable intent ID is the Turnstile product UUID; its context revision
+is the current registry product revision. A new renewal operation retains identities and
+uses current context; an exact historical retry preserves original expiry/context only.
+
+The private Node verifier checks provisioned central trust/key status, exact signing header,
+issuer/audience/time, full binding, independent DMS product ID, profile/release and assignment/
+intent revision. It supplies no credentials or runtime authorization. Staff controls support
+reviewed fresh reservation and reviewed retryable intent downloads without browser storage.
+
+The Node/Linux coordinator `scripts/prepare-installation.mjs` consumes protected local
+operator input, separate public trusts, a signed selected bundle and an independently pinned
+locally loaded DMS image. It verifies physical inventory/signatures, checks the intent/package
+context and calls the canonical central HTTPS `/api/installation-intents/status` endpoint.
+This stateless endpoint verifies a current unexpired central-purpose signature and recovery
+authority and returns only whether the desired assignment/release remains current. It grants
+no pairing, artifact retrieval, renewal or business authority. Ordinary pairing revisions
+can increase while the same desired context remains current; assignment revisions cannot.
+The coordinator checks freshness again before recording configuration completion.
+
+Both owning initializers validate input in read-only/no-network containers before any plan
+is committed, then generate configuration under the operator UID with no network, added
+privileges or capabilities. Private 0700 directories/0600 regular files reject symlinks,
+unsafe modes and unknown/replaced state. Each owning plan is synced and committed once
+before synced atomic publication of its files; retries restore missing files from retained
+secret material and never overwrite mismatches or regenerate committed secrets. The parent
+identity/settings/image journal fences another intent/assignment/package or settings change;
+its completion receipt contains only bindings and file digests, not authority. Completed or
+partial product credential/candidate directories remain untouched. Renewed intents for the
+same context preserve identities/secrets; changed context stops for explicit reconciliation,
+not fresh reset or implicit upgrade. Interrupted configuration and lost receipts resume the
+same committed preparation. Root-level cloning remains outside this mechanism's guarantees.
+
+DMS configuration supports combined authority/resource origins and explicit reserved local
+installation/tenant IDs. Its owning bootstrap inserts that local ID only for a fresh row and
+rejects replacement transactionally; the old generated-local-ID standalone path remains
+compatible. Turnstile configuration supplies reserved application identity, independent
+runtime/migrator/reporter passwords, correct product/invitation key formats and its existing
+controlled STARTTLS relay settings. OAuth/client secret fields remain empty until the real
+verified-customer authority workflow issues them. Separate deployment overlays retain
+independent machine state/markers and no implicit approval. Configuration/access initialization,
+role provisioning and actual target work continue through their explicit owning commands;
+central never performs them. New release artifacts use dependency and registry-metadata
+BuildKit caches while retaining pinned pnpm supply-chain policy checks.
+
+Source/local qualification uses actual initializer Docker images, real central HTTPS/SQL
+handlers, a separate disposable customer database and the owning bootstrap/pairing commands.
+Production registry/host rollout and whole-installer journals stay with their IA and
+MOD-I09–10 owners. Module activation/cutover follows MOD-I08 below. See the
+[intent runbook](docs/deployment/thaarei_ecosystem_guide.md#registration) for exact inputs, commands, WSL paths,
+secret custody and qualification scope.
+
+### Signed module decisions and compatibility
+
+Current strict deployment decision v1 approves only `product-business`. Add explicit
+Turnstile decision v2, retaining JWT type/algorithm/issuer/audience, full identity/epoch
+binding and order checks. Approved v2 binds the active catalogue/profile/release and
+active assignment revision, the change assignment revision producing current policy,
+and the complete effective allowed IDs. Desired catalogue/profile/assignment context is
+separate and never grants authority to a new profile. No ID absent
+from that installed catalogue/profile may be authorized. Pending/rejected/suspended
+variants confer no module allow authority. Unsigned report/profile/status or HTTP 200
+cannot grant access.
+
+Module-managed products have a durable central minimum decision version of 2 and a
+verified local release requiring v2. Negotiation cannot downgrade it. Missing/unknown/
+malformed claims fail closed for module business access. Stage central dual support,
+then enforcing customer artifacts, then explicit activation. Legacy v1 Turnstile keeps
+its existing foundation policy only; new module assignments wait for reviewed upgrade.
+DMS products and independent credentials can remain v1. Qualify the full mixed-version
+matrix; no older binary may reopen a module-managed installation after enforcement.
+
+The shared server-only implementation exposes strict `verifyModuleDecision` and
+`evaluateModuleDecision` alongside the v1 verifier. The owning store supplies a branded,
+immutable installed release context from `verifyInstalledModuleRelease`, which verifies
+purpose-separated release evidence against independent provisioned trust and the trusted
+image's exact compiled profile. Installed build evidence may outlive its original bounded
+issuance window; it cannot extend a business grant. Key revocation and monotonic release
+trust revisions still apply. Central sync now accepts explicit v1/v2 bodies at the existing machine sync endpoint.
+A separate `module_authority` row permanently requires v2, independent of machine epoch.
+The current-MFA Admin enforcement endpoint commits that restrictive floor with product
+revision, receipt and audit; it cannot grant modules. Runtime can insert only a closed
+fence and cannot delete it or directly update active authority. Issuance validates persisted active
+context against the exact release request, rechecks policy/floor/epoch after signing,
+and returns pending for absent activation or a replacement epoch. MOD-I08 adds the
+reviewed activation/restriction flow below; direct runtime document writes remain denied.
+
+Selected images compile the exact installed profile into their owning adapter. The API
+and reporter read separately protected signed release evidence and public release trust,
+then re-verify context during SQL application/evaluation. Fresh private preparation writes
+these files and binds their hashes to its receipt. The legacy development source remains
+v1. Supported activation/cutover and installed-path qualification follow MOD-I08 below.
+See the [decision runbook](docs/runbooks/module-decisions.md).
+
+Reuse atomic policyRevision/decisionSequence and durable denial. Module or authorized
+profile/catalogue changes require a newer policy revision. Same-revision renewal cannot
+change module authority; conflicting content is a protocol error. Persist the complete
+verified policy/acknowledgement atomically before opening access. Stale receipts/reports/
+renewals cannot restore removed modules. Restores use external quarantine/new epoch/
+current central reconciliation, including catalogue/assignment/active-profile evidence;
+missing independent central evidence needs fresh reviewed approval, not restored renewal.
+
+Retain seven-day maximum grant/daily renewal/fifteen-minute reporting. No central lookup
+per user request. Removal applies locally on sync; an offline installation that never
+receives it loses all catalogue-managed business module access when its current grant
+expires, including reads. Applied removal remains denial after envelope expiry. Every
+new business module, including one promoted to Core, needs current approved v2 authority.
+The existing fixed foundation is enumerated from current routes/services in MOD-I01;
+its previously accepted product-level read/identity/recovery exceptions remain intact.
+Category promotion cannot turn business functionality into a foundation exception.
+Module IDs are not OAuth scopes, tenants or local DMS registrations.
+
+| Verified state                                                         | Catalogue-managed business reads                        | New module writes/work                | Existing foundation                                                                                                        |
+| ---------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Current approved v2, module present/allowed/enabled                    | Allowed with current user/resource rights.              | Allowed with owning rights/readiness. | Existing product/local rules.                                                                                              |
+| Approved but module absent, removed or locally disabled                | Denied, including direct landing/API reads.             | Denied; no new dispatch.              | Existing product/local rules.                                                                                              |
+| Cached approval expired during outage, including unseen remote removal | Denied; prior activation is not a module-read fallback. | Denied.                               | Existing product prior-activation read exception only where already supported; identity/private recovery remain available. |
+| Signed pending/rejected/suspended, or its durable denial after expiry  | Denied.                                                 | Denied.                               | Existing product policy, including its distinct prior-activation requirements, remains unchanged.                          |
+| Invalid/unknown/wrong-profile proof or supported restore quarantine    | Denied.                                                 | Denied.                               | Only owning diagnostics/identity/recovery exceptions; no inferred business approval.                                       |
+
+The product-level authorized-read exception cannot override this business-module matrix.
+Network loss alone does not close still-valid approved module authority; it cannot extend
+its expiry or add a module. Safety completion/cleanup of work admitted before restriction
+is separately classified by its owning feature, not exposed as a user business read.
+
+### MOD-I08 reviewed transitions and private cutover
+
+The current-MFA Admin/Operator activation endpoint
+`POST /api/registry/products/[id]/modules/activate` independently reviews current product,
+desired assignment, active basis, machine epoch and a matching fresh installed observation.
+It verifies the desired package with the independently provisioned release reference index.
+Migration 0016 records bounded authenticated machine inventory (self-reported, never an
+attestation). The sync adapter commits that observation separately so a wrong active-profile
+sync can remain a conflict without producing a different signed policy at the same revision.
+Migration 0017 retains the permanent floor and direct runtime document-update denial; its
+bounded SECURITY DEFINER writer checks live staff/MFA, product revision/floor and epoch.
+Restrictions can only reduce the old allowed set without changing its installed context.
+
+Assignment draft/approval now carry a current active basis and explicit active-catalogue
+removal closure. Saving does not narrow access; approval atomically updates the desired
+pointer, restricts old authority, advances the shared product revision and writes audit/
+receipt. Additions remain staged. Draft-to-approval review ignores only the mechanically
+advanced basis policy revision; the locked current basis and saved draft revision must still
+match. Initial or subsequent activation separately writes the exact verified target request,
+current epoch, desired assignment and complete allowed set under the same locks. Historical
+receipt retries cannot replay activation over a later restriction. Old-epoch documents grant
+nothing after replacement. The staff page exposes bounded central authority/inventory facts
+for review; full acknowledgement/effective reporting and installer handover remain MOD-I09.
+
+The Node/Linux owner helper `scripts/module-cutover.mjs` is a POC tools-checkout workflow,
+not a customer application or the combined installer. Its private input pins both complete
+bundles, exact old API/web/reporter container IDs, fixed configuration, desired/policy basis
+and current access revision. It uses the existing feature-release closer and owning SQL/
+file deployment quarantine, stops old containers, captures a checksummed coherent product
+schema/private-state/configuration archive, loads/verifies target artifacts, applies forward
+owning migrations and checks identity/setup/local access fingerprints. RLS-aware dump uses
+explicit fixed-tenant PGOPTIONS and insert statements. No domain schema or data deletion is
+introduced. File plans use private modes, kernel locking, fsync/atomic rename and immutable
+input/artifact identities; interruption preserves a closed resumable checkpoint. Private input
+is limited to 32 KiB, at most 16 exact mounts/containers and 16 reconciliation reviews. Backup
+paths must be disjoint from all live inputs; only staging owned by that plan may be regenerated.
+The target also verifies against the installation's independent release trust before any
+closure. The helper preserves that file, its key revocations/retirement and its revision;
+delivery trust cannot provision or reactivate installed signing keys.
+
+The supported cutover then uses existing replacement pairing and private rebind, current
+product approval, fresh installed observation, explicit current-MFA module activation and
+signed sync. Customer rebind preserves minimum decision version and independent release-trust
+revision floors. Old credentials/activation are retired, while fixed IDs, completion, grants
+and data are retained. The helper's verify phase requires the new epoch/current target proof,
+matching preserved fingerprints and stopped old processes. Normal protected administrator
+opening remains explicit. A private access change during the closed interval needs a new
+normal-login administrator review and current revision before rebaselining; it never changes
+central authority or overwrites the changed grants. Prior review receipts cannot replace a
+newer baseline. Central changes require fresh central review.
+
+Existing external-marker quarantine and fresh online epoch rules govern coherent central/
+customer restores. Archive/receipts are evidence, never current authority. Missing independent
+evidence, wrong profiles, retired secrets or lower-trust/v1 images remain closed. Feature work
+admitted before restriction may perform only its owning explicit safety/cleanup; no new
+module work is inferred. See the [transition runbook](docs/runbooks/module-transitions.md)
+and [activation OpenAPI](docs/api/module-transitions.openapi.json); actual qualification is
+recorded in IN_PROGRESS.
+
+### Assignment transitions and effective access
+
+Keep desired assignment, available package, reported installed profile, authorized active
+profile and allowed IDs separate. Reported inventory is self-reported, not attestation.
+
+Assignment changes record both a current active basis (catalogue/profile/active assignment
+and policy revision) and the desired target catalogue/profile/revision. They also record
+explicitly unassigned IDs and the staff-reviewed removal closure using the **active**
+catalogue's mandatory dependant graph. Commit that restrictive policy with assignment,
+receipt and audit before waiting for delivery. A stale active basis requires conflict/
+fresh review, not silent recalculation under different authority.
+
+For any combined change, removals take precedence: effective IDs become the current
+allowed IDs minus explicitly removed IDs and their confirmed affected dependants.
+Apply this even when additions or a new target catalogue are pending; local enforcement
+occurs on sync or the expiry bound above. Stage additions separately until verified
+profile installation and explicit activation. A delayed build/old acknowledgement cannot
+reintroduce removed rights. Pure classification migration is not unassignment. Existing
+Core cannot be removed individually; a request to do so is rejected or requires the
+supported compatible catalogue/profile cutover, rather than silently weakening Core.
+
+Thus Incident-only to Risk-only removes Incident authority immediately at central commit
+(locally on sync/expiry), leaves only the foundation while Risk delivery is pending, then
+enables Risk after verified cutover/approval. The same rule applies to an explicitly
+deselected active Individual module across catalogue versions. Classification-only
+promotion/demotion preserves unchanged active authority until its deliberate cutover.
+
+| Transition                           | Required result                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Initial assignment                   | Desired authority may be approved before installation. Activation still requires actual pairing, matching inventory, recent-MFA staff activation approval and local signed application/acknowledgement.                                                                                                                                                                |
+| Add missing code                     | Preserve only authority remaining after explicit removals/dependant restrictions; show Upgrade required for additions. Install the exact new profile under private cutover controls, then explicitly approve its activation. Old-profile grants cannot authorize the new profile.                                                                                      |
+| Remove Individual within a catalogue | Review/remove active affected dependants; closure must stay valid, including explicit Individual unassignment across target catalogues. A newer signed allowed-set restriction against the currently installed profile denies removed-module reads/writes/entry/jobs. Retain data/private recovery; files remain until a narrower package is installed and authorized. |
+| Reapprove                            | Newer reviewed approval, compatible installed code and current local rights are required; stale decisions cannot restore access.                                                                                                                                                                                                                                       |
+| Reclassify across catalogues         | Stage a verified new catalogue/profile and deliberate compatible update. Preserve unchanged classification-only authority until cutover; apply separately confirmed Individual removals immediately against the active context. A new demotion cannot unassign old Core in place.                                                                                      |
+| Interrupt or restore                 | Preserve identities/secrets/data, reconcile current receipts/desired/active state and quarantine unknown profile/binding or supported restore. No v1 downgrade, retired-secret rollback or implicit writer opening.                                                                                                                                                    |
+
+Explicit module removal denies all removed-module business access, stricter than the
+existing whole-product expired/suspended authorized-read exception, which remains
+unchanged. Core cannot be unassigned individually. Removal retains data/user grants;
+reapproval reevaluates current membership/permissions. Fence new operation admission;
+already admitted work follows its owning safe completion/cleanup classification. Future
+business modules must define these boundaries; this POC adds no workflow engine.
+
+Effective access requires installed code, signed module authority, optional local enablement,
+actor/resource permission, overall product operation permission and applicable readiness.
+Internal calls/optional integrations check the called capability; dependency inclusion
+is not user authorization. Local configuration may reduce, never expand, signed rights.
+Use policy at actual operation admission and owning transactional checks for future writes,
+not a stale browser snapshot. Existing identity/setup/recovery exemptions remain bounded.
+
+Proposed `GET /api/modules` returns only the current user's permitted installed entries
+and safe catalogue/profile/decision context, private/no-store. Landing routes are
+`GET /api/modules/incident-management/entry` and the Risk equivalent, returning ID/title/
+message. Explicit read permissions are `turnstile:incidents:read` and `turnstile:risks:read`,
+assigned through normal private administration; protected admin or module assignment
+does not imply them. No domain tables are needed. Extend permission schema/constraints
+only during the owning implementation, never in planning.
+
+API/web composition and allowlisted runtime assembly share the resolved profile. Verify
+excluded implementation files/dependencies/chunks/source maps/docs/private tools absent.
+Shared allowed libraries and bounded catalogue IDs are not excluded implementation.
+Retain existing foundation migration history; future feature migration/data lifecycle
+belongs to its implementation. No generic drop/uninstall is added. Navigation uses
+backend capabilities; absent routes do not register, installed-but-disallowed routes deny.
+Reports add only bounded catalogue/profile/release IDs, assignment/applied decision
+revisions, installed/allowed IDs and finite mismatch status under existing privacy limits.
+No module usage, business records, users or customer credentials are added.
+
+## Proposed installation automation
+
+**Planning proposal, 2026-11-07:** The owner authorized the installation specification
+and delivery plan following the local setup journey. Installer implementation, new
+proof contracts and target rollout are separate authorizations. The existing central,
+customer authority and recovery designs above retain their accepted policy. This section
+owns the proposed technical design; the
+[specification](docs/deployment/installation_specification.md) owns IA-R01–18 and the
+[implementation plan](docs/deployment/installation_implementation_plan.md) owns IA-I01–09.
+Actual delivery/evidence belongs in IN_PROGRESS.md.
+
+The [central module plan](docs/turnstile/modules/module_delivery_implementation_plan.md)
+adds prerequisites to IA-I01/02/03: catalogue/profile/activation contracts and central-first
+reserved identity mode. Existing/local-first adoption preserves actual exported IDs.
+Provisioning/migration and deployment execution remain with the customer operator.
+
+### Installer placement and release ownership
+
+Use a versioned operator-run engine with a thin Docker-only target launcher, distributed
+with a complete combined customer release. Implement orchestration as a server-only
+workspace package, with pure versioned input/result validation separated from adapters.
+The bounded module POC is implemented by `@thaarei/installation-engine` as detailed
+below; complete infrastructure/processing/target acceptance remains with the wider IA
+track. Adapters invoke packaged owning private commands or
+authenticated HTTP contracts, never another application's repositories/database code.
+No persistent installer API or inbound customer deployment agent is required.
+
+The customer host needs supported Docker/Compose and reviewed artifacts, not the source
+checkout or host Node/Python toolchains. Release assembly uses the pinned workspace
+toolchain and monorepo-root builds. Reuse DMS bundle verification/inventories/notices and
+add the exact Turnstile API/web/private commands and reporter. Bind the engine, profile,
+images, migrations and protected product-release inventory to one compatible release.
+Keep the existing DMS-only distribution independently supported. Central releases remain
+separate and are reused across customer installations.
+
+Keep infrastructure preparation separate from application stages: the operator provides
+the authorized host/Dokploy project, domains, production relay, capacity, secret custody
+and backup destination. The adapter validates them and configures only the selected
+application. Central remains registry, signed approval and disclosed reporting under
+TCP-R13; it stores no customer migrator/provider keys and issues no deployment commands.
+Application containers receive no Docker socket or installer/migration authority.
+
+### Installation inputs and protected state
+
+| Contract                  | Proposed content and ownership                                                                                                                                                                                                                                                                                        |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Installation intent       | Strict versioned nonsecret desired profile, environment/region label, customer key, canonical origins, selected release, ingress/network binding, SMTP transport metadata, explicit admission limits and references to private input handles. Unknown fields fail validation.                                         |
+| Generated local inventory | Durable local installation/tenant/Turnstile application identities and independently identified service clients/products. Central-first fresh mode accepts verified reserved IDs once; local-first/adoption exports actual retained IDs. Keep module catalogue/profile/revision bindings with authoritative receipts. |
+| Private input store       | Protected files/stdin or operator-scoped secret handles for role/service credentials, pairing candidates, temporary user proof and provider access. File permissions and mounts restrict each owner. Separate typed JSON, raw env and key writers; no wildcard dotenv rewrite.                                        |
+| Stage journal             | Engine/contract version, release binding, nonsecret intent fingerprint, installation binding, stage/operation ID, expected revisions, state, safe receipt reference, evidence time and next actor/action. No passwords, cookies, pairing codes, bearer tokens or low-entropy secret hashes.                           |
+| Evidence record           | Exact artifact/target bindings, bounded observed statuses, redacted request/receipt IDs, verification category/time and outstanding checks. Technical readiness and signed human target acceptance are different fields.                                                                                              |
+
+Persist the binding and protected candidate material durably before external effects.
+Use exclusive creation/atomic replacement, appropriate fsync and owner permissions;
+secret generation must survive a crash before a downstream call. Keep journals private
+even though their exported projection excludes secrets. Secret values never pass through
+shell arguments, source, browser builds, rendered Compose output or general logs.
+Remove transient user proof when no longer needed; retain/recover pairing candidates
+according to their owning protocol rather than deleting them on an ambiguous response.
+
+One mutating invocation owns an installation lock. Read-only status can run concurrently;
+resume reconciles a stale lock only after proving no active owner remains. The journal
+records desired and last-observed state; it is not authorization and cannot override
+current application/central decisions. Missing/corrupt state or a different binding is
+a recovery problem, not permission to create new accounts/secrets or delete volumes.
+
+### Stages and replay rules
+
+The bounded MOD-I09 launcher implements `plan`, `install`, `status`, `resume` and
+`verify`, plus explicit owning adapters listed below. The complete installation stages
+and target acceptance remain wider IA work. Plan/default verify are read-only. Mutation
+starts only under an authorized installation intent. Versioned
+machine results distinguish completion, waiting for a named human action, retryable
+unavailability, conflicting state and manual reconciliation. The exact finite codes
+and compatibility rules are fixed for the implemented module POC below.
+
+| Stage                                       | Dependencies and completion evidence                                                                                                                                                                                                             |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Preflight and artifact validation           | Trusted bundle/image compatibility; supported runtime/resources/clock; canonical DNS/TLS and private routing; protected inputs and selected profile.                                                                                             |
+| Base configuration and owned initialization | Retained identities/secrets; owning role/migration/bootstrap commands; storage and broker definitions; minimal authority/API running with business gates closed. Export nonsecret central inventory.                                             |
+| Central registration and activation         | Staff reviews import, delivers each protected pairing artifact and approves each product with current MFA. Local sync verifies signed decisions and activation acknowledgements independently.                                                   |
+| Customer identity and client integration    | Selected user completes actual email/password setup. Verified authority-admin credentials allow distinct local clients, enrollment and explicit initial grants. Normal product sign-in becomes available only when registration/policy are real. |
+| Private administrator handover              | Current ordinary-login proof, selected user/operator, compatible release, revision and recovery epoch validated by owning private commands. Bootstrap and opening remain explicit protected transitions.                                         |
+| Processing and workspace completion         | Operator-selected admission/work clients/signatures/services; administrator-confirmed company/time-zone/first unit through normal product setup. These independent branches may wait on different actors.                                        |
+| Verification and handover                   | Current technical/workspace state, separate permission/service probes, authorized document test evidence, recovery/backup custody and accountable target sign-off.                                                                               |
+
+Each mutating adapter declares its real retry contract. Reuse existing durable candidate
+and receipt recovery for deployment pairing/rotation; reuse exact keys/payloads/revisions
+for owner-provided receipt commands. After a lost acknowledgement inspect authoritative
+state before advancing. A credential/password/proof change is not the same payload under
+the old operation ID. If an expired proof requires a new operation, first reconcile the
+old result and obtain current authority/revision. Never replay stale approval/grant state
+after an intervening suspension, replacement, role removal or recovery.
+
+Fresh-only commands such as DMS init cannot be blindly rerun over partial configuration.
+Recover retained files and inspect owning state; add an owning inspect/reconciliation
+contract where needed during implementation. If a committed outcome cannot be identified
+safely, stop with a precise operator action. Do not promise exactly-once effects from a
+journal alone. Stage completion is reevaluated when its live prerequisites change.
+
+### Guided identity and operator handover
+
+Solve the observed verification/client bootstrap ordering explicitly: authority admin
+verification precedes client issuance, while product sign-in requires those real clients.
+Use an allowlisted setup-completion destination that shows preparation state until the
+private installer provisions them. Preserve actual verification/password flows and
+normal issuer/callback policy; do not mark verification in SQL or invent a login client.
+Expired mail/reset/MFA states lead to the owning recovery flow with bounded safe errors.
+
+Replace routine HttpOnly-cookie copying with a proposed scoped proof handoff. The private
+operator selects the intended administrator and creates a bounded challenge bound to
+installation/tenant/application, release, action, current revision/epoch and operation.
+After normal login, an explicit authenticated, CSRF-protected customer confirmation can
+produce a short-lived audience-bound proof for that challenge. The private release command
+must validate issuer/trust, expiry, one-time use and live identity/session before acting;
+proof alone grants no authority. Reuse current private bootstrap/open commands and their
+operator fence, release inventory and revision/epoch checks. Refresh proof after a
+transition as required rather than replacing the payload of a pending command.
+
+IA-I01/06 must settle and review proof signing/key custody, challenge delivery, expiry,
+replay storage and session revocation semantics before introducing routes or persistence.
+No token format, public granting endpoint or new OAuth device flow is accepted here.
+Until qualified, the existing protected private handover runbook remains authoritative.
+Production passwords/mailboxes/TOTP and migration credentials never enter central or an
+installer browser UI. The product browser retains its normal session protections.
+
+### Deployment adapters and readiness
+
+The isolated local adapter provides explicit test CA/Mailpit/loopback routing and uses
+the reserved local-port table. Validate Windows browser versus WSL/container trust and
+path resolution separately; trust only the public local CA in the testing browser/OS.
+Linux tools require Linux paths, including translated Windows-drive/WSL UNC selections.
+Keep the private CA key local. Disposable fixture actors may automate real email/TOTP
+handlers; no production skip-verification/MFA/approval flag is introduced.
+
+The Dokploy adapter uses an operator-scoped provider context or rendered configuration
+applied by the operator. Validate API/version capabilities before use and limit changes
+to the selected project/application; preserve volumes. Dokploy owns canonical ingress/TLS,
+with explicit same-origin `/api`/`/identity` routing and no public private-job/operator
+routes. Render secrets only into their protected owning settings. Host/cloud provisioning
+is a separate adapter scope, not an application runtime responsibility.
+
+Status is a projection of independent facts: per-product activation/acknowledgement,
+identity/client/enrollment, protected release state, API readiness, selected processing
+readiness, company completion and evidence age. Technical readiness, workspace readiness,
+document-test result and accountable acceptance stay separate. Missing mail/client/worker/
+admission/signature evidence produces a named pending condition. A report is self-reported
+health, not externally verified uptime. Use the existing cadence and freshness thresholds.
+Read-only verification does not generate test organizations/accounts/documents/grants.
+
+Each independent region/environment has new identities, private state and one tenant.
+Replicas/restarts share their installation's existing identity. Recovery retains its
+coherent binding/keys but follows current external markers, quarantine and central
+reconciliation before private release opening. The installer must recognize recovery
+markers and refuse to treat them as fresh setup. No active-active topology, automatic
+downgrade, secret rollback or destructive reset follows from this proposal. Independent
+off-host combined recovery qualification is required before target acceptance.
+
+### MOD-I09 artifact-only local installation and staff handover
+
+The implemented server-only `@thaarei/installation-engine` 0.1.0 owns the bounded
+`module-poc` fresh Linux/amd64 flow. It imports public packages and invokes packaged
+owning commands; applications cannot import it. A signed combined release binds five
+exact image content IDs (engine, PostgreSQL, independent DMS API, selected Turnstile
+API/web), the inner selected module delivery and eleven fixed file digests/sizes.
+Independent provisioned release trust verifies both inventories; central public signing
+trust separately verifies the fresh reserved intent. Unknown roles/files, substitutions,
+revoked or late-retired signers and platform/engine mismatch stop before initialization.
+Release attestations are durable content evidence: verify their original issuance and
+current key revocation/retirement policy, including on a resumed setup after publication
+expiry. They provide no current authority. Every affected write still requires the
+current unexpired central intent and live desired-context check below. This allows an
+approved generic artifact to be reused across regions without regenerating secrets or
+binaries when staff renews setup authority. This POC accepts a transferred local bundle.
+It performs no registry pull, remote artifact fetch or redirect. A production HTTPS distribution adapter remains a wider IA gate and
+must use the configured origin/scoped local credentials described above.
+
+`deploy/installation/installer` is the supported Docker-only POSIX launcher. The operator
+loads the complete archive, independently pins the engine SHA, and supplies disjoint
+canonical artifact, 0700 private input and 0700 state directories outside a checkout.
+Only the transient private engine receives the local Docker socket. APIs/reporters never
+receive it or migrator/provision credentials. The engine uses Docker API 1.52 compatibility,
+requires at least 4 GiB/2 CPUs and no more than 300 seconds daemon clock skew. Commands
+have 180 second Docker deadlines, 16 MiB response/output bounds, 10 MiB x 3 logs and
+bounded memory/CPU/PID/tmpfs limits. Outer artifacts are at most 32 GiB per fixed file;
+source inventories are bounded at 16 MiB. These are POC admission defaults, not measured
+production capacity. PostgreSQL data uses a labeled persistent volume and is never deleted.
+Owned network/volume labels bind both local installation ID and state-directory digest.
+An optional explicit RFC1918 /24 privateSubnet is immutable input and is checked on
+network reuse; address-pool/conflict failures never select a fallback subnet.
+Ingress/TLS remain operator/Dokploy owned; generated Nginx routing uses actual container
+names and canonical origins and exposes only public product/identity routes.
+
+Actions are `plan`, `install`, `resume`, `status`, `verify`, `pair`, `sync`, `owner` and
+`identity` and explicit `retry-open`. JSON results use 0 complete, 10 waiting for a named actor, 20 conflict/owning
+reconciliation and 30 retryable unavailability. Read-only status verifies retained signed
+metadata at issuance time with current key revocation policy; write actions require current
+unexpired intent and recheck desired state before each affected owning command/opening.
+A changed context preserves files, identities, credentials, completed receipts and volumes.
+One mutator holds a kernel flock; process death releases it without stale-PID guessing.
+
+Durable private command recipes precede effects. A deterministic container name recovers
+lost create/start responses; successful exited commands are recorded before cleanup and
+never rerun. Replayable owning configuration, migration/bootstrap, deployment candidate/
+sync and pure inspection commands may retry the same retained payload after a nonzero
+exit. Role provisioning first requires TCP readiness (the temporary PostgreSQL Unix-socket
+bootstrap is insufficient). Its private exit 75 identifies an allowlisted connection
+failure before any role DDL and permits retry of the same retained input; every attempt
+resets that eligibility. Unknown role outcomes still stop. Fresh-only account/client/key issuance, legacy access replacement and uncertain
+proof-bearing grants stop for owning reconciliation instead of inventing exactly-once
+semantics. Explicit reviewed pairing `rebind` supersedes failed prior pairing/sync jobs;
+it invokes the existing owning recovery protocol and never resets floors or database state.
+A private HMAC binds each owner command file to its retained payload without publishing
+low-entropy secret hashes. Transient proof payloads are removed on settlement; original
+operator input files remain in operator custody and must be removed after use.
+
+Explicit `retry-open` accepts only a retained `release.open` job and a fresh normal
+administrator cookie. It preserves every non-proof input, including operation key,
+subject, release and expected revision. The owning release receipt handles lost success
+without reopening a subsequently closed release. No account, key or role issuance is
+made automatically replayable. Current intent, artifacts, process inventory and
+installation locking still apply. New bundles include the command; older signed bundles
+require a separately reviewed tools update, never edits to their signed inventories.
+
+The customer can transfer the six provisioned module-POC runtime services to a separate
+Compose project using `scripts/export-customer-compose.mjs`. This operator-only export
+requires a private outside-checkout destination; it preserves exact image IDs, environments,
+mounts and external database/network resources. `deploy/customer/compose.yaml` includes
+that exported runtime and a separately built nonroot gateway from
+`deploy/customer/Dockerfile`. The gateway lives only on the operator ingress network,
+publishes no host port, forwards Turnstile/identity routes to the installation-specific
+service names and denies `/internal/`. Dokploy still owns TLS and the independent DMS
+resource origin. The gateway gets neither credentials nor Docker access. Lifecycle
+transfer stops/removes only reviewed container IDs, retains all volumes/state, and is
+serialized with installer maintenance. This does not add full DMS storage/processing to
+the module POC or claim a second clean-host/production acceptance.
+
+The optional exact same-origin `/setup-preparation` verification destination solves email
+verification before real client issuance. It grants no session or access. Private identity
+setup uses the verified selected authority administrator, distinct login/machine/identity
+service clients, real application enrollment and explicit initial permissions. The existing
+ordinary-login protected private bootstrap/open/module-grant commands remain authoritative;
+this does not implement the proposed IA-I06 scoped public proof exchange. Current permission
+and release inspection remain owning private operations; no central report or historic
+installer receipt is proof of current user access or workspace/processing readiness.
+
+Central `/api/machine/v1/status` is an authenticated own-binding/current-epoch read with
+no issuance or business grant. Validated application metadata is recorded in
+`control_plane.machine_application`, linked to the issued exact product/epoch/decision.
+Its monotonic update rejects stale epoch/revision/sequence rollback. Staff projections show
+observed inventory, central authority, last acknowledged module grant and independent
+DMS/Turnstile pairing/approval/reporting. Acknowledged access requires current authority,
+approved current product revision/epoch and an unexpired issued decision. It remains
+product-reported evidence, never runtime attestation or a replacement for local permissions.
+Production Linux/Dokploy, off-host recovery, processing acceptance and accountable target
+sign-off remain separate wider installer gates.
+
+MOD-I10 handoff evidence uses a separate full workspace source/test/tool/document inventory
+with executable flags, alongside the existing selected-image source digest. Git HEAD alone
+does not identify an uncommitted candidate. A fixed public record contains exact contracts,
+catalogues/profiles/images, safe historical assignment/epoch/acknowledgement projections,
+log hashes and the MOD-R01–20 trace. Ignored private state/build output, the generated record
+and mutable progress log are excluded. Checksums are review evidence, never trusted release
+publication, current authority or runtime attestation. Read-only verification detects byte
+and executable drift without querying a customer. Source changes require a new record.
+
+The limited module-poc bundle retains its fixed signed file set and uses its own source
+offer; it does not claim that the complete-DMS SPDX/source-access/legal archives are bundled.
+External pinned Syft inventories and actual per-image legal archives for its five exact
+images are retained as independently transferred evidence sidecars. Packaging cache identity
+includes offer, notices and proprietary license bytes. Inventory/notice collection does not
+certify corresponding-source completeness or customer distribution acceptance. See the
+[release handoff](docs/turnstile/modules/module_release_handover.md) and
+[support runbook](docs/runbooks/module-release.md).
 
 ## Engineering and verification architecture
 
@@ -4112,7 +7648,7 @@ The selected solution must run as a commercial B2B product without mandatory pai
 
 Do not bundle proprietary/commercial-only editions or models with noncommercial/research-only restrictions. PyMuPDF/MuPDF and a Ghostscript-based conversion pipeline are excluded from the default; their stronger-copyleft/commercial alternatives are unnecessary for the selected paths. Grafana is operator-supplied if desired, rather than a bundled AGPL dependency. This preference does not imply copyleft software prohibits commercial use, nor does container separation remove distribution obligations.
 
-As ordinary implementation/release work, pin package/image/model versions and hashes, retain a software bill of materials, and ship `THIRD_PARTY_NOTICES`, license texts, and required covered-source access/offer materials with customer distributions. Inventory TypeScript/Python dependencies, OS/JVM/native libraries, image codecs/fonts, OCR data, scanner signatures, and models, including optional profiles. Check hosted operation and customer redistribution separately; do not label the full stack license-free from top-level project licenses alone. Thaarei-owned application code and documentation are confidential and proprietary under the repository LICENSE; no open-source license is granted for that material. Third-party components retain their own licenses. No assembled distribution has yet been audited.
+As ordinary implementation/release work, pin package/image/model versions and hashes, retain a software bill of materials, and ship `THIRD_PARTY_NOTICES`, license texts, and required covered-source access/offer materials with customer distributions. Inventory TypeScript/Python dependencies, OS/JVM/native libraries, image codecs/fonts, OCR data, scanner signatures, and models, including optional profiles. Check hosted operation and customer redistribution separately; do not label the full stack license-free from top-level project licenses alone. Thaarei-owned application code and documentation are confidential and proprietary under the repository LICENSE; no open-source license is granted for that material. Third-party components retain their own licenses. I18 assembles candidate inventories and notices; complete customer-redistribution review remains an I20 release gate.
 
 [Better Auth license](https://github.com/better-auth/better-auth/blob/main/LICENSE.md), [OAuth plugin license](https://github.com/better-auth/better-auth/blob/main/packages/oauth-provider/package.json), [Celery license](https://github.com/celery/celery/blob/main/LICENSE), [Dramatiq license](https://dramatiq.io/license.html), [PDFium build licenses](https://github.com/pypdfium2-team/pypdfium2#licensing), [MPL distribution guidance](https://www.mozilla.org/en-US/MPL/2.0/FAQ/), [ClamAV linking/license guidance](https://docs.clamav.net/manual/Development/libclamav.html#license), [Docling code/model licenses](https://github.com/docling-project/docling#license)
 
@@ -4149,3 +7685,61 @@ References carried forward from the accepted blueprint, where they were recorded
 - [Docling supported formats](https://docling-project.github.io/docling/usage/supported_formats/) and [offline/model configuration](https://docling-project.github.io/docling/usage/advanced_options/)
 - [PostgreSQL license](https://www.postgresql.org/about/licence/), [RabbitMQ OSS licensing](https://www.rabbitmq.com/), and [Grafana licensing](https://grafana.com/licensing/)
 - [PyMuPDF/MuPDF licensing](https://pymupdf.readthedocs.io/en/latest/about.html#license-and-copyright)
+
+
+## Contractual licence lifecycle (2026-11-12)
+
+Central registry products own a nullable `licence_expires_at` (UTC timestamptz). Null means
+unconfigured, never perpetual. Approval/reapproval requires a future configured end;
+Admin/Operator with recent MFA may update it using the existing revision/reason/atomic
+receipt/audit command. A same-state approval with a changed end is a licence update.
+A product's administrative policy and its time-dependent licence validity remain distinct.
+DMS and Turnstile dates are independently managed, like their approvals.
+
+Approved issuance requires a future licence end. The signed v1/v2 envelope includes
+`licenceExpiresAt` as integer UTC seconds and caps `exp` at that end; cached decisions
+cannot bypass a shortened end. The post-sign transaction rechecks revision, licence end
+and time. Expired/unconfigured approved products cannot receive new grants, and module
+activation/handover also requires a current licence. Receipt retries do not replay writes.
+The customer verifier closes all business access at the signed licence end, including
+retained-read exceptions; identity/recovery routes retain their existing independent rules.
+Renewal requires a newer approved policy and signed sync. A shortened date cannot alter
+an offline customer's already issued token: the previous signed deadline/offline TTL binds
+it until a newer policy arrives. No data is deleted at expiry.
+
+The field is optional only for historical v1/v2 compatibility. Upgrade customer verifiers
+before new central issuance (old strict parsers reject the added field), migrate central,
+then explicitly configure expiry on existing approved products. Historical tokens without
+a contractual date keep their original bounded validity; they are not retroactively dated.
+Live signed installations require their normal reviewed release/cutover procedure.
+
+## Configurable business-module registration (2026-11-12)
+
+`packages/turnstile-contracts/src/module-registry.ts` is the source-owned registry of IDs,
+titles, versions, read permissions, dependencies, optional integrations and enablement.
+It has no executable imports or service credentials. At most 63 active business modules
+plus Foundation form a catalogue; up to 1,024 retained registrations preserve historical
+identities. Runtime contracts, permission lists/labels and source build maps derive from it.
+Feature source follows conventional ID-based backend module/class and web entry paths.
+Central Core/Individual classification remains a separate verified catalogue decision.
+
+`pnpm modules:sync` validates owned active entrypoints, generates a custom owning permission
+migration for additions, rebuilds contracts and regenerates affected OpenAPI references.
+The retained `module-permissions.json` ledger prevents changing/reusing published permission
+identities. `turnstile.permission_catalog` is a non-tenant, runtime-read-only code catalogue;
+role permissions reference it by foreign key. Company-scope SQL guards query that catalogue
+rather than listing Incident/Risk. Business permissions are company-only and never become
+implicit system-role grants. Customer tenant data and grants remain isolated by existing RLS.
+
+Retire a published registration using `enabled: false`, retaining its metadata/permission
+identity. Active dependencies on a retired module are rejected. Retired feature source may
+remain in the checkout; selected builds remove it and do not register its routes. Contracts
+can still represent retained role permissions; module capability/operator entry admits only
+active modules. Retirement does not delete customer records or rewrite deployed catalogues.
+Customers change through reviewed desired assignment, matching release installation,
+activation/sync and explicit user permissions. Adding a registration implements no business
+workflow by itself; new handlers must use the existing service-level authorization boundary.
+
+Installer-created PostgreSQL uses `unless-stopped`, matching long-lived application
+services. Existing customer Compose/container policies require explicit reconciliation;
+changing an installer source default does not rewrite a signed installed release.

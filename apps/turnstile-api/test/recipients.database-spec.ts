@@ -13,7 +13,7 @@ import {
   type RestrictedInvitationContextDto,
   recipientAccountSetupContextSchema,
   recipientAccountSetupResultSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import Fastify, { type FastifyRequest } from 'fastify';
 import { Pool, type PoolClient } from 'pg';
 import { createApplication } from '../src/bootstrap.js';
@@ -21,7 +21,7 @@ import { parseProductEnvironment } from '../src/infrastructure/auth-environment.
 import { INVITATION_TABLES } from '../src/infrastructure/database/invitation-safety.js';
 import { withTenant } from '../src/infrastructure/database/postgres.js';
 import { IdentityClientService } from '../src/integrations/identity/identity-client.service.js';
-import { readAccess } from '../src/modules/access/access-evaluator.js';
+import { covers, readAccess } from '../src/modules/access/access-evaluator.js';
 import { canonicalAccessReady } from '../src/modules/access/access-safety.js';
 import { releaseOperator } from '../src/modules/access/release-operator.js';
 import { BrowserAuthService } from '../src/modules/auth/browser-auth/browser-auth.service.js';
@@ -372,6 +372,7 @@ describe('restricted invitation recipient HTTP and atomic PostgreSQL acceptance'
       const invitation = await owned(async (db) => {
         await db.query('SELECT turnstile.lock_access_context($1)', [tenant]);
         const selectedRole = randomUUID();
+        const access = await readAccess(db, tenant, actor().userId);
         await db.query(
           'INSERT INTO turnstile.access_role(tenant_id,id,name,name_key) VALUES($1,$2,$3,$3)',
           [tenant, selectedRole, 'incomplete recipient'],
@@ -382,11 +383,12 @@ describe('restricted invitation recipient HTTP and atomic PostgreSQL acceptance'
             tenant,
             selectedRole,
             PEOPLE_PERMISSIONS.filter(
-              (p) => canManageConfiguration || p !== 'turnstile:configuration:manage',
+              (p) =>
+                covers(access, p, { kind: 'company' }) &&
+                (canManageConfiguration || p !== 'turnstile:configuration:manage'),
             ),
           ],
         );
-        const access = await readAccess(db, tenant, actor().userId);
         const assignments = await resolveAssignments(
           db,
           tenant,
@@ -1449,6 +1451,33 @@ describe('restricted invitation recipient HTTP and atomic PostgreSQL acceptance'
       changed: false,
     });
     expect((await context(flow.cookie)).statusCode).toBe(200);
+    // A lost opening acknowledgement is reconciled with a fresh ordinary proof.
+    // Its historical receipt must not reopen a release closed in the meantime.
+    await releaseOperator('close', {
+      operatorId: 'release-fixture',
+      key: randomUUID(),
+      expectedRevision: (await versions()).expectedAccessRevision,
+    });
+    const freshLogin = await purposeLogin(
+      '',
+      await authorityLogin(fixture.users.operator?.email),
+      '/',
+    );
+    const freshCookie = freshLogin.cookie.split(';')[0] as string;
+    expect(
+      await releaseOperator('open', { ...opening, administratorCookie: freshCookie }),
+    ).toMatchObject({
+      publicWritesEnabled: false,
+      replayed: true,
+      changed: false,
+    });
+    expect((await context(flow.cookie)).statusCode).toBe(503);
+    await releaseOperator('open', {
+      ...opening,
+      key: randomUUID(),
+      expectedRevision: (await versions()).expectedAccessRevision,
+      administratorCookie: freshCookie,
+    });
     const counts = await owned(
       async (db) =>
         (
@@ -1457,7 +1486,7 @@ describe('restricted invitation recipient HTTP and atomic PostgreSQL acceptance'
           )
         ).rows[0].n,
     );
-    expect(counts).toBe(2);
+    expect(counts).toBe(4);
   }, 45000);
 
   it('restores an actual archive, rejects the old epoch and quarantines mail without changing accepted grants', async () => {

@@ -5,7 +5,7 @@ import {
   SidebarLeftIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import type { UserSessionDto } from '@thaarei/turnstile-contracts';
+import type { ModuleCapabilitiesDto, UserSessionDto } from '@thaarei/turnstile-contracts/runtime';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 import { ButtonLink } from '@/components/button-link';
@@ -19,6 +19,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { canEnterDocuments } from '@/features/documents/Documents';
 import { canReadUnits, company } from '@/features/people/client';
 import { cn } from '@/lib/utils';
 
@@ -34,36 +35,41 @@ export function workspaceDestinations(
   path: string,
   canManage: boolean,
   session?: UserSessionDto,
+  modules: ModuleCapabilitiesDto['modules'] = [],
 ): WorkspaceDestination[] {
   return [
     { label: 'Home', href: '/', active: path === '/', icon: Home01Icon },
+    ...(session && canEnterDocuments(session)
+      ? [
+          {
+            label: 'Documents',
+            href: company(session, 'turnstile:documents:read')
+              ? '/documents'
+              : '/documents/connection',
+            active: path === '/documents' || path.startsWith('/documents/'),
+            icon: Home01Icon,
+          },
+        ]
+      : []),
+    ...modules.map((module) => ({
+      label: module.title,
+      href: module.path,
+      active: path === module.path,
+      icon: Home01Icon,
+      group: 'Modules',
+    })),
     ...(session
       ? [
-          ...(company(session, 'turnstile:people:manage')
+          ...(company(session, 'turnstile:people:manage') ||
+          company(session, 'turnstile:roles:manage')
             ? [
                 {
-                  label: 'Members',
+                  label: 'Users',
                   group: 'People & access',
-                  href: '/people/members',
-                  active: path === '/people/members',
-                  icon: Settings01Icon,
-                },
-                {
-                  label: 'Invitations',
-                  group: 'People & access',
-                  href: '/people/invitations',
-                  active: path === '/people/invitations',
-                  icon: Settings01Icon,
-                },
-              ]
-            : []),
-          ...(company(session, 'turnstile:roles:manage')
-            ? [
-                {
-                  label: 'Roles',
-                  group: 'People & access',
-                  href: '/people/roles',
-                  active: path === '/people/roles',
+                  href: company(session, 'turnstile:people:manage')
+                    ? '/people/members'
+                    : '/people/roles',
+                  active: path.startsWith('/people/'),
                   icon: Settings01Icon,
                 },
               ]

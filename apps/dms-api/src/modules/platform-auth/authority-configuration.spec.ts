@@ -47,6 +47,41 @@ describe('authority configuration boundary', () => {
     }
   });
 
+  it('starts explicit machine-only mode without product callback or default client IDs', () => {
+    const env = authorityEnvironment();
+    env.AUTH_MODE = 'standalone';
+    delete env.AUTH_LOGIN_CALLBACK_URL;
+    delete env.AUTH_LOGIN_CLIENT_ID;
+    delete env.DMS_MACHINE_CLIENT_ID;
+    expect(parseAuthorityEnvironment(env).AUTH_MODE).toBe('standalone');
+    env.AUTH_MODE = 'combined';
+    expect(() => parseAuthorityEnvironment(env)).toThrow();
+  });
+
+  it('allows only the exact combined setup completion page', () => {
+    const env = authorityEnvironment();
+    const accepted = `${env.AUTH_PUBLIC_ORIGIN}/setup-preparation`;
+    expect(
+      parseAuthorityEnvironment({ ...env, AUTH_SETUP_COMPLETION_URL: accepted })
+        .AUTH_SETUP_COMPLETION_URL,
+    ).toBe(accepted);
+    for (const url of [
+      'https://attacker.test/setup-preparation',
+      `${accepted}?next=https://attacker.test`,
+      `${accepted}/`,
+      `${env.AUTH_PUBLIC_ORIGIN}/other`,
+    ]) {
+      expect(() => parseAuthorityEnvironment({ ...env, AUTH_SETUP_COMPLETION_URL: url })).toThrow();
+    }
+    expect(() =>
+      parseAuthorityEnvironment({
+        ...env,
+        AUTH_MODE: 'standalone',
+        AUTH_SETUP_COMPLETION_URL: accepted,
+      }),
+    ).toThrow();
+  });
+
   it('does not invent secrets or clients when unset', () => {
     expect(() => parseAuthorityEnvironment({})).toThrow(/AUTH_SECRET/);
   });

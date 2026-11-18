@@ -1,10 +1,16 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import type { PoolClient } from 'pg';
 import { AccessContextChangedException } from '../../infrastructure/access-context-exception.js';
+import { fenceAccessContract } from '../../infrastructure/access-contract.js';
 import type { ConfigurationActor } from '../../infrastructure/configuration-context.js';
 import { withTenant } from '../../infrastructure/database/postgres.js';
 import { ProductPersistenceService } from '../../infrastructure/database/product-persistence.service.js';
 import { covers, readAccess } from '../access/access-evaluator.js';
+import {
+  type DeploymentMode,
+  deploymentPreflight,
+  requireDeployment,
+} from '../deployment/access.js';
 import { parseInvitationEnvironment } from './invitation-environment.js';
 import { unavailable } from './invitation-policy.js';
 @Injectable()
@@ -25,19 +31,23 @@ export class InvitationStoreService {
     ) => Promise<T>,
     actor?: ConfigurationActor,
     deadlineAt?: number,
+    deployment: DeploymentMode = actor?.deploymentMode ?? 'recovery',
   ): Promise<T> {
     const config = this.config;
     const pool = this.persistence.pool;
     if (!config || !pool || !(await this.persistence.ready())) return unavailable();
     const deadline = actor?.deadlineAt ?? deadlineAt ?? Date.now() + 10000;
     try {
+      await deploymentPreflight(pool, config.INSTALLATION_TENANT_ID, deployment);
       return await withTenant(
         pool,
         config.INSTALLATION_TENANT_ID,
         async (db) => {
+          await requireDeployment(db, deployment);
           await db.query('SELECT turnstile.lock_access_context($1::uuid)', [
             config.INSTALLATION_TENANT_ID,
           ]);
+          await fenceAccessContract(db, config.INSTALLATION_TENANT_ID);
           if (actor) {
             const access = await readAccess(db, config.INSTALLATION_TENANT_ID, actor.userId);
             if (!covers(access, 'turnstile:people:manage', { kind: 'company' }))

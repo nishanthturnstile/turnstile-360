@@ -1,0 +1,401 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Turnstile module capabilities", "version": "1.0.0" },
+  "servers": [{ "url": "https://turnstile.example.test" }],
+  "paths": {
+    "/api/modules": {
+      "get": {
+        "description": "Only installed modules permitted by current signed v2, local enablement, current explicit user rights and readiness. Legacy products return no business modules.",
+        "security": [{ "ProductSession": [] }],
+        "responses": {
+          "200": {
+            "description": "Current user projection",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleCapabilities" },
+                "example": {
+                  "version": 1,
+                  "modules": [
+                    {
+                      "id": "incident-management",
+                      "title": "Incident Management",
+                      "path": "/modules/incident-management"
+                    }
+                  ],
+                  "context": {
+                    "catalogueDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "profileDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                    "releaseId": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                    "policyRevision": 3,
+                    "assignmentRevision": 2
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          },
+          "401": {
+            "description": "Normal login required",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          },
+          "403": {
+            "description": "Deployment or user/module access denied",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          },
+          "409": {
+            "description": "Readiness or access context changed",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          },
+          "503": {
+            "description": "Required dependency or release unavailable",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/modules/incident-management/entry": {
+      "get": {
+        "description": "Guarded placeholder. This route is unregistered (404) when its implementation is excluded from the selected image.",
+        "security": [{ "ProductSession": [] }],
+        "responses": {
+          "200": {
+            "description": "Current user projection",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleEntry" },
+                "example": {
+                  "id": "incident-management",
+                  "title": "Incident Management",
+                  "message": "You are in Incident Management"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          },
+          "401": {
+            "description": "Normal login required",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          },
+          "403": {
+            "description": "Deployment or user/module access denied",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          },
+          "404": {
+            "description": "Implementation excluded from this selected image; route unregistered"
+          },
+          "409": {
+            "description": "Readiness or access context changed",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          },
+          "503": {
+            "description": "Required dependency or release unavailable",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/modules/risk-management/entry": {
+      "get": {
+        "description": "Guarded placeholder. This route is unregistered (404) when its implementation is excluded from the selected image.",
+        "security": [{ "ProductSession": [] }],
+        "responses": {
+          "200": {
+            "description": "Current user projection",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleEntry" },
+                "example": {
+                  "id": "incident-management",
+                  "title": "Incident Management",
+                  "message": "You are in Incident Management"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          },
+          "401": {
+            "description": "Normal login required",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          },
+          "403": {
+            "description": "Deployment or user/module access denied",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          },
+          "404": {
+            "description": "Implementation excluded from this selected image; route unregistered"
+          },
+          "409": {
+            "description": "Readiness or access context changed",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          },
+          "503": {
+            "description": "Required dependency or release unavailable",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "const": "private, no-store" } },
+              "Referrer-Policy": { "schema": { "type": "string", "const": "no-referrer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModuleError" },
+                "example": { "code": "MODULE_ACCESS_DENIED" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ProductSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Host-turnstile",
+        "description": "Normal product BFF session. Staff and machine credentials do not authenticate user module routes."
+      }
+    },
+    "schemas": {
+      "ModuleCapabilities": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "version": { "type": "number", "const": 1 },
+          "modules": {
+            "maxItems": 2,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "enum": ["incident-management", "risk-management"] },
+                "title": { "type": "string", "minLength": 1, "maxLength": 100 },
+                "path": { "type": "string", "maxLength": 100 }
+              },
+              "required": ["id", "title", "path"],
+              "additionalProperties": false
+            }
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "catalogueDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "profileDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "releaseId": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "policyRevision": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "assignmentRevision": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "catalogueDigest",
+                  "profileDigest",
+                  "releaseId",
+                  "policyRevision",
+                  "assignmentRevision"
+                ],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          }
+        },
+        "required": ["version", "modules", "context"],
+        "additionalProperties": false
+      },
+      "ModuleEntry": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "enum": ["incident-management", "risk-management"] },
+          "title": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "message": { "type": "string", "minLength": 1, "maxLength": 300 }
+        },
+        "required": ["id", "title", "message"],
+        "additionalProperties": false
+      },
+      "ModuleError": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "MODULE_ACCESS_DENIED",
+              "MODULE_UNAVAILABLE",
+              "MODULE_INVALID_INPUT",
+              "IDENTITY_REQUIRED",
+              "LOGIN_REQUIRED",
+              "PRODUCT_ACCESS_DENIED",
+              "PERMISSION_DENIED",
+              "DEPLOYMENT_RESTRICTED",
+              "AUTH_UNAVAILABLE",
+              "SETUP_REQUIRED",
+              "CONFIGURATION_UNAVAILABLE",
+              "REFRESH_IN_PROGRESS",
+              "ACCESS_CONTEXT_CHANGED"
+            ]
+          },
+          "requestId": { "type": "string", "maxLength": 128 },
+          "accessRevision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "reason": { "type": "string", "maxLength": 128 }
+        },
+        "required": ["code"],
+        "additionalProperties": false
+      }
+    }
+  }
+}

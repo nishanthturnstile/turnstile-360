@@ -4,14 +4,23 @@ import assert from 'node:assert/strict';
 import { fork, spawn, spawnSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { lstat, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { request as httpRequest, createServer as httpServer } from 'node:http';
 import { createServer } from 'node:https';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { chromium } from '@playwright/test';
+import { Pool } from 'pg';
 import { parse } from 'yaml';
+import { documentsDraftIngress } from './fixtures/documents-draft-ingress.mjs';
+import { verifyDocumentsRestore } from './fixtures/documents-release-restore.mjs';
+import { prepareModuleAccess } from './fixtures/module-access.mjs';
+import { prepareCutoverBrowser } from './fixtures/module-cutover-browser-setup.mjs';
+import { testDocuments } from './test-documents-browser.mjs';
+import { testModuleCutover } from './test-module-cutover-browser.mjs';
+import { testModuleAccess } from './test-modules-browser.mjs';
 import { testOnboarding } from './test-onboarding-browser.mjs';
 import { testPeople } from './test-people-browser.mjs';
 import { testSettings } from './test-settings-browser.mjs';
@@ -23,6 +32,27 @@ const mailpit = `thaarei-mail-${randomBytes(6).toString('hex')}`;
 const web = `thaarei-web-${randomBytes(6).toString('hex')}`;
 let mailCreated = false;
 let webCreated = false;
+const runtimeContainers = [];
+let productMaintenanceArgs;
+let cutoverPreparation;
+let productRuntimeArguments;
+const documentsMode = process.argv.includes('--documents');
+const documentsUpload = process.argv.includes('--documents-upload');
+const documentsVersions = process.argv.includes('--documents-versions');
+const documentsBatches = process.argv.includes('--documents-batches');
+const documentsLifecycle = process.argv.includes('--documents-lifecycle');
+const documentsProcessing = process.argv.includes('--documents-processing');
+const documentsRelease = process.argv.includes('--documents-release');
+let draftIngress;
+let transferOrigin;
+const fullImages = process.env.AUTH_BROWSER_FULL_IMAGES === 'true';
+assert.ok(
+  !fullImages ||
+    (process.env.AUTH_BROWSER_API_IMAGE &&
+      process.env.AUTH_BROWSER_DMS_IMAGE &&
+      process.env.AUTH_BROWSER_WEB_IMAGE),
+  'Full image acceptance needs all three candidate images',
+);
 let browser;
 let page;
 let callbackStatus;
@@ -35,6 +65,17 @@ let authorityPort = 0;
 let productPort = 0;
 let webPort = 0;
 let fault = 'none';
+let documentsReadHeld = false;
+const browserNetwork = `${web}-network`;
+let networkCreated = false;
+const faultFile = join(temporary, 'browser-fault');
+const heldFile = join(temporary, 'documents-response-held');
+writeFileSync(faultFile, fault, { mode: 0o600 });
+writeFileSync(heldFile, 'no', { mode: 0o600 });
+const setFault = (value) => {
+  fault = value;
+  writeFileSync(faultFile, value, { mode: 0o600 });
+};
 let stage = 'fixture setup';
 let productLogs = '';
 let authorityLogs = '';
@@ -44,6 +85,10 @@ const nginx = await readFile('deploy/nginx/nginx.conf', 'utf8');
 const csp = /add_header Content-Security-Policy "([^"]+)"/.exec(nginx)?.[1];
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: 'utf8', timeout: 30000, ...options });
+  if (result.status !== 0 && command === 'docker')
+    console.error(
+      `Docker fixture operation failed: ${result.stderr.replace(/postgres(?:ql)?:\/\/[^\s]+/g, '[redacted]')}`,
+    );
   assert.equal(
     result.status,
     0,
@@ -65,6 +110,13 @@ async function waitFor(check) {
 const gateway = createServer({}, async (request, response) => {
   try {
     const path = (request.url ?? '/').split('?')[0];
+    if (
+      fullImages &&
+      (path.startsWith('/internal/identity/') || path.startsWith('/internal/work/'))
+    ) {
+      response.writeHead(404).end();
+      return;
+    }
     const identity =
       path.startsWith('/identity/') ||
       path.startsWith('/internal/identity/') ||
@@ -82,17 +134,39 @@ const gateway = createServer({}, async (request, response) => {
     const port =
       identity || path.startsWith('/v1')
         ? authorityPort
-        : path.startsWith('/api')
-          ? productPort
-          : webPort;
+        : draftIngress && path === '/api/documents/operations' && request.method === 'POST'
+          ? draftIngress.port
+          : path.startsWith('/api')
+            ? productPort
+            : webPort;
     if (port) {
+      if (
+        (fault === 'bulk-invitation-before-forward' &&
+          path === '/api/people/invitations' &&
+          request.method === 'POST') ||
+        (fault === 'documents-lose-edit-before-write' &&
+          request.method === 'PATCH' &&
+          /^\/v1\/documents\/[^/]+$/.test(path)) ||
+        (fault === 'structure-before-forward' &&
+          path.startsWith('/api/structure/units') &&
+          ['POST', 'PATCH', 'DELETE'].includes(request.method))
+      ) {
+        setFault('none');
+        request.resume();
+        response.destroy();
+        return;
+      }
       const upstream = httpRequest(
         {
           hostname: '127.0.0.1',
           port,
           path: request.url,
           method: request.method,
-          headers: { ...request.headers, connection: 'close' },
+          headers: {
+            ...request.headers,
+            connection: 'close',
+            ...(port === draftIngress?.port ? { 'x-forwarded-proto': 'https' } : {}),
+          },
         },
         (incoming) => {
           if (path === '/identity/oauth2/introspect')
@@ -101,13 +175,86 @@ const gateway = createServer({}, async (request, response) => {
               (introspectionStatuses.get(incoming.statusCode) ?? 0) + 1,
             );
           if (
-            fault === 'people-outcome' &&
-            path === '/api/people/roles' &&
-            request.method === 'POST'
+            fault === 'structure-outcome' &&
+            path.startsWith('/api/structure/units') &&
+            ['POST', 'PATCH', 'DELETE'].includes(request.method) &&
+            incoming.statusCode >= 200 &&
+            incoming.statusCode < 300
           ) {
-            fault = 'none';
+            setFault('none');
             incoming.resume();
             incoming.once('end', () => response.destroy());
+            return;
+          }
+          if (
+            ((fault === 'people-outcome' && path === '/api/people/roles') ||
+              (fault === 'bulk-invitation-outcome' && path === '/api/people/invitations')) &&
+            request.method === 'POST'
+          ) {
+            setFault('none');
+            incoming.resume();
+            incoming.once('end', () => response.destroy());
+            return;
+          }
+          if (
+            incoming.statusCode >= 200 &&
+            incoming.statusCode < 300 &&
+            ((request.method === 'PATCH' &&
+              fault === 'documents-lose-edit' &&
+              /^\/v1\/documents\/[^/]+$/.test(path)) ||
+              (request.method === 'DELETE' &&
+                fault === 'documents-lose-batch-cancel' &&
+                /^\/v1\/upload-batches\/[^/]+$/.test(path)) ||
+              (request.method === 'DELETE' &&
+                fault === 'documents-lose-delete' &&
+                /^\/v1\/documents\/[^/]+$/.test(path)) ||
+              (request.method === 'PUT' &&
+                fault === 'documents-lose-grants' &&
+                /^\/v1\/documents\/[^/]+\/permissions$/.test(path)) ||
+              (request.method === 'POST' &&
+                ((['documents-lose-begin', 'documents-crash-begin'].includes(fault) &&
+                  path === '/v1/uploads') ||
+                  (fault === 'documents-lose-complete' &&
+                    /^\/v1\/uploads\/[^/]+\/complete$/.test(path)) ||
+                  (fault === 'documents-lose-restore' &&
+                    /^\/v1\/documents\/[^/]+\/versions\/[^/]+\/restore$/.test(path)) ||
+                  (fault === 'documents-lose-reprocess' &&
+                    /^\/v1\/documents\/[^/]+\/versions\/[^/]+\/reprocess$/.test(path)) ||
+                  (fault === 'documents-lose-logical-restore' &&
+                    /^\/v1\/documents\/[^/]+\/restore$/.test(path)) ||
+                  (fault === 'documents-lose-batch-create' && path === '/v1/upload-batches') ||
+                  (fault === 'documents-lose-batch-close' &&
+                    /^\/v1\/upload-batches\/[^/]+\/close$/.test(path)) ||
+                  (fault === 'documents-lose-batch-item' && path === '/v1/uploads') ||
+                  (fault === 'documents-lose-draft' && path === '/api/documents/operations'))))
+          ) {
+            const crash = fault === 'documents-crash-begin';
+            setFault('none');
+            incoming.resume();
+            incoming.once('end', () => {
+              if (crash) product.kill('SIGKILL');
+              response.destroy();
+            });
+            return;
+          }
+          if (
+            fault === 'documents-held-response' &&
+            path.startsWith('/v1/documents/') &&
+            incoming.statusCode === 200
+          ) {
+            documentsReadHeld = true;
+            const started = Date.now();
+            const timer = setInterval(() => {
+              if (fault !== 'documents-held-response' || Date.now() - started > 5000) {
+                clearInterval(timer);
+                response.writeHead(incoming.statusCode, incoming.headers);
+                incoming.pipe(response);
+              }
+            }, 25);
+            response.once('close', () => {
+              clearInterval(timer);
+              incoming.destroy();
+            });
             return;
           }
           response.writeHead(incoming.statusCode ?? 503, incoming.headers);
@@ -134,7 +281,9 @@ const gateway = createServer({}, async (request, response) => {
               ? 'font/woff2'
               : 'text/html',
         'referrer-policy': 'no-referrer',
-        'content-security-policy': csp,
+        'content-security-policy': transferOrigin
+          ? csp.replace("connect-src 'self'", `connect-src 'self' ${transferOrigin}`)
+          : csp,
         'cache-control': 'no-store',
       })
       .end(body);
@@ -160,13 +309,13 @@ try {
     '-subj',
     '/CN=auth.fixture.test',
     '-addext',
-    'subjectAltName=IP:127.0.0.1,DNS:auth.fixture.test',
+    `subjectAltName=IP:127.0.0.1,DNS:auth.fixture.test,DNS:mailpit,DNS:${mailpit}`,
   ]);
   gateway.setSecureContext({
     key: await readFile(join(temporary, 'key.pem')),
     cert: await readFile(join(temporary, 'cert.pem')),
   });
-  await new Promise((done) => gateway.listen(0, '127.0.0.1', done));
+  await new Promise((done) => gateway.listen(0, fullImages ? '0.0.0.0' : '127.0.0.1', done));
   const origin = `https://auth.fixture.test:${gateway.address().port}`;
   const dnsFile = join(temporary, 'fixture-dns.cjs');
   await writeFile(
@@ -179,6 +328,18 @@ dns.lookup = function(host, options, callback) {
 };\n`,
   );
   const image = parse(await readFile('deploy/compose.local.yaml', 'utf8')).services.mailpit.image;
+  if (fullImages) {
+    run('docker', [
+      'network',
+      'create',
+      ...(process.env.AUTH_BROWSER_PRIVATE_SUBNET
+        ? ['--subnet', process.env.AUTH_BROWSER_PRIVATE_SUBNET]
+        : []),
+      browserNetwork,
+    ]);
+    networkCreated = true;
+    run('docker', ['network', 'connect', browserNetwork, process.env.ONBOARDING_ARCHIVE_CONTAINER]);
+  }
   stage = 'Mailpit container';
   run('docker', [
     'run',
@@ -186,6 +347,7 @@ dns.lookup = function(host, options, callback) {
     '--rm',
     '--name',
     mailpit,
+    ...(fullImages ? ['--network', browserNetwork, '--network-alias', 'mailpit'] : []),
     '-p',
     '127.0.0.1::1025',
     '-p',
@@ -233,12 +395,36 @@ dns.lookup = function(host, options, callback) {
     AUTH_SMTP_PORT: smtpPort,
     AUTH_SMTP_MODE: 'starttls',
     AUTH_BROWSER_MAILPIT_URL: mailUrl,
+    ...(process.argv.includes('--modules')
+      ? {
+          AUTH_BROWSER_DIAGNOSTIC_FILE: join(
+            dirname(process.env.MOD_I07_MODULE_FIXTURE),
+            'authority-error.json',
+          ),
+        }
+      : {}),
     AUTH_LOGIN_CLIENT_ID: 'bff-fixture-login',
     DMS_MACHINE_CLIENT_ID: 'bff-fixture-machine',
   };
-  if (process.argv.includes('--people-ui')) {
+  if (
+    process.argv.includes('--people-ui') ||
+    documentsMode ||
+    process.argv.includes('--modules') ||
+    process.argv.includes('--module-cutover') ||
+    process.argv.includes('--structured-onboarding')
+  ) {
     environment.IDENTITY_SERVICE_CLIENT_ID = 'bff-fixture-service';
     environment.IDENTITY_SERVICE_RESOURCE_URL = `${origin}/identity/services/accounts`;
+  }
+  if (documentsMode) {
+    environment.AUTH_BROWSER_DOCUMENTS = 'true';
+    if (documentsLifecycle) environment.AUTH_BROWSER_DOCUMENTS_LIFECYCLE = 'true';
+    if (documentsProcessing) environment.AUTH_BROWSER_DOCUMENTS_PROCESSING = 'true';
+    if (documentsUpload) {
+      environment.AUTH_BROWSER_DOCUMENTS_UPLOAD = 'true';
+      environment.AUTH_BROWSER_TRANSFER_KEY_FILE = join(temporary, 'key.pem');
+    }
+    environment.DMS_DOCUMENTS_SCOPES = 'dms:documents:read dms:documents:write dms:audit:read';
   }
   stage = 'authority fixture startup';
   authority = fork('apps/dms-api/test/bff-authority-fixture.mjs', [], {
@@ -264,21 +450,35 @@ dns.lookup = function(host, options, callback) {
     });
   });
   authorityPort = fixture.port;
-  function command(action) {
+  if (documentsUpload) {
+    assert.ok(fixture.transferOrigin);
+    transferOrigin = fixture.transferOrigin;
+    environment.DMS_DOCUMENTS_TRANSFER_ORIGIN = transferOrigin;
+  }
+  function command(action, fields = {}, onAssessmentReady) {
     const requestId = randomUUID();
     return new Promise((done, reject) => {
-      const timer = setTimeout(() => {
-        authority.off('message', listener);
-        reject(new Error('Fixture operation deadline'));
-      }, 10000);
+      const timer = setTimeout(
+        () => {
+          authority.off('message', listener);
+          reject(new Error('Fixture operation deadline'));
+        },
+        ['documents-assess', 'documents-processing-setup', 'documents-process'].includes(action)
+          ? 150000
+          : 10000,
+      );
       function listener(message) {
         if (message.requestId !== requestId) return;
+        if (message.assessmentReady && onAssessmentReady) {
+          void onAssessmentReady().catch(reject);
+          return;
+        }
         clearTimeout(timer);
         authority.off('message', listener);
         message.ok ? done(message) : reject(new Error('Fixture operation failed'));
       }
       authority.on('message', listener);
-      authority.send({ action, requestId });
+      authority.send({ ...fields, action, requestId });
     });
   }
   stage = 'machine enrollment';
@@ -317,7 +517,13 @@ dns.lookup = function(host, options, callback) {
       }),
     });
   }
-  if (process.argv.includes('--people-ui')) {
+  if (
+    process.argv.includes('--people-ui') ||
+    documentsMode ||
+    process.argv.includes('--modules') ||
+    process.argv.includes('--module-cutover') ||
+    process.argv.includes('--structured-onboarding')
+  ) {
     environment.IDENTITY_SERVICE_CLIENT_SECRET = fixture.identitySecret;
     environment.IDENTITY_SERVICE_API_URL = `${origin}`;
     environment.TURNSTILE_INVITATION_ENCRYPTION_KEY = randomBytes(32).toString('hex');
@@ -325,12 +531,25 @@ dns.lookup = function(host, options, callback) {
     environment.TURNSTILE_SMTP_HOST = '127.0.0.1';
     environment.TURNSTILE_SMTP_PORT = String(smtpPort);
     environment.TURNSTILE_MAIL_FROM = 'turnstile@example.test';
+  }
+  if (
+    process.argv.includes('--people-ui') ||
+    documentsMode ||
+    process.argv.includes('--modules') ||
+    process.argv.includes('--module-cutover')
+  ) {
     stage = 'People owning fixture setup';
     run(process.execPath, ['apps/turnstile-api/test/people-browser-fixture.mjs', '--setup'], {
       env: { ...environment, NODE_ENV: 'test' },
       input: JSON.stringify(fixture.users),
     });
   }
+  const moduleFixture = process.argv.includes('--modules')
+    ? await prepareModuleAccess(environment)
+    : undefined;
+  if (documentsRelease) await prepareModuleAccess(environment);
+  if (process.argv.includes('--module-cutover'))
+    cutoverPreparation = await prepareCutoverBrowser(environment, browserNetwork);
   const reservation = httpServer();
   await new Promise((done) => reservation.listen(0, '127.0.0.1', done));
   productPort = reservation.address().port;
@@ -346,18 +565,298 @@ dns.lookup = function(host, options, callback) {
         'PROVISION_DATABASE_URL',
         'AUTH_SECRET',
         'AUTH_BROWSER_MAILPIT_URL',
+        'TURNSTILE_REPORTER_DATABASE_URL',
       ].includes(name)
     )
       delete productEnvironment[name];
-  product = spawn(process.execPath, ['apps/turnstile-api/dist/main.js'], {
-    env: productEnvironment,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  for (const stream of [product.stdout, product.stderr])
-    stream.on('data', (chunk) => {
-      productLogs = `${productLogs}${chunk}`.slice(-131072);
+  async function imageRuntime(kind, image, configuration, port) {
+    stage = `${kind} image container startup`;
+    const runtime = {};
+    const mounts = new Set();
+    for (const [key, raw] of Object.entries(configuration)) {
+      if (
+        !/^(AUTH_|DMS_|IDENTITY_|TURNSTILE_|INSTALLATION_|CONTROL_PLANE_|NODE_ENV$|NODE_EXTRA_CA_CERTS$)/.test(
+          key,
+        ) ||
+        key.includes('MIGRATION_') ||
+        key.includes('FIXTURE') ||
+        key.includes('BROWSER') ||
+        key.includes('PROVISION') ||
+        key === 'DMS_COORDINATOR_DATABASE_URL' ||
+        key === 'DMS_OPERATOR_DATABASE_URL' ||
+        key.endsWith('MACHINE_SECRET_FILE')
+      )
+        continue;
+      if (
+        kind === 'product' &&
+        [
+          'AUTH_DATABASE_URL',
+          'DMS_DATABASE_URL',
+          'AUTH_SECRET',
+          'TURNSTILE_REPORTER_DATABASE_URL',
+        ].includes(key)
+      )
+        continue;
+      if (
+        kind === 'authority' &&
+        (key.startsWith('TURNSTILE_') ||
+          (key.startsWith('IDENTITY_') &&
+            !['IDENTITY_SERVICE_CLIENT_ID', 'IDENTITY_SERVICE_RESOURCE_URL'].includes(key)))
+      )
+        continue;
+      let value = raw;
+      if (key.endsWith('DATABASE_URL')) {
+        const url = new URL(value);
+        url.hostname = process.env.ONBOARDING_ARCHIVE_CONTAINER;
+        url.port = '5432';
+        value = url.href;
+      }
+      if (key.endsWith('SMTP_HOST')) value = key === 'TURNSTILE_SMTP_HOST' ? 'mailpit' : mailpit;
+      if (key.endsWith('SMTP_PORT')) value = '1025';
+      if (key.endsWith('_FILE') || key === 'NODE_EXTRA_CA_CERTS') mounts.add(value);
+      runtime[key] = value;
+    }
+    for (const path of mounts)
+      assert.ok(
+        (await lstat(path)).isFile(),
+        'Runtime delivery must mount exact public files, not fixture directories',
+      );
+    runtime.HOST = '0.0.0.0';
+    runtime.PORT = String(port);
+    const file = join(temporary, `${kind}-runtime.env`);
+    await writeFile(
+      file,
+      Object.entries(runtime)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('\n'),
+      { mode: 0o600 },
+    );
+    const mountArgs = [...mounts].flatMap((path) => [
+      '--mount',
+      `type=bind,source=${path},target=${path},readonly`,
+    ]);
+    if (kind === 'product') {
+      const migrationUrl = new URL(environment.TURNSTILE_MIGRATION_DATABASE_URL);
+      migrationUrl.hostname = process.env.ONBOARDING_ARCHIVE_CONTAINER;
+      migrationUrl.port = '5432';
+      const maintenanceFile = join(temporary, 'product-maintenance.env');
+      await writeFile(
+        maintenanceFile,
+        Object.entries({ ...runtime, TURNSTILE_MIGRATION_DATABASE_URL: migrationUrl.href })
+          .map(([key, value]) => `${key}=${value}`)
+          .join('\n'),
+        { mode: 0o600 },
+      );
+      productMaintenanceArgs = [
+        'run',
+        '--rm',
+        '-i',
+        '--network',
+        browserNetwork,
+        '--read-only',
+        '--tmpfs',
+        '/tmp',
+        '--cap-drop',
+        'ALL',
+        '--security-opt',
+        'no-new-privileges:true',
+        '--env-file',
+        maintenanceFile,
+        ...mountArgs,
+        image,
+        'node',
+        'dist/modules/access/release-operator.js',
+      ];
+    }
+    if (kind === 'product') productRuntimeArguments = { runtime, mounts: [...mounts], image };
+    const name = `${web}-${kind}`;
+    run('docker', [
+      'run',
+      '--detach',
+      '--rm',
+      '--name',
+      name,
+      '--network',
+      browserNetwork,
+      '-p',
+      `127.0.0.1::${port}`,
+      '--read-only',
+      '--tmpfs',
+      '/tmp',
+      '--cap-drop',
+      'ALL',
+      '--security-opt',
+      'no-new-privileges:true',
+      '--env-file',
+      file,
+      ...[...mounts].flatMap((path) => [
+        '--mount',
+        `type=bind,source=${path},target=${path},readonly`,
+      ]),
+      image,
+    ]);
+    runtimeContainers.push(name);
+    const exposed = Number(
+      run('docker', [
+        'inspect',
+        '--format',
+        `{{(index (index .NetworkSettings.Ports "${port}/tcp") 0).HostPort}}`,
+        name,
+      ]),
+    );
+    stage = `${kind} image health readiness`;
+    await waitFor(async () => (await fetch(`http://127.0.0.1:${exposed}/health/live`)).ok);
+    return exposed;
+  }
+  let cutoverOwnerFile;
+  if (cutoverPreparation) {
+    environment.TURNSTILE_BUILD_VERSION = 'tcp-i06';
+    productEnvironment.TURNSTILE_BUILD_VERSION = 'tcp-i06';
+    const owner = { ...environment };
+    for (const key of Object.keys(owner))
+      if (key.endsWith('DATABASE_URL') && key.startsWith('TURNSTILE_')) {
+        const url = new URL(owner[key]);
+        url.hostname = process.env.ONBOARDING_ARCHIVE_CONTAINER;
+        url.port = '5432';
+        owner[key] = url.href;
+      }
+    owner.TURNSTILE_SMTP_HOST = 'mailpit';
+    owner.TURNSTILE_SMTP_PORT = '1025';
+    cutoverOwnerFile = join(cutoverPreparation.directory, 'owner.env');
+    await writeFile(
+      cutoverOwnerFile,
+      Object.entries(owner)
+        .filter(
+          ([key]) =>
+            /^(AUTH_|DMS_|IDENTITY_|TURNSTILE_|INSTALLATION_|NODE_ENV$|NODE_EXTRA_CA_CERTS$)/.test(
+              key,
+            ) &&
+            ![
+              'PROVISION_DATABASE_URL',
+              'AUTH_DATABASE_URL',
+              'DMS_DATABASE_URL',
+              'AUTH_SECRET',
+            ].includes(key) &&
+            (!key.endsWith('DATABASE_URL') || key.startsWith('TURNSTILE_')),
+        )
+        .map(([k, v]) => `${k}=${v}`)
+        .join('\n'),
+      { mode: 0o600 },
+    );
+    const publicPaths = [
+      'TURNSTILE_CONTROL_PLANE_RECOVERY_MARKER_FILE',
+      'TURNSTILE_CONTROL_PLANE_VERIFICATION_KEYS_FILE',
+      'TURNSTILE_MODULE_RELEASE_FILE',
+      'TURNSTILE_MODULE_RELEASE_TRUST_FILE',
+      'NODE_EXTRA_CA_CERTS',
+    ].map((k) => owner[k]);
+    const args = [
+      'run',
+      '--rm',
+      '-i',
+      '--network',
+      browserNetwork,
+      '--env-file',
+      cutoverOwnerFile,
+      ...publicPaths.flatMap((p) => ['--mount', `type=bind,source=${p},target=${p},readonly`]),
+      '--mount',
+      `type=bind,source=${cutoverPreparation.privateDirectory},target=${cutoverPreparation.privateDirectory}`,
+      process.env.AUTH_BROWSER_API_IMAGE,
+      'node',
+      'dist/modules/deployment/operator.js',
+    ];
+    const own = (action) =>
+      run('docker', args, {
+        input: JSON.stringify({
+          action,
+          ...(action === 'setup' ? { pairingFile: cutoverPreparation.pairingFile } : {}),
+        }),
+      });
+    args.splice(
+      args.indexOf(process.env.AUTH_BROWSER_API_IMAGE),
+      0,
+      '--mount',
+      `type=bind,source=${cutoverPreparation.pairingFile},target=${cutoverPreparation.pairingFile},readonly`,
+    );
+    own('setup');
+    await cutoverPreparation.rpc({ action: 'approve-product' });
+    own('sync');
+    await cutoverPreparation.rpc({ action: 'activate' });
+    own('sync');
+  }
+  if (fullImages) {
+    authorityPort = await imageRuntime(
+      'authority',
+      process.env.AUTH_BROWSER_DMS_IMAGE,
+      environment,
+      3001,
+    );
+    productPort = await imageRuntime(
+      'product',
+      process.env.AUTH_BROWSER_API_IMAGE,
+      productEnvironment,
+      3002,
+    );
+    const ingress = `${web}-canonical`;
+    stage = 'packaged canonical ingress startup';
+    run('docker', [
+      'run',
+      '--detach',
+      '--rm',
+      '--name',
+      ingress,
+      '--network',
+      browserNetwork,
+      '--network-alias',
+      'auth.fixture.test',
+      '--read-only',
+      '--cap-drop',
+      'ALL',
+      '--security-opt',
+      'no-new-privileges:true',
+      '-e',
+      `QUALIFICATION_AUTHORITY=${web}-authority`,
+      '-e',
+      `QUALIFICATION_PRODUCT=${web}-product`,
+      '-e',
+      `QUALIFICATION_PORT=${new URL(origin).port}`,
+      '--mount',
+      `type=bind,source=${join(temporary, 'cert.pem')},target=/qualification/cert.pem,readonly`,
+      '--mount',
+      `type=bind,source=${join(temporary, 'key.pem')},target=/qualification/key.pem,readonly`,
+      '--mount',
+      `type=bind,source=${faultFile},target=/qualification/browser-fault,readonly`,
+      '--mount',
+      `type=bind,source=${heldFile},target=/qualification/documents-response-held`,
+      '--mount',
+      `type=bind,source=${resolve('scripts/fixtures/customer-browser-ingress.mjs')},target=/ingress.mjs,readonly`,
+      process.env.AUTH_BROWSER_API_IMAGE,
+      'node',
+      '/ingress.mjs',
+    ]);
+    runtimeContainers.push(ingress);
+    stage = 'packaged identity discovery through canonical ingress';
+    await waitFor(async () => {
+      const probe = run('docker', [
+        'exec',
+        `${web}-product`,
+        'node',
+        '-e',
+        `fetch('${origin}/identity/.well-known/openid-configuration',{redirect:'error',signal:AbortSignal.timeout(5000)}).then(async r=>{const m=await r.json();if(!r.ok||m.issuer!=='${origin}/identity'||m.jwks_uri!=='${origin}/identity/jwks'){console.error(JSON.stringify({status:r.status,issuer:m.issuer,jwks:m.jwks_uri}));process.exit(1);}console.log('passed')}).catch(e=>{console.error(e.cause?.code??e.name);process.exit(1)})`,
+      ]);
+      return probe === 'passed';
     });
-  await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
+  } else {
+    product = spawn(process.execPath, ['apps/turnstile-api/dist/main.js'], {
+      env: productEnvironment,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    for (const stream of [product.stdout, product.stderr])
+      stream.on('data', (chunk) => {
+        productLogs = `${productLogs}${chunk}`.slice(-131072);
+      });
+    await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
+  }
   if (process.env.AUTH_BROWSER_WEB_IMAGE) {
     run('docker', [
       'run',
@@ -365,6 +864,7 @@ dns.lookup = function(host, options, callback) {
       '--rm',
       '--name',
       web,
+      ...(fullImages ? ['--network', browserNetwork] : []),
       '-p',
       '127.0.0.1::8080',
       process.env.AUTH_BROWSER_WEB_IMAGE,
@@ -373,33 +873,38 @@ dns.lookup = function(host, options, callback) {
     webPort = Number(port(web, 8080));
     await waitFor(async () => (await fetch(`http://127.0.0.1:${webPort}/health/live`)).ok);
     // Confirm canonical TLS/discovery reachability from an application container without disabling TLS checks.
-    const probe = spawn(
-      'docker',
-      [
-        'run',
-        '--rm',
-        '--network',
-        'host',
-        '--add-host',
-        'auth.fixture.test:127.0.0.1',
-        '-v',
-        `${join(temporary, 'cert.pem')}:/tmp/auth07-ca.crt:ro`,
-        '-e',
-        'NODE_EXTRA_CA_CERTS=/tmp/auth07-ca.crt',
-        process.env.AUTH_BROWSER_API_IMAGE ?? 'thaarei-auth07-api',
-        'node',
-        '-e',
-        `fetch('${origin}/identity/.well-known/openid-configuration',{redirect:'error',signal:AbortSignal.timeout(5000)}).then(async r=>{const m=await r.json();process.exit(r.ok&&m.issuer==='${origin}/identity'&&m.jwks_uri==='${origin}/identity/jwks'?0:1)}).catch(e=>process.exit(['ECONNREFUSED','ENETUNREACH','ETIMEDOUT','EHOSTUNREACH','UND_ERR_CONNECT_TIMEOUT'].includes(e.cause?.code)||e.name==='TimeoutError'?2:1))`,
-      ],
-      { stdio: 'ignore', timeout: 10000 },
-    );
-    const probeResult = (await once(probe, 'exit'))[0];
-    assert.ok([0, 2].includes(probeResult), 'Canonical container discovery/TLS validation failed');
-    console.log(
-      probeResult === 0
-        ? 'Canonical HTTPS discovery from application container passed.'
-        : 'UNAVAILABLE: application container cannot reach the local HTTPS fixture (host-network routing). Actual deployment DNS/TLS reachability remains unverified.',
-    );
+    if (!fullImages) {
+      const probe = spawn(
+        'docker',
+        [
+          'run',
+          '--rm',
+          '--network',
+          'host',
+          '--add-host',
+          'auth.fixture.test:127.0.0.1',
+          '-v',
+          `${join(temporary, 'cert.pem')}:/tmp/auth07-ca.crt:ro`,
+          '-e',
+          'NODE_EXTRA_CA_CERTS=/tmp/auth07-ca.crt',
+          process.env.AUTH_BROWSER_API_IMAGE ?? 'thaarei-auth07-api',
+          'node',
+          '-e',
+          `fetch('${origin}/identity/.well-known/openid-configuration',{redirect:'error',signal:AbortSignal.timeout(5000)}).then(async r=>{const m=await r.json();process.exit(r.ok&&m.issuer==='${origin}/identity'&&m.jwks_uri==='${origin}/identity/jwks'?0:1)}).catch(e=>process.exit(['ECONNREFUSED','ENETUNREACH','ETIMEDOUT','EHOSTUNREACH','UND_ERR_CONNECT_TIMEOUT'].includes(e.cause?.code)||e.name==='TimeoutError'?2:1))`,
+        ],
+        { stdio: 'ignore', timeout: 10000 },
+      );
+      const probeResult = (await once(probe, 'exit'))[0];
+      assert.ok(
+        [0, 2].includes(probeResult),
+        'Canonical container discovery/TLS validation failed',
+      );
+      console.log(
+        probeResult === 0
+          ? 'Canonical HTTPS discovery from application container passed.'
+          : 'UNAVAILABLE: application container cannot reach the local HTTPS fixture (host-network routing). Actual deployment DNS/TLS reachability remains unverified.',
+      );
+    }
   }
   browser = await chromium.launch({
     headless: true,
@@ -446,6 +951,64 @@ dns.lookup = function(host, options, callback) {
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   }
+  const activatePeopleFeature = async () => {
+    const rolesStatus = await page.evaluate(async () => (await fetch('/api/people/roles')).status);
+    assert.equal(rolesStatus, 403, 'Legacy grants do not promote a People administrator');
+    const invokeRelease = async (operation, input) => {
+      await new Promise((resolve, reject) => {
+        const child = spawn(
+          fullImages ? 'docker' : process.execPath,
+          fullImages
+            ? [...productMaintenanceArgs, operation]
+            : ['apps/turnstile-api/dist/modules/access/release-operator.js', operation],
+          {
+            env: environment,
+            stdio: ['pipe', 'pipe', 'pipe'],
+          },
+        );
+        let output = '';
+        child.stdout.on('data', (chunk) => {
+          output += chunk;
+          if (output.length > 16384) child.kill();
+        });
+        child.stderr.on('data', () => {});
+        const timer = setTimeout(() => child.kill(), 30000);
+        child.once('error', reject);
+        child.once('exit', (code) => {
+          clearTimeout(timer);
+          code === 0
+            ? resolve(JSON.parse(output))
+            : reject(new Error(`Private release command failed: ${operation}`));
+        });
+        child.stdin.end(JSON.stringify(input));
+      });
+    };
+    const proof = async () => {
+      const session = await page.evaluate(async () => (await fetch('/api/auth/session')).json());
+      const cookie = (await context.cookies()).find((value) => value.name === '__Host-turnstile');
+      assert.ok(cookie, 'A signed normal product login is required');
+      return {
+        operatorId: fixture.users.member.id,
+        administratorUserId: fixture.users.member.id,
+        administratorCookie: `${cookie.name}=${cookie.value}`,
+        key: randomUUID(),
+        expectedRevision: session.access.accessRevision,
+      };
+    };
+    await invokeRelease('bootstrap-administrator', await proof());
+    await invokeRelease('open', {
+      ...(await proof()),
+      releaseId: 'b'.repeat(64),
+      incompatibleProcessesStopped: true,
+    });
+    const verified = await proof();
+    await invokeRelease('verify-login', {
+      operatorId: verified.operatorId,
+      administratorUserId: verified.administratorUserId,
+      administratorCookie: verified.administratorCookie,
+    });
+    console.log('Real private administrator handover and versioned release opening passed.');
+  };
   const heading = (name) => page.getByRole('heading', { name, exact: true }).waitFor();
   async function mailLink(purpose, email) {
     const list = await (await fetch(`${mailUrl}/api/v1/messages`)).json();
@@ -463,8 +1026,24 @@ dns.lookup = function(host, options, callback) {
   }
 
   async function restartProduct() {
-    product.kill('SIGTERM');
-    await once(product, 'exit');
+    if (fullImages) {
+      run('docker', ['restart', `${web}-product`]);
+      productPort = Number(
+        run('docker', [
+          'inspect',
+          '--format',
+          '{{(index (index .NetworkSettings.Ports "3002/tcp") 0).HostPort}}',
+          `${web}-product`,
+        ]),
+      );
+      await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
+      return;
+    }
+    if (product.exitCode === null && product.signalCode === null) {
+      const exited = once(product, 'exit');
+      product.kill('SIGTERM');
+      await exited;
+    }
     product = spawn(process.execPath, ['apps/turnstile-api/dist/main.js'], {
       env: productEnvironment,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -475,7 +1054,151 @@ dns.lookup = function(host, options, callback) {
       });
     await waitFor(async () => (await fetch(`http://127.0.0.1:${productPort}/health/live`)).ok);
   }
-  if (process.argv.includes('--people-ui')) {
+  if (documentsMode) {
+    stage = 'Documents compatibility, private validator and read-only journeys';
+    if (documentsBatches) draftIngress = await documentsDraftIngress(temporary, () => productPort);
+    await testDocuments({
+      page,
+      context,
+      origin,
+      login,
+      fixture,
+      environment,
+      activateFeature: activatePeopleFeature,
+      temporary,
+      productMaintenanceArgs: fullImages ? productMaintenanceArgs : undefined,
+      restartProduct,
+      clearRateLimits: () => command('clear-rate-limits'),
+      setFault,
+      documentReadHeld: () => documentsReadHeld || readFileSync(heldFile, 'utf8') === 'yes',
+      machineScope: (state) => command(state ? 'restore-machine-scope' : 'deny-machine-scope'),
+      ...(documentsUpload ? { uploadCommand: command } : {}),
+      documentsVersions,
+      documentsBatches,
+      documentsLifecycle,
+      documentsProcessing,
+      ...(documentsRelease
+        ? {
+            verifyReleaseRestore: (input) =>
+              verifyDocumentsRestore({
+                ...input,
+                environment,
+                temporary,
+                network: browserNetwork,
+                candidate: productRuntimeArguments,
+                clearRateLimits: () => command('clear-rate-limits'),
+              }),
+          }
+        : {}),
+    });
+  } else if (process.argv.includes('--module-cutover')) {
+    stage = 'actual selected module cutover';
+    await testModuleCutover({
+      page,
+      context,
+      origin,
+      fixture,
+      login,
+      environment,
+      preparation: cutoverPreparation,
+      ownerFile: cutoverOwnerFile,
+      network: browserNetwork,
+      web,
+      temporary,
+      productImage: process.env.AUTH_BROWSER_API_IMAGE,
+      runtime: () => productRuntimeArguments,
+      replace: async (bundle) => {
+        for (const kind of ['product', 'reporter']) {
+          const index = runtimeContainers.indexOf(`${web}-${kind}`);
+          if (index !== -1) runtimeContainers.splice(index, 1);
+        }
+        const image = `sha256:${bundle.inventory.images.find((i) => i.role === 'turnstile-api').digest}`;
+        productPort = await imageRuntime('product', image, productEnvironment, 3002);
+        run('docker', [
+          'run',
+          '--detach',
+          '--rm',
+          '--name',
+          web,
+          ...(fullImages ? ['--network', browserNetwork] : []),
+          '-p',
+          '127.0.0.1::8080',
+          `sha256:${bundle.inventory.images.find((i) => i.role === 'turnstile-web').digest}`,
+        ]);
+        webPort = Number(port(web, 8080));
+        await waitFor(async () => (await fetch(`http://127.0.0.1:${webPort}/health/live`)).ok);
+      },
+      trackReporter: () => {
+        if (!runtimeContainers.includes(`${web}-reporter`))
+          runtimeContainers.push(`${web}-reporter`);
+      },
+    });
+  } else if (process.argv.includes('--modules')) {
+    assert.ok(fullImages, 'Module acceptance requires actual selected images');
+    stage = 'Selected module ordinary-login journeys';
+    await testModuleAccess({
+      page,
+      context,
+      origin,
+      fixture,
+      moduleFixture,
+      command,
+      login,
+      invoke: (code, input) =>
+        new Promise((resolve, reject) => {
+          const child = spawn(
+            'docker',
+            [...productMaintenanceArgs.slice(0, -1), '--input-type=module', '-e', code],
+            { stdio: ['pipe', 'pipe', 'pipe'] },
+          );
+          let output = '',
+            error = '';
+          child.stdout.on('data', (c) => {
+            output += c;
+            if (output.length > 16384) child.kill();
+          });
+          child.stderr.on('data', (c) => {
+            error = `${error}${c}`.slice(-32768);
+          });
+          const timer = setTimeout(() => child.kill(), 30000);
+          child.once('error', reject);
+          child.once('exit', (code) => {
+            clearTimeout(timer);
+            if (code === 0) {
+              try {
+                resolve(JSON.parse(output));
+              } catch {
+                reject(new Error('Invalid private module command result'));
+              }
+            } else {
+              writeFile(
+                join(dirname(process.env.MOD_I07_MODULE_FIXTURE), 'module-command-error.log'),
+                error,
+                { mode: 0o600 },
+              ).then(() =>
+                reject(
+                  new Error(
+                    `Private module command failed; inspect ${join(dirname(process.env.MOD_I07_MODULE_FIXTURE), 'module-command-error.log')}`,
+                  ),
+                ),
+              );
+            }
+          });
+          child.stdin.end(JSON.stringify(input));
+        }),
+      disable: async (ids) => {
+        productEnvironment.TURNSTILE_DISABLED_MODULES = JSON.stringify(ids);
+        run('docker', ['rm', '--force', `${web}-product`]);
+        runtimeContainers.splice(runtimeContainers.indexOf(`${web}-product`), 1);
+        productPort = await imageRuntime(
+          'product',
+          process.env.AUTH_BROWSER_API_IMAGE,
+          productEnvironment,
+          3002,
+        );
+      },
+    });
+  } else if (process.argv.includes('--people-ui')) {
     stage = 'People administration browser journeys';
     const result = await testPeople({
       page,
@@ -486,71 +1209,65 @@ dns.lookup = function(host, options, callback) {
       mailLink,
       fixture,
       restartProduct,
-      clearRateLimits: () => command('clear-rate-limits'),
-      activateFeature: async () => {
-        const rolesStatus = await page.evaluate(
-          async () => (await fetch('/api/people/roles')).status,
-        );
-        assert.equal(rolesStatus, 403, 'Legacy grants do not promote a People administrator');
-        const invokeRelease = async (operation, input) => {
-          await new Promise((resolve, reject) => {
-            const child = spawn(
-              process.execPath,
-              ['apps/turnstile-api/dist/modules/access/release-operator.js', operation],
-              {
-                env: environment,
-                stdio: ['pipe', 'pipe', 'pipe'],
-              },
-            );
-            let output = '';
-            child.stdout.on('data', (chunk) => {
-              output += chunk;
-              if (output.length > 16384) child.kill();
-            });
-            child.stderr.on('data', () => {});
-            const timer = setTimeout(() => child.kill(), 30000);
-            child.once('error', reject);
-            child.once('exit', (code) => {
-              clearTimeout(timer);
-              code === 0
-                ? resolve(JSON.parse(output))
-                : reject(new Error('Private release command failed'));
-            });
-            child.stdin.end(JSON.stringify(input));
+      verifyDeploymentClockQueue: async () => {
+        const pool = new Pool({
+          connectionString: process.env.TURNSTILE_MIGRATION_DATABASE_URL,
+          max: 2,
+        });
+        const held = await pool.connect();
+        let pending;
+        try {
+          await held.query('BEGIN');
+          await held.query("SELECT set_config('app.tenant_id',$1,true)", [
+            process.env.INSTALLATION_TENANT_ID,
+          ]);
+          await held.query('SELECT * FROM turnstile.deployment_clock_state FOR UPDATE');
+          const pid = (await held.query('SELECT pg_backend_pid() AS pid')).rows[0].pid;
+          pending = page.evaluate(async () => {
+            const response = await fetch('/api/deployment/status');
+            return { status: response.status, body: await response.json() };
           });
-        };
-        const proof = async () => {
-          const session = await page.evaluate(async () =>
-            (await fetch('/api/auth/session')).json(),
+          let blocked = false;
+          for (let attempt = 0; attempt < 50; attempt++) {
+            const result = await pool.query(
+              'SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE $1 = ANY(pg_blocking_pids(pid))) AS blocked',
+              [pid],
+            );
+            if (result.rows[0].blocked) {
+              blocked = true;
+              break;
+            }
+            await delay(20);
+          }
+          assert.equal(
+            blocked,
+            true,
+            'Actual HTTPS deployment preflight must reach the blocked SQL handler',
           );
-          const cookie = (await context.cookies()).find(
-            (value) => value.name === '__Host-turnstile',
+          await delay(1200);
+          await held.query(
+            'UPDATE turnstile.deployment_clock_state SET last_time=floor(extract(epoch FROM clock_timestamp()))',
           );
-          assert.ok(cookie, 'A signed normal product login is required');
-          return {
-            operatorId: fixture.users.member.id,
-            administratorUserId: fixture.users.member.id,
-            administratorCookie: `${cookie.name}=${cookie.value}`,
-            key: randomUUID(),
-            expectedRevision: session.access.accessRevision,
-          };
-        };
-        await invokeRelease('bootstrap-administrator', await proof());
-        await invokeRelease('open', {
-          ...(await proof()),
-          releaseId: 'b'.repeat(64),
-          incompatibleProcessesStopped: true,
-        });
-        const verified = await proof();
-        await invokeRelease('verify-login', {
-          operatorId: verified.operatorId,
-          administratorUserId: verified.administratorUserId,
-          administratorCookie: verified.administratorCookie,
-        });
-        console.log('Real private administrator handover and versioned release opening passed.');
+          await held.query('COMMIT');
+          const result = await pending;
+          assert.equal(result.status, 200);
+          assert.equal(
+            result.body.access,
+            'full',
+            'An ordinary queued request must not quarantine the installation',
+          );
+          assert.equal(result.body.state, 'approved');
+        } finally {
+          await held.query('ROLLBACK').catch(() => {});
+          await pending?.catch(() => {});
+          held.release();
+          await pool.end();
+        }
       },
+      clearRateLimits: () => command('clear-rate-limits'),
+      activateFeature: activatePeopleFeature,
       setFault: (value) => {
-        fault = value;
+        setFault(value);
       },
     });
     assert.ok(
@@ -573,13 +1290,14 @@ dns.lookup = function(host, options, callback) {
   } else if (process.argv.includes('--structured-onboarding')) {
     stage = 'fresh required-Department onboarding web journey';
     await testStructuredOnboarding({
+      activateFeature: activatePeopleFeature,
       page,
       origin,
       login,
       restartProduct,
       clearRateLimits: () => command('clear-rate-limits'),
       setFault: (value) => {
-        fault = value;
+        setFault(value);
       },
     });
   } else {
@@ -783,7 +1501,7 @@ dns.lookup = function(host, options, callback) {
     stage = 'permission-gated document connection';
     await page.getByRole('button', { name: 'Check connection' }).click();
     await page.getByText('Connected. Document features will appear here when available.').waitFor();
-    fault = 'dms';
+    setFault('dms');
     await page.getByRole('button', { name: 'Check connection' }).click();
     await page
       .getByText(
@@ -791,36 +1509,36 @@ dns.lookup = function(host, options, callback) {
       )
       .waitFor();
     stage = 'authority outage navigation and session recovery';
-    fault = 'authority';
+    setFault('authority');
     await page.reload();
     await heading('We can’t connect right now');
     await page.getByRole('link', { name: 'Sign in', exact: true }).waitFor();
-    fault = 'none';
+    setFault('none');
     await page.evaluate(() => window.dispatchEvent(new Event('focus')));
     await heading('Welcome, member.');
-    fault = 'authority';
+    setFault('authority');
     await page.reload();
     await heading('We can’t connect right now');
-    fault = 'none';
+    setFault('none');
     // The single delayed retry also recovers without a focus event or manual click.
     await heading('Welcome, member.');
-    fault = 'authority';
+    setFault('authority');
     await page.reload();
     await heading('We can’t connect right now');
-    fault = 'none';
+    setFault('none');
     await page.getByRole('button', { name: 'Try again' }).click();
     await heading('Welcome, member.');
     await page.goto(`${origin}/auth-unavailable`);
     await heading('Welcome, member.');
     assert.equal(new URL(page.url()).pathname, '/');
-    fault = 'logout';
+    setFault('logout');
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();
     await page.getByRole('button', { name: 'Retry sign-out' }).waitFor();
     assert.equal(
       await page.evaluate(async () => (await fetch('/api/dms/capabilities')).status),
       401,
     );
-    fault = 'none';
+    setFault('none');
     await page.getByRole('button', { name: 'Retry sign-out' }).click();
     await heading('You’re signed out');
     assert.equal(
@@ -907,14 +1625,28 @@ dns.lookup = function(host, options, callback) {
     await page.goto(`${origin}/forgot-password`);
     await heading('Forgot your password?');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
-    const metrics = (await command('security-metrics')).metrics;
+    let metrics;
+    if (fullImages) {
+      // Read the runtimes that actually served the requests, not the provisioning fixture.
+      authorityLogs = run('docker', ['logs', `${web}-authority`]);
+      productLogs = run('docker', ['logs', `${web}-product`]);
+      metrics = {};
+      for (const line of authorityLogs
+        .split('\n')
+        .filter((line) => line.startsWith('{"type":"security"'))) {
+        const event = JSON.parse(line),
+          key = `${event.event}.${event.outcome}`;
+        metrics[key] = Math.max(metrics[key] ?? 0, event.count);
+      }
+    } else metrics = (await command('security-metrics')).metrics;
     assert.ok(
       metrics['identity.login.success'] > 0 &&
         metrics['identity.recovery.success'] > 0 &&
         metrics['identity.token.success'] > 0 &&
         metrics['machine.access.success'] > 0,
     );
-    assert.ok(Object.keys(metrics).length <= 24);
+    assert.ok(Object.keys(metrics).filter((key) => !key.includes('.latency_le_')).length <= 24);
+    assert.ok(Object.keys(metrics).length <= 60);
     const sensitive = [
       ...continuationSecrets,
       fixture.password,
@@ -940,9 +1672,28 @@ dns.lookup = function(host, options, callback) {
       events.length > 0 &&
         events.every((event) =>
           Object.keys(event).every((key) =>
-            ['type', 'event', 'outcome', 'status', 'count', 'requestId'].includes(key),
+            [
+              'type',
+              'event',
+              'outcome',
+              'status',
+              'count',
+              'requestId',
+              'durationMs',
+              'bucket',
+            ].includes(key),
           ),
         ),
+    );
+    assert.ok(
+      events.every(
+        (event) =>
+          event.durationMs === undefined ||
+          (Number.isFinite(event.durationMs) &&
+            event.durationMs >= 0 &&
+            event.durationMs <= 30000 &&
+            [50, 100, 300, 1000, 5000, 30000].includes(event.bucket)),
+      ),
     );
     console.log(
       'Browser journey 3 passed: unauthorized/expired states, signed-context tamper denial, mobile layout and bounded/redacted events.',
@@ -953,6 +1704,18 @@ dns.lookup = function(host, options, callback) {
       'Production Nginx assets/CSP served the requested browser journeys over the local HTTPS gateway.',
     );
 } catch (error) {
+  if (documentsMode && error instanceof Error)
+    console.error(
+      'Documents failure callsites:',
+      error.stack?.match(
+        /(?:test-documents(?:-upload|-versions|-batches|-lifecycle|-processing)?-browser|documents-release-restore)\.mjs:\d+:\d+/g,
+      ),
+      'name:',
+      error.name,
+      'numeric expected/actual:',
+      typeof error.expected === 'number' ? error.expected : undefined,
+      typeof error.actual === 'number' ? error.actual : undefined,
+    );
   console.error('Introspection status counts:', Object.fromEntries(introspectionStatuses));
   if (process.argv.includes('--people-ui') && error instanceof Error) {
     const callsite = error.stack?.match(/test-people-browser\.mjs:\d+:\d+/)?.[0];
@@ -960,6 +1723,29 @@ dns.lookup = function(host, options, callback) {
   }
   // Browser exceptions may contain signed or recovery URLs. Do not print raw failures/traces.
   if (page) {
+    if (documentsRelease) {
+      const summary = await page
+        .evaluate(async () => {
+          try {
+            const response = await fetch('/api/auth/session', {
+              headers: { 'x-turnstile-access-contract': '3' },
+            });
+            const value = await response.json();
+            return {
+              session: response.status,
+              code: /^[A-Z_]{1,64}$/.test(value.code ?? '') ? value.code : undefined,
+              entryScripts: document.querySelectorAll('script[type="module"]').length,
+              loadedAssets: performance
+                .getEntriesByType('resource')
+                .filter((item) => new URL(item.name).pathname.startsWith('/assets/')).length,
+            };
+          } catch {
+            return { session: 'unavailable' };
+          }
+        })
+        .catch(() => ({}));
+      console.error('Packaged browser status:', JSON.stringify(summary));
+    }
     const path = new URL(page.url()).pathname;
     const allowed = [
       '/',
@@ -1026,12 +1812,20 @@ dns.lookup = function(host, options, callback) {
     )
       console.error(`Safe response code: ${code}`);
   }
+  if (
+    (process.argv.includes('--modules') || process.argv.includes('--module-cutover')) &&
+    error instanceof Error
+  )
+    console.error(error.message.replace(/[A-Za-z0-9_-]{40,}/g, '[redacted]'));
   console.error(
     `Auth browser verification failed during ${stage} (${error instanceof Error ? error.name : 'Error'}).`,
   );
   process.exitCode = 1;
 } finally {
   await browser?.close();
+  await draftIngress?.close();
+  for (const name of runtimeContainers.reverse())
+    spawnSync('docker', ['rm', '--force', name], { stdio: 'ignore' });
   for (const child of [product, authority])
     if (child && child.exitCode === null) {
       child.kill('SIGTERM');
@@ -1042,12 +1836,27 @@ dns.lookup = function(host, options, callback) {
         }),
       ]);
     }
-  gateway.closeAllConnections();
-  await new Promise((done) => gateway.close(() => done()));
   for (const [created, name] of [
     [mailCreated, mailpit],
     [webCreated, web],
   ])
     if (created) spawnSync('docker', ['rm', '-f', '-v', name], { stdio: 'ignore' });
+  if (networkCreated) {
+    spawnSync(
+      'docker',
+      ['network', 'disconnect', browserNetwork, process.env.ONBOARDING_ARCHIVE_CONTAINER],
+      { stdio: 'ignore' },
+    );
+    spawnSync('docker', ['network', 'disconnect', browserNetwork, mailpit], { stdio: 'ignore' });
+    if (cutoverPreparation?.centralIngress)
+      spawnSync(
+        'docker',
+        ['network', 'disconnect', browserNetwork, cutoverPreparation.centralIngress],
+        { stdio: 'ignore' },
+      );
+    spawnSync('docker', ['network', 'rm', browserNetwork], { stdio: 'ignore' });
+  }
+  gateway.closeAllConnections();
+  await new Promise((done) => gateway.close(() => done()));
   await rm(temporary, { recursive: true, force: true });
 }

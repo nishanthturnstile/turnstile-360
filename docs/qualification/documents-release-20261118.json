@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "increment": "DV-I08",
+  "date": "2026-11-18",
+  "scope": "Disposable local selected Core profile with exact Turnstile API/web and DMS API images. The combined archive rehearsal covers PostgreSQL owning state. Product upload, native processing and storage transport are qualified separately through the source-built product fixtures.",
+  "sourceDigest": "06bab73474a1d4f5ada5a6eb6897edc1e9d3f91ac8a7ce2790099ce3afa2de1f",
+  "platform": "linux/amd64",
+  "release": {
+    "profileDigest": "93666801200cfac0b1ada8e1e8ca76a51f7fe2c8ba0147dc7d8471f416f67351",
+    "modules": [
+      {
+        "id": "foundation",
+        "version": "1.0.0"
+      }
+    ],
+    "releaseId": "46843891108f17d2ddae11ddf2de0f55783f6e5f5d2a5bb40ddc6acd7173969a",
+    "images": [
+      {
+        "role": "turnstile-api",
+        "digest": "8fb5161dd1731d5c6960a87edcb317c3eb2d30473d22e2a5fca66c030bd87b3a"
+      },
+      {
+        "role": "turnstile-web",
+        "digest": "1754667ce60557a9aec4ad16c73b268790bb64a81f9aa289acf0645ab89af58e"
+      }
+    ],
+    "archiveDigest": "27ad728949a7b1d8e1cc899b2cb95d6f32c67f599379dfa110e4ccc1bf6e62f9",
+    "dmsImage": "sha256:65e80e095927c0883166c44904fae3db2a0e10da9753b4eb232b58d305409cd4"
+  },
+  "legacy": {
+    "apiImage": "sha256:8b6748f8c75f887f6943bb0c1466c3722ea5203a20ee64a7bc3c71a6e0ade481",
+    "webImage": "sha256:a3e1a9fc81b12e4173ad0deb5c4cb1afff127da6e575bd4be45730ab33278b66"
+  },
+  "coverage": {
+    "consumerOperations": 32,
+    "serviceIdentity": true,
+    "privateEnrollment": "Owning real HTTP fixture",
+    "checklistOperations": 34
+  },
+  "verified": [
+    "Signed selected archive identity, startup, exclusion, tamper rejection and reuse.",
+    "Exact legacy-to-candidate migrations and repeated bootstrap preserve installation identity.",
+    "Actual captured legacy web and candidate web ordinary login, retained nested access records, supported 401 recovery, blocked legacy writes, and protected first-validator grant/revoke/handover.",
+    "Protected checklist, live status and request correlation, typed outage and transient observation reset.",
+    "Coherent PostgreSQL dump and restore retain setup, identities, grants, documents and intent identity. A rotated independent marker produces HTTP DEPLOYMENT_RESTRICTED before approved fixture reopening.",
+    "The restored candidate keeps the v3 barrier, the previous API fails database readiness, the older-marker draft stays under review, and aged payload/receipt pruning does not reopen dispatch."
+  ],
+  "workspace": {
+    "check": "pass",
+    "build": "pass",
+    "test": "pass",
+    "integration": "pass with native image and PDF OCR"
+  },
+  "productBrowser": {
+    "batchesVersionsAndUploads": "pass",
+    "lifecycleSharingContributeAndAudit": "pass",
+    "processingExtractedContentSearchAndArtifactPreflight": "pass"
+  },
+  "customerTargetAccepted": false,
+  "separateQualification": [
+    "Customer-specific image/profile and coordinated database/object recovery",
+    "Optional structured runtime where configured"
+  ]
+}

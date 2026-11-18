@@ -1,10 +1,12 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import type { PoolClient } from 'pg';
 import { AccessContextChangedException } from '../../infrastructure/access-context-exception.js';
+import { fenceAccessContract } from '../../infrastructure/access-contract.js';
 import type { ConfigurationActor } from '../../infrastructure/configuration-context.js';
 import { withTenant } from '../../infrastructure/database/postgres.js';
 import { ProductPersistenceService } from '../../infrastructure/database/product-persistence.service.js';
 import { covers, type EffectiveAccess, readAccess } from '../access/access-evaluator.js';
+import { deploymentPreflight, requireDeployment } from '../deployment/access.js';
 
 export type PeoplePolicy = 'people' | 'roles' | 'either';
 export interface PeopleTransaction {
@@ -29,13 +31,20 @@ export class PeopleStoreService {
     if (!pool || !config || !(await this.persistence.ready()))
       return peopleFailure(503, 'PEOPLE_UNAVAILABLE', { reason: 'readiness' });
     try {
+      await deploymentPreflight(
+        pool,
+        config.INSTALLATION_TENANT_ID,
+        actor.deploymentMode ?? 'full',
+      );
       return await withTenant(
         pool,
         config.INSTALLATION_TENANT_ID,
         async (db) => {
+          await requireDeployment(db, actor.deploymentMode ?? 'full');
           await db.query('SELECT turnstile.lock_access_context($1::uuid)', [
             config.INSTALLATION_TENANT_ID,
           ]);
+          await fenceAccessContract(db, config.INSTALLATION_TENANT_ID);
           const access = await readAccess(db, config.INSTALLATION_TENANT_ID, actor.userId);
           const people = covers(access, 'turnstile:people:manage', { kind: 'company' }),
             roles = covers(access, 'turnstile:roles:manage', { kind: 'company' });

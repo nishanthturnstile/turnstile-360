@@ -1,0 +1,490 @@
+{
+  "version": 1,
+  "increment": "DV-I02",
+  "date": "2026-11-18",
+  "status": "Implementation and local qualification complete",
+  "sourceDigest": "4874a2753b1e34cd0f4d88e200977cef0acbe598765e94277c71e06a3d1785ef",
+  "sourceFileCount": 487,
+  "scope": "Four actual selected foundation API/web profile builds, production startup, exclusion, archive identity/signatures, substitution rejection and reuse. Documents compiled handlers/private command, parser hooks and migrations present in every API inventory.",
+  "ordinaryLoginDocumentsImageAcceptance": false,
+  "profiles": [
+    {
+      "profileDigest": "0092ac4a83a7edc74d57eb86ba2eff406a7a717e84f07dd22f598b04a24c2496",
+      "modules": [
+        {
+          "id": "foundation",
+          "version": "1.0.0"
+        }
+      ],
+      "releaseId": "5d1c9130ab1ccf70cf6526c99c17a38bbd8bb8fac97f5f0891e8e1f6b1ec901b",
+      "images": [
+        {
+          "role": "turnstile-api",
+          "digest": "414d94e6493dd821ecf5ab76071b8c3de35706c40266d276b63252339c756e49"
+        },
+        {
+          "role": "turnstile-web",
+          "digest": "32f67335c85febcba6039c929c19ea2d7a6d351663ecbb7b46e6e4ddd2d1fc79"
+        }
+      ],
+      "documentsInventory": [
+        {
+          "path": "database/migrations/0039_documents_access_barrier.sql",
+          "digest": "698bcaa439bf3a3c57454d6eafadb1103e6d96e6405593cc7d9190609fa9da56"
+        },
+        {
+          "path": "database/migrations/0040_documents_validator_audit.sql",
+          "digest": "a1ab63b2ecf23f8c2f3ae644ba72c21fe6e2ea6d38db1c5202687f63315a7e2b"
+        },
+        {
+          "path": "dist/infrastructure/documents-http.d.ts",
+          "digest": "cf26733d197166e7e6663ab5cf5e4b14bdd518aaabe30f93ea4fb6678bab91f6"
+        },
+        {
+          "path": "dist/infrastructure/documents-http.js",
+          "digest": "bf8a81c1459aea54b7ce7e95f1eb9f9e10dbe314444c06ed1fd657e8b6dade40"
+        },
+        {
+          "path": "dist/infrastructure/documents-http.js.map",
+          "digest": "4a0e294bb0d1a24bea0d7fc3df66384ec25bcea2712a5fad579fb7feafb66dbf"
+        },
+        {
+          "path": "dist/modules/documents/documents-operator.d.ts",
+          "digest": "fd48cc8189bcedcc2670aa218254fd4795bea541628f9b1b6cf65e97c80ff58e"
+        },
+        {
+          "path": "dist/modules/documents/documents-operator.js",
+          "digest": "ddcb8127092fd57bb16eb70db9059644ed50a8b010d0a73273abeef7b47b94d7"
+        },
+        {
+          "path": "dist/modules/documents/documents-operator.js.map",
+          "digest": "2f7c762b7158faa3c1d273cba9c55b06d6024d2bab5f3d96127e844dd84c59b2"
+        },
+        {
+          "path": "dist/modules/documents/documents.controller.d.ts",
+          "digest": "fda63d793900ed00296023ec9183016d24a58cc22a030d07f6dd3f4cc371e908"
+        },
+        {
+          "path": "dist/modules/documents/documents.controller.js",
+          "digest": "7221dbcf9c8701913b5e7166b586d5c978a2c424167846bc11c93318244c5ffb"
+        },
+        {
+          "path": "dist/modules/documents/documents.controller.js.map",
+          "digest": "de7220e69b2207193b19b00b138e1fcdf46a083d7299591678e07d006c6a01f0"
+        },
+        {
+          "path": "dist/modules/documents/documents.module.d.ts",
+          "digest": "ccaf2b276fbae3e19cce16bc5e2c393d562baeeff7292a3d1a0291d5b91d6eea"
+        },
+        {
+          "path": "dist/modules/documents/documents.module.js",
+          "digest": "3c4a77c7562390b550dd605021cc2e616804ba11ca95bea89aa30dbda24b177f"
+        },
+        {
+          "path": "dist/modules/documents/documents.module.js.map",
+          "digest": "3dc455c5ed5b4c496e26676ea75f06a6608a762939fedee5155e6a13ff93c123"
+        },
+        {
+          "path": "dist/modules/documents/documents.service.d.ts",
+          "digest": "1d61e861d670f99f19bcf7c5c48f211dbc64f9bfb0f1c62101061ca8c14a498f"
+        },
+        {
+          "path": "dist/modules/documents/documents.service.js",
+          "digest": "75dc1d93922bdff35e987ce2d2ce5fe592f0c566ea765dcf85059bd21b096d90"
+        },
+        {
+          "path": "dist/modules/documents/documents.service.js.map",
+          "digest": "cb7bc8bd761e08c3d7f2f0f91ebc7bbad88f0d1a1bed4c9439b75e44634fd825"
+        }
+      ]
+    },
+    {
+      "profileDigest": "e5a09816f8b71728ad150dd5bd70f7f108fd688fc6ad66860a7a5c703cbf82c4",
+      "modules": [
+        {
+          "id": "foundation",
+          "version": "1.0.0"
+        },
+        {
+          "id": "incident-management",
+          "version": "1.0.0"
+        }
+      ],
+      "releaseId": "45dc20600bf07e2dc92853898ae3aea13dfa245e05c206cd1017ba252234e26e",
+      "images": [
+        {
+          "role": "turnstile-api",
+          "digest": "8482ee1708c87229c92943c3958121535377f8df13951af9cdf6ffb2a8d9e171"
+        },
+        {
+          "role": "turnstile-web",
+          "digest": "6774a5073e3d4dd910dba8ac0be66bc262d0ad6a84ae01480d5029a1c571679e"
+        }
+      ],
+      "documentsInventory": [
+        {
+          "path": "database/migrations/0039_documents_access_barrier.sql",
+          "digest": "698bcaa439bf3a3c57454d6eafadb1103e6d96e6405593cc7d9190609fa9da56"
+        },
+        {
+          "path": "database/migrations/0040_documents_validator_audit.sql",
+          "digest": "a1ab63b2ecf23f8c2f3ae644ba72c21fe6e2ea6d38db1c5202687f63315a7e2b"
+        },
+        {
+          "path": "dist/infrastructure/documents-http.d.ts",
+          "digest": "cf26733d197166e7e6663ab5cf5e4b14bdd518aaabe30f93ea4fb6678bab91f6"
+        },
+        {
+          "path": "dist/infrastructure/documents-http.js",
+          "digest": "bf8a81c1459aea54b7ce7e95f1eb9f9e10dbe314444c06ed1fd657e8b6dade40"
+        },
+        {
+          "path": "dist/infrastructure/documents-http.js.map",
+          "digest": "4a0e294bb0d1a24bea0d7fc3df66384ec25bcea2712a5fad579fb7feafb66dbf"
+        },
+        {
+          "path": "dist/modules/documents/documents-operator.d.ts",
+          "digest": "fd48cc8189bcedcc2670aa218254fd4795bea541628f9b1b6cf65e97c80ff58e"
+        },
+        {
+          "path": "dist/modules/documents/documents-operator.js",
+          "digest": "ddcb8127092fd57bb16eb70db9059644ed50a8b010d0a73273abeef7b47b94d7"
+        },
+        {
+          "path": "dist/modules/documents/documents-operator.js.map",
+          "digest": "2f7c762b7158faa3c1d273cba9c55b06d6024d2bab5f3d96127e844dd84c59b2"
+        },
+        {
+          "path": "dist/modules/documents/documents.controller.d.ts",
+          "digest": "fda63d793900ed00296023ec9183016d24a58cc22a030d07f6dd3f4cc371e908"
+        },
+        {
+          "path": "dist/modules/documents/documents.controller.js",
+          "digest": "7221dbcf9c8701913b5e7166b586d5c978a2c424167846bc11c93318244c5ffb"
+        },
+        {
+          "path": "dist/modules/documents/documents.controller.js.map",
+          "digest": "de7220e69b2207193b19b00b138e1fcdf46a083d7299591678e07d006c6a01f0"
+        },
+        {
+          "path": "dist/modules/documents/documents.module.d.ts",
+          "digest": "ccaf2b276fbae3e19cce16bc5e2c393d562baeeff7292a3d1a0291d5b91d6eea"
+        },
+        {
+          "path": "dist/modules/documents/documents.module.js",
+          "digest": "3c4a77c7562390b550dd605021cc2e616804ba11ca95bea89aa30dbda24b177f"
+        },
+        {
+          "path": "dist/modules/documents/documents.module.js.map",
+          "digest": "3dc455c5ed5b4c496e26676ea75f06a6608a762939fedee5155e6a13ff93c123"
+        },
+        {
+          "path": "dist/modules/documents/documents.service.d.ts",
+          "digest": "1d61e861d670f99f19bcf7c5c48f211dbc64f9bfb0f1c62101061ca8c14a498f"
+        },
+        {
+          "path": "dist/modules/documents/documents.service.js",
+          "digest": "75dc1d93922bdff35e987ce2d2ce5fe592f0c566ea765dcf85059bd21b096d90"
+        },
+        {
+          "path": "dist/modules/documents/documents.service.js.map",
+          "digest": "cb7bc8bd761e08c3d7f2f0f91ebc7bbad88f0d1a1bed4c9439b75e44634fd825"
+        }
+      ]
+    },
+    {
+      "profileDigest": "25ac2be8dcd9b53c562ce6eae50e3157fe919ef654a27f040378d3a746b9be15",
+      "modules": [
+        {
+          "id": "foundation",
+          "version": "1.0.0"
+        },
+        {
+          "id": "risk-management",
+          "version": "1.0.0"
+        }
+      ],
+      "releaseId": "4c593128be00aa37b39008c3fdd06848fa9511eec4e786a3e01dd7b471475f70",
+      "images": [
+        {
+          "role": "turnstile-api",
+          "digest": "a8ebb92971ce3fbc2b601d9be041c1846c7a075b73939875281c0079e96eecb8"
+        },
+        {
+          "role": "turnstile-web",
+          "digest": "37da9c66f911a516df776e8598f959e361d21bac2f57a1bec1fe7b29a02b3a97"
+        }
+      ],
+      "documentsInventory": [
+        {
+          "path": "database/migrations/0039_documents_access_barrier.sql",
+          "digest": "698bcaa439bf3a3c57454d6eafadb1103e6d96e6405593cc7d9190609fa9da56"
+        },
+        {
+          "path": "database/migrations/0040_documents_validator_audit.sql",
+          "digest": "a1ab63b2ecf23f8c2f3ae644ba72c21fe6e2ea6d38db1c5202687f63315a7e2b"
+        },
+        {
+          "path": "dist/infrastructure/documents-http.d.ts",
+          "digest": "cf26733d197166e7e6663ab5cf5e4b14bdd518aaabe30f93ea4fb6678bab91f6"
+        },
+        {
+          "path": "dist/infrastructure/documents-http.js",
+          "digest": "bf8a81c1459aea54b7ce7e95f1eb9f9e10dbe314444c06ed1fd657e8b6dade40"
+        },
+        {
+          "path": "dist/infrastructure/documents-http.js.map",
+          "digest": "4a0e294bb0d1a24bea0d7fc3df66384ec25bcea2712a5fad579fb7feafb66dbf"
+        },
+        {
+          "path": "dist/modules/documents/documents-operator.d.ts",
+          "digest": "fd48cc8189bcedcc2670aa218254fd4795bea541628f9b1b6cf65e97c80ff58e"
+        },
+        {
+          "path": "dist/modules/documents/documents-operator.js",
+          "digest": "ddcb8127092fd57bb16eb70db9059644ed50a8b010d0a73273abeef7b47b94d7"
+        },
+        {
+          "path": "dist/modules/documents/documents-operator.js.map",
+          "digest": "2f7c762b7158faa3c1d273cba9c55b06d6024d2bab5f3d96127e844dd84c59b2"
+        },
+        {
+          "path": "dist/modules/documents/documents.controller.d.ts",
+          "digest": "fda63d793900ed00296023ec9183016d24a58cc22a030d07f6dd3f4cc371e908"
+        },
+        {
+          "path": "dist/modules/documents/documents.controller.js",
+          "digest": "7221dbcf9c8701913b5e7166b586d5c978a2c424167846bc11c93318244c5ffb"
+        },
+        {
+          "path": "dist/modules/documents/documents.controller.js.map",
+          "digest": "de7220e69b2207193b19b00b138e1fcdf46a083d7299591678e07d006c6a01f0"
+        },
+        {
+          "path": "dist/modules/documents/documents.module.d.ts",
+          "digest": "ccaf2b276fbae3e19cce16bc5e2c393d562baeeff7292a3d1a0291d5b91d6eea"
+        },
+        {
+          "path": "dist/modules/documents/documents.module.js",
+          "digest": "3c4a77c7562390b550dd605021cc2e616804ba11ca95bea89aa30dbda24b177f"
+        },
+        {
+          "path": "dist/modules/documents/documents.module.js.map",
+          "digest": "3dc455c5ed5b4c496e26676ea75f06a6608a762939fedee5155e6a13ff93c123"
+        },
+        {
+          "path": "dist/modules/documents/documents.service.d.ts",
+          "digest": "1d61e861d670f99f19bcf7c5c48f211dbc64f9bfb0f1c62101061ca8c14a498f"
+        },
+        {
+          "path": "dist/modules/documents/documents.service.js",
+          "digest": "75dc1d93922bdff35e987ce2d2ce5fe592f0c566ea765dcf85059bd21b096d90"
+        },
+        {
+          "path": "dist/modules/documents/documents.service.js.map",
+          "digest": "cb7bc8bd761e08c3d7f2f0f91ebc7bbad88f0d1a1bed4c9439b75e44634fd825"
+        }
+      ]
+    },
+    {
+      "profileDigest": "845968e096a7975e875c1cb60f79079db7d33e5150b7cb2b59746f1edfb1a06d",
+      "modules": [
+        {
+          "id": "foundation",
+          "version": "1.0.0"
+        },
+        {
+          "id": "incident-management",
+          "version": "1.0.0"
+        },
+        {
+          "id": "risk-management",
+          "version": "1.0.0"
+        }
+      ],
+      "releaseId": "2310d16f59e21a85444dbe35190b7452a6b92c438f3b98d4bbd1fcfd7a9aea96",
+      "images": [
+        {
+          "role": "turnstile-api",
+          "digest": "9171eb1a057165bcefe727cd681769049decd528a8b9bc81cd91d374f31a6f1b"
+        },
+        {
+          "role": "turnstile-web",
+          "digest": "1b081bb11df823d4eea9b8b0ab7d8223d550587f47a1890cda161f26f56faca2"
+        }
+      ],
+      "documentsInventory": [
+        {
+          "path": "database/migrations/0039_documents_access_barrier.sql",
+          "digest": "698bcaa439bf3a3c57454d6eafadb1103e6d96e6405593cc7d9190609fa9da56"
+        },
+        {
+          "path": "database/migrations/0040_documents_validator_audit.sql",
+          "digest": "a1ab63b2ecf23f8c2f3ae644ba72c21fe6e2ea6d38db1c5202687f63315a7e2b"
+        },
+        {
+          "path": "dist/infrastructure/documents-http.d.ts",
+          "digest": "cf26733d197166e7e6663ab5cf5e4b14bdd518aaabe30f93ea4fb6678bab91f6"
+        },
+        {
+          "path": "dist/infrastructure/documents-http.js",
+          "digest": "bf8a81c1459aea54b7ce7e95f1eb9f9e10dbe314444c06ed1fd657e8b6dade40"
+        },
+        {
+          "path": "dist/infrastructure/documents-http.js.map",
+          "digest": "4a0e294bb0d1a24bea0d7fc3df66384ec25bcea2712a5fad579fb7feafb66dbf"
+        },
+        {
+          "path": "dist/modules/documents/documents-operator.d.ts",
+          "digest": "fd48cc8189bcedcc2670aa218254fd4795bea541628f9b1b6cf65e97c80ff58e"
+        },
+        {
+          "path": "dist/modules/documents/documents-operator.js",
+          "digest": "ddcb8127092fd57bb16eb70db9059644ed50a8b010d0a73273abeef7b47b94d7"
+        },
+        {
+          "path": "dist/modules/documents/documents-operator.js.map",
+          "digest": "2f7c762b7158faa3c1d273cba9c55b06d6024d2bab5f3d96127e844dd84c59b2"
+        },
+        {
+          "path": "dist/modules/documents/documents.controller.d.ts",
+          "digest": "fda63d793900ed00296023ec9183016d24a58cc22a030d07f6dd3f4cc371e908"
+        },
+        {
+          "path": "dist/modules/documents/documents.controller.js",
+          "digest": "7221dbcf9c8701913b5e7166b586d5c978a2c424167846bc11c93318244c5ffb"
+        },
+        {
+          "path": "dist/modules/documents/documents.controller.js.map",
+          "digest": "de7220e69b2207193b19b00b138e1fcdf46a083d7299591678e07d006c6a01f0"
+        },
+        {
+          "path": "dist/modules/documents/documents.module.d.ts",
+          "digest": "ccaf2b276fbae3e19cce16bc5e2c393d562baeeff7292a3d1a0291d5b91d6eea"
+        },
+        {
+          "path": "dist/modules/documents/documents.module.js",
+          "digest": "3c4a77c7562390b550dd605021cc2e616804ba11ca95bea89aa30dbda24b177f"
+        },
+        {
+          "path": "dist/modules/documents/documents.module.js.map",
+          "digest": "3dc455c5ed5b4c496e26676ea75f06a6608a762939fedee5155e6a13ff93c123"
+        },
+        {
+          "path": "dist/modules/documents/documents.service.d.ts",
+          "digest": "1d61e861d670f99f19bcf7c5c48f211dbc64f9bfb0f1c62101061ca8c14a498f"
+        },
+        {
+          "path": "dist/modules/documents/documents.service.js",
+          "digest": "75dc1d93922bdff35e987ce2d2ce5fe592f0c566ea765dcf85059bd21b096d90"
+        },
+        {
+          "path": "dist/modules/documents/documents.service.js.map",
+          "digest": "cb7bc8bd761e08c3d7f2f0f91ebc7bbad88f0d1a1bed4c9439b75e44634fd825"
+        }
+      ]
+    }
+  ],
+  "verification": [
+    {
+      "command": "pnpm check",
+      "result": "passed",
+      "log": "/tmp/dv-i02-check.log",
+      "sha256": "c767f039e9c34947350794a500c7e1d3a1a8427ea3011d3d83f3e17c9ed38bd0"
+    },
+    {
+      "command": "pnpm build",
+      "result": "passed",
+      "log": "/tmp/dv-i02-build.log",
+      "sha256": "398c200c50d534b03df7265b93b568e18167791c185a1b9bb9beef33b69a01ba"
+    },
+    {
+      "command": "pnpm test",
+      "result": "passed",
+      "log": "/tmp/dv-i02-test.log",
+      "sha256": "ceec65b37639feec4af8316aec816546ef439716384367bcb516e7241b36c1c2"
+    },
+    {
+      "command": "pnpm test:integration",
+      "result": "passed",
+      "log": "/tmp/dv-i02-integration.log",
+      "sha256": "55920f19c59d29b0801a267ce5c3852579f4ec94be7b1b8b4436084df416dec3"
+    },
+    {
+      "command": "pnpm test:browser:documents",
+      "result": "passed",
+      "log": "/tmp/dv-i02-browser-final.log",
+      "sha256": "90c4b14db5ed586499da3d9c1705b4a3f08025c1361b69ace50d2359c856de22"
+    },
+    {
+      "command": "pnpm test:browser:structure (includes full People journey)",
+      "result": "passed",
+      "log": "/tmp/dv-i02-structure-browser.log",
+      "sha256": "8a57fc061689e26ec084682ca9a050bb2d0d49830ac2bfb1386a3fa3868b5071",
+      "scope": "Shared contract/navigation/authority regression; those sources remained unchanged by the final Documents-only format/admission display completion."
+    },
+    {
+      "command": "pnpm test:browser:auth",
+      "result": "passed",
+      "log": "/tmp/dv-i02-auth-browser.log",
+      "sha256": "b0903bd8e5fbeb348702c3a7079812ad2b59439c3d9b85bb71115d7035f580e9",
+      "scope": "Shared contract/navigation/authority regression; those sources remained unchanged by the final Documents-only format/admission display completion."
+    }
+  ],
+  "testSources": [
+    {
+      "path": "scripts/test-documents-browser.mjs",
+      "sha256": "d792112888e707ff04aee135cf469ad8c16f589ea7d9cb27370a970a992e3494"
+    },
+    {
+      "path": "scripts/test-documents-ingress.mjs",
+      "sha256": "37d6cc8fbdc7069835167ee95c93d3019a8ac56742118fa53f46f77f7b49ae2b"
+    },
+    {
+      "path": "scripts/test-auth-browser.mjs",
+      "sha256": "8f625288fab27329682e756d5eb7873ff011fa85396ab5f1d2ebff05e655c464"
+    },
+    {
+      "path": "scripts/test-auth-database.mjs",
+      "sha256": "7754731ecdac80aa35632cb5599fa7c43ebd1bf0e57bf031f9f9a644dd77871e"
+    },
+    {
+      "path": "apps/dms-api/test/bff-authority-fixture.mjs",
+      "sha256": "e56c21514d7558c7c403a36d4b9ece4ef01aba51d80c765cdcb6c5db8cc75ad9"
+    },
+    {
+      "path": "apps/turnstile-api/test/documents-upgrade.database-spec.ts",
+      "sha256": "5f15f1407149ae7d1bf6d87121aca96a522481224e87a3d2cfe3c8362f163ea6"
+    },
+    {
+      "path": "apps/turnstile-api/test/people.database-spec.ts",
+      "sha256": "8a3e3c3bbf738b1078fa705e4e3bf738c0503746b877b62af748dc9200c60c66"
+    },
+    {
+      "path": "apps/turnstile-api/src/infrastructure/documents-http.spec.ts",
+      "sha256": "c69826521db99fc187384107c6a4246a8e6d66bdcb7c1c9d5f6ec94259cf7cb4"
+    },
+    {
+      "path": "apps/turnstile-api/src/integrations/dms/transport.spec.ts",
+      "sha256": "1708db283a42bbbb1ff95da27ba8b55b8a4abd020168a92f2ed070f967798cc9"
+    }
+  ],
+  "browserEvidence": {
+    "legacyFixtures": "packages/turnstile-contracts/test/documents-legacy-v2.fixture.json",
+    "scope": "Actual hash-checked old assets against new real API before/after private activation, current asset recovery, nested retained records, normal verified validator login, actual private-tool proof/retry/conflict/audit rollback/revoke/handover, real DMS list/detail/policy/identity, independent machine denial/outage, late local revocation, recipient v3 exchange after activation, and full format/admission policy display.",
+    "syntheticScreenshots": "/tmp/thaarei-documents-ui-cBKJ9X",
+    "visualReview": "Synthetic desktop directory/overview and narrow connection screenshots inspected. Keyboard detail navigation, admission-limit expansion and 320/390px no-page-overflow checks pass."
+  },
+  "limitations": [
+    "Ordinary-login Documents compatibility/private-tool/read-only browser qualification runs real source-built product and DMS handlers separately from these selected production images.",
+    "Exact selected-image Documents browser/upgrade/backup/restore repetition remains DV-I08.",
+    "Synthetic metadata only; no upload/security/publication or target acceptance claim.",
+    "Six existing opt-in database cases skipped by the standard integration suite.",
+    "No live deployment or validator grant."
+  ],
+  "evidenceStore": "/tmp/dv-i02-selected-images-final-20261118",
+  "selectedImagesLog": {
+    "path": "/tmp/dv-i02-selected-images.log",
+    "sha256": "c76d46fda67efa310c2e1d95dc68e0fb9843d137991d92f01c73d3ee67be0f45"
+  }
+}

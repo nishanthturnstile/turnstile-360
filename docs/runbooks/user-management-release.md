@@ -1,7 +1,7 @@
 # User-management release and recovery
 
 Use this procedure for UM-I11 with the [authentication](authentication.md),
-[onboarding recovery](onboarding-release.md) and [Dokploy](dokploy.md) runbooks.
+[onboarding recovery](onboarding-release.md) and [Dokploy](../deployment/customer_deployment_guide.md#ingress) runbooks.
 [Architecture](../../architecture.md#user-management-release-compatibility) defines
 the capability, role, credential and restore boundaries. Record actual evidence and
 target acceptance in [IN_PROGRESS.md](../../IN_PROGRESS.md). This runbook does not

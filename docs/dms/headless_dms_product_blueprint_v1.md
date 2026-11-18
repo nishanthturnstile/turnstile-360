@@ -45,6 +45,18 @@ The product is delivered per customer/use case; another customer receives a sepa
 installation. There is no SaaS tenant selection or provisioning of multiple customers
 in one installation. See the [customer deployment model](../../architecture.md#customer-deployment-and-application-model).
 
+### Central deployment approval amendment (TCP-I01, 2026-11-06)
+
+The owner adopted the [central deployment approval scope](../thaarei/control-plane-specification.md)
+for coordinated future delivery. DMS remains headless, customer-hosted, one tenant per
+installation and independent of Turnstile. Local consumer enrollment stays separate from
+central DMS product pairing/approval. The renewable approval introduces a bounded central
+availability dependency; processing still uses local bytes/models and does not gain a cloud
+fallback. Follow the [architecture policy and recovery contract](../../architecture.md#thaarei-central-control-plane-proposal)
+rather than assuming indefinite offline business operation. Existing installations and the
+standalone DMS branch retain their current behavior until explicitly staged integration and
+release; this amendment does not claim implementation or authorize their cutover.
+
 ## 2. Frozen v1 scope
 
 ### Included in the first release

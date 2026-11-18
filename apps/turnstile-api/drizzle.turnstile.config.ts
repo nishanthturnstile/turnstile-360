@@ -6,11 +6,14 @@ if (existsSync('.env.migrate')) process.loadEnvFile('.env.migrate');
 export default defineConfig({
   dialect: 'postgresql',
   schema: [
+    './src/modules/deployment/deployment.schema.ts',
     './src/modules/auth/persistence/product.schema.ts',
     './src/modules/organization/persistence/organization.schema.ts',
     './src/modules/access/access.schema.ts',
     './src/modules/people/persistence/invitation.schema.ts',
     './src/modules/people/persistence/people.schema.ts',
+    './src/modules/people/persistence/import.schema.ts',
+    './src/modules/documents/documents-intent.schema.ts',
   ],
   out: './database/migrations',
   migrations: { schema: 'turnstile_migrations' },

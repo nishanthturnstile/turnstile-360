@@ -1,0 +1,9 @@
+# Copy to a private 0600 file and replace placeholders in an editor.
+url = "https://dms.customer.example/identity/oauth2/token"
+user = "<client-id>:<client-secret>"
+request = "POST"
+header = "Content-Type: application/x-www-form-urlencoded"
+data = "grant_type=client_credentials&resource=https%3A%2F%2Fdms.customer.example%2Fv1&scope=dms%3Acapabilities%3Aread"
+
+# Direct connections only; never inherit ambient proxy settings.
+noproxy = "*"

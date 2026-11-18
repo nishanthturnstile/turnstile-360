@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { AdmissionFeaturesModule } from '../uploads/admission-features.module.js';
 import { CapabilitiesController } from './capabilities/capabilities.controller.js';
 import { DmsDatabaseService } from './dms-database/dms-database.service.js';
 import { MachineGuard } from './machine/machine.guard.js';
 import { MachineVerifierService } from './machine-verifier/machine-verifier.service.js';
 
 @Module({
+  imports: [AdmissionFeaturesModule],
   exports: [DmsDatabaseService],
   providers: [
     DmsDatabaseService,

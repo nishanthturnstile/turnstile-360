@@ -162,10 +162,11 @@ describe('DMS machine transport security and retry boundary', () => {
     try {
       const address = server.address();
       if (!address || typeof address === 'string') throw new Error('Missing HTTP fixture');
-      const client = new DmsClient({
+      const options = {
         baseUrl: `http://127.0.0.1:${address.port}/v1`,
         allowInsecureHttp: true,
-        timeoutMs: 100,
+        // Redirect/body assertions must not race cold connections on a loaded CI runner.
+        timeoutMs: 5000,
         tokenProvider: {
           getToken: async () => ({
             accessToken: token().access_token,
@@ -173,13 +174,131 @@ describe('DMS machine transport security and retry boundary', () => {
           }),
           invalidate: () => {},
         },
-      });
+      };
+      const client = new DmsClient(options);
       await expect(client.capabilities()).rejects.toMatchObject({ code: 'DMS_UNAVAILABLE' });
       expect(calls).toBe(1);
       mode = 'stall';
-      await expect(client.capabilities()).rejects.toMatchObject({ code: 'DMS_UNAVAILABLE' });
+      const stalledClient = new DmsClient({ ...options, timeoutMs: 1000 });
+      await expect(stalledClient.capabilities()).rejects.toMatchObject({ code: 'DMS_UNAVAILABLE' });
+      expect(calls).toBe(2);
       for (mode of ['large', 'invalid'])
         await expect(client.capabilities()).rejects.toMatchObject({ code: 'DMS_INVALID_RESPONSE' });
+    } finally {
+      server.closeAllConnections();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+  it('DV-I02 bounds finite document GETs independently, keeps query binding and only replays explicit expired tokens', async () => {
+    let mode = 'large-page',
+      calls = 0;
+    const paths: string[] = [];
+    const server = createServer((request, response) => {
+      calls++;
+      paths.push(request.url ?? '');
+      response.setHeader('content-type', 'application/json');
+      if (mode === 'expired' && calls === 1) {
+        response.writeHead(401).end(
+          JSON.stringify({
+            code: 'MACHINE_TOKEN_EXPIRED',
+            requestId: randomUUID(),
+            retryable: false,
+          }),
+        );
+        return;
+      }
+      if (mode === 'denied') {
+        response
+          .writeHead(403)
+          .end(
+            JSON.stringify({ code: 'OPERATION_DENIED', requestId: randomUUID(), retryable: false }),
+          );
+        return;
+      }
+      if (mode === 'not-found') {
+        response.writeHead(404).end(
+          JSON.stringify({
+            code: 'DOCUMENT_NOT_FOUND',
+            requestId: randomUUID(),
+            retryable: false,
+          }),
+        );
+        return;
+      }
+      if (mode === 'stall-document') {
+        response.writeHead(200).flushHeaders();
+        return;
+      }
+      if (mode === 'oversize') {
+        response.end('x'.repeat(1048577));
+        return;
+      }
+      response.end(
+        JSON.stringify({
+          items: Array.from({ length: 50 }, () => ({
+            id: randomUUID(),
+            applicationId: capabilities.applicationId,
+            title: 'x'.repeat(240),
+            fileName: 'y'.repeat(255),
+            tags: [],
+            lifecycle: 'ACTIVE',
+            revision: '1',
+            currentVersionId: null,
+            downloadable: false,
+            searchable: false,
+          })),
+          nextCursor: null,
+        }),
+      );
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('HTTP fixture required');
+    const invalidate = vi.fn();
+    const client = new DmsClient({
+      baseUrl: `http://127.0.0.1:${address.port}/v1`,
+      allowInsecureHttp: true,
+      tokenProvider: {
+        getToken: async () => ({ accessToken: 'fixture-token', expiresAt: Date.now() + 300000 }),
+        invalidate,
+      },
+    });
+    const actor = { userId: 'fixture-user', requestId: randomUUID() };
+    try {
+      const page = await client.documents({ limit: '50', title: 'a&tenant=foreign' }, actor);
+      expect(page.items).toHaveLength(50);
+      expect(Buffer.byteLength(JSON.stringify(page))).toBeGreaterThan(16384);
+      expect(new URL(`http://fixture${paths[0]}`).searchParams.get('title')).toBe(
+        'a&tenant=foreign',
+      );
+      await expect(
+        client.documents({ tenantId: randomUUID() } as never, actor),
+      ).rejects.toMatchObject({ code: 'DMS_REQUEST_INVALID' });
+      expect(calls).toBe(1);
+      mode = 'expired';
+      calls = 0;
+      await client.documents({}, actor);
+      expect(calls).toBe(2);
+      expect(invalidate).toHaveBeenCalledTimes(1);
+      mode = 'denied';
+      calls = 0;
+      await expect(client.documents({}, actor)).rejects.toMatchObject({
+        code: 'DMS_ACCESS_DENIED',
+      });
+      expect(calls).toBe(1);
+      mode = 'not-found';
+      await expect(client.document(randomUUID(), actor)).rejects.toMatchObject({
+        code: 'DMS_NOT_FOUND',
+        status: 404,
+      });
+      mode = 'stall-document';
+      await expect(
+        client.documents({}, { ...actor, deadlineAt: Date.now() + 1000 }),
+      ).rejects.toMatchObject({ code: 'DMS_UNAVAILABLE' });
+      mode = 'oversize';
+      await expect(client.documents({}, actor)).rejects.toMatchObject({
+        code: 'DMS_INVALID_RESPONSE',
+      });
     } finally {
       server.closeAllConnections();
       await new Promise<void>((resolve) => server.close(() => resolve()));

@@ -13,7 +13,7 @@ import {
   unitPathSchema,
   unitRenameSchema,
   type WorkspaceStatusDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { parseConfiguration } from '../../infrastructure/configuration-validation.js';
 import {
   validateCreate,

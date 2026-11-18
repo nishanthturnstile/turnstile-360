@@ -1,0 +1,5 @@
+url = "https://dms.customer.example/v1/capabilities"
+header = "Authorization: Bearer <short-lived-token>"
+
+# Direct connections only; never inherit ambient proxy settings.
+noproxy = "*"

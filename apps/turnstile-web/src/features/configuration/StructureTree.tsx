@@ -14,7 +14,7 @@ import {
   UserGroupIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { CONFIGURATION_LIMITS } from '@thaarei/turnstile-contracts';
+import { CONFIGURATION_LIMITS } from '@thaarei/turnstile-contracts/runtime';
 import {
   type CSSProperties,
   type PointerEvent,

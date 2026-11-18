@@ -1,0 +1,2087 @@
+{
+  "version": 1,
+  "audience": "{canonical-authority-issuer}/services/work",
+  "roles": {
+    "publisher": "dms:work:publish",
+    "scanner": "dms:work:scan",
+    "extractor": "dms:work:extract",
+    "heavy": "dms:work:heavy"
+  },
+  "tasks": {
+    "document.scan": "scanner",
+    "document.extract": "extractor",
+    "document.heavy": "heavy"
+  },
+  "limits": {
+    "executions": 3,
+    "executionSeconds": 1800,
+    "attemptSeconds": 600,
+    "leaseSeconds": 90,
+    "recoveryGraceSeconds": 30,
+    "retryRecoveryGraceSeconds": 90,
+    "deliverySeconds": 600,
+    "dispatchLeaseSeconds": 30,
+    "recoveries": 3,
+    "batch": 10
+  },
+  "extraction": {
+    "limits": {
+      "inputBytes": 52428800,
+      "outputBytes": 26214400,
+      "expandedBytes": 104857600,
+      "pages": 100,
+      "sheets": 100,
+      "cells": 1000000,
+      "cellBytes": 32768,
+      "embeddedItems": 100,
+      "embeddedDepth": 5,
+      "documentSeconds": 600
+    },
+    "formats": {
+      "text/plain": "utf8",
+      "text/markdown": "utf8",
+      "text/csv": "csv",
+      "text/tab-separated-values": "csv",
+      "application/pdf": "pdfium",
+      "image/jpeg": "tesseract",
+      "image/png": "tesseract",
+      "image/tiff": "tesseract",
+      "image/bmp": "tesseract",
+      "image/webp": "tesseract",
+      "application/msword": "tika",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "tika",
+      "application/vnd.ms-powerpoint": "tika",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation": "tika",
+      "application/vnd.oasis.opendocument.text": "tika",
+      "application/vnd.oasis.opendocument.presentation": "tika",
+      "application/rtf": "tika",
+      "application/vnd.ms-excel": "calamine",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "calamine",
+      "application/vnd.ms-excel.sheet.binary.macroenabled.12": "calamine",
+      "application/vnd.oasis.opendocument.spreadsheet": "calamine",
+      "message/rfc822": "tika",
+      "application/vnd.ms-outlook": "tika"
+    },
+    "ocr": {
+      "engineVersion": "5.5.4",
+      "dataVersion": "87416418657359cb625c412a48b6e1d6d41c29bd",
+      "englishSha256": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2",
+      "orientationSha256": "9cf5d576fcc47564f11265841e5ca839001e7e6f38ff7f7aacf46d15a96b00ff"
+    },
+    "structure": {
+      "processorVersion": "2.146.0",
+      "configurationVersion": "docling-layout-v1",
+      "layoutRevision": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8",
+      "tableRevision": "fc0f2d45e2218ea24bce5045f58a389aed16dc23",
+      "modelManifestSha256": "888f5b1c76339f3b680caa13b670c88fafaad97f3b66bdfc4992080977a8b090"
+    }
+  },
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/internal/work/presence",
+      "role": "task-owner",
+      "request": "Presence",
+      "response": "PresenceReceipt"
+    },
+    {
+      "method": "POST",
+      "path": "/internal/work/attempts/extraction-input",
+      "role": "task-owner",
+      "request": "Lease",
+      "response": "ExtractionInput"
+    },
+    {
+      "method": "POST",
+      "path": "/internal/work/attempts/extraction-output",
+      "role": "task-owner",
+      "request": "ExtractionOutputRequest",
+      "response": "ExtractionOutput"
+    },
+    {
+      "method": "POST",
+      "path": "/internal/work/attempts/candidate",
+      "role": "scanner",
+      "request": "Lease",
+      "response": "Candidate"
+    },
+    {
+      "method": "POST",
+      "path": "/internal/work/dispatches/claim",
+      "role": "publisher",
+      "request": "Empty",
+      "response": "Deliveries"
+    },
+    {
+      "method": "POST",
+      "path": "/internal/work/dispatches/delivered",
+      "role": "publisher",
+      "request": "DeliveryReceipt",
+      "response": "Acknowledged"
+    },
+    {
+      "method": "POST",
+      "path": "/internal/work/dispatches/failed",
+      "role": "publisher",
+      "request": "DeliveryFailure",
+      "response": "Acknowledged"
+    },
+    {
+      "method": "POST",
+      "path": "/internal/work/attempts/claim",
+      "role": "task-owner",
+      "request": "Envelope",
+      "response": "Claim"
+    },
+    {
+      "method": "POST",
+      "path": "/internal/work/attempts/heartbeat",
+      "role": "task-owner",
+      "request": "Lease",
+      "response": "Heartbeat"
+    },
+    {
+      "method": "POST",
+      "path": "/internal/work/attempts/result",
+      "role": "task-owner",
+      "request": "Result",
+      "response": "ResultReceipt"
+    }
+  ],
+  "schemas": {
+    "Presence": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "state": { "type": "string", "enum": ["ready", "degraded", "stopping"] },
+        "signatureTime": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        }
+      },
+      "required": ["state"],
+      "additionalProperties": false
+    },
+    "PresenceReceipt": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": { "accepted": { "type": "boolean", "const": true } },
+      "required": ["accepted"],
+      "additionalProperties": false
+    },
+    "ExtractionInput": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "request": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": { "type": "number", "const": 1 },
+            "documentId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "versionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "runId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "generation": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
+            "lifecycleGeneration": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 2147483646
+            },
+            "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "contentType": {
+              "type": "string",
+              "enum": [
+                "text/plain",
+                "text/markdown",
+                "text/csv",
+                "text/tab-separated-values",
+                "application/pdf",
+                "image/jpeg",
+                "image/png",
+                "image/tiff",
+                "image/bmp",
+                "image/webp",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/vnd.ms-powerpoint",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                "application/vnd.oasis.opendocument.text",
+                "application/vnd.oasis.opendocument.presentation",
+                "application/rtf",
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "application/vnd.ms-excel.sheet.binary.macroenabled.12",
+                "application/vnd.oasis.opendocument.spreadsheet",
+                "message/rfc822",
+                "application/vnd.ms-outlook"
+              ]
+            },
+            "profile": { "type": "string", "enum": ["secure-only", "searchable", "structured"] },
+            "stage": { "type": "string", "enum": ["native", "ocr", "structure"] }
+          },
+          "required": [
+            "schemaVersion",
+            "documentId",
+            "versionId",
+            "runId",
+            "generation",
+            "lifecycleGeneration",
+            "sourceSha256",
+            "contentType",
+            "profile"
+          ],
+          "additionalProperties": false
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        "url": { "type": "string", "format": "uri" },
+        "size": { "type": "integer", "exclusiveMinimum": 0, "maximum": 52428800 }
+      },
+      "required": ["request", "url", "size"],
+      "additionalProperties": false
+    },
+    "ExtractionOutputRequest": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "version": { "type": "number", "const": 1 },
+        "jobId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "dispatchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "generation": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+        "task": {
+          "type": "string",
+          "enum": ["document.scan", "document.extract", "document.heavy"]
+        },
+        "attemptId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "leaseToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+        "size": { "type": "integer", "exclusiveMinimum": 0, "maximum": 26214400 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      },
+      "required": [
+        "version",
+        "jobId",
+        "dispatchId",
+        "generation",
+        "task",
+        "attemptId",
+        "leaseToken",
+        "size",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "ExtractionOutput": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "artifactId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "url": { "type": "string", "format": "uri" },
+        "size": { "type": "integer", "exclusiveMinimum": 0, "maximum": 26214400 },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "content-type": { "type": "string", "const": "application/json" },
+            "if-none-match": { "type": "string", "const": "*" }
+          },
+          "required": ["content-type", "if-none-match"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["artifactId", "url", "size", "headers"],
+      "additionalProperties": false
+    },
+    "ExtractionRequest": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "schemaVersion": { "type": "number", "const": 1 },
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "versionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "runId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "generation": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
+        "lifecycleGeneration": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483646 },
+        "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "contentType": {
+          "type": "string",
+          "enum": [
+            "text/plain",
+            "text/markdown",
+            "text/csv",
+            "text/tab-separated-values",
+            "application/pdf",
+            "image/jpeg",
+            "image/png",
+            "image/tiff",
+            "image/bmp",
+            "image/webp",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.oasis.opendocument.text",
+            "application/vnd.oasis.opendocument.presentation",
+            "application/rtf",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-excel.sheet.binary.macroenabled.12",
+            "application/vnd.oasis.opendocument.spreadsheet",
+            "message/rfc822",
+            "application/vnd.ms-outlook"
+          ]
+        },
+        "profile": { "type": "string", "enum": ["secure-only", "searchable", "structured"] },
+        "stage": { "type": "string", "enum": ["native", "ocr", "structure"] }
+      },
+      "required": [
+        "schemaVersion",
+        "documentId",
+        "versionId",
+        "runId",
+        "generation",
+        "lifecycleGeneration",
+        "sourceSha256",
+        "contentType",
+        "profile"
+      ],
+      "additionalProperties": false
+    },
+    "ExtractionManifest": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "schemaVersion": { "type": "number", "const": 1 },
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "versionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "runId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "generation": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
+        "lifecycleGeneration": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483646 },
+        "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "contentType": {
+          "type": "string",
+          "enum": [
+            "text/plain",
+            "text/markdown",
+            "text/csv",
+            "text/tab-separated-values",
+            "application/pdf",
+            "image/jpeg",
+            "image/png",
+            "image/tiff",
+            "image/bmp",
+            "image/webp",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.oasis.opendocument.text",
+            "application/vnd.oasis.opendocument.presentation",
+            "application/rtf",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-excel.sheet.binary.macroenabled.12",
+            "application/vnd.oasis.opendocument.spreadsheet",
+            "message/rfc822",
+            "application/vnd.ms-outlook"
+          ]
+        },
+        "profile": { "type": "string", "enum": ["secure-only", "searchable", "structured"] },
+        "stage": { "type": "string", "enum": ["native", "ocr", "structure"] },
+        "processor": {
+          "type": "string",
+          "enum": [
+            "utf8",
+            "csv",
+            "pdfium",
+            "calamine",
+            "tika",
+            "none",
+            "tesseract",
+            "pdfium-tesseract",
+            "docling"
+          ]
+        },
+        "processorVersion": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "configurationVersion": {
+          "type": "string",
+          "enum": ["native-extraction-v1", "english-ocr-v1", "docling-layout-v1"]
+        },
+        "ocr": {
+          "type": "object",
+          "properties": {
+            "engine": { "type": "string", "const": "tesseract" },
+            "engineVersion": { "type": "string", "const": "5.5.4" },
+            "language": { "type": "string", "const": "eng" },
+            "dataVersion": {
+              "type": "string",
+              "const": "87416418657359cb625c412a48b6e1d6d41c29bd"
+            },
+            "englishSha256": {
+              "type": "string",
+              "const": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2"
+            },
+            "orientationSha256": {
+              "type": "string",
+              "const": "9cf5d576fcc47564f11265841e5ca839001e7e6f38ff7f7aacf46d15a96b00ff"
+            },
+            "configurationVersion": { "type": "string", "const": "english-ocr-v1" }
+          },
+          "required": [
+            "engine",
+            "engineVersion",
+            "language",
+            "dataVersion",
+            "englishSha256",
+            "orientationSha256",
+            "configurationVersion"
+          ],
+          "additionalProperties": false
+        },
+        "structure": {
+          "type": "object",
+          "properties": {
+            "processorVersion": { "type": "string", "const": "2.146.0" },
+            "configurationVersion": { "type": "string", "const": "docling-layout-v1" },
+            "layoutRevision": {
+              "type": "string",
+              "const": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8"
+            },
+            "tableRevision": {
+              "type": "string",
+              "const": "fc0f2d45e2218ea24bce5045f58a389aed16dc23"
+            },
+            "modelManifestSha256": {
+              "type": "string",
+              "const": "888f5b1c76339f3b680caa13b670c88fafaad97f3b66bdfc4992080977a8b090"
+            }
+          },
+          "required": [
+            "processorVersion",
+            "configurationVersion",
+            "layoutRevision",
+            "tableRevision",
+            "modelManifestSha256"
+          ],
+          "additionalProperties": false
+        },
+        "status": {
+          "type": "string",
+          "enum": ["SUCCEEDED", "PARTIAL", "FAILED", "UNSUPPORTED", "OMITTED"]
+        },
+        "code": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "SECURE_ONLY",
+            "UNSUPPORTED_FORMAT",
+            "INVALID_INPUT",
+            "LIMIT_EXCEEDED",
+            "SANDBOX_UNAVAILABLE",
+            "PROCESSOR_FAILED"
+          ]
+        },
+        "languages": {
+          "maxItems": 4,
+          "type": "array",
+          "items": { "type": "string", "maxLength": 16 }
+        },
+        "coverage": {
+          "type": "object",
+          "properties": {
+            "attempted": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+            "completed": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+            "omitted": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+            "ocrNeeded": { "type": "integer", "minimum": 0, "maximum": 100 }
+          },
+          "required": ["attempted", "completed", "omitted", "ocrNeeded"],
+          "additionalProperties": false
+        },
+        "warnings": {
+          "maxItems": 16,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "MIXED_CONTENT",
+              "OCR_REQUIRED",
+              "FORMULA_NOT_RECALCULATED",
+              "FORMULA_UNAVAILABLE",
+              "EMBEDDED_OMITTED",
+              "UNSUPPORTED_ELEMENT",
+              "HTML_MARKUP_OMITTED",
+              "OCR_TIMEOUT",
+              "OCR_FAILED",
+              "ORIENTATION_UNCERTAIN",
+              "OCR_LOW_CONFIDENCE",
+              "OCR_NO_TEXT",
+              "DOCUMENT_TIMEOUT",
+              "OCR_LIMIT_EXCEEDED",
+              "STRUCTURE_APPROXIMATE",
+              "STRUCTURE_FAILED",
+              "STRUCTURE_TIMEOUT"
+            ]
+          }
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "documentId",
+        "versionId",
+        "runId",
+        "generation",
+        "lifecycleGeneration",
+        "sourceSha256",
+        "contentType",
+        "profile",
+        "processor",
+        "processorVersion",
+        "configurationVersion",
+        "status",
+        "code",
+        "languages",
+        "coverage",
+        "warnings",
+        "completedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ExtractionArtifact": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "manifest": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": { "type": "number", "const": 1 },
+            "documentId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "versionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "runId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "generation": { "type": "integer", "exclusiveMinimum": 0, "maximum": 2147483647 },
+            "lifecycleGeneration": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 2147483646
+            },
+            "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "contentType": {
+              "type": "string",
+              "enum": [
+                "text/plain",
+                "text/markdown",
+                "text/csv",
+                "text/tab-separated-values",
+                "application/pdf",
+                "image/jpeg",
+                "image/png",
+                "image/tiff",
+                "image/bmp",
+                "image/webp",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/vnd.ms-powerpoint",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                "application/vnd.oasis.opendocument.text",
+                "application/vnd.oasis.opendocument.presentation",
+                "application/rtf",
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "application/vnd.ms-excel.sheet.binary.macroenabled.12",
+                "application/vnd.oasis.opendocument.spreadsheet",
+                "message/rfc822",
+                "application/vnd.ms-outlook"
+              ]
+            },
+            "profile": { "type": "string", "enum": ["secure-only", "searchable", "structured"] },
+            "stage": { "type": "string", "enum": ["native", "ocr", "structure"] },
+            "processor": {
+              "type": "string",
+              "enum": [
+                "utf8",
+                "csv",
+                "pdfium",
+                "calamine",
+                "tika",
+                "none",
+                "tesseract",
+                "pdfium-tesseract",
+                "docling"
+              ]
+            },
+            "processorVersion": { "type": "string", "minLength": 1, "maxLength": 120 },
+            "configurationVersion": {
+              "type": "string",
+              "enum": ["native-extraction-v1", "english-ocr-v1", "docling-layout-v1"]
+            },
+            "ocr": {
+              "type": "object",
+              "properties": {
+                "engine": { "type": "string", "const": "tesseract" },
+                "engineVersion": { "type": "string", "const": "5.5.4" },
+                "language": { "type": "string", "const": "eng" },
+                "dataVersion": {
+                  "type": "string",
+                  "const": "87416418657359cb625c412a48b6e1d6d41c29bd"
+                },
+                "englishSha256": {
+                  "type": "string",
+                  "const": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2"
+                },
+                "orientationSha256": {
+                  "type": "string",
+                  "const": "9cf5d576fcc47564f11265841e5ca839001e7e6f38ff7f7aacf46d15a96b00ff"
+                },
+                "configurationVersion": { "type": "string", "const": "english-ocr-v1" }
+              },
+              "required": [
+                "engine",
+                "engineVersion",
+                "language",
+                "dataVersion",
+                "englishSha256",
+                "orientationSha256",
+                "configurationVersion"
+              ],
+              "additionalProperties": false
+            },
+            "structure": {
+              "type": "object",
+              "properties": {
+                "processorVersion": { "type": "string", "const": "2.146.0" },
+                "configurationVersion": { "type": "string", "const": "docling-layout-v1" },
+                "layoutRevision": {
+                  "type": "string",
+                  "const": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8"
+                },
+                "tableRevision": {
+                  "type": "string",
+                  "const": "fc0f2d45e2218ea24bce5045f58a389aed16dc23"
+                },
+                "modelManifestSha256": {
+                  "type": "string",
+                  "const": "888f5b1c76339f3b680caa13b670c88fafaad97f3b66bdfc4992080977a8b090"
+                }
+              },
+              "required": [
+                "processorVersion",
+                "configurationVersion",
+                "layoutRevision",
+                "tableRevision",
+                "modelManifestSha256"
+              ],
+              "additionalProperties": false
+            },
+            "status": {
+              "type": "string",
+              "enum": ["SUCCEEDED", "PARTIAL", "FAILED", "UNSUPPORTED", "OMITTED"]
+            },
+            "code": {
+              "type": "string",
+              "enum": [
+                "OK",
+                "SECURE_ONLY",
+                "UNSUPPORTED_FORMAT",
+                "INVALID_INPUT",
+                "LIMIT_EXCEEDED",
+                "SANDBOX_UNAVAILABLE",
+                "PROCESSOR_FAILED"
+              ]
+            },
+            "languages": {
+              "maxItems": 4,
+              "type": "array",
+              "items": { "type": "string", "maxLength": 16 }
+            },
+            "coverage": {
+              "type": "object",
+              "properties": {
+                "attempted": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+                "completed": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+                "omitted": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+                "ocrNeeded": { "type": "integer", "minimum": 0, "maximum": 100 }
+              },
+              "required": ["attempted", "completed", "omitted", "ocrNeeded"],
+              "additionalProperties": false
+            },
+            "warnings": {
+              "maxItems": 16,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "MIXED_CONTENT",
+                  "OCR_REQUIRED",
+                  "FORMULA_NOT_RECALCULATED",
+                  "FORMULA_UNAVAILABLE",
+                  "EMBEDDED_OMITTED",
+                  "UNSUPPORTED_ELEMENT",
+                  "HTML_MARKUP_OMITTED",
+                  "OCR_TIMEOUT",
+                  "OCR_FAILED",
+                  "ORIENTATION_UNCERTAIN",
+                  "OCR_LOW_CONFIDENCE",
+                  "OCR_NO_TEXT",
+                  "DOCUMENT_TIMEOUT",
+                  "OCR_LIMIT_EXCEEDED",
+                  "STRUCTURE_APPROXIMATE",
+                  "STRUCTURE_FAILED",
+                  "STRUCTURE_TIMEOUT"
+                ]
+              }
+            },
+            "completedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "documentId",
+            "versionId",
+            "runId",
+            "generation",
+            "lifecycleGeneration",
+            "sourceSha256",
+            "contentType",
+            "profile",
+            "processor",
+            "processorVersion",
+            "configurationVersion",
+            "status",
+            "code",
+            "languages",
+            "coverage",
+            "warnings",
+            "completedAt"
+          ],
+          "additionalProperties": false
+        },
+        "structure": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": { "type": "number", "const": 1 },
+            "coordinateSystem": { "type": "string", "const": "top-left-normalized-page" },
+            "pages": {
+              "maxItems": 100,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "index": { "type": "integer", "exclusiveMinimum": 0, "maximum": 100 },
+                  "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 1000000 },
+                  "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 1000000 },
+                  "elements": {
+                    "maxItems": 5000,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "maxLength": 160 },
+                        "kind": { "type": "string", "maxLength": 64 },
+                        "text": { "type": "string", "maxLength": 32768 },
+                        "box": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "left": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "top": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "right": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "bottom": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["left", "top", "right", "bottom"],
+                              "additionalProperties": false
+                            },
+                            { "type": "null" }
+                          ]
+                        },
+                        "table": {
+                          "type": "object",
+                          "properties": {
+                            "rows": { "type": "integer", "minimum": 0, "maximum": 10000 },
+                            "columns": { "type": "integer", "minimum": 0, "maximum": 1000 },
+                            "cells": {
+                              "maxItems": 10000,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "row": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "column": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "rowSpan": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "columnSpan": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "text": { "type": "string", "maxLength": 32768 },
+                                  "header": { "type": "boolean" },
+                                  "box": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "left": { "type": "number", "minimum": 0, "maximum": 1 },
+                                          "top": { "type": "number", "minimum": 0, "maximum": 1 },
+                                          "right": { "type": "number", "minimum": 0, "maximum": 1 },
+                                          "bottom": { "type": "number", "minimum": 0, "maximum": 1 }
+                                        },
+                                        "required": ["left", "top", "right", "bottom"],
+                                        "additionalProperties": false
+                                      },
+                                      { "type": "null" }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "row",
+                                  "column",
+                                  "rowSpan",
+                                  "columnSpan",
+                                  "text",
+                                  "header",
+                                  "box"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": ["rows", "columns", "cells"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["id", "kind", "text", "box"],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": ["index", "width", "height", "elements"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["schemaVersion", "coordinateSystem", "pages"],
+          "additionalProperties": false
+        },
+        "units": {
+          "maxItems": 1000000,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "minLength": 1, "maxLength": 160 },
+              "kind": {
+                "type": "string",
+                "enum": ["line", "page", "paragraph", "slide", "cell", "email-body", "attachment"]
+              },
+              "state": {
+                "type": "string",
+                "enum": ["TEXT", "EMPTY", "OCR_NEEDED", "PARTIAL", "OMITTED"]
+              },
+              "text": { "type": "string", "maxLength": 32768 },
+              "recognition": { "type": "string", "enum": ["NATIVE", "OCR", "NATIVE_AND_OCR"] },
+              "ocr": {
+                "type": "object",
+                "properties": {
+                  "coordinateSystem": {
+                    "type": "string",
+                    "const": "top-left-oriented-raster-pixels"
+                  },
+                  "width": { "type": "integer", "exclusiveMinimum": 0, "maximum": 25000000 },
+                  "height": { "type": "integer", "exclusiveMinimum": 0, "maximum": 25000000 },
+                  "dpi": { "type": "integer", "minimum": 72, "maximum": 300 },
+                  "rotationClockwise": {
+                    "anyOf": [
+                      { "type": "number", "const": 0 },
+                      { "type": "number", "const": 90 },
+                      { "type": "number", "const": 180 },
+                      { "type": "number", "const": 270 }
+                    ]
+                  },
+                  "orientationConfidence": {
+                    "anyOf": [
+                      { "type": "number", "minimum": 0, "maximum": 1000 },
+                      { "type": "null" }
+                    ]
+                  },
+                  "words": {
+                    "maxItems": 5000,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "text": { "type": "string", "minLength": 1, "maxLength": 256 },
+                        "confidence": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "box": {
+                          "type": "object",
+                          "properties": {
+                            "x": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                            "y": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                            "width": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "height": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": ["x", "y", "width", "height"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["text", "confidence", "box"],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "coordinateSystem",
+                  "width",
+                  "height",
+                  "dpi",
+                  "rotationClockwise",
+                  "orientationConfidence",
+                  "words"
+                ],
+                "additionalProperties": false
+              },
+              "source": {
+                "type": "object",
+                "properties": {
+                  "index": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "row": { "type": "integer", "exclusiveMinimum": 0, "maximum": 1000000 },
+                  "column": { "type": "integer", "exclusiveMinimum": 0, "maximum": 1000000 },
+                  "sheet": { "type": "string", "maxLength": 128 },
+                  "exifOrientation": { "type": "integer", "minimum": 1, "maximum": 8 },
+                  "fileName": { "type": "string", "maxLength": 240 },
+                  "contentType": { "type": "string", "maxLength": 100 },
+                  "size": { "type": "integer", "minimum": 0, "maximum": 52428800 },
+                  "slide": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "offset": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                  "valueType": {
+                    "type": "string",
+                    "enum": ["string", "number", "boolean", "date", "time", "empty"]
+                  },
+                  "formula": {
+                    "anyOf": [{ "type": "string", "maxLength": 32768 }, { "type": "null" }]
+                  },
+                  "cached": { "type": "boolean" }
+                },
+                "required": ["index"],
+                "additionalProperties": false
+              },
+              "warnings": {
+                "maxItems": 16,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "MIXED_CONTENT",
+                    "OCR_REQUIRED",
+                    "FORMULA_NOT_RECALCULATED",
+                    "FORMULA_UNAVAILABLE",
+                    "EMBEDDED_OMITTED",
+                    "UNSUPPORTED_ELEMENT",
+                    "HTML_MARKUP_OMITTED",
+                    "OCR_TIMEOUT",
+                    "OCR_FAILED",
+                    "ORIENTATION_UNCERTAIN",
+                    "OCR_LOW_CONFIDENCE",
+                    "OCR_NO_TEXT",
+                    "DOCUMENT_TIMEOUT",
+                    "OCR_LIMIT_EXCEEDED",
+                    "STRUCTURE_APPROXIMATE",
+                    "STRUCTURE_FAILED",
+                    "STRUCTURE_TIMEOUT"
+                  ]
+                }
+              }
+            },
+            "required": ["id", "kind", "state", "text", "source", "warnings"],
+            "additionalProperties": false
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "propertyNames": { "type": "string", "maxLength": 128 },
+          "additionalProperties": {
+            "maxItems": 20,
+            "type": "array",
+            "items": { "type": "string", "maxLength": 2048 }
+          }
+        }
+      },
+      "required": ["manifest", "units", "metadata"],
+      "additionalProperties": false
+    },
+    "Assessment": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "candidateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "outcome": { "type": "string", "enum": ["PASSED", "REJECTED", "INCONCLUSIVE"] },
+        "code": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "MALWARE",
+            "HASH_MISMATCH",
+            "SIZE_MISMATCH",
+            "TYPE_MISMATCH",
+            "INVALID_TEXT",
+            "UNSUPPORTED_FORMAT",
+            "SCANNER_UNAVAILABLE",
+            "SIGNATURE_STALE",
+            "SANDBOX_UNAVAILABLE",
+            "LIMIT_EXCEEDED"
+          ]
+        },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "size": { "type": "integer", "minimum": 1, "maximum": 52428800 },
+        "contentType": {
+          "type": "string",
+          "enum": [
+            "text/plain",
+            "text/markdown",
+            "text/csv",
+            "text/tab-separated-values",
+            "application/pdf",
+            "image/jpeg",
+            "image/png",
+            "image/tiff",
+            "image/bmp",
+            "image/webp",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.oasis.opendocument.text",
+            "application/vnd.oasis.opendocument.presentation",
+            "application/rtf",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-excel.sheet.binary.macroenabled.12",
+            "application/vnd.oasis.opendocument.spreadsheet",
+            "message/rfc822",
+            "application/vnd.ms-outlook"
+          ]
+        },
+        "policy": { "type": "string", "enum": ["utf8-text-v1", "format-security-v1"] },
+        "engine": { "type": "string", "pattern": "^[A-Za-z0-9 ._/-]{1,120}$" },
+        "signatures": { "type": "string", "pattern": "^[0-9]{1,20}$" },
+        "signatureTime": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        "complete": { "type": "boolean" },
+        "isolated": { "type": "boolean" }
+      },
+      "required": [
+        "candidateId",
+        "outcome",
+        "code",
+        "sha256",
+        "size",
+        "contentType",
+        "policy",
+        "engine",
+        "signatures",
+        "signatureTime",
+        "startedAt",
+        "finishedAt",
+        "complete",
+        "isolated"
+      ],
+      "additionalProperties": false
+    },
+    "Candidate": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "candidateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "url": { "type": "string", "format": "uri" },
+        "size": { "type": "integer", "exclusiveMinimum": 0, "maximum": 52428800 },
+        "contentType": { "type": "string", "maxLength": 100 },
+        "sha256": {
+          "anyOf": [{ "type": "string", "pattern": "^[a-f0-9]{64}$" }, { "type": "null" }]
+        }
+      },
+      "required": ["candidateId", "url", "size", "contentType", "sha256"],
+      "additionalProperties": false
+    },
+    "Job": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "version": { "type": "number", "const": 1 },
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "uploadId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "applicationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "task": {
+          "type": "string",
+          "enum": ["document.scan", "document.extract", "document.heavy"]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "QUEUED",
+            "RUNNING",
+            "RETRY_WAIT",
+            "SUCCEEDED",
+            "FAILED",
+            "UNSUPPORTED",
+            "CANCELLED"
+          ]
+        },
+        "generation": { "type": "integer", "exclusiveMinimum": 0, "maximum": 9007199254740991 },
+        "executions": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "recoveries": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        "budgetStartedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            },
+            { "type": "null" }
+          ]
+        },
+        "deadline": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            },
+            { "type": "null" }
+          ]
+        },
+        "nextEligibleAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            },
+            { "type": "null" }
+          ]
+        },
+        "recoverAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            },
+            { "type": "null" }
+          ]
+        },
+        "resultCode": { "anyOf": [{ "type": "string", "maxLength": 64 }, { "type": "null" }] }
+      },
+      "required": [
+        "version",
+        "id",
+        "uploadId",
+        "applicationId",
+        "task",
+        "state",
+        "generation",
+        "executions",
+        "recoveries",
+        "createdAt",
+        "budgetStartedAt",
+        "deadline",
+        "nextEligibleAt",
+        "recoverAt",
+        "resultCode"
+      ],
+      "additionalProperties": false
+    },
+    "Envelope": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "version": { "type": "number", "const": 1 },
+        "jobId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "dispatchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "generation": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+        "task": {
+          "type": "string",
+          "enum": ["document.scan", "document.extract", "document.heavy"]
+        }
+      },
+      "required": ["version", "jobId", "dispatchId", "generation", "task"],
+      "additionalProperties": false
+    },
+    "Lease": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "version": { "type": "number", "const": 1 },
+        "jobId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "dispatchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "generation": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+        "task": {
+          "type": "string",
+          "enum": ["document.scan", "document.extract", "document.heavy"]
+        },
+        "attemptId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "leaseToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" }
+      },
+      "required": [
+        "version",
+        "jobId",
+        "dispatchId",
+        "generation",
+        "task",
+        "attemptId",
+        "leaseToken"
+      ],
+      "additionalProperties": false
+    },
+    "Result": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "version": { "type": "number", "const": 1 },
+            "jobId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "dispatchId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "generation": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+            "task": {
+              "type": "string",
+              "enum": ["document.scan", "document.extract", "document.heavy"]
+            },
+            "attemptId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "leaseToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+            "outcome": { "type": "string", "const": "SUCCEEDED" },
+            "code": { "type": "string", "const": "OK" },
+            "assessment": {
+              "type": "object",
+              "properties": {
+                "candidateId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "outcome": { "type": "string", "enum": ["PASSED", "REJECTED", "INCONCLUSIVE"] },
+                "code": {
+                  "type": "string",
+                  "enum": [
+                    "OK",
+                    "MALWARE",
+                    "HASH_MISMATCH",
+                    "SIZE_MISMATCH",
+                    "TYPE_MISMATCH",
+                    "INVALID_TEXT",
+                    "UNSUPPORTED_FORMAT",
+                    "SCANNER_UNAVAILABLE",
+                    "SIGNATURE_STALE",
+                    "SANDBOX_UNAVAILABLE",
+                    "LIMIT_EXCEEDED"
+                  ]
+                },
+                "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "size": { "type": "integer", "minimum": 1, "maximum": 52428800 },
+                "contentType": {
+                  "type": "string",
+                  "enum": [
+                    "text/plain",
+                    "text/markdown",
+                    "text/csv",
+                    "text/tab-separated-values",
+                    "application/pdf",
+                    "image/jpeg",
+                    "image/png",
+                    "image/tiff",
+                    "image/bmp",
+                    "image/webp",
+                    "application/msword",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "application/vnd.ms-powerpoint",
+                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                    "application/vnd.oasis.opendocument.text",
+                    "application/vnd.oasis.opendocument.presentation",
+                    "application/rtf",
+                    "application/vnd.ms-excel",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "application/vnd.ms-excel.sheet.binary.macroenabled.12",
+                    "application/vnd.oasis.opendocument.spreadsheet",
+                    "message/rfc822",
+                    "application/vnd.ms-outlook"
+                  ]
+                },
+                "policy": { "type": "string", "enum": ["utf8-text-v1", "format-security-v1"] },
+                "engine": { "type": "string", "pattern": "^[A-Za-z0-9 ._/-]{1,120}$" },
+                "signatures": { "type": "string", "pattern": "^[0-9]{1,20}$" },
+                "signatureTime": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                },
+                "startedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                },
+                "finishedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                },
+                "complete": { "type": "boolean" },
+                "isolated": { "type": "boolean" }
+              },
+              "required": [
+                "candidateId",
+                "outcome",
+                "code",
+                "sha256",
+                "size",
+                "contentType",
+                "policy",
+                "engine",
+                "signatures",
+                "signatureTime",
+                "startedAt",
+                "finishedAt",
+                "complete",
+                "isolated"
+              ],
+              "additionalProperties": false
+            },
+            "extraction": {
+              "type": "object",
+              "properties": {
+                "artifactId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "manifest": {
+                  "type": "object",
+                  "properties": {
+                    "schemaVersion": { "type": "number", "const": 1 },
+                    "documentId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "versionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "runId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "generation": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 2147483647
+                    },
+                    "lifecycleGeneration": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 2147483646
+                    },
+                    "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                    "contentType": {
+                      "type": "string",
+                      "enum": [
+                        "text/plain",
+                        "text/markdown",
+                        "text/csv",
+                        "text/tab-separated-values",
+                        "application/pdf",
+                        "image/jpeg",
+                        "image/png",
+                        "image/tiff",
+                        "image/bmp",
+                        "image/webp",
+                        "application/msword",
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        "application/vnd.ms-powerpoint",
+                        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                        "application/vnd.oasis.opendocument.text",
+                        "application/vnd.oasis.opendocument.presentation",
+                        "application/rtf",
+                        "application/vnd.ms-excel",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "application/vnd.ms-excel.sheet.binary.macroenabled.12",
+                        "application/vnd.oasis.opendocument.spreadsheet",
+                        "message/rfc822",
+                        "application/vnd.ms-outlook"
+                      ]
+                    },
+                    "profile": {
+                      "type": "string",
+                      "enum": ["secure-only", "searchable", "structured"]
+                    },
+                    "stage": { "type": "string", "enum": ["native", "ocr", "structure"] },
+                    "processor": {
+                      "type": "string",
+                      "enum": [
+                        "utf8",
+                        "csv",
+                        "pdfium",
+                        "calamine",
+                        "tika",
+                        "none",
+                        "tesseract",
+                        "pdfium-tesseract",
+                        "docling"
+                      ]
+                    },
+                    "processorVersion": { "type": "string", "minLength": 1, "maxLength": 120 },
+                    "configurationVersion": {
+                      "type": "string",
+                      "enum": ["native-extraction-v1", "english-ocr-v1", "docling-layout-v1"]
+                    },
+                    "ocr": {
+                      "type": "object",
+                      "properties": {
+                        "engine": { "type": "string", "const": "tesseract" },
+                        "engineVersion": { "type": "string", "const": "5.5.4" },
+                        "language": { "type": "string", "const": "eng" },
+                        "dataVersion": {
+                          "type": "string",
+                          "const": "87416418657359cb625c412a48b6e1d6d41c29bd"
+                        },
+                        "englishSha256": {
+                          "type": "string",
+                          "const": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2"
+                        },
+                        "orientationSha256": {
+                          "type": "string",
+                          "const": "9cf5d576fcc47564f11265841e5ca839001e7e6f38ff7f7aacf46d15a96b00ff"
+                        },
+                        "configurationVersion": { "type": "string", "const": "english-ocr-v1" }
+                      },
+                      "required": [
+                        "engine",
+                        "engineVersion",
+                        "language",
+                        "dataVersion",
+                        "englishSha256",
+                        "orientationSha256",
+                        "configurationVersion"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "structure": {
+                      "type": "object",
+                      "properties": {
+                        "processorVersion": { "type": "string", "const": "2.146.0" },
+                        "configurationVersion": { "type": "string", "const": "docling-layout-v1" },
+                        "layoutRevision": {
+                          "type": "string",
+                          "const": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8"
+                        },
+                        "tableRevision": {
+                          "type": "string",
+                          "const": "fc0f2d45e2218ea24bce5045f58a389aed16dc23"
+                        },
+                        "modelManifestSha256": {
+                          "type": "string",
+                          "const": "888f5b1c76339f3b680caa13b670c88fafaad97f3b66bdfc4992080977a8b090"
+                        }
+                      },
+                      "required": [
+                        "processorVersion",
+                        "configurationVersion",
+                        "layoutRevision",
+                        "tableRevision",
+                        "modelManifestSha256"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["SUCCEEDED", "PARTIAL", "FAILED", "UNSUPPORTED", "OMITTED"]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "OK",
+                        "SECURE_ONLY",
+                        "UNSUPPORTED_FORMAT",
+                        "INVALID_INPUT",
+                        "LIMIT_EXCEEDED",
+                        "SANDBOX_UNAVAILABLE",
+                        "PROCESSOR_FAILED"
+                      ]
+                    },
+                    "languages": {
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": { "type": "string", "maxLength": 16 }
+                    },
+                    "coverage": {
+                      "type": "object",
+                      "properties": {
+                        "attempted": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+                        "completed": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+                        "omitted": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+                        "ocrNeeded": { "type": "integer", "minimum": 0, "maximum": 100 }
+                      },
+                      "required": ["attempted", "completed", "omitted", "ocrNeeded"],
+                      "additionalProperties": false
+                    },
+                    "warnings": {
+                      "maxItems": 16,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "MIXED_CONTENT",
+                          "OCR_REQUIRED",
+                          "FORMULA_NOT_RECALCULATED",
+                          "FORMULA_UNAVAILABLE",
+                          "EMBEDDED_OMITTED",
+                          "UNSUPPORTED_ELEMENT",
+                          "HTML_MARKUP_OMITTED",
+                          "OCR_TIMEOUT",
+                          "OCR_FAILED",
+                          "ORIENTATION_UNCERTAIN",
+                          "OCR_LOW_CONFIDENCE",
+                          "OCR_NO_TEXT",
+                          "DOCUMENT_TIMEOUT",
+                          "OCR_LIMIT_EXCEEDED",
+                          "STRUCTURE_APPROXIMATE",
+                          "STRUCTURE_FAILED",
+                          "STRUCTURE_TIMEOUT"
+                        ]
+                      }
+                    },
+                    "completedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "schemaVersion",
+                    "documentId",
+                    "versionId",
+                    "runId",
+                    "generation",
+                    "lifecycleGeneration",
+                    "sourceSha256",
+                    "contentType",
+                    "profile",
+                    "processor",
+                    "processorVersion",
+                    "configurationVersion",
+                    "status",
+                    "code",
+                    "languages",
+                    "coverage",
+                    "warnings",
+                    "completedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": ["artifactId", "manifest"],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "version",
+            "jobId",
+            "dispatchId",
+            "generation",
+            "task",
+            "attemptId",
+            "leaseToken",
+            "outcome",
+            "code"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "version": { "type": "number", "const": 1 },
+            "jobId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "dispatchId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "generation": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+            "task": {
+              "type": "string",
+              "enum": ["document.scan", "document.extract", "document.heavy"]
+            },
+            "attemptId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "leaseToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+            "outcome": { "type": "string", "const": "FAILED" },
+            "code": { "type": "string", "const": "EXECUTION_FAILED" }
+          },
+          "required": [
+            "version",
+            "jobId",
+            "dispatchId",
+            "generation",
+            "task",
+            "attemptId",
+            "leaseToken",
+            "outcome",
+            "code"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "version": { "type": "number", "const": 1 },
+            "jobId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "dispatchId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "generation": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+            "task": {
+              "type": "string",
+              "enum": ["document.scan", "document.extract", "document.heavy"]
+            },
+            "attemptId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "leaseToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+            "outcome": { "type": "string", "const": "UNSUPPORTED" },
+            "code": { "type": "string", "const": "HANDLER_NOT_INSTALLED" }
+          },
+          "required": [
+            "version",
+            "jobId",
+            "dispatchId",
+            "generation",
+            "task",
+            "attemptId",
+            "leaseToken",
+            "outcome",
+            "code"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "version": { "type": "number", "const": 1 },
+            "jobId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "dispatchId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "generation": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+            "task": {
+              "type": "string",
+              "enum": ["document.scan", "document.extract", "document.heavy"]
+            },
+            "attemptId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "leaseToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+            "outcome": { "type": "string", "const": "RETRY" },
+            "code": { "type": "string", "const": "TRANSIENT_IO" }
+          },
+          "required": [
+            "version",
+            "jobId",
+            "dispatchId",
+            "generation",
+            "task",
+            "attemptId",
+            "leaseToken",
+            "outcome",
+            "code"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Claim": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "state": { "type": "string", "const": "claimed" },
+            "lease": {
+              "type": "object",
+              "properties": {
+                "version": { "type": "number", "const": 1 },
+                "jobId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "dispatchId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "generation": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+                "task": {
+                  "type": "string",
+                  "enum": ["document.scan", "document.extract", "document.heavy"]
+                },
+                "attemptId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "leaseToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" }
+              },
+              "required": [
+                "version",
+                "jobId",
+                "dispatchId",
+                "generation",
+                "task",
+                "attemptId",
+                "leaseToken"
+              ],
+              "additionalProperties": false
+            },
+            "leaseExpiresAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            },
+            "attemptDeadline": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            },
+            "remainingExecutions": { "type": "integer", "minimum": 0, "maximum": 2 }
+          },
+          "required": [
+            "state",
+            "lease",
+            "leaseExpiresAt",
+            "attemptDeadline",
+            "remainingExecutions"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": { "state": { "type": "string", "enum": ["busy", "stale", "terminal"] } },
+          "required": ["state"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "state": { "type": "string", "const": "wait" },
+            "retryAfterSeconds": { "type": "integer", "minimum": 1, "maximum": 60 }
+          },
+          "required": ["state", "retryAfterSeconds"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ResultReceipt": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "accepted": { "type": "boolean", "const": true },
+        "duplicate": { "type": "boolean" },
+        "retryAfterSeconds": {
+          "anyOf": [{ "type": "integer", "minimum": 1, "maximum": 60 }, { "type": "null" }]
+        }
+      },
+      "required": ["accepted", "duplicate", "retryAfterSeconds"],
+      "additionalProperties": false
+    },
+    "DeliveryReceipt": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "dispatchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "deliveryToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" }
+      },
+      "required": ["dispatchId", "deliveryToken"],
+      "additionalProperties": false
+    },
+    "DeliveryFailure": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "dispatchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "deliveryToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+        "code": { "type": "string", "enum": ["UNROUTABLE", "BROKER_UNAVAILABLE"] }
+      },
+      "required": ["dispatchId", "deliveryToken", "code"],
+      "additionalProperties": false
+    },
+    "Deliveries": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "items": {
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "dispatch": {
+                "type": "object",
+                "properties": {
+                  "version": { "type": "number", "const": 1 },
+                  "jobId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "dispatchId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "generation": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+                  "task": {
+                    "type": "string",
+                    "enum": ["document.scan", "document.extract", "document.heavy"]
+                  }
+                },
+                "required": ["version", "jobId", "dispatchId", "generation", "task"],
+                "additionalProperties": false
+              },
+              "deliveryToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" }
+            },
+            "required": ["dispatch", "deliveryToken"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["items"],
+      "additionalProperties": false
+    },
+    "Empty": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "Acknowledged": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": { "accepted": { "type": "boolean", "const": true } },
+      "required": ["accepted"],
+      "additionalProperties": false
+    },
+    "Heartbeat": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "leaseExpiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        }
+      },
+      "required": ["leaseExpiresAt"],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-11-04
+Last updated: 2026-11-18
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -9,6 +9,307 @@ requirements remain in their linked specifications. This file records what has a
 been completed, verified, or left pending.
 
 ## Current position
+
+2026-11-18 DV-UX-01 redesigned the full Documents workspace and refreshed the
+existing local validator build. The library, search, upload and batch workspaces,
+recovery, activity, connection, validation, contribution and all document detail
+tabs use the redesigned layout. Workspace gates and focused Documents browser
+regressions passed. Local desktop and phone checks cover all sections and tabs.
+
+2026-11-18 DV-LOCAL-01 started the current source-built Documents workspace at
+`https://documents.localhost:23600/documents/validation` with a separate synthetic
+database and signed storage. A fresh validator login, the 34-item checklist and
+browser upload through native assessment, extraction and indexing passed. The
+retained Titan demo still responds on its existing host.
+
+2026-11-18 DV-AUDIT-02 closed all four DV-AUDIT-01 findings locally. Uploads
+shows byte progress and follows extraction and indexing past upload completion.
+Validation and Connection use the complete ordinary action permissions. The
+upload and batch draft/execute restriction matrix and same-intent renewal passed.
+All four workspace gates, three Documents browser suites and the exact signed Core
+rehearsal passed. See the [current qualification](docs/qualification/documents-audit-20261118.json).
+
+2026-11-18 DV-AUDIT-01 completed an independent review of DV-I01–08. All eight
+increments have implementation and owning evidence. Full plan acceptance remains
+open for upload processing polling, transfer progress, partial-role diagnostics
+and the remaining restricted-mode control tests. All four workspace gates passed
+on rerun, and the current selected product source matches the qualified Core
+release record. See DV-AUDIT-01 for findings and separate target scope.
+
+2026-11-18 DV-I08 is implemented and locally qualified. Documents has protected
+operation coverage and live diagnostics. The exact selected Core images passed
+legacy compatibility, first-validator provisioning and PostgreSQL recovery and
+retention checks. All four workspace gates and the batch, lifecycle and native
+processing browser regressions passed. The reviewed customer target and optional
+structured profile have separate acceptance. See the
+[release evidence](docs/qualification/documents-release-20261118.json).
+
+2026-11-18 DV-I02 compatibility, private validator provisioning and the guarded read-only
+Documents workspace are implemented and locally qualified. All four workspace gates,
+actual old/new-bundle and private-tool browser checks, auth/People/Structure regressions
+and all four selected API/web foundation builds pass. See DV-I02 below and the
+[qualification record](docs/qualification/documents-readonly-20261118.json). No live
+installation or grant changed. Next: DV-I03 ledger and first real upload flow; exact-image
+Documents rollout/restore and target acceptance remain separately gated.
+
+2026-11-17 Documents validation implementation has started with completed DV-I01
+executable contracts and legacy-bundle fixtures. All four workspace gates pass; no
+Documents route, grant, ledger, UI or deployment is enabled. DV-I02 compatibility,
+first-validator provisioning and read-only shell are next. See DV-I01 below and the
+[coverage register](docs/turnstile/documents/documents_validation_coverage.json).
+
+2026-11-14 Structure redesign is implemented and deployed in signed release
+40aaf5da986cb49b572cb3daf3a95c46b704fc3c34a50d7ded57ba8476cb5a98. The scoped
+chart/outline workspace includes search, branch focus, camera controls, responsive unit
+overviews and guarded create/rename/move/delete sheets. Complete authorized paging,
+reviewed drag moves and receipt recovery preserve the existing server authority. All four
+workspace gates, expanded People/auth/onboarding browser journeys, supported cutover,
+retained-data comparison and direct live desktop/phone checks pass. See
+STRUCTURE-IMPLEMENT-11; optional advanced projections and export/import remain follow-ups.
+
+2026-11-14 Users navigation/query caching is completed and deployed in signed release
+92a15a98033100ad2eba051a2c1fd16af6f7d9d3605f11667fd6f67d1a5e76b6. Users keeps
+its common header/tabs visible, reuses fresh tab reads and updates stale data in place.
+Scoped TanStack Query caching, write/revision invalidation and late-response cancellation
+pass all four gates, nine focused cases, full People browser journeys and direct live
+navigation/delayed-refresh/retained-data checks. See USERS-QUERY-CACHE-09.
+
+2026-11-14 the administrator View access false service-unavailable error is corrected in
+signed release fe5ee2938288eac13d13bc76a36d93949a5eb421dc3b16b19234b93a6380da5f.
+An older open client rejected the new CSV capability in a successful catalog response.
+Catalog opt-in now preserves pre-import readers; current response-validation failures have
+accurate refresh guidance. All four gates, 34 People database cases, real browser and
+old-image/deployed compatibility checks pass. Saved access is preserved. See USERS-UNAVAILABLE-08.
+
+2026-11-14 UE-08 CSV invitation imports/durable jobs are implemented and deployed in
+signed release 8a2fce9f5def383ac68f7ceccd4e126ad7dfa76d791335e3ffcd870391d25c29.
+Server validation, duplicate handling, shared reviewed access, durable row receipts,
+saved progress, restart recovery, resume/cancel and complete error CSV are available
+through Users → Import CSV. All workspace gates, 33 focused People database cases,
+expanded real browser journeys and final live responsive/retained-data/cutover checks
+pass. Existing identity authority and invitation limits are preserved. See USERS-BULK-IMPORT-07.
+
+2026-11-14 Members filter layout correction is deployed in signed release
+6779ef6515a0ffb01b72fc447b025cddd88144d35f44e7c66ea25f76bfa62e49.
+Expanded role/coverage filters are compact, aligned on desktop and stacked on smaller
+screens. Required gates, focused real-browser regression, direct live visual checks,
+retained-access comparison and supported cutover checks pass. See USERS-FILTER-LAYOUT-06.
+
+2026-11-14 Users enhancement core increment UE-01–07 is completed and deployed in
+source-matched signed release c8fe03f2650c062806ea72c3d9131d55dfdb4bc3379c41b9534d0ca0d5cc0456.
+Recovery fixes, Activity/CSV, contextual access/offboarding inspection, role-reference
+drilldowns, invitation troubleshooting and shareable/sorted directories are live. Final
+workspace gates, real browser regression, supported cutover fingerprints and direct live
+desktop/tablet/phone checks pass. Existing identity authority remains the selected scope;
+durable imports/governance are sequenced follow-ups and enterprise SSO/SCIM is deferred.
+See USERS-ENHANCE-05 and the enhancement sequence for exact scope and evidence.
+
+2026-11-14 activation recovery is complete. A false durable clock quarantine after the
+Users rollout was reproduced and corrected by migration 0034, which samples time after
+locking the clock row. Corrective signed release a4a1d070ab1c022256316c89107b7f2bb6b71789d54a8bf8ec359c68ce464ceb
+is active; the actual live queued-HTTP failure scenario and concurrent checks remain
+approved. All workspace gates and SQL/HTTPS/browser regressions pass. See
+USERS-ACTIVATION-RECOVERY-04 for recovery and verification evidence.
+
+2026-11-14 Users redesign and audit corrections are implemented and deployed in the
+source-matched signed API/web release e8774a7a055e51b6892035499eebc47c25eab8d98e6de441e59a1b294902997d.
+Members, Invitations and Roles use accessible task sheets, clearer composition/reviews
+and responsive directories. Role/coverage filters and authorized role usage are now live.
+All four workspace gates, the expanded real browser journey and direct live desktop/
+tablet/mobile checks pass; preserved installation/setup/access fingerprints were verified
+through the supported upgrade. See USERS-UX-REWORK-03 for exact verification/handoff.
+
+2026-11-13 owner demo is running the current source-built central/DMS and a new signed
+both-module Turnstile release. All four workspace gates and post-upgrade HTTPS login,
+role boundaries and cross-service capabilities pass. Both owner-authorized demo licences
+end 2027-11-13 at 23:59:59 UTC. All 11 deployed module-POC services run with retained data;
+private credentials/URLs and recovery evidence are recorded by LOCAL-READY-20261113 below.
+Broader target/document-processing acceptance remains open; older live-state notes are
+historical snapshots.
+
+2026-11-11 MOD-I09 and MOD-I10 are **completed for the locally qualified module POC**.
+The artifact-only fresh installer/staff handover, all four selected profiles, restrictive
+cutovers/recovery and exact release evidence are implemented and verified. The
+[frozen record](docs/qualification/module-release-20261111.json) pins 1,339 source/test/
+tool/document files, contracts/catalogues/profiles, historical assignment revision 3,
+exact images and nine execution log hashes. All four workspace gates and focused actual
+image/browser/cutover/fresh/Docker-failure checks pass. See the
+[requirement handoff](docs/turnstile/modules/module_release_handover.md) and
+[support runbook](docs/runbooks/module-release.md). Separate Linux/Dokploy, off-host
+recovery, production distribution, real-document/capacity, corresponding-source/license
+completeness and accountable human/target acceptance remain pending under the wider
+installer gates. No live customer installation, credential or preexisting volume changed.
+Older MOD-I08/I09-next statements below describe their historical milestone boundaries.
+
+2026-11-11 MOD-I08 is **completed and locally qualified**. Current-MFA staff activation,
+atomic restrictive desired changes, supported private selected-profile cutover and coherent
+recovery are implemented. All four workspace gates pass. Eight real selected API/web
+images plus central/DMS images passed ordinary-login HTTPS/PostgreSQL add/remove/Core
+classification, interrupted archive/resume, current-epoch activation, retained setup/grants/
+trust floors and central/customer restore fences. No live customer installation or volume
+changed. Next: MOD-I09 installer and central staff handover integration. See the
+[transition runbook](docs/runbooks/module-transitions.md). Earlier MOD-I08-next notes are historical.
+
+2026-11-11 MOD-I07 is **completed and locally qualified**. Backend module capabilities
+and selected Incident/Risk landing endpoints require current signed v2 authority, an
+installed verified release, local enablement and explicit current user read permissions.
+Company-only permission catalogue v2, owning migrations/SQL guards, private audited reader
+grants and selected web navigation are implemented. All four workspace gates pass, and
+all four actual API/web image profiles pass normal-login HTTPS/PostgreSQL browser journeys.
+Existing installations/volumes were preserved. Next: MOD-I08 staff activation, module
+change/removal and recovery transitions. See the [module access runbook](docs/runbooks/module-access.md).
+Earlier MOD-I07-next notes are historical.
+
+
+2026-11-11 MOD-I06 signed module decisions are **completed and locally qualified**.
+Strict v2 central issuance, permanent Admin/MFA version fences, verified selected-image
+release context and durable SQL/private-file recovery pass real container HTTPS/PostgreSQL
+checks. The selected Incident image's API evaluator, store and shipped reporter pass the
+binding/ordering/expiry/denial/replay/restore matrix; two isolated v1 customer clusters
+verify compatibility and independent credentials. All four workspace gates pass, including
+database and storage integration. No existing customer installation was migrated or
+upgraded. Next: MOD-I07 capabilities and user-permission-guarded placeholder entries;
+reviewed staff activation/cutover remains MOD-I08. See the
+[decision runbook](docs/runbooks/module-decisions.md).
+
+
+2026-11-10 MOD-I05 is implemented and locally qualified. Central reservations and signed
+intents now feed the combined private configuration coordinator, owning Docker initializers
+and durable secret-preserving file plans. Actual central HTTPS/PostgreSQL plus selected
+initializer images verify input validation, immutable reserved bootstrap, configuration/access
+initialization, interrupted writes/retries, expiry/renewal, independent/partially paired
+products, duplicate setup, existing-state refusal, private modes and changed-assignment
+fences. All four workspace gates pass, with final isolated target-path verification passing.
+See the [intent/preparation runbook](docs/deployment/thaarei_ecosystem_guide.md#registration). No live customer
+configuration, authority, database or deployment changed. MOD-I06 signed module decisions
+is next; broader installer automation and production rollout remain their owning work.
+
+2026-11-10 MOD-I04 selected module artifacts are implemented and locally qualified.
+Incident/Risk placeholder entries are composed from the shared exact profile; unselected
+implementation is removed before compilation and API output is assembled from an explicit
+allowlist. The private local-bundle adapter binds signed results to source/catalogue/
+profile/platform, verifies/reuses exact artifacts and publishes only central references.
+Central exports approved build requests and shows matching verified package availability
+without granting module access. All four workspace gates pass. Four linux/amd64 profiles
+(Core, Incident, Risk, both) built eight real API/web images and passed non-root/read-only
+production startup, closed business access, exclusion/inventory/archive, signature,
+substitution, load/reuse/renewal checks. See the [delivery runbook](docs/deployment/thaarei_ecosystem_guide.md#delivery).
+No live migration, deployment, customer configuration or module authority changed.
+Next: MOD-I05 central-first installation intent/private preparation; MOD-I06/07 own signed
+runtime enforcement/navigation. Earlier MOD-I04-next statements are historical.
+
+2026-11-09 MOD-I03 central per-product assignment is implemented and locally verified.
+Turnstile product pages now link to published-catalogue selection with fixed Core entries,
+keyboard checkboxes, required/optional dependency graph/text equivalents and explicit
+full-set confirmation. Immutable draft/approved snapshots, product-bound pointers,
+current revisions and atomic receipt/audit preserve independently approved desired state.
+The view separates desired selection from unknown observed/effective module authority;
+ordinary v1 product approval never becomes module activation. All four workspace gates
+pass, including real central HTTPS/PostgreSQL/Chromium and existing integration suites.
+See the [assignment runbook](docs/deployment/thaarei_ecosystem_guide.md#assignment). No live migration,
+deployment or customer module authority changed. Next: MOD-I04 selected artifact builds
+and exclusion/inventory verification. Earlier MOD-I03-next statements are historical.
+
+2026-11-09 MOD-I02 central catalogue administration is implemented and locally verified.
+Staff can import separately signed code metadata, draft Core/Individual classification,
+review dependency impacts, export an exact build plan and publish an immutable version
+with matching release evidence. Atomic receipts/audit and current Admin MFA protect
+mutations; Operator/Viewer have read access. All four workspace gates pass, including
+real HTTPS/PostgreSQL/browser catalogue checks and the full database/storage suite.
+No live central migration/redeployment, production catalogue seed or customer activation
+change occurred. See the [catalogue runbook](docs/deployment/thaarei_ecosystem_guide.md#catalogue).
+Next: MOD-I03 per-product assignment and dependency selection UI. Earlier MOD-I02-next
+statements describe the preceding milestone.
+
+2026-11-09 MOD-I01 shared foundation is implemented and verified. The new
+`@thaarei/module-catalog` package supplies strict metadata/assignment/intent/v2 payloads,
+dependency proposal/confirmation, portable canonical hashing and active removal closure.
+Twenty focused tests and all four workspace gates pass. The fixed foundation cannot be
+omitted/demoted; no application issuer, customer activation, database or UI was changed.
+The [contract reference](docs/turnstile/modules/module_contracts.md) freezes source-backed
+foundation inventory and ownership/retry/compatibility rules. MOD-I02 central catalogue
+persistence/intake/UI is next. Earlier planning-only statements below are historical.
+
+2026-11-09 central module planning is complete. The
+[module specification](docs/turnstile/modules/module_delivery_specification.md) defines
+MOD-R01–20; the [implementation plan](docs/turnstile/modules/module_delivery_implementation_plan.md)
+sequences ten increments with central catalogue/assignment, dependency visualization,
+selected artifact delivery and signed customer activation. Astra reviewed the draft;
+the parent resolved its high mixed-transition and medium expiry/read findings in the
+[review record](docs/turnstile/modules/module_delivery_review.md). All four workspace
+gates and final document checks pass. MOD-I01 is the first implementation task and
+extends the installer's IA-I01; selected packaging/intent gates precede IA-I02/03 freeze.
+Earlier proposals deferring central entitlements from the POC are superseded. No module
+application implementation, customer deployment or runtime mutation occurred.
+
+2026-11-07 installation automation planning is complete: the proposed
+[specification](docs/deployment/installation_specification.md) defines IA-R01–18 and the
+[implementation plan](docs/deployment/installation_implementation_plan.md) sequences nine
+increments, with proposed technical design in architecture.md. All four workspace gates
+pass. Installer implementation starts with IA-I01 baseline/contract review and the
+remaining real-document evidence gate; no installer or target rollout was implemented
+by this planning task. The existing local installation remains unchanged.
+
+2026-11-07 processing follow-up: owner ran the prepared processing command successfully.
+Live checks now confirm four authorized worker roles, enabled admission policy, healthy
+publisher/scan/extract/heavy/scanner/broker containers and HTTPS API/processing readiness
+200. The installed Turnstile machine service reads DMS capabilities with full deployment
+access, PDF/PNG/plain-text formats, secure-only/searchable profiles and English. Central
+receives independent approved/acknowledged reports and DMS processingReady=true within
+the configured reporting cadence. Company setup remains complete and access open.
+Installer planning has no remaining configuration blocker. Real-file document smoke
+verification on this fresh installation and production/clean-host/recovery acceptance
+remain explicit checks to include in the plan. Older unconfigured-processing statements
+below describe earlier snapshots and are superseded by this update.
+
+2026-11-07 live manual-testing update: owner completed central registration, pairing,
+approval, customer verification/login and company setup. Protected administrator handover
+and release opening are complete. Both product approvals are acknowledged and both
+independent reporters have recent central records. A live invocation of the installed
+Turnstile capabilities service authenticates to DMS and validates tenant/application
+bindings with deploymentAccess=full. This is a machine/service-path check, not a new
+end-user controller/browser test. DMS document processing remains unconfigured in this
+installation: no worker identities or processing services, no admission policy, and
+capabilities advertise empty format/profile/language lists. The prepared processing
+setup step and manual document journeys remain pending. Turnstile document business
+workflows and actual production-host rollout also remain separate future work.
+Earlier dated empty-installation statements below are historical snapshots.
+
+2026-11-07 11:58 UTC update: DMS-I20 frozen local qualification run-5 passed and
+the owner-authorized fresh local manual registration environment is running. The old
+selected test containers and three selected data volumes were removed; unrelated
+projects were preserved. Central has zero clients/installations/products, customer has
+zero documents/members/organization units and incomplete empty v2 setup. Exactly one
+unverified bootstrap account exists in each authority, with two verification messages
+in local Mailpit. Neither product is paired or approved. Start with the ignored private
+.dms-manual-testing-20261107/START-HERE.md and the committed manual checklist.
+Local qualification is complete; manual, customer-release and target acceptance remain
+pending. Statements below describing the stopped pre-reset stack are historical.
+
+2026-11-07 assessment update: development now includes merged PR #15 (4d4810e),
+with all sixteen reviewed-head push/PR checks successful. Source/local qualification
+evidence confirms central/DMS/Turnstile activation and authentication integration.
+The older running-installation statements below are historical: the current Docker
+engine has three exited owner-test application containers with missing WSL bind mounts
+and no running Turnstile stack. No owner-installation restart, reset or cutover was
+performed by INTEGRATION-STATUS-01. DMS-I20 final frozen qualification and actual
+central/customer target rollout remain open; Turnstile document business features
+remain unimplemented. See the assessment handoff under Active work.
+
+Control-plane delivery has started with TCP-I01 owner-adopted scope/architecture on
+2026-11-06. The remaining policy defaults are accepted. TCP-I02 central foundation/staff access now
+passes local source and production-image HTTP verification. TCP-REVIEW-02 fixed both
+review findings. TCP-I03 registry/policy records now pass local source and rebuilt-image
+HTTP/PostgreSQL verification with a closed pairing boundary. TCP-I04 machine protocol and
+private client now pass all four workspace gates and actual source/production-image
+HTTP/PostgreSQL verification after Docker restoration. TCP-I05 DMS integration now passes all
+four workspace gates and source/production-image HTTPS verification after merging the owning
+DMS foundation through development. TCP-I06 Turnstile integration now passes all four
+workspace gates, real browser/private identity journeys and joint-product HTTPS/reporting
+checks. TCP-I07 usage/health reporting now passes all four workspace gates and rebuilt
+central-image HTTPS verification. TCP-I08 isolated local implementation/qualification now
+passes its frozen workspace, container, recovery and browser gates; target release/acceptance
+remains deferred. See the current TCP-I08 handoff below.
 
 The owner-authorized 2026-11-04 fresh local reset has now replaced the earlier preserved
 installation: all seven Compose services are recreated, with fresh database/storage and
@@ -31,8 +332,10 @@ registration/scope checks, bound transactional enrollment, local-first disableme
 bounded audit. The typed DMS client and product-permission-protected capability request
 use a separate machine token over real HTTP. Login/recovery/reset and safe session/logout UI,
 bounded security telemetry and Mailpit development/pilot configuration are implemented.
-Real client provisioning/enrollment,
-document/processing/business capabilities and source/data migration remain incomplete.
+DMS-I01–I19 now implement and locally qualify standalone identity, document and processing
+capabilities, coherent backup/recovery and controlled disposal. Customer onboarding, customer
+release and target acceptance (I20), Turnstile business functionality and source/data migration
+remain pending their authorized scopes.
 A persistent local-development authentication installation has now been provisioned and
 passes live login/recovery/logout and machine-enrollment/capability checks. Earlier feature
 verification used disposable fixtures; no real customer has been onboarded.
@@ -113,6 +416,4467 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+DV-PUBLISH-01 — **In progress** (owner Codex, 2026-11-18).
+Prepare the Documents implementation, audit fixes and redesign for publication on
+development and the owner-requested development-to-main pull request. Keep the
+separate portal prototype and local runtime files out of the commit.
+
+DV-NAV-01 — **Completed** (navigation explanation, owner Codex, 2026-11-18).
+Confirmed that the local validator role and installation profile govern the global
+sidebar. Structure and Settings routes remain in development. Both local sign-in
+hosts respond. No permissions or application code changed for this review.
+
+DV-UX-01 — **Completed** (owner Codex, 2026-11-18).
+Documents now has a wider library, expandable exact filters, mobile library rows,
+direct search navigation and responsive document tabs. Uploads, Batches and Contribute
+put saved operations beside the active workflow. Version, processing, content,
+application access, lifecycle, recovery, Activity and Connection views use the shared
+document status and data patterns. Validation has a selectable coverage table and
+request inspector. Detail editing and reference/restore sheets keep action buttons
+visible and protect dirty drafts with the shared confirmation controls. The design
+gallery and design guide cover the reused patterns.
+
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed. The
+standard batch/version/upload, lifecycle/Contribute and native processing/OCR/search
+browser suites passed. The versions suite now exercises keeping a dirty document
+draft through the discard dialog. Fresh local validator checks cover eight workspace
+sections and seven detail tabs at 1440, 390 and 320 pixels, including mobile filtering,
+operation selection, extracted sample content and explicit draft discard. The existing
+local validator server serves the current compiled web build and retained synthetic data.
+
+DV-LOCAL-01 — **Completed** (owner Codex, 2026-11-18).
+The source-built validator workspace remains running on a dedicated HTTPS host at
+the existing loopback ingress (23600), with signed storage on 23608 and a separate
+disposable PostgreSQL database, Mailpit and native processing fixture. The source
+digest matches DV-AUDIT-02. Fresh normal login, the 34-item checklist, private-route
+denial from public ingress, and `Local validation example.csv` through upload,
+native assessment, extraction and indexing passed. The retained Titan demo
+still responds on its existing host. Its retained data and assignments were preserved.
+The ignored mode-0600 login handoff and launcher live in the local validation fixture
+directory. The isolated data is temporary. The application source was untouched.
+
+DV-AUDIT-02 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+Uploads shows signed PUT byte progress with the existing Progress component and
+keeps the visible upload and run polling until processing and indexing settle.
+Validation and Connection reuse ordinary execution permissions, including READ
+when required. Explicit no-READ Contribute eligibility remains independent.
+The real product/DMS browser matrix verifies draft and execute denials for upload
+refresh, complete, cancel and batch create, admit, close and cancel, with independent
+product restrictions, both restricted, closure, decision/licence expiry and renewal.
+Eligible saved commands recover under their original IDs. Updated the generated
+contract, coverage register, design guide, operational runbook and qualified image record.
+
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed, with the
+pinned native OCR runtime enabled for integration. Batch/version/upload, lifecycle/
+Contribute and processing browser suites passed in their separate standard fixtures.
+An exploratory combined run shared document version state between suites and failed
+the lifecycle fixture's initial-version expectation. The signed Core rerun passed
+after a fixture startup failure in the initial attempt. It verified prior-client
+recovery, first-validator handover, partial-role projections, and a disposable
+PostgreSQL restore with the marker, legacy rollback fence and receipt pruning.
+The [evidence](docs/qualification/documents-audit-20261118.json) pins the current
+source and images. Customer acceptance, coordinated database/object recovery on
+the reviewed target and the optional structured runtime remain separate.
+
+DV-AUDIT-01 — **Completed** (audit, owner Codex, 2026-11-18).
+An independent reviewer traced DV-I01–08 against the plan, specifications, owning
+handlers and coverage register. The primary review confirmed these open items:
+
+- DV-I03/I07 and DV-R13. Upload status polling stops when DMS marks the upload
+  complete, even if extraction is queued. Processing history initially returns
+  `NOT_INDEXED` and that also stops the Uploads view's history polling. A slow
+  searchable upload needs a focused browser test for processing and index updates
+  while the Uploads view remains open. Current batch creation uses secure-only text.
+- DV-I02/I08 and DV-R10–11. Validation and Connection use single permission
+  checks for some compound actions. A role with reprocess and validate but no
+  Documents READ can see `Action permitted` while execution correctly denies.
+  Verify the projections with partial company roles and the ordinary/Contribute
+  action requirements.
+- DV-I03/I05 and RF-06. The real HTTP restriction matrix varies both products for
+  completion. Refresh, cancel and batch controls share full-access guards and need
+  equivalent runtime evidence. Close the pending RF-06 entry with that evidence and
+  refresh the outdated DV-R12 runtime wording in the coverage register.
+- DV-I03 and DV-R02. The signed PUT exposes busy and completion states. The Uploads
+  view lacks transfer progress while bytes are in flight.
+
+The contract and fixture baseline (DV-I01), assessed restoration of historical
+versions and conflict/replay journeys (DV-I04), and lifecycle/no-READ Contribute
+with independent fixture-owner verification (DV-I06) have matching evidence.
+The other increments retain their verified paths subject to the findings above.
+The independent reviewer reran contract drift and six focused contract tests. The
+primary review reran `pnpm check`, `pnpm build`, `pnpm test`, and `pnpm test:integration`
+with pinned native OCR enabled, all passing. The archived selected Core release log
+and recorded source digest were verified against the current product source. Only
+this handoff changed during review. Customer acceptance, coordinated database/object
+recovery on the reviewed target and optional structured runtime remain separate.
+
+DV-I08 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+The protected Validation checklist covers all 34 inventory entries and records the
+latest actual HTTP status, request ID and bounded outcome per operation during the
+current authorized Documents visit. Live identity and admission policy diagnostics
+use the fixed owning endpoints. The coverage register records real product evidence
+for the 32 consumer operations and assigns identity, enrollment and transfer evidence.
+
+`pnpm test:release:documents` passed for the exact signed Core API/web bundle and
+DMS image. The test ran packaged migrations from the captured legacy API through
+the candidate, repeated bootstrap and verified the legacy web bundle, retained
+records, role write fencing and the packaged private first-validator command.
+An actual PostgreSQL archive restored matching setup, identities, grants, documents
+and operation IDs. Rotation of the independent marker closed Documents access with
+authentication ready. The disposable clone used fixture-signed approval to resume.
+The candidate retained the v3 barrier, resolved receipt and unresolved older-marker
+draft. The old API failed database readiness. Aged receipts exercised payload
+compaction, tombstone pruning and refusal to replay.
+
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed with
+the opt-in native image and PDF OCR integration cases enabled. The Documents source
+browser, batch/version/upload, lifecycle/Contribute and native processing suites
+passed, including artifact preflight allow/deny. The [release record](docs/qualification/documents-release-20261118.json)
+pins the exact Core and legacy image identities. The [handoff](docs/runbooks/documents-validation.md#coverage-and-release-qualification)
+records the separate customer image, database/object recovery and optional structured
+qualification.
+
+DV-I07 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+Processing and Content support the current or a selected version, retained runs, active
+results, source coverage, warnings and index status. The browser verifies artifact
+bytes, schema and source identity, rechecks result authority after transfer and pages
+the visible text, tables and OCR data. Search supports exact filters and English text
+and links to the matched source. Ordinary uploads expose the current DMS formats and
+profiles. Migration 0045 binds owner reprocessing receipts to the selected version
+and accepted run.
+
+`pnpm test:browser:documents:processing` passed with Chromium, customer Nginx,
+PostgreSQL, DMS, SeaweedFS, ClamAV, RabbitMQ and production Python workers with
+pinned Tesseract. It verified native text/CSV, PNG OCR, partial mixed-PDF extraction,
+exact and English search, cursor binding, retained run selection, lost-reply retry,
+concurrent-run rejection and failed replacement preserving the active result and
+original bytes. A corrupted artifact and a transfer held across deletion never
+displayed content. The DMS integration also exercised grant revocation and source
+invalidation at its owning boundary.
+
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed. The
+workspace integration enabled the native image and PDF OCR cases, and the isolated
+pinned OCR suite passed 13 tests. Both API integration suites passed after final
+code changes. The optional structured runtime, exact selected product images and
+customer target acceptance remain separate qualification.
+
+DV-I06 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+Recovery supports known document IDs, recorded lifecycle operations, reviewed soft
+deletion and logical restore with native reassessment status. Application access replaces
+grants for provisioned application IDs. Activity reads application and document audit
+streams within the owner's scope. Contribute uses owner-supplied revisions and file
+descriptors for shared metadata, references and secure-only text versions. Migration
+0044 persists the operation mode and lifecycle document binding. Contribution receipts
+record acknowledgement and keep the owner-authorized publication checks separate.
+
+`pnpm test:browser:documents:lifecycle` passed against real Chromium, customer Nginx,
+PostgreSQL, DMS, SeaweedFS and native assessment. The fixture enrolled a separate DMS
+owner that verified metadata and reference changes and the contributed original's
+SHA-256. The Turnstile registration exercised EDIT_METADATA-only and ADD_VERSION-only
+grants, READ-only write denial, revocation, namespace ownership, forbidden reads, and
+receipt-only reload. The lost shared edit entered manual review. The owner flow verified
+lost grant and delete replies, deletion racing upload completion, retry from Recovery,
+lost restore acknowledgement, native reassessment and the restored original's exact
+bytes. The fixture advanced the restore deadline and exercised the real typed 410.
+Owner Activity distinguished download authorization and enforced audit cursor scope.
+
+`pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` and
+`pnpm test:browser:documents:batches` passed. The default suites skipped six opt-in
+DMS database tests and 24 optional processing tests. DV-I07 is next. Exact-image and
+customer rollout and acceptance remain DV-I08.
+
+DV-I05 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+The Batches workspace reviews mixed create and owned new-version manifests, transfers
+one selected file at a time, and reopens saved batches and controls. The API derives
+admissions from the immutable manifest. Migration 0043 extends the intent ledger with
+batch bindings, scoped retention and protected attachment of verified DMS resources.
+The gateway admits the batch budget on operation creation and the parser applies the
+smaller limits to other commands. The contract, coverage register and runbook are current.
+
+`pnpm test:browser:documents:batches` passed with actual customer Nginx, Chromium,
+PostgreSQL, DMS, SeaweedFS and native assessment. The fixture verified a valid 100-item
+manifest, exact and over-limit envelopes, forwarded attribution bounds, media type
+errors, pagination and whole-batch counts. It exercised wrong-file rejection, capacity
+retry, lost creation and item replies, close racing admission, cancellation readback,
+and close replay after cancellation. Published versions remained available. Stored
+deadline advancement verified protection against replacement and protected attachment of
+the batch and a second-page item. The fixture advanced the transfer expiry deadlines and
+ran actual coordinator settlement before repeating the original upload journey.
+
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed. Integration
+included the owning database suites, Nginx and the pinned storage transfer fixture.
+Six opt-in DMS database tests were skipped by the default suites. The next planned
+increment is DV-I06. Exact-image and customer rollout remain DV-I08.
+
+DV-I04 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+The typed DMS client and product API expose ordinary owned-document edits, reference
+changes, paged versions, selected originals, new text versions and assessed restore.
+Migration 0042 extends the owning operation ledger for conditional readback, stable
+version/restore replay and protected disposition. Overview and Versions compose the
+existing task sheet, table and upload flow. The generated contract, coverage register,
+runbook and architecture record the current boundaries.
+
+`pnpm test:browser:documents:versions` passed with real Chromium, PostgreSQL, SeaweedFS
+and native assessment. Two tabs retained the unsaved title and the other tab's tags.
+The fixture exercised reference changes, exact and over-limit UTF-8 edits, a lost
+committed edit reply and a divergent readback that required manual review. Historical
+download matched the original bytes. Native out-of-order results preserved the current
+pointer. Same-key restore after an intervening edit produced one new admission and
+became current after assessment.
+
+`pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed. Integration
+included the owning migrations and database suites, the actual Nginx envelope checks
+and pinned storage transfers. An initial disposable storage startup failure cleared on
+the full retry. Six opt-in DMS database cases were skipped by the default suites.
+The next planned increment is DV-I05. Exact-image and customer rollout remain DV-I08.
+
+DV-I03 — **Completed** (implementation and local qualification, owner Codex, 2026-11-18).
+Owner authorized the first real Documents upload and bounded reconciliation increment.
+Migration 0041 adds the tenant-bound Documents intent ledger with forced RLS, controlled
+runtime pruning, terminal history protection and separate payload/tombstone retention.
+Draft acknowledgement precedes dispatch. The original UUID, digest, actor and recovery
+marker bind the operation. A short lease, the activation/access lock and 100 reserved
+uncertainty slots bound retries. Current product and DMS full policy gates every public
+upload control. Expired or restored ambiguous work enters review. A protected current
+administrator can attach an independently verified DMS binding or dispose of an accounted
+outcome with a recorded reason. Intent reads do not authorize live DMS resource data.
+
+The ordinary Uploads view supports secure-only text, reopening, exact file re-selection,
+conditional PUT, complete, refresh and cancel. It reports upload, security, availability,
+processing and index separately. Available originals are fetched through the exact signed
+storage origin and verified by byte count and SHA-256 before saving. The product API and
+customer Nginx enforce the scoped byte budgets and exact transfer origin. The generated
+contract, [coverage register](docs/turnstile/documents/documents_validation_coverage.json),
+architecture and [runbook](docs/runbooks/documents-validation.md#secure-only-upload-and-original-download)
+record the API, provisioning and review boundaries.
+
+Verification on 2026-11-18: pnpm check, build, test and test:integration pass. Integration
+includes the central HTTP/browser suites, fresh owning PostgreSQL and retained access
+upgrade, actual Nginx envelope/CSP checks and real SeaweedFS browser/Node/Python transfers.
+Six existing opt-in database cases were skipped. Auth/onboarding/Settings and full
+People/Structure browser regressions pass. The normal Documents browser suite passes
+actual old/new compatibility and the new real DMS/product/SeaweedFS HTTP application
+journey. New evidence covers lost draft/begin/PUT/complete replies, conditional 412,
+a product SIGKILL after DMS commit, exact-key recovery, no replacement after expiry or
+missing/pruned IDs, verified private binding/disposition, independent and combined
+suspension, closure, licence expiry and renewal. It runs current official ClamAV and
+the isolated text assessor through the private DMS claim/candidate/result and publication
+handlers, including accepted work settling during DMS existing-reads. The original
+download matches the source exactly and the normal browser start/cancel path passes.
+Deadline/tombstone aging and an earlier recovery marker are simulated in the disposable
+ledger. Exact selected-image coordinated backup/restore and target rollout remain DV-I08.
+The final UUID normalization follow-up passes the full Documents browser journey with
+uppercase IDs and refreshed check/build/unit gates.
+
+Logs: /tmp/dv-i03-{check,build,test,integration,browser-final,auth-browser,structure-browser,
+ingress-final,native}.log. Verification used disposable installations and synthetic files.
+No live deployment, grant, credentials or existing installation data changed. Independent
+portal and DV-I01–02 work, root licence and third-party notices were preserved. No
+commit/push was performed. Next increment: DV-I04 metadata, references and versions.
+
+DV-I02 — **Completed** (implementation and local qualification; owner: Codex, 2026-11-18).
+Owner authorized compatibility, first-validator provisioning and the read-only Documents
+shell. The current-runtime contracts subpath adopts v3 while the package root preserves
+all 85 frozen v2 schemas/examples. Negotiating clients, request-local wire projection and
+owning access-transaction fences preserve exact legacy reads before activation; after
+the private monotonic barrier, legacy permission-bearing reads/writes take supported
+401/current-assets recovery. Stored rights, historical snapshots and receipt identities
+are preserved. Migrations 0039/0040 add the owning release-2 fence, explicit company-only
+permission definitions, private barrier/guards and immutable reviewed audit reasons;
+retained release-1 upgrades preserve setup/access/import/invitation/receipt state.
+The private Documents command verifies current protected administrator and active target
+sessions, custom company role, explicit permissions/revision/reason and atomic grant/
+revoke/handover/receipt/audit. Same-key replay never reapplies subsequently removed rights.
+No system role template or startup process implicitly grants Documents permissions.
+Typed, bounded server-only DMS reads use separately provisioned machine scopes and fixed
+application bindings, with authorization before and after remote calls. Read-only HTTP
+connection/policy/identity/list/detail routes, scoped parser/deadline/response hooks and
+customer Nginx 413/415/correlation/no-store handling are implemented. The foundation web
+workspace has contextual navigation, exact filters/cursor paging, safe overview, independent
+availability/ownership, complete format/admission policy display and identity/access/revision-
+partitioned transient query caching. No public mutation or operation ledger is opened.
+Verification on 2026-11-18: pnpm check, build, test and test:integration all pass for the
+final implementation. Fresh owning PostgreSQL includes 35 People/access cases and one
+retained Documents upgrade; six focused production-hook/real-HTTP transport cases pass.
+Actual customer Nginx scoped boundaries and real SeaweedFS browser/Node/Python transfers
+pass. Six existing opt-in database cases remain skipped; unchanged tasks may use Turbo cache.
+The actual hash-checked installed old bundle and new browser pass pre/post-barrier nested
+session/catalogue/member/role/access/eligible-role/invitation/import/receipt checks,
+legacy-write races, supported current-assets recovery, private proof/revision/acknowledgement-
+loss/audit rollback/concurrency/revoke/handover, ordinary validator login, real DMS reads,
+independent machine denial/outage, late local revocation and post-barrier recipient exchange.
+Final Documents browser rerun also verifies full policy display, keyboard navigation and
+320/390px layout; synthetic desktop/narrow screenshots were inspected. Full People/Structure
+and baseline auth/onboarding/Settings browser regressions pass; shared sources were unchanged
+by the final Documents-only presentation completion.
+All four actual selected API/web profiles pass startup/exclusion/archive/signature/
+substitution/reuse; every API inventory includes Documents handlers/private tool/hooks and
+migrations. The [qualification record](docs/qualification/documents-readonly-20261118.json)
+pins current source, eight images, seven gate/browser logs and focused test-source hashes.
+The [coverage register](docs/turnstile/documents/documents_validation_coverage.json),
+architecture, generated contracts, design guide and [runbook](docs/runbooks/documents-validation.md)
+record actual boundaries and provisioning. Logs: /tmp/dv-i02-{check,build,test,integration,
+browser-final,structure-browser,auth-browser,selected-images}.log; private final image
+fixtures: /tmp/dv-i02-selected-images-final-20261118. Exact selected-image Documents browser/
+upgrade/backup/restore repetition remains DV-I08; production/target acceptance is separate.
+Synthetic DMS metadata is read qualification, not file/security/publication evidence.
+No blocker remains for DV-I02. Next: DV-I03 draft-before-dispatch ledger/migrations,
+bounded reconciliation and one actual text upload/security/publication/download flow.
+No live deployment, grant, credentials or existing data changed. Independent portal/DV-I01
+edits, root licence and third-party notices were preserved. No commit/push was performed.
+
+DV-I01 — **Completed** (contracts only; owner: Codex, 2026-11-17).
+Owner authorized starting the Documents validation implementation plan. Implemented the
+first ordered increment against DV-R01–20 and RF-01–06. The isolated
+`@thaarei/turnstile-contracts/documents` export defines nine explicit company permissions,
+a separate catalogue-v3 graph, finite sixteen-command and 34-operation route catalogue,
+private grant/revoke/handover inputs, safe connection projection, typed errors, scoped
+UTF-8/envelope/forwarded budgets and bounded reconciliation/receipt states. Shared access,
+People/import/insight schema factories retain the active v2 exports and system templates;
+no runtime consumer negotiates v3 yet. Only public, platform-independent DMS validators
+are reused through a workspace dependency; no private/server implementation is imported.
+The read-only installed API capture pins 85 schema hashes and 85 checked synthetic
+payloads, exact API/web image IDs and seven web asset hashes. Six new focused contract
+cases verify legacy drift, nested v3/company-only shapes, private validator inputs,
+UTF-8/actor overhead, finite execution/deadlines, and no-READ contribution/full-access
+command policies. Old/new browser behavior and transactional barriers are not claimed.
+The generated [contract](docs/api/turnstile-documents.contract.json), synthetic examples,
+reproducible capture/generation scripts and [coverage register](docs/turnstile/documents/documents_validation_coverage.json)
+freeze operation, requirement and review-gate ownership. The register records planned
+runtime/image/target evidence separately, including contributor versus owner checks.
+`pnpm docs:documents` generates the reference; `pnpm check:contracts` checks schema,
+example, route/scope, local-reference and coverage drift. Architecture, package guide and
+plan/specification status now reflect this foundation increment.
+Verification on 2026-11-17: pnpm check, pnpm build, pnpm test and pnpm test:integration
+all pass. The contracts package passes 31 cases including the six new regressions;
+legacy People OpenAPI remains byte-for-byte unchanged. Fresh integration covered central
+HTTPS/PostgreSQL/browser, DMS/Turnstile owning migrations/privileges/auth/access fixtures
+and real SeaweedFS browser/Node/Python transfers. Six existing opt-in database cases were
+skipped. Generated references, 38 local documentation links and git diff --check pass.
+Logs: /tmp/dv-i01-{check,build,test,integration,contracts}.log. Some unchanged build/test
+tasks reused Turbo cache; new contracts and affected product build/test tasks ran.
+No blocker remains for DV-I01. Documents routes, grants, private operator execution,
+ledger schema, CSP/CORS changes, UI and deployment remain unimplemented. No live data,
+setup, credentials, existing installation, root licence or third-party notices changed;
+independent portal/planning edits were preserved. No commit/push was performed.
+Next: DV-I02 dual-contract rollout/barrier, private first-validator/provisioning, scoped
+HTTP hooks, typed read adapter and read-only Documents shell, with actual old/new bundle
+and selected-profile evidence before grants. DV-I03 owns the first real file and ledger;
+DV-I04–08 and target acceptance remain pending. Source-only contracts do not qualify
+those runtime, optional native-profile, selected-image or customer-target paths.
+
+DMS-WEB-READY-01 — **Completed** (planning readiness only; owner: Codex, 2026-11-17).
+Owner authorized addressing all six plan-review findings and making the Documents plan
+ready for implementation. Scope is planning-document corrections and concrete delivery/
+acceptance decisions; no runtime implementation, migrations, grant changes or deployment.
+All six findings now have concrete baseline decisions in specification DV-R15–20/RF-01–06,
+the eight-increment plan and architecture: staged catalogue-v3/legacy-v2 response gate
+before grants; private verified custom-role grant/revoke/handover; scoped HTTP/envelope/
+upstream budgets; draft-before-dispatch IDs with finite reconciliation/unresolved/manual
+disposition and retention; known-ID no-READ Contribute with receipt-only confirmation;
+full-access-only public mutations in both products. Foundation packaging is selected;
+no additive DMS directory/effective-rights API or public completion exception is required.
+The documentation index now identifies the implementation-ready baseline. Exact budgets,
+permission names, compatibility activation/concurrency/rollback, private handover,
+reconciliation deadlines/retention/capacity and contribution visibility are recorded in
+architecture; the specification owns requirements and RF-01–06 acceptance mapping.
+Verification on 2026-11-17: all 34 OpenAPI operations retained exactly once, 20 unique
+requirements, six review dispositions in both documents, eight increments, local links,
+settled architecture constraints, scoped Biome and git diff --check pass. All required
+gates pass: pnpm check, pnpm build, pnpm test and pnpm test:integration. Build/unit tasks
+used Turbo cache; fresh integration covered baseline central HTTP/PostgreSQL/browser,
+owning DMS/Turnstile database and actual storage/browser/Node/Python fixtures. Existing
+opt-in skips remain; these do not qualify the future Documents UI/native/target paths.
+No code, schema, grant, live data, deployment, root licence or third-party notice changed.
+Other workspace/portal edits were preserved. No planning blocker remains. Next authorized
+implementation task: DV-I01 executable contracts/route-permission matrix, compatibility
+fixtures and evidence register, followed by gated DV-I02–03 first-validator/read/upload/
+status/download. Runtime delivery and deployment still require their own implementation
+scope; this task made the plan ready and did not start them.
+
+DMS-WEB-REVIEW-01 — **Completed** (review only; owner: Codex parent; independent reviewer: review
+sub-agent, 2026-11-17). Owner requested a sub-agent review of the Documents validation
+plan for issues/gaps. Scope: independent source-backed review, parent disposition and
+planning corrections only; no runtime implementation, schema/grant or deployment change.
+Independent read-only review completed with five findings, all parent-verified: high
+old-client session/People compatibility when adding permission names; medium recovery
+after upstream receipt expiry, independent mutation-without-READ UI coverage, public
+upload completion restricted at DMS as well as Turnstile, and missing scoped product
+request-body limits. Parent additionally confirmed a first-validator grant bootstrap gap:
+ordinary role management cannot grant permissions the actor does not hold; existing
+administrator/module-reader private tools do not cover all proposed Documents actions.
+Recommendations: explicit old-web/new-API rollout before granting; bounded reconciliation
+plus durable unresolved/key tombstones; deliberate no-READ flow/evidence scope; preserve
+public restriction or design both-service completion changes; scoped request/ingress
+budgets and typed size errors; reviewed private first-validator handover. The complete
+34-operation inventory and previously acknowledged directories/CSP limitations stand.
+Plan/specification/architecture remain unchanged by this review; these are proposed
+corrections for DV-I01–03/DV-I06, not implemented fixes. Verification on 2026-11-17:
+pnpm check, pnpm build, pnpm test and pnpm test:integration pass; build/unit tasks used
+Turbo cache, and fresh integration included central HTTPS/PostgreSQL/browser, owning
+DMS/Turnstile database and real storage/browser/Node/Python checks. Existing opt-in skips
+remain; no new Documents runtime/browser or optional-profile qualification is claimed.
+Scoped tracker Biome and git diff --check pass. Only this tracker entry was changed;
+all other workspace/portal edits were preserved. Next: incorporate the six findings in
+the proposed documents before DV-I02 implementation, deciding the no-READ UI and public
+restricted-completion scope explicitly. The review is complete; the proposed fixes remain
+outstanding. Parent owns this progress entry.
+
+Subsequent disposition: DMS-WEB-READY-01 resolves all six findings in the planning baseline
+and acceptance gates. The review above remains the original source-backed finding record;
+runtime safeguards are future DV-I01–03/DV-I06 work, not completed implementation.
+
+DMS-WEB-PLAN-01 — **Completed** (planning only; owner: Codex, 2026-11-17).
+Owner requested analysis and a plan for a Documents sidebar/workspace in Turnstile 360
+that integrates and validates the exposed DMS core API. Scope is source-backed endpoint,
+contract, permission, integration and test inventory plus a phased UI/verification plan;
+implementation, live data changes and deployment are not authorized by this planning task.
+Source review is complete: all 34 public operations are mapped, including 32 consumer
+operations, service identity and the separate enrollment boundary. Draft specification
+and eight-increment implementation plan are in docs/turnstile/documents; architecture.md
+contains an explicitly proposed technical boundary. Confirmed gaps include capabilities-
+only token/client integration, absent document user permissions, small response bounds,
+strict transfer CSP, missing upload/batch/trash/application directories and no effective
+shared-rights projection. Existing private worker/operator/identity interfaces remain
+separate. Primary RFC 9110/OWASP upload references were researched. The documentation
+index links both proposed documents. Verification on 2026-11-17: exact 34-operation
+OpenAPI/table comparison, local document links/architecture anchor, scoped Biome and
+git diff --check pass. All four required workspace gates pass: pnpm check, pnpm build,
+pnpm test and pnpm test:integration. Build/unit tasks used Turbo cache; integration
+includes fresh central HTTP/PostgreSQL/browser fixtures, owning DMS/Turnstile database
+checks and actual SeaweedFS/browser/Node/Python transfer verification. Existing opt-in
+cases were skipped (three enrollment and three standalone cases); this is not new
+Documents browser, optional native-profile or production-target qualification.
+No runtime implementation, schema/grant change, customer deployment or existing live
+data change was made. Other portal-refresh edits were preserved. No planning blocker
+remains. Next, after owner adoption, start DV-I01 scope/permission/contract/packaging
+freeze, followed by DV-I02–03 Documents reads and real upload/status/download slice.
+
+WORKSPACE-PUBLISH-12 — **Completed** (owner: Codex, 2026-11-14).
+Owner requests committing all pending workspace changes and pushing to GitHub. All 148
+pending source, migration, contract, fixture and documentation files were committed as
+`c50a1809ec9421ee07d58b6547644cf23ecfe282` and pushed to `origin/development`.
+The branch was synchronized with its remote before publication; `main` was untouched.
+Staged whitespace/content checks pass: no local credentials, private runtime files,
+private-key literals or oversized files were included. The runtime source still matches
+the verified deployed digest recorded under STRUCTURE-IMPLEMENT-11; its four workspace
+gates and People/auth/onboarding browser results were reviewed, with no runtime changes
+requiring a repeat. Ignored deployment evidence and credentials remain local. This
+handoff is recorded in a separate documentation commit; no pull request was requested.
+
+STRUCTURE-IMPLEMENT-11 — **Completed** (owner: Codex, 2026-11-14).
+Owner authorizes implementation of STRUCTURE-DESIGN-10. Deliver the scoped hierarchy
+loading/cache adapter, chart-first workspace with outline/search/focus/breadcrumbs,
+overview plus guarded unit task sheets, legal creation/move/deletion affordances,
+existing permission-gated Members access drilldowns, gallery/docs and real validation.
+Preserve scoped server authority, command revisions/keys, lost-acknowledgement recovery,
+draft and access-change protections; do not reuse unrestricted onboarding data. New
+unit-wide insights/audit projections and export/import/saved views remain separately
+sequenced enhancements unless required to complete the core UI correctly.
+Milestone: complete scoped hierarchy query/model, chart/outline/search/focus workbench,
+responsive overview and explicit unit task forms are implemented and type-check. The
+loader publishes only complete same-revision/access-revision batches; five focused tests
+pass, including the actual request transport at the 101-unit boundary, cancellation,
+context promotion, mixed revisions and malformed pagination. Forms preserve captured
+commands/proofs/receipt readback, use the shared task discard guard, constrain creation
+and move choices and provide explicit stale-context reconciliation. Root-create uncertain
+recovery now reads the scoped hierarchy instead of an unsupported root detail route.
+Browser milestone: the complete People HTTPS/PostgreSQL/OIDC journey passes with the new
+Structure UI (`/tmp/turnstile-structure-browser4.log`), including actual committed-response
+loss, before-forward transport failure/review of the same command, creation/rename/delete,
+scoped child creation, reviewed moves, dirty cancellation and phone navigation. Review
+found unit names clipped by the shared Button's default height; card/row variants now
+preserve readable names. Recovery itself correctly refreshed the cache. The native camera
+supports the new scoped presentation without changing onboarding authority. Added optional
+pointer/touch move handles after the click path passed; drops open the same draft/review
+and cancel/invalid drops never write. The fixture gallery and architecture/design guidance
+are updated. Twenty-one focused hierarchy/affordance/camera/layout/model cases pass,
+including the maximum 500-node read boundary. Expanded final browser validation covers
+drag and actual HTTP paging across 100 units. All four workspace gates pass: `pnpm check`
+(`/tmp/turnstile-structure-check-final.log`, plus the final test-harness check in
+`/tmp/turnstile-structure-check-handoff.log`), `pnpm build`
+(`/tmp/turnstile-structure-build-final.log`), `pnpm test`
+(`/tmp/turnstile-structure-test-final.log`) and `pnpm test:integration`
+(`/tmp/turnstile-structure-integration.log`, real PostgreSQL/HTTP and storage).
+Final People (`/tmp/turnstile-structure-browser-handoff.log`), auth
+(`/tmp/turnstile-structure-auth-browser.log`) and structured onboarding
+(`/tmp/turnstile-structure-onboarding-browser3.log`) browser suites pass. The extra
+onboarding check exposed stale ongoing-Settings assertions and missing identity setup in
+its fixture; it now exercises the canonical Structure UI and owning administrator handover
+without pre-seeding the fresh onboarding organization. Production authorization is unchanged.
+Deployment: source digest `61506f2e664e27e49a3f39bdeeb2f7c822872e682b9650fa9a2fd4ff932a3b32`,
+profile `ea1bc121de9dc52697e02a160c777d760efccadf553c75eb9e2696fdbc3a739a`, signed release
+`40aaf5da986cb49b572cb3daf3a95c46b704fc3c34a50d7ded57ba8476cb5a98` is live.
+API/reporter image `sha256:8b6748f8c75f887f6943bb0c1466c3722ea5203a20ee64a7bc3c71a6e0ade481`;
+web image `sha256:a3e1a9fc81b12e4173ad0deb5c4cb1afff127da6e575bd4be45730ab33278b66`.
+The supported cutover completed with unchanged identity/setup/local-grant fingerprints;
+normal administrator login and deployment `full`/`approved` pass. Private release evidence
+is under ignored `.dms-titan-20261112/structure-redesign-20261114`; cutover backups/journal
+remain outside the checkout at `/home/dev/.local/state/thaarei-structure-redesign-20261114-cutover`.
+Retained comparison passes for two members, six roles, one invitation, two non-root units,
+organization context and no import jobs. Only volatile identity verification times are
+excluded, with exactly the two expected release close/open Access revisions verified
+(32 → 34); saved permissions and business records are equal. Deployed ingress SPA/cache/
+missing-chunk/security-header checks pass. Direct shared-browser checks at 1440×900,
+1280×800 and 390×844 cover chart/outline/search, branch focus/reset, overview, legal action
+states, rename keep-editing/discard, phone full-height creation/overview sheets and the
+filtered Members link. Local view/search controls add no hierarchy reads; no horizontal
+overflow or visible errors remain after loading. No live business writes were performed;
+retained comparison passes again after review. The owned preview tab is closed.
+Handoff: the accepted core redesign is complete and deployed. Optional unit-wide access
+insights/audit projections, export/import and saved views are separate future enhancements;
+they require their own scoped contracts and server authorization rather than inferred metrics.
+
+STRUCTURE-DESIGN-10 — **Completed** (owner: Codex, 2026-11-14).
+Owner requests a full review and redesign recommendation for Structure, emphasizing
+visual hierarchy/chart presentation and the quality established in Users. Scope:
+inspect the live scoped Structure page and its subforms, reconcile existing chart and
+command capabilities, research relevant hierarchy patterns, and prepare a reviewable
+interactive concept plus an ordered implementation/validation plan. This task is design
+and review; product implementation/deployment is not yet claimed. Preserve canonical
+organization/site/department rules, scoped authorization and reviewed command recovery.
+Live review covered Chart/Outline and rename/create/move/delete subforms at 1280×800
+and 390×844, without submitting business mutations. The completed-workspace route uses
+the separate CSS scoped outline/chart renderer rather than onboarding's full pan/zoom
+chart. Repeated headings consume canvas height; opening the editor narrows/reflows the
+chart and stacks above it on phones. Site creation offers invalid types below a site;
+move choices include self/descendants; known non-leaf deletion still offers review.
+The server remains authoritative and rejects invalid changes; these are affordance gaps.
+Scoped list reads are capped at 100, organization at 500 nodes/8 levels. A complete chart
+must assemble revision-consistent authorized pages and identify ancestor-only context;
+never reuse the unrestricted onboarding snapshot or infer hidden units. Research covers
+SAP company structure/network-graph navigation, Google Resource Manager move inheritance
+and Entra delegated scopes. The current editor also resets typed input on action switches
+and Cancel bypasses the Close guard; draft protection is part of the core recommendation.
+The [interactive concept and full review](docs/turnstile/structure/structure-redesign-concept.html)
+contain seven Before/After findings, reference links, component boundaries, eight delivery
+steps and acceptance scenarios. Scope the first increment to consistent authorized data,
+chart/camera/navigation and guarded forms; reuse existing Members coverage filters/access
+inspection before adding unit-wide insights/deletion capabilities/structure audit contracts.
+No new domain types, employee reporting lines or extra UI framework are proposed.
+Concept navigation/search/ancestry/overview/move review/draft back/collapse/empty/width checks
+pass (18 checks each at 728, 390 and 320 pixels), with light/dark visual review. A discovered
+prototype collapse/expand label mismatch was corrected and the interaction checks rerun.
+Required `pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` all pass;
+unchanged build and unit tasks reuse valid Turbo outputs. Integration exercised real
+disposable HTTP/PostgreSQL suites (including 34 People cases) and authenticated SeaweedFS
+transfer boundaries. Logs: `/tmp/turnstile-structure-design-check-final.log`,
+`/tmp/turnstile-structure-design-build.log`, `/tmp/turnstile-structure-design-test.log`,
+`/tmp/turnstile-structure-design-integration.log`. Final artifact Biome and `git diff --check`
+pass. Owned live-review tab closed; no customer data, product source, contracts, database,
+accepted architecture or deployment changed. The concept was rendered inline in the thread.
+Handoff: proceed with the proposed scoped data/chart/form increment when implementation
+is requested, then insights and release validation; this review does not mark those features
+implemented. No review blockers remain. Existing dirty work and the signed release are
+preserved.
+
+USERS-QUERY-CACHE-09 — **Completed and deployed** (owner: Codex, 2026-11-14).
+Owner reports full-page loading when switching Users subtabs and asks for proper React
+Query caching/invalidation. Scope: trace route/loading boundaries, keep the Users shell
+stable, adopt authorization-scoped data caching and targeted invalidation, preserve live
+authority/draft/security behavior, and validate navigation/network behavior and mutations.
+Implemented: TanStack React Query 5.107.1 memory cache for People/Structure reads, keyed
+by subject/live grants/caller revision/full canonical query URL; 30-second freshness,
+five-minute unobserved retention and no retries/persistence. Users shell stays visible;
+cold content and background updates have separate local feedback. Live session/deployment
+checks remain uncached; setup/modules alone can be reused for rapid verified Users switches.
+Owning writes/global Access revisions/import progress invalidate related reads and cancel
+preceding transports to reject late old replies. Draft and uncertain-write recovery stay
+under their existing owners. Nine focused cache/navigation cases pass, including aborted
+transport after permission loss and late replies after an intervening write. Files: App,
+WorkspaceLayout, People query scope/cache/events/shared loaders and tab/activity/import
+consumers; pinned dependency/lock/notices, pure regression tests, real browser journey,
+architecture and fixture-only gallery/design guidance.
+Verification milestone: final pnpm check/build/test and pnpm test:integration pass; all
+required container/runtime checks are available. Expanded real HTTPS/PostgreSQL browser
+journey passes: delayed live session preserves header/nav/table, fresh tab revisits add no
+People requests, explicit Reload fetches, edits/role references/activity/import jobs update,
+and independent permissions, lost acknowledgements, session loss, identity switches and
+draft recovery pass. The required integration run includes all 34 People database cases.
+Signed release 92a15a98033100ad2eba051a2c1fd16af6f7d9d3605f11667fd6f67d1a5e76b6 is
+built/published, backed up, cut over, rebound, approved, activated, verified and opened.
+Profile 72b1ea7f00c9217dd1d4fa757d16d6fc557189481cdce24a612493af5e904cec;
+source da878140178bb77080352657faff101ef7b89cc6e98f4d6bb0f18bef18178d2c matches the
+current inventory; API sha256:6c3e29880d0fb16145efa9d0fcaec261b31fa569bc45da9d2c6ea1af6a4a9b61
+and web sha256:e64de6b77ecca9e49c3d2f23ce9f23edcd536fb3dc4f53083251cf1890dbd4f6.
+Final live validation: eight switches across all four tabs preserve the identical visible
+header, no whole-page loader or alerts, one document navigation and zero additional
+People reads on the warm round. Live session/deployment reads still occur per switch.
+Delayed live session preserves header/nav/previous table; delayed manual refresh keeps
+both member rows visible with Updating members feedback and completes without alerts.
+Ingress no-store/immutable-asset/304/missing-chunk/security checks pass. Compared saved
+members/invitations/roles are identical apart from volatile identity verification time;
+live counts remain 2 members, 1 invitation, 6 roles, 2 units and 0 import jobs. Deployment
+access is full; headerless catalog compatibility remains intact. Private release and
+retention evidence is under the ignored users-query-cache-20261114 directory; owned
+preview tab closed. No outstanding work or blockers in this increment; no commit/push.
+
+USERS-UNAVAILABLE-08 — **Completed and deployed** (owner: Codex, 2026-11-14).
+Owner reports a generic service-unavailable alert on Members with a role filter.
+Scope: reproduce the actual browser/API failure, identify its owning request and reason,
+correct it without changing saved access, and validate the production failure path plus
+required checks/local release as needed. Preserve unrelated workspace changes.
+Diagnosis: owner confirmed View access for Titan Administrator. Fresh live sheet and
+all owning API reads return 200 without alerts; API telemetry has no service failures.
+The actual pre-import contract from signed image sha256:783769c54dea0ca79e97ad285b58372219cc9f282d8526056fcfca8df09831dc
+rejects today's catalog solely for unrecognized durableImports, and accepts the same
+response without that field. The owner's desktop tab predates the CSV rollout. An old
+strict browser parser is therefore misclassifying a successful catalog response as 503.
+Implemented explicit imports-v1 catalog opt-in for updated clients and legacy default
+projection, preserving strict DTOs/authorization. Current browser success-schema failures
+now give a separate safe refresh message and retain uncertain-write recovery semantics.
+Verification milestone: focused real PostgreSQL/HTTP suite passes 34/34, including the
+strict frozen pre-import catalog shape with no opt-in and current imports-v1 response.
+Current client unit tests cover scoped opt-in headers and response rejection guidance,
+including no automatic replay for uncertain mutations. pnpm check/build/test pass.
+Expanded real HTTPS/OIDC People browser journey passes the new View access/catalog-header
+regression and existing CSV, access/lifecycle and authorization flows. Full integration is
+running; source-matched signed artifacts are built and published. No user data mutation.
+Final verification 2026-11-14: pnpm check, build, test and test:integration pass, including
+all 34 People PostgreSQL cases and storage verification. The final real HTTPS/OIDC browser
+journey includes the access-sheet feature-header regression and prior CSV/lifecycle/
+authorization cases. Direct deployed Titan Administrator → View access on the reported
+role-filter URL opens with roles/coverage and no alerts. The actual pre-import contract
+from the old signed image accepts the deployed headerless response; the opted-in request
+still returns durableImports=1. No schema relaxation, automatic reload or write replay.
+
+Supported backup/cutover/re-pair/approval/activation/opening is complete for signed release
+fe5ee2938288eac13d13bc76a36d93949a5eb421dc3b16b19234b93a6380da5f,
+profile 57da2a43aa4c0562be118e678305d178b274ff14a9f4255afaf01f8896f39ccf,
+source 85c81419d4cfa9b0d045df4e22ecc3afa4cf56d7e06aa5ca90ff39c329907b5c.
+API image sha256:6ba72384eb21141b2cfea88640f666396befc55da8b224ffd42b5afd7057e1ed;
+web image sha256:885d87abc0e56c3d10a17df72ddf57602c580dd71ad87e01dae8ee3c62bf504c.
+Installed source matches the build; full/approved status, retained cutover fingerprints
+and deployed ingress/cache/security checks pass. Two members, one invitation and six roles
+compare unchanged except normal identity verification timestamps. No live mutation was
+used for diagnosis/inspection. Owned inspection tab closed; no commits/pushes created.
+Private operation/compatibility evidence is under ignored
+.dms-titan-20261112/users-catalog-compat-20261114; logs use /tmp/turnstile-unavailable-*.
+No remaining work for this reported access-sheet error. Older pages can close/reopen the
+sheet to fetch the compatible response; refreshing loads the latest UI/CSV features.
+
+USERS-BULK-IMPORT-07 — **Completed and deployed** (owner: Codex, 2026-11-14; UE-08).
+Owner authorized planning and implementing CSV imports/durable bulk operations.
+Scope: invitation-recipient CSV validation, duplicate handling, reviewed shared access,
+durable bounded jobs and row receipts, progress/resume/cancel and row-error downloads.
+Reuse current identity/invitation authority, approval and rate safeguards; preserve all
+other workspace changes and saved access. Next: document format/state/authorization/
+recovery contracts, then implement owning backend/UI and production-path regression tests.
+Implementation milestone: strict imports contracts/OpenAPI examples, bounded UTF-8 CSV
+parser, owning job/row tables (generated migrations 0037–38), tenant RLS/readiness checks,
+review/start/resume/cancel routes, a leased bounded worker and atomic invitation/row
+receipts are implemented. Worker checks live product and owning-authority creator access,
+frozen role/organization context, deployment/release opening and existing invitation
+budgets. UI now has template/upload, server review, shared assignment summary, saved jobs,
+paged progress, cancellation and complete safe error CSV, with a gallery progress example.
+Focused PostgreSQL now passes 33/33, including wrong-tenant runtime isolation, duplicate
+drafts, a 500-row preview above the ordinary body limit, lease takeover/stale workers,
+post-commit lost acknowledgement, replay after invitation cancellation, in-flight identity
+cancellation, revocation/resume, changed role context and rate waits. An actual SQL trigger
+failure verifies atomic invitation/row-receipt rollback and same-reservation retry.
+Corrected JSONB snapshot key ordering and CSV-cell surrounding whitespace handling.
+Expanded real HTTPS/OIDC browser journey passes CSV validation/error rows/download,
+1440/768/390px layouts, closed-panel background completion, reopening history and draft
+cancellation alongside prior People regressions. pnpm check, build and test pass for the
+final backend/source; full integration including PostgreSQL/SeaweedFS passes.
+Core signed release 84a3f0045eef728f1441ef14cea601594d87f6d63094c3ea18a702c3bfab99f6
+is deployed through the supported cutover/migrations/pairing/approval/activation/opening
+path, with protected fingerprints preserved, full/approved status, durableImports=1 and
+live import reads 200. Existing two members, one invitation and six roles compare unchanged
+except identity verification timestamps. Direct live panel review found the Validate action
+became enabled for an empty role row; corrected readiness to require selected roles and
+nonempty unit coverage. Final source-matched UI polish build and expanded browser checks
+are underway. No live job was submitted or invitation/member/role changed during inspection.
+
+Final UI polish is deployed in signed release
+8a2fce9f5def383ac68f7ceccd4e126ad7dfa76d791335e3ffcd870391d25c29,
+profile a97aa80c95807536f44316750beeaedfc0d4fa66f1bdbeccf19978a1fda73b0e,
+source 8a980bf9019f0f071b73803799535fda686dc3c29c356e46407acedba680ee91.
+API image sha256:a70ca5b9ca1f5256bf6eed33f07d68c67dc0114c32e0d501e9a85af49ad1819e;
+web image sha256:a8be2a65966fafea5f799abfb44ec3d0241dbd337bb14d549853ae02a9173e96.
+Repeated pnpm check/build/test pass after the frontend readiness correction; the expanded
+real HTTPS/OIDC browser journey passes again, including disabled empty role/empty unit
+validation, valid review/start, background completion/reopening, errors and cancellation.
+The full pnpm test:integration pass includes the final backend and 33 People tests;
+frontend-only readiness polish has separate repeated static/unit/browser verification.
+Direct deployed 1440px/768px/390px inspection confirms upload, actual eligible-role choices,
+company/unit coverage, 36px picker searches, readiness transitions, no horizontal overflow
+and protected draft dismissal. Inspection used an unsaved file only, discarded it and
+closed the owned tab; there are still zero live import jobs. Current source matches the
+installed build; full/approved status, durableImports capability, import reads, ingress
+cache/security checks and supported cutover fingerprints pass. The two members, one
+invitation and six roles remain unchanged except normal identity verification timestamps.
+No schema/permission relaxation or invitation rate increase. All requested UE-08 work for
+bounded CSV invitation jobs is complete. Bulk membership/role edits are outside this
+increment; UE-10 governance remains planned and UE-09 enterprise identity remains deferred.
+Private operation evidence is under ignored .dms-titan-20261112/users-bulk-import-20261114
+and users-bulk-import-polish-20261114; nonsecret logs use /tmp/turnstile-import-*. No commits,
+pushes or changes to other agents' work were made.
+
+
+USERS-FILTER-LAYOUT-06 — **Completed and deployed** (owner: Codex, 2026-11-14).
+Owner reported excessive vertical space and poor alignment in expanded Members role/
+coverage filters. The shared search form's 14rem toolbar flex basis became a 224px
+height inside vertical pickers. Scoped that sizing to direct horizontal-toolbar searches;
+vertical searches now fit their 36px controls. Role and coverage use equal aligned columns
+above a 42rem container width and stack below it. Available unit results scroll within
+12rem instead of extending the page. Added an inert design-system gallery example and
+recorded the responsive pattern in architecture.md.
+
+Verification: pnpm check, pnpm build, pnpm test, pnpm test:integration (including real
+PostgreSQL and SeaweedFS) and pnpm test:browser:people pass. The focused real HTTPS/OIDC
+regression measures compact search/filter geometry and absence of document overflow at
+1440/768/390px, desktop label alignment, bounded unit results, successful actual role/unit
+filter requests and clearing. Direct browser inspection of the deployed signed app also
+passes desktop/tablet/phone, selection, clearing and collapse. At 1280px the expanded
+panel fell from 762px to 266px with the same two units; both search forms fell from
+224px to 36px. Desktop labels align; phone/tablet stack without blank reserved height.
+The deployed ingress cache/security check passes; status is full/approved. Existing two
+members, one invitation and six roles compare unchanged except refreshed identity
+verification timestamps; supported cutover preservation fingerprints pass.
+
+Published and activated source-matched signed release
+6779ef6515a0ffb01b72fc447b025cddd88144d35f44e7c66ea25f76bfa62e49,
+profile 430b54c820768e580ba31828a1e84c0e08f6cd674518a7e815f5bf875a9a4a73,
+source 1c71c3e97bea63bae52324d8a2e4a9354988dbbefa6f0855ee238ea569b8ecf7.
+API image sha256:783769c54dea0ca79e97ad285b58372219cc9f282d8526056fcfca8df09831dc;
+web image sha256:bb921cd54ded9f7894e05d51cef8dcad2529d05b83161a16c9d25461a8957f5b.
+Used the existing reviewed private release/cutover/approval path; retained all data and
+other workspace changes. Private operation evidence stays under ignored
+.dms-titan-20261112/users-filter-layout-20261114; nonsecret gate/browser/cache logs use
+/tmp/turnstile-filter-*. No schema or permission change. No remaining work for this
+reported filter-layout issue; wider Users enhancement follow-ups remain separately tracked.
+
+USERS-ENHANCE-05 — **Completed** (core increment UE-01–07 and sequenced follow-up plan;
+owner: Codex, 2026-11-14).
+Owner requested a detailed, sequenced plan for the final-review findings and Users
+enhancements, followed by incremental implementation and validation. Preserve unrelated
+dirty workspace changes and the existing signed installation. Deliver the recovery fixes
+first, then authorized audit visibility, contextual access/lifecycle inspection, role-use
+drilldowns and directory/invitation improvements. Record enterprise identity/governance
+and durable large-batch prerequisites separately; do not imply provider configuration or
+policy decisions exist. See the enhancement sequence in the user-management implementation
+plan. UE-01 implemented and validated: a definite readiness rejection remains a failed
+row; an uncertain transport outcome offers readback plus explicit re-review/retry with
+the identical captured command and key. No automatic replay or continuation. Corrected
+deletion guidance to identify actionable references rather than retained history.
+2026-11-14 verification: web typecheck and expanded disposable production-handler HTTPS/
+Postgres People browser journey pass, including failure before forwarding/no receipt,
+explicit same-command recovery/exact key equality, lost acknowledgement after commit,
+intervening cancellation and a single resulting invitation. First run hit authority rate
+budgets during earlier navigation; fixture resets now occur at bounded stage boundaries,
+without changing production limits. Next: UE-02 authorized audit reader and UI, then
+contextual inspection and actionable directory improvements. New enterprise extensions
+remain gated as described in the plan. Owner subsequently confirmed existing identity
+authority first and enterprise integration later. UE-02–06 are implemented: narrow SQL
+audit reader/Activity/CSV, canonical contextual access inspection and offboarding guidance,
+role-use drilldowns, effective delivery/role invitation filters, lifecycle/provenance dates,
+recipient preflight errors/unsent-copy and URL filters/stable sorting. Migrations 0035–36
+add the reader and two supporting indexes, retaining direct audit SELECT denial. Updated
+strict schemas/examples/OpenAPI 1.2.0, development gallery and architecture/spec/plan.
+Focused Postgres: 26/26 pass, including microsecond cursor ordering, retention/authority/
+tenant isolation, suspension/permission implications, sorted cursors and effective expiry
+delivery filters. Expanded real HTTPS/OIDC/SMTP/browser journey passes audit-filtered CSV,
+access inspection, role drilldowns, reload/back/sort persistence, recovery and prior lifecycle
+regressions. Web tests 30/30 and contract tests 25/25 pass. All four workspace gates
+passed for the initial increment. Signed release
+24d7e4d9f693e432a06b63822b606ff521e5eb733a235fc447c98927e51b75fe is deployed and
+full/approved after supported backup/migration, fresh pairing/approval/activation and
+private release opening. Preflight initially stopped before changes until an ordinary
+sync accepted the newly approved desired profile. Protected identity/setup/grant table
+fingerprints were preserved. Live counts remain two members, one invitation and six roles.
+Direct 1440px/768px/390px browser checks confirm invitation dates, task/footer layout,
+role details and no horizontal overflow. Live audit review identified poor readability
+of raw IDs; source correction resolves linked cached actor/subject names, retains stable
+IDs in disclosure/CSV, keeps role-name lookup behind Roles authority and explains name
+provenance. The correction also uses compact audit cards and wraps inspector text.
+Final repeated pnpm check, pnpm build, pnpm test and pnpm test:integration all pass,
+including actual PostgreSQL/storage; final expanded real HTTPS/OIDC/SMTP/browser passes.
+Follow-up signed release c8fe03f2650c062806ea72c3d9131d55dfdb4bc3379c41b9534d0ca0d5cc0456
+is deployed and full/approved. Profile efee49006aee10a59dd1560010d99c5f013df292673574da8772bc848d567b3e;
+source a52b243705287e5e301717a25e53803485e037f427236a70b7126b1f7fe8c82f.
+API image f8b897d8f62b65592d7544f3fd5e4771eca74d6c617b3979ed583e548db3dc76;
+web image 5197cdb8bb4e5a0d550474497cc0b71bfaf618764a2dc6f5581ce85aee5e71e9.
+Supported cutover/backup/re-pair/approval/activation/opening verified retained protected
+installation/setup/access fingerprints. Direct live API reads remain 200 with two members,
+one invitation, six roles and seven audit events; six user events have linked actor names
+and all seven have recognized subject labels. Browser confirms readable Activity and IDs,
+1440px/768px/390px layouts, saved acceptance dates, contextual reader grant explanation,
+sheet/footer fit and no horizontal overflow. No live member/role/invitation data was
+mutated during UI inspection. Deployed ingress/cache/security checks and source-digest
+match pass. Inspection tab closed. No commits or pushes created; unrelated dirty changes
+were preserved. Logs: /tmp/turnstile-users-{check-final,build-final,test-final,
+integration-final,polish-browser,enhance-db,polish-cutover,polish-verify,cache-live}.log.
+Remaining planned work: UE-08 durable imports/bulk jobs and UE-10 governance after their
+requirements/capacity/policy gates. UE-09 enterprise SSO/SCIM remains deferred by owner
+choice; identity-wide session/credential management stays in the owning authority.
+
+USERS-ACTIVATION-RECOVERY-04 — **Completed** (corrective migration, signed recovery/
+deployment and live verification; owner: Codex, 2026-11-14).
+Owner sees Installation activation required after the signed Users rollout. Diagnose
+the live deployment gate, current central approval and periodic reporter behavior;
+recover through the owning signed flow and verify sustained access in the browser.
+Preserve customer data, grants, licences and trust. No bypass of activation guards.
+Delivered: reproduced the failure, restored access and deployed the correction below.
+Diagnosis: browser reproduced closed/reconciliation-required. Signed approval, installed
+release and recovery marker all validate; deployment_control itself is not quarantined,
+but the durable clock row is. Isolated production-SQL regression reproduces a false
+quarantine when deployment_clock samples time before waiting for a row lock and a
+legitimate writer advances the durable floor. The before-fix test fails true vs false.
+Generated custom migration 0034 with the pinned Drizzle CLI; clock sampling now occurs
+after the clock row lock. The focused real-Postgres test passes and still verifies that
+a genuine future durable clock floor quarantines access. Added an actual HTTPS browser
+preflight regression using a held real SQL row lock; no failing handler is replaced.
+Ordinary staff MFA/replacement pairing/reapproval/activation and signed sync restored
+the existing installation to full/approved without changing data, grants or licences.
+Next: finish browser/workspace verification, deploy the signed corrective release and
+verify sustained live access across concurrent checks and periodic reporter activity.
+Verification milestone: focused Postgres suite passes all three tests, including the
+negative future-clock case. The complete People HTTPS browser suite also passes with
+the new real-lock/actual-status-handler regression (queued deployment-clock preflight
+stays approved), plus existing UI/save/recovery/session journeys. Build/test pass;
+check passed after formatting the CLI-generated metadata; full integration continues.
+Current normal browser is back in Users with deployment full/approved and member reads
+200. Building a source-matched signed corrective API/web pair before supported cutover.
+Final verification 2026-11-14: migration 0034 is deployed in signed release
+a4a1d070ab1c022256316c89107b7f2bb6b71789d54a8bf8ec359c68ce464ceb, profile
+b3e3931da03e015c4a8441abb9d3b0a3106f81201295f56ff9a9b978934bf6f6.
+API image sha256:4d2821eaab50cdfc1096b307bccd062fc5be940979dddb4774c0320169f5cf61;
+web image sha256:637f45672113b78ec2455c020256cafe123b93c5407ab18d9005aa47534ef009.
+Supported archive/migrate, ordinary staff MFA/rebinding/reapproval/activation, signed
+sync, unchanged identity/setup/grant fingerprints and normal administrator opening pass.
+The actual live SQL function was held while the normal HTTPS deployment preflight
+queued, then invoked by the legitimate lock holder to advance the floor before commit.
+The queued HTTP returned 200/full/approved and the durable clock remained unquarantined.
+Twelve additional concurrent actual HTTP checks all returned approved. Repeated live
+probes stayed approved over several minutes; normal browser shows Users. Final reads
+return 200 with two members, one invitation and six roles. Background reporter runs with
+no failures or pending report; its existing 15-minute cadence was not shortened and a
+new natural scheduled acknowledgement was not claimed during this check. Ordinary
+signed sync was verified. Temporary probe was stopped and inspection tab closed.
+pnpm check, pnpm build, pnpm test, pnpm test:integration (actual Postgres/storage),
+focused deployment Postgres tests, expanded People HTTPS/browser regression, deployed
+cache/security check and git diff --check pass. Logs: /tmp/activation-{check-final,
+build,test,integration,clock-before-2,clock-after,clock-browser,clock-live-queue,
+live-monitor,cache-live}.log. Source still matches the installed signed request.
+Protected helpers are in ignored .dms-titan-20261112/activation-clock-fix-20261114;
+coherent upgrade evidence is outside Git in
+/home/dev/.local/state/thaarei-activation-clock-fix-20261114-cutover. No data reset,
+manual grant rewrite, clock-guard bypass, commit or push. Owner can click Check activation
+or refresh https://turnstile.localhost:23600/people/members; signing out is unnecessary.
+
+USERS-UX-REWORK-03 — **Completed** (implementation, signed local deployment and
+browser validation; owner: Codex, 2026-11-14).
+Owner authorized detailed planning, implementation, direct browser validation and
+fixing further UI/UX issues discovered during review. Scope is the complete audit-02
+correction set for Users, preserving backend authorization and durable recovery.
+Plan: (1) full-width directories and accessible modal task sheets with guarded close,
+Escape and focus return; (2) compact invitation composition with explicit initial role,
+recipient validation, coverage feedback and state-specific saved details; (3) role
+overview and intentional create/edit/duplicate/delete workflows; (4) added/removed
+access reviews and actionable reference conflicts; (5) responsive directory/action/tab
+fixes and truthful bulk dismissal; (6) focused browser regressions plus all workspace
+gates, local build/deployment and direct desktop/tablet/mobile review/fix iterations.
+Check installed filters/usage separately from source; use the owning release process
+for API changes and retain existing data/signed module authority. No commit/push requested.
+Delivered: the planned corrections and supporting API deployment, as verified below.
+Implementation milestone: Users uses Base UI modal task sheets over unchanged-width
+directories with keepMounted/activity gating, guarded dismissal and focus return.
+Role View opens an overview; duplicate is an editable new custom-role draft. Added
+permission/assignment differences, proof expiry feedback, initial unselected invitation
+role rows, associated email errors, persistent selected unit paths, state-specific saved
+invitation dates/close and responsive table/action/tab fixes. Bulk dismissal reports
+success only for actually saved items. Updated architecture/spec/design guide/gallery.
+Direct preview verified new bundle/tab underline, directory width, inline validation,
+dirty Escape/keep/discard and focus return, role overview and added-permission review.
+Expanded disposable browser regressions cover role details/permissions/duplicate/delete,
+modal behavior and mobile geometry. Initial runs exposed old-flow assumptions and
+post-refresh timing in tests; iteration continues. Build/test and initial pnpm check pass;
+full integration is running. Preparing the supported signed API/web update for filters/
+usage with retained data and ordinary staff MFA; no deployment trust bypass.
+Browser milestone: /tmp/users-rework-browser-7.log passes the complete real HTTPS/OIDC/
+SMTP/Postgres journey, including new role details/permissions/difference/duplicate/delete
+and modal validation, focus return, false-success and mobile geometry regressions, plus
+existing actual lost-acknowledgement recovery, independent powers, subject revocation/
+restoration, session recovery, identity change and recipient verification/acceptance.
+The test exposed a real portal transition issue on authorization loss; inactive task
+content now hides synchronously while retaining draft state. Final selected-tab geometry
+assertions and final source checks are running. One existing environment-serializer
+template-style lint was normalized without changing emitted bytes to unblock the global
+gate. Updated signed catalogue prepared; first artifact predates the transition fix and
+will not be installed. Building the corrected exact-source pair before supported cutover.
+Release milestone: supported prepare/archive/migrate, replacement pairing, ordinary
+staff MFA/reapproval/activation, signed sync, fingerprint verification and normal customer
+administrator opening succeeded for release ad0cc2c67d2c74dd74a88201db840a6aee3dd0d865c5b4758e1eb916ed1bc60a.
+Live API now advertises memberAssignmentFilters and returns all six role usage rows;
+actual administrator-role filtering returned the correct single member. Direct mobile
+member-assignment review shows removed/added role/coverage correctly at 390px, with a
+390px sheet, no document overflow and a visible footer. Directory width stays 975px
+behind a 672px desktop sheet. Live counts remain two members, one invitation, six roles;
+all direct review drafts were discarded. All four workspace gates pass including actual
+PostgreSQL and authenticated storage; final expanded browser suite also passed.
+Final live polish found singular usage/coverage wording and oversized nested-picker
+loading placeholders; corrected text, compact spinner states, error wrapping and
+invitation-action spacing. A final matching signed pair is being built and rechecked;
+no business logic or authoritative state semantics changed in this polish increment.
+Final handoff 2026-11-14: the corrected/polished exact-source API/web pair is installed,
+activated, fingerprint-verified and opened through normal staff MFA and customer admin
+flows. Final release e8774a7a055e51b6892035499eebc47c25eab8d98e6de441e59a1b294902997d;
+profile 8cdc8adc9968c23d942547b14c42789a9e679717ecab89f0986798d63759a5c7.
+API image sha256:e3c324f1e625fb5f95e2cc39d728a9500d45c032be9ad739f25e237dca69f4de;
+web image sha256:a25d8649977808ce38674d3981b25b7f219779ca0f549d809d1f93b061b5d181.
+Live ordinary navigation loads index-DnP2V4hl.js. Final source inventory still matches
+the installed signed request. Role counts use correct singular/plural text. At 390px,
+the invitation table is 333px with 333px scroll width, document width is 390px, invite
+actions have an 8px gap, the sheet is 390px wide and its body has no horizontal overflow.
+Both actual saved-detail and transient task reviews were inspected at 1280/960/390px.
+The final direct browser pass used existing data and discarded every draft; end reads
+still show two members, one invitation and six roles, all owning endpoints return 200,
+and no task dialog remains. Agent-owned inspection tabs were closed.
+Verification: final pnpm check, pnpm build, pnpm test, expanded
+MEMBERS_DESIGN_CAPTURE=1 pnpm test:browser:people, deployed-ingress cache/security check
+and git diff --check pass. Full pnpm test:integration passed actual Postgres and storage
+in this increment; the subsequent presentation-only copy/spinner/spacing refinements
+were rechecked by the final build/check/test/browser runs. Logs:
+/tmp/users-polish-{check-verified,build,test,browser,cache-live,signed-build,cutover-prepare,
+cutover-verify}.log and /tmp/users-rework-integration.log. The existing nonfatal browser
+chunk-size advisory remains; no failed gate or remaining blocker within this Users scope.
+Protected release helpers/state are under ignored .dms-titan-20261112/users-rework-final-20261114;
+coherent archives/configuration/identity/access evidence are outside Git under
+/home/dev/.local/state/thaarei-users-rework-final-20261114-cutover (earlier upgrade archive
+retained). Source API migrations and module-profile changes used the supported owning
+operators; no trust bypass, data reset, manual grant rewrite, commit or push occurred.
+Owner validation: https://turnstile.localhost:23600/people/members. This closes the earlier
+installed-API filter/usage gap and supersedes the cache task's historical Mailpit blocker.
+
+USERS-UX-AUDIT-02 — **Completed** (audit; corrections delivered by USERS-UX-REWORK-03;
+owner: Codex, 2026-11-14).
+Owner requested another comprehensive validation of all Users tabs and nested forms/
+panels against the WorkOS/Clerk research, because the redesign feels insufficient.
+Scope: live desktop/narrow inspection, transient form/review navigation, source and
+requirement coverage audit, severity-ranked findings and a concrete correction plan.
+No business mutations, invitations, role saves or deployment changes in this audit.
+Live inspection milestone: exercised all three directories at desktop and 390px;
+also checked a 960px scoped invitation. Opened member overview/edit, account/permission
+disclosures and suspension review; single/bulk invitation drafts, invalid recipients,
+single invitation review and saved accepted-invitation details; role create/template,
+built-in copy, custom details/duplicate/permissions and blocked deletion review. All
+drafts were discarded without confirming a business write. Confirmed the current
+bundle is loaded; this is an incomplete UX redesign, not the earlier HTML cache bug.
+Confirmed defects: pill styles override intended underlined tabs; desktop adjacent
+panels compress member/invitation tables; narrow invite CTAs overlap by 16px; closing
+an unsent bulk draft falsely reports Changes saved; invalid email has only generic
+notice/no field association; panel close loses keyboard focus and Escape does not
+dismiss; accepted invitation shows compose instructions and Cancel and discard draft;
+expiry is hidden on narrow list and absent from details; the narrow invitation table
+still overflows internally (444px content in 333px available); role View opens copy/edit
+directly, duplication cannot adjust permissions in the same task, and in-use deletion
+has a generic conflict with no reassignment guidance. Coverage search retains selected
+IDs but hides their names when filtered and has no loading/no-results feedback.
+Current API catalog explicitly lacks memberAssignmentFilters; filters and role usage
+remain source/tested capabilities awaiting the coordinated API release.
+Source/requirement mapping: UX-R01/02 are partially delivered; the old non-modal adjacent
+card architecture remains, with role tasks hiding their directory instead. UX-R03's
+automatic assessment and explicit confirmation work, but reviews lack added/removed
+permission/assignment/coverage differences. UX-R04/05 are implemented/tested in source
+and unavailable on the installed API. UX-R06's bounded durable send/recovery behavior
+has prior functional verification; its composition/validation/close UX needs revision.
+Pending/needs-review/cancelled/expired invitations, suspended-member reactivation and
+actual final saves/transport recovery were source-reviewed and compared with prior
+isolated test coverage, not freshly executed against live data. No new business saves
+were authorized or attempted by this audit. End-of-audit authorized reads still show
+two members, one invitation and six roles. Transient drafts were discarded and the
+agent-owned inspection tab was closed.
+The browser suite covers functional authorization, durable outcomes and document-level
+narrow overflow, but has no visual acceptance assertions for CTA overlap, internal table
+overflow, active-tab style, focus restoration, or complete role subtask presentation.
+Verification 2026-11-14: live 1280/960/390px preview inspection, source/spec/test review,
+and git diff --check. No application code, architecture, runtime configuration or
+deployment changed; no new application test/build gates run for this audit/document-only
+increment. Earlier implementation and integration-fixture results remain historical.
+Handoff: prioritize full-width directories with accessible detail sheets, compact shared
+single/bulk invitation composition with one explicit unselected role row and inline
+recipient errors, a clear role overview/editor, useful before/after impact review and
+state-specific details. Fix CTA/tab/focus/false-success defects and coverage picker
+feedback; preserve authorization, scoped assignments, protected roles and uncertain-write
+recovery. Then validate every subtask at desktop/tablet/mobile and deliver backend
+filters/usage through the coordinated signed release. The prior functional increment
+does not establish completion of the researched UX redesign.
+
+USERS-UX-VISIBILITY-01 — **Completed** (cache fix verified; full integration fixture
+gate subsequently passed in USERS-UX-REWORK-03; owner: Codex, 2026-11-14).
+Reproduced the owner's old UI after normal administrator login in the shared browser:
+cached /assets/index-BW_99bMN.js rendered old separate Members/Invitations/Roles
+navigation, while a cache-bypassed request returned new /assets/index-ySc4CcWy.js.
+No service worker was installed. Nginx HTML responses lacked Cache-Control.
+Updated deploy/nginx/nginx.conf to send no-store for entry documents/fallbacks and
+errors, immutable one-year caching for successful hashed assets and their 304s, and
+uncached 404s for missing chunks instead of SPA HTML. Server-level security-header
+inheritance is preserved. Architecture documents the accepted cache policy.
+Added scripts/test-web-cache.mjs, a read-only real-ingress regression check. It failed
+against the original cache headers and passes after deployment, checking all Users
+entry routes, asset/conditional responses, missing chunks and the combined identical
+security headers added by ingress and Nginx. Container nginx -t also passes.
+Built/deployed thaarei-turnstile-web:users-cache-20261114 at
+sha256:cc18984f228f23e0111797e883073875c0141a121020073f7e519b5898fa3393;
+private Compose backup is compose.yaml.before-users-cache-20261114. Recreated only
+the web service; existing API/data/authority are retained. Browser verification used
+the existing private administrator handoff without changing account/access data.
+After cache reload, the signed-in page shows Users heading/sidebar, Invite member,
+Invite multiple members and compact assignment summaries. A subsequent ordinary
+canonical /people/members navigation still loaded index-ySc4CcWy.js and the new UI.
+2026-11-14 pnpm check, pnpm build, pnpm test, targeted Biome, git diff --check and
+live nginx/cache/browser checks pass. pnpm test:integration passed all ten Turbo
+application tasks, then its disposable fixture stopped before database tests with
+'Disposable Mailpit did not become ready'. The preceding full database/storage gate
+passed in USERS-UX-IMPLEMENT-01. Logs: /tmp/users-cache-{build,check,workspace-build,
+test,integration,before,after}.log. Remaining: restore disposable Mailpit readiness
+and rerun the full integration fixture gate; no remaining UI-cache deployment work.
+Owner handoff: https://turnstile.localhost:23600/people/members?ui=users-20261114
+bypasses previously cached HTML once. Existing open tabs may require a full reload;
+subsequent entry documents now use no-store. Backend filter/count release remains
+separate as recorded below. No commit, push or database migration performed.
+
+USERS-UX-IMPLEMENT-01 — **Completed** (functional source increment and compatible
+local web deployment; UX acceptance incomplete, see USERS-UX-AUDIT-02;
+owner: Codex, 2026-11-14).
+Implemented functional portions of owner-adopted UX-R01–06 for mixed organization
+scale. Users has a shared header and section links, invitation rows with separate approval/
+delivery/expiry, summarized member assignments and role permissions, direct member
+invitation composition, built-in role starting points, explicit role task buttons and
+a wider role editor. Impact is fetched automatically on entering review; confirmation
+labels name the operation. Cancellable assessment, transient drafts, protected roles,
+independent authorization and uncertain-save receipt recovery are retained. Registered
+business permissions now appear in the grouped picker. Inert gallery examples and
+responsive member rows were updated using the existing component system.
+Added server-side member role/covered-unit filters, matching the same saved assignment,
+with authorized totals and filter-bound cursors. Unit filtering requires unit read
+power. Role usage aggregates distinct saved members and unexpired actionable invitations
+in one set-based projection; only actors with both Roles and People powers receive it.
+No new schema or migration. Updated executable contracts and generated People OpenAPI.
+The catalog advertises filter capability; newer web clients omit unsupported controls
+when an older API is installed. Counts are never fabricated when absent.
+Bulk invitation tasks accept at most ten distinct normalized recipients with a common
+assignment set. Every item uses an independent existing command, frozen role/scope/org
+versions and a stable key. Fresh access/impact precedes each explicit batch-authorized
+send. Failure/uncertainty stops subsequent recipients; receipt lookup never resends and
+shows the current invitation/delivery state after intervening changes. Busy/uncertain
+close is blocked and unsaved draft close requires explicit discard.
+Verification 2026-11-14: `pnpm check`, `pnpm build`, `pnpm test`,
+`pnpm test:integration` and `git diff --check` pass. Full integration includes real
+PostgreSQL and authenticated SeaweedFS browser/Node/Python transfer checks. Focused
+`node scripts/test-auth-database.mjs --people` passes all 22 HTTP/Postgres tests,
+including paired filtering, cursor changes and role-only usage privacy.
+`MEMBERS_DESIGN_CAPTURE=1 pnpm test:browser:people` passes real HTTPS/OIDC/SMTP,
+role creation, direct invitation, post-restart persistence, server role filtering,
+two-recipient success, lost bulk acknowledgement, receipt recovery after cancellation,
+independent powers, revocation/session draft recovery, subject change, narrow layouts,
+recipient acceptance and restricted-deployment regression checks. Initial runs exposed
+post-save navigation timing and disclosure-toggle test assumptions (fixed); one restart
+attempt failed transiently. The final complete browser run passed. Browser snapshots
+were inspected for the role task. Logs are /tmp/users-ux-{check-verified,build-verified,
+test-verified,integration,people-database,browser-5,image-final}.log.
+Built both-module compatible web image `thaarei-turnstile-web:users-ux-20261114`,
+`sha256:be9bfa6f8dc943455c7851a923398a44e07f94308695cbc8c333eb67d2987884`.
+Backed up private runtime Compose to compose.yaml.before-users-ux-20261114, pinned
+this image and recreated only turnstile-web. HTTPS /people/members and the new
+/assets/index-ySc4CcWy.js return 200 and contain the new workflows; Incident/Risk
+selection remains. API session is reachable (401 without login). Existing API,
+reporters, identity, data and signed module authority were not replaced.
+Handoff: refresh https://turnstile.localhost:23600/people/members to test the redesigned
+UI, including bulk invites. Backend role/coverage filtering and usage counts are
+implemented/tested but require the next coordinated signed API/web module release
+before becoming available on this installed demo. This web-only local testing update
+is not a new signed API/web release. No commit, push or database migration performed.
+
+USERS-UX-RESEARCH-01 — **Completed** (research/proposal; owner: Codex, 2026-11-14).
+Owner requested detailed WorkOS/Clerk analysis before redesigning Users; confirmed
+mixed scale from small teams to large organizations. Reviewed official WorkOS
+Widgets/User Management, dashboard members, RBAC configuration/custom roles and
+AuthKit invitations; Clerk OrganizationProfile, invitation and roles/role-set docs,
+member-search changelog and published 2025 invitation screenshots. Inspected four
+WorkOS screenshots and Clerk member/invitation examples. These are public documented
+flows and published visuals, not authenticated competitor-dashboard testing.
+Audited current People.tsx, Members.tsx, AccessViews.tsx, Review.tsx, shared controls,
+contracts and accepted UM-R01–22 requirements. Recommendation: consistent Users
+header/tabs; compact member/invitation/role directories; direct invitation task;
+role templates and grouped permission editing; integrated server-impact review;
+retain explicit role/coverage pairs, protected roles, approval/delivery separation,
+independent People/Roles authorization and uncertain-save recovery. New bulk flows,
+role/site filters, usage/global counts and activity columns require owning backend
+work; do not derive them from one paginated page or leak member identities to
+role-only administrators. No product code, scope specification, architecture decision
+or running deployment changed in this research task.
+A fictional-data interactive concept is retained outside Git at
+/home/dev/.local/state/turnstile-users-ux-research/users-direction.html. Inspected
+its initial render at 728px and 390px; corrected narrow member layout; no preview
+console errors. Source research evidence is linked in the conversation. Verification:
+`git diff --check`; no application gates rerun for this research-only increment.
+Prior application verification and integration-fixture blockers remain below.
+Handoff: owner review of the researched recommendation; next implementation should
+adopt the design in owning architecture/spec references, then deliver frontend
+workflows and separately scoped backend scale capabilities. Proposal is not a claim
+that the redesign or new capabilities have been implemented.
+
+USERS-NAV-REBUILD-01 — **Completed** (owner: Codex, 2026-11-14).
+Owner authorized rebuilding/updating the local UI for manual testing. Built the web
+Dockerfile from the monorepo root with the installed Incident/Risk selection and
+pinned Node/pnpm; image `thaarei-turnstile-web:users-nav-20261114` has digest
+`sha256:9bdca308be333716b0a77829ef2447bc9f0aa201ed3e2a896821257a82cf6447`.
+Backed up the private runtime Compose as `compose.yaml.before-users-nav-20261114`,
+pinned its web image and recreated only turnstile-web through the existing customer
+composition with --no-deps. Backend, database and other services were retained.
+HTTPS /people/members and the new index-BWzw8J29.js return 200; served JS contains
+Users with the permission-aware default and /people/ active state. The served module
+selection retains foundation/Incident/Risk; API session route responds 401 without
+login. Container is running. This is a local UI testing rebuild, not a new signed
+API/web module release. Prior full integration fixture blockers remain recorded below.
+Handoff: owner can refresh https://turnstile.localhost:23600/people/members and sign
+in if needed to test Users and its internal sections. Build log: /tmp/users-nav-rebuild.log.
+
+USERS-NAV-01 — **Completed** (owner: Codex, 2026-11-14).
+Consolidated Members/Invitations/Roles sidebar entries into one Users destination
+in `apps/turnstile-web/src/components/workspace-navigation.tsx`, shared by desktop,
+collapsed and mobile navigation. Existing internal sections/routes and authorization
+remain. Users defaults to Members for People managers or Roles for role-only managers,
+and stays active across People routes. Updated architecture/design guidance and
+`scripts/test-people-browser.mjs` for single-entry/internal-tab/role-only regression.
+2026-11-14 verification: `pnpm check`, `pnpm build`, `pnpm test`,
+`pnpm test:browser:people` and `git diff --check` pass. The real HTTPS/OIDC People
+journey verifies administration, permission boundaries, retained drafts and narrow UI.
+`pnpm test:integration` passed all ten Turbo tasks (including real central
+HTTPS/PostgreSQL/browser checks), then failed before its database checks with
+`Database role provisioning failed (connect, unknown)`. A standalone
+`pnpm test:database` retry failed at the same pre-provisioning connection stage.
+Separately attempted `pnpm test:storage`; it failed with `Storage fixture unavailable`
+before executing storage tests. These were the earlier runtime fixture failures; the later USERS-UX-IMPLEMENT-01
+passed the complete integration gate including database/storage. Navigation was
+deployed by USERS-NAV-REBUILD-01 and is retained by the redesigned local UI.
+Preview inspection originally reached an expired-session screen; subsequent focused
+HTTPS/OIDC browser journeys pass. No navigation-specific work remains.
+
+LOCAL-READY-20261113 — **Completed** (owner: Codex, 2026-11-13).
+Owner requested latest build, services and login handoff, then authorized one-year demo
+licences for both products. Latest origin/development equals local b9602eb; retained local
+foundation changes are included in the deployed source. All four required workspace gates
+pass: pnpm check, fresh pnpm build --force (12 uncached tasks), uncached pnpm test, and
+pnpm test:integration including actual PostgreSQL and SeaweedFS. One nonfatal frontend
+chunk-size warning remains; no failed build/check/test gate.
+Restored all 11 Titan services and set all central long-lived services to unless-stopped.
+Built current central/DMS images and a source-matched signed both-module API/web bundle;
+published the unchanged classifications and matching reference. Supported profile cutover
+completed its closed/quarantined product-schema archive, forward migrations, replacement
+pairing, normal staff-MFA approval/activation, sync, fingerprint verification and normal
+administrator release opening. Central then applied owning migrations; both independent
+licences are approved through 2027-11-13T23:59:59Z and both accepted signed policies carry
+that exact deadline. Current source inventory equals the deployed signed profile.
+Company setup, installation identity, memberships and local permission fingerprints were
+preserved. The temporary maintenance network connection was removed. No reset, data
+removal, service credential rotation outside supported pairing, commit or push occurred.
+Post-upgrade HTTPS checks pass central MFA/session, customer administrator/reader OIDC and
+logout/session closure, admin Incident/Risk, reader Incident with Risk denied, and real
+Turnstile-to-DMS capability integration. Central/DMS/auth readiness, both databases and
+Mailpit pass; all 11 retained containers run with unless-stopped. Current reporter logs
+have no new errors. Signed Turnstile release: 0b02d7a35774553332ffec8dc926f7d02f68198a3770815621c30bf567983c97.
+Protected backups/commands/build/gate/live logs are retained under ignored
+.dms-titan-20261112/upgrade-20261113; the coherent product cutover archive/plan is outside
+Git at /home/dev/.local/state/thaarei-ready-20261113-cutover. Private login handoff:
+.dms-titan-20261112/LOGIN-DETAILS.md. No credentials are recorded in this progress file.
+Owner validation URLs: https://central.localhost:23600/access,
+https://turnstile.localhost:23600/sign-in and http://localhost:23605.
+The signed local module POC still excludes storage/scanner/processing workers and DMS
+Swagger remains disabled. This does not close wider TITAN-EXEC-01 acceptance, clean-host/
+Dokploy rollout, document/OCR or production release gates. Next: owner manual validation
+using the private handoff; existing broader feature/target work remains under its owners.
+
+RESOURCE-CLEANUP-01 — **Completed** (owner: Codex, 2026-11-12).
+Recovered Docker after user WSL restart. Removed redundant setup installers and superseded
+test snapshots, 118 unused profile image tags, six obsolete fixture tags, dangling images
+and unused build cache. Preserved every database volume, container-referenced customer
+image, retained customer configuration, other-project images and T3 history/worktrees.
+Trimmed Docker filesystem and successfully compacted the detached data VHDX with Windows
+DiskPart (Exit 0). C: reached 94 GiB free after compaction and remains about 84 GiB free after
+fresh sequential qualifications (initial pre-cleanup measurement was 159 MiB). Restored Titan
+central services/ingress; customer PostgreSQL automatically restarted with unless-stopped.
+Both databases accept connections; configured central HTTPS redirects to sign-in (307).
+Released clean build filesystem caches after verification. Maintenance steps are in the
+canonical ecosystem guide. Final fixture/evidence directories are private and outside Git
+under /home/dev/.local/state/thaarei-qualification/. Earlier /tmp evidence was cleared by
+WSL restart; final fresh results supersede those interrupted runs.
+
+FOUNDATION-FIX-01 — **Completed for the three scoped source fixes and local qualification**
+(owner: Codex, 2026-11-12).
+Implemented reviewed UTC product licence expiry/renewal, bounded signed v1/v2 issuance,
+online renewal denial after contractual expiry, customer hard closure including retained
+reads, and rejection of licence-bound downgrade. Actual central HTTP shortening, expiry,
+offline closure, denial and staff renewal pass.
+Installer PostgreSQL defaults to unless-stopped. Actual fresh signed-installer qualification
+passes automatic restart after PostgreSQL immediate shutdown and committed-data retention,
+plus complete HTTPS/browser handover. Initial rerun met an occupied reserved port; the final
+run isolated that port and restored Titan ingress afterward.
+One module registry now drives active IDs, contracts, permissions, labels, source ownership
+and limits. Owning permission catalogue/FK and SQL company-scope guards replace fixed lists.
+modules:sync generates migrations and API references; enabled:false retires implementations
+while preserving historical metadata/grants. The final disposable Permit lifecycle passes
+actual-image ordinary login, explicit permissions, SQL scope, disablement/revocation/expiry,
+retirement type checks/route exclusion and zero-active-module contract/API generation.
+All four required workspace gates previously passed on the implementation; the fresh actual
+installer and module qualifications now pass after resource recovery. No source behavior was
+changed during this resumed cleanup; documentation/whitespace validation is clean.
+Evidence: /home/dev/.local/state/thaarei-qualification/restart-final.log,
+restart-20261112/qualification.log (private), and modules-20261112.log. Cleanup summaries
+are in the same parent directory. Do not publish private fixture inputs/keys.
+No live commercial end date was invented and no existing signed Titan application release
+was rewritten. Rollout remains customer verifier upgrade first, then central migrations/
+issuer, then reviewed real end dates. Broader production/customer acceptance remains under
+its existing tasks; this does not close the historical unexplained combined-profile failure.
+
+FOUNDATION-VERIFY-01 — **Completed** (owner: Codex, 2026-11-12).
+Final foundation assessment requested: onboarding, installation, Core/Individual modules,
+catalogue changes, assignment/activation, revocation and failure/recovery scenarios.
+Independent read-only review assigned to foundation_review; main agent maps requirements
+to current implementation and runs focused verification. Preserve the live Titan demo.
+Review completed: one confirmed defect (installer PostgreSQL restart policy), missing
+commercial licence end dates, fixed two-module registration and unfinished business-workflow
+qualification. Corrected new-install database restart policy and Titan's retained Compose/
+Docker policy without restarting its database; added a fresh-launcher fixture assertion
+(not executed in this review). Added browser-test phase diagnostics. Forty focused tests
+pass; reviewer independently passed 23 overlapping catalogue/retry tests. Fresh actual-image
+browser checks pass Core-only, Incident-only and Risk-only. Combined profile first failed
+with unexplained DEPLOYMENT_RESTRICTED 403, then passed using the same images. Preserve that
+intermittent failure as an open gate, not a clean suite result. Details and remaining
+customer/production gates: docs/deployment/titan_acceptance_results.md. Logs/artifacts are
+outside the checkout under /tmp/thaarei-foundation-verification/ and
+/tmp/thaarei-foundation-profiles-20261112/. All four required pnpm gates pass, including
+PostgreSQL and SeaweedFS integration. Scoped review is complete; full foundation acceptance
+is not. No fresh-installer/reboot qualification or production sign-off. Changes remain local
+and uncommitted; the previously published development commit is unchanged.
+
+ARTIFACT-CLEANUP-01 — **Completed** (owner: Codex, 2026-11-12).
+Inspect the three user-selected historical DMS verification directories, remove unused
+private test artifacts, document their purpose and retention boundary, then commit and
+push the accumulated Titan implementation/documentation changes to development.
+All 15 existing containers inspected: no mounts or Compose source labels reference
+.dms-i19-verification, .dms-i20-verification or .dms-i20-final-20261107.
+Removed those three directories (approximately 19 GiB) after also checking active Titan
+configuration, symlinks, process working directories/open files and filesystem mounts.
+Current Titan installation, database volumes and tracked qualification reports remain;
+historical report paths now identify deleted local evidence, not retrievable backups.
+Added private-directory retention guidance to the customer guide. All four central and
+seven customer containers remain running. All four required pnpm gates (check, build, test,
+test:integration) pass, including actual PostgreSQL and SeaweedFS verification. Logs:
+/tmp/titan-publish-gates/. Staged whitespace and private-file checks pass. This development
+publication includes the accumulated Titan setup fixes, separate customer deployment and
+consolidated guides; the user explicitly authorized commit/push. No production deployment
+or broader acceptance completion is claimed.
+
+DOCS-CONSOLIDATE-01 — **Completed** (owner: Codex, 2026-11-12).
+Consolidated setup into [Thaarei ecosystem](docs/deployment/thaarei_ecosystem_guide.md)
+and [customer installation](docs/deployment/customer_deployment_guide.md). Ten overlapping
+setup runbooks removed after migrating commands/input formats and repairing links. Root
+START_HERE is navigation only; feature operations and historical evidence remain distinct.
+Added concrete central container bootstrap and catalogue-signing recipe; corrected stale
+processing and suspension claims. Documented the full-DMS wrapper's missing activation
+configuration and the required exact-image activated overlay (wider packaging gate remains).
+Release README now embeds the canonical customer guide without broken checkout links;
+DMS releases include both guides. Updated installer cache and generated DMS ledger references;
+immutable release reports/source inventories were not rewritten or requalified.
+Removed nine unmounted obsolete private rehearsal helpers/logs and the empty capture
+directory; running services, volumes, signer/trust, receipts and operating credentials retained.
+Verification: 615 local Markdown links/anchors resolve; all 23 shell examples and embedded
+Node snippets parse. Both catalogue-signing recipes executed and verified with disposable
+keys, then those keys were removed. Focused release-guide regression passed. Final pnpm
+check/build/test/test:integration passed, including real PostgreSQL and SeaweedFS verification;
+initial moved-link Markdown formatting corrected. Logs: /tmp/titan-doc-gates/ and
+/tmp/titan-doc-packaging-test.log. Final Biome and git diff --check passed.
+All seven Titan customer services remain running. No commit/push, live redeployment, fresh
+release-image/archive build or new browser acceptance in this documentation/cleanup task.
+Wider product/target acceptance remains tracked by TITAN-EXEC-01, not marked complete here.
+
+TITAN-EXEC-01 — **In progress** (owner: Codex, 2026-11-12).
+The supported local module-POC journey, separate customer Docker deployment, discovered
+setup fixes and manual guide are delivered; the wider acceptance matrix remains open.
+Baseline development c75b4cb; implementation/documentation changes are included in the
+ARTIFACT-CLEANUP-01 development publication. Wider acceptance work remains open.
+
+- Authorized scoped reset removed 19 containers, 8 dedicated volumes, 11 networks and
+  old .dms-manual-testing-20261107 state. Unrelated/unproven resources were preserved.
+- Fresh central bootstrap, browser email verification/login/TOTP, catalogue publication,
+  Titan registration/reservation, independent product pairing/approval, module activation,
+  customer identity and administrator handover succeeded. No MFA/TLS bypass or sudo needed.
+- Browser company setup saved Titan, Asia/Kolkata and Titan Headquarters. Customer data
+  survived transfer to independent titan-customer Compose: six services plus a nonroot
+  gateway, with external volumes/networks retained. New Dockerfile/Compose and protected
+  exact-service export automate this transfer; production TLS remains Dokploy-owned.
+- Fixed stale proof recovery with narrow receipt-preserving retry-open; actual retained
+  failed job succeeded on attempt two. Added real release replay-after-close regression.
+  Added bounded shorter signed decisions, verified actual 120-second expiry, and corrected
+  misleading removal wording. Seven-day default restored. No live SQL/session/journal edits.
+- Browser checks passed: both/Incident-only/no Individual modules; central removal and
+  restoration requiring activation; direct URL denial; independent DMS/Turnstile suspension;
+  local Incident disablement with Risk usable; suspension retained after API restart;
+  central outage before expiry, natural expiry and renewal. Normal configuration restored.
+- Invited reader completed UI email/account/login/acceptance through the gateway; Incident
+  worked, Risk was hidden/denied. Membership suspension blocked existing and fresh-login
+  access; reviewed reactivation restored membership. This is not identity-session revocation.
+- Final pnpm check/build/test/test:integration passed, including PostgreSQL release receipt
+  replay and SeaweedFS storage integration. Logs: /tmp/titan-final-{check,build,test,test-integration}.log.
+- Fixed local ingress recreation losing its manual customer network connection by declaring
+  external network/aliases in owning Compose; login and signed sync verified after recreation.
+- Removed temporary normal-proof capture code/mount and transient proof/consumed pairing
+  inputs. Retained live private state at /home/dev/titan-local-20261112 and central ignored
+  .dms-titan-20261112. Current project: compose-reviewed/customer.yaml plus project.env.
+- [START_HERE](START_HERE.md), [manual guide](docs/deployment/customer_deployment_guide.md),
+  [results](docs/deployment/titan_acceptance_results.md) and
+  [follow-up plan](docs/deployment/installation_implementation_plan.md#titan-rehearsal-follow-up--2026-11-12)
+  record exact boundaries. Remaining: Risk-only central variant, full profile/Core cutovers,
+  staff/recipient edge cases, coherent restore, packaged tools update and clean-host/Dokploy
+  acceptance. Full documents/OCR cannot be tested through the current Turnstile UI; this
+  module POC does not deploy DMS processing/storage. Do not mark the full matrix passed.
+
+
+TITAN-RESET-PLAN-01 — **Completed** (planning only; owner: Codex, 2026-11-12).
+Created [the Titan reset/browser acceptance plan](docs/deployment/titan_fresh_install_validation_plan.md)
+with scoped Docker/data cleanup, central-first installation, real MFA, independent product
+activation, customer onboarding, module/permission matrix, expiry/outage/replay cases and
+post-validation documentation replacement. Inspected architecture/runbooks, old private
+START-HERE and live Docker metadata. Remote development checked with git ls-remote:
+92f7320; local c75b4cb includes it plus the existing documentation handoff commit.
+No deletion, runtime configuration, provisioning or browser acceptance performed.
+Current UI gaps: first-admin/private installation operations, full DMS document workflows,
+and accelerated expiry; preserve these distinctions during execution. Browser tools are
+available; no browser-use/agentic-browser skill found in available roots. Verification:
+local Markdown target/whitespace checks only; workspace build/test gates and runtime/browser
+checks not run for this planning-only change. Next: execute the reviewed plan beginning
+with exact resource/mount ownership inventory; retain unrelated projects and source inputs.
+
+PR16-CI — **Completed** (test fix/local verification; owner: Codex, 2026-11-12).
+Fixed the CI redirect test's 100 ms deadline racing cold HTTP connections: ordinary
+redirect/body checks use 5 seconds, while the stalled response retains a separate
+1-second deadline and an assertion that its request reached the real server. Production
+transport settings and runtime code are unchanged. Five consecutive focused transport
+runs and `pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` pass; six existing
+conditional non-module integration skips remain. Initial integration under a /tmp worktree
+failed three processor cases because the sandbox's private /tmp hid the Python venv;
+moving the isolated checkout/venv under home resolved those cases without processor edits.
+The historical MOD-I10 frozen record remains immutable and identifies the pre-fix test
+snapshot; this test-only correction has separate verification logs at /tmp/pr16-*.log,
+including the successful /tmp/pr16-integration-home.log. PR #16 merged during validation; fix publication uses a follow-up PR;
+GitHub validation of the new commit remains pending. Concurrent UI work was preserved.
+
+REPO-SYNC-01 — **Completed** (owner: Codex, 2026-11-12). Owner requested
+committing pending handoffs to development and pulling its latest remote state.
+Reconciled final PR #15 CI notes from the other worktree into this checkout and
+committed the operator/login/audit handoffs. Pulled origin/development with rebase
+onto 92f7320, preserving PR #18's transport test correction and both documentation
+histories during conflict resolution. Only IN_PROGRESS.md changed in the local commit.
+Validation: Git whitespace checks and clean working-tree/ancestry checks; no runtime
+change or application tests needed for these documentation-only changes. The source
+worktree's duplicate local notes and historical stash remain preserved. No push was
+requested or performed; this local development commit remains ahead of origin.
+
+REPO-MERGE-AUDIT-01 — **Completed** (assessment; owner: Codex, 2026-11-12).
+Fetched/pruned origin and inspected every local/remote branch, all three linked
+worktrees, GitHub PR history/open PRs and the retained stash. No open PRs. Remote
+development is 92f7320 (PR #18 merged); local development remains ac9c7c5, behind
+two commits, with preexisting uncommitted operator notes preserved. No merge/push,
+checkout update, stash application/drop or runtime change was performed.
+
+Outstanding tracked working changes are documentation only: this checkout's
+IN_PROGRESS.md (login diagnosis, UI publication/runtime handoff and this audit), plus
+IN_PROGRESS.md in the control-plane implementation worktree (final PR #15 CI results).
+The transport CI worktree is clean; no untracked files were reported in any worktree.
+All branch tips are ancestors of remote development except user-management's final
+handoff (git cherry confirms patch-equivalence), module-delivery b125c76 (its test
+file is byte-identical to merged PR #18; only its historical handoff differs), and
+origin/main's two promotion merge commits. No missing implementation was found in
+these branch-only commits. PRs #16, #17 and #18 are merged into development.
+
+One historical TCP-I01–04/TCP-I05-handoff stash remains on the control-plane branch.
+All 122 changed/untracked paths exist in development; 88 exact file versions are
+reachable in development history. The remaining 34 versions differ from reachable
+versions and need detailed reconciliation if recovering or deleting the stash;
+path coverage alone does not prove every stashed hunk was incorporated. Preserve it.
+Remaining housekeeping: reconcile/publish the two local documentation handoffs,
+fast-forward this checkout with documentation preservation, and assess the historical
+stash before cleanup. Validation was Git/GitHub inspection, patch comparison and
+stash path/blob inventory; workspace build/tests and container checks were not run
+for this assessment-only documentation update. No feature/release gap was implemented.
+
+TCP-LOGIN-01 — **Completed** (diagnosis/private guidance correction; owner: Codex,
+2026-11-12). Reproduced the actual HTTPS sign-in failure with the initial password from
+its ignored private credential note: HTTP 401. A read-only diagnostic using the installed
+Better Auth password verifier confirmed the retained staff account exists, is active,
+email-verified, Administrator and MFA-enrolled, but the listed initial password does not
+match its current credential. No account/auth configuration failure or missing setup was
+found. Corrected only the central password guidance in the ignored note, retaining its
+original privately. Use the standard Forgot password flow and local Mailpit to choose a
+new password if the current one is unknown; preserve the existing authenticator/recovery
+codes. No password, MFA, session policy or database record was reset or bypassed by this
+investigation. No application source change; existing generic authentication errors
+remain intact. Validation: real HTTPS rejection plus read-only account/hash verification;
+recovery SMTP/TLS verification passed and local Mailpit returned HTTP 200. No reset
+email was initiated; the owner can use the normal account recovery interface.
+
+TCP-UX-RUN-01 — **Completed** (owner: Codex, 2026-11-12). Owner authorized publishing
+and merging the redesign into development and restoring all retained manual-test apps.
+Committed/pushed UI source d81423f and opened PR #17 against development; it includes the
+module-delivery prerequisite PR #16. The latter's earlier failed checks job
+was a timing-sensitive transport test, while its other run passed; reran that failed job.
+PR #16 passed all check contexts and merged into development at 267a5a2 on
+2026-11-12 04:59 UTC. PR #17 then passed every check context and merged into
+development at ac9c7c5 on 2026-11-12 05:01 UTC. Updated the local development branch
+by fast-forward to that merge, preserving this local operator handoff.
+
+Restored the existing private central/customer Compose stacks and retained volumes and
+credentials. Built thaarei-manual-central:ui-redesign, backed up the existing central
+PostgreSQL database to its ignored private directory, applied owning central migrations
+successfully and started the redesigned image. HTTPS access and central readiness return
+200; the live HTML contains the redesigned sign-in. Turnstile sign-in/identity and DMS
+API readiness return 200. Both products completed authenticated sync successfully.
+ClamAV signatures were stale after the stopped interval: enabled the existing updater
+profile, assigned its private egress network an unused explicit 10.254.252.0/24 subnet
+because Docker automatic pools were exhausted, updated signatures to 28180 and reloaded
+the daemon. Scanner worker preflight and presence are ready; DMS processing readiness
+now returns 200. Other existing networks and volumes were preserved. These were private
+operator configuration/startup actions, not changes to committed deployment defaults.
+
+Owner test URLs: https://central.localhost:23600/access and
+https://turnstile.localhost:23600/sign-in; Mailpit remains http://localhost:23605.
+Use existing staff/customer accounts and the retained local CA/hostname setup. No passwords,
+MFA seeds or pairing files were printed or committed. Runtime is ready for owner testing;
+Both PR merges and the local development checkout are complete. Rechecked all six
+HTTPS access/readiness/identity endpoints after the merge: all return 200; the control
+plane still serves the redesigned sign-in. All processing workers and stateful services
+with configured health checks are healthy. This operational handoff remains a local
+uncommitted documentation update; published source is the verified merged UI commit. Source checks were already fully
+qualified under TCP-UX-01; central image build, migrations and actual HTTPS startup were
+additionally verified in this publication/startup task.
+
+TCP-UX-01 — **Completed** (source/local UI qualification; owner: Codex, 2026-11-12).
+Owner requested the complete control-plane UX audit, reviewed plan and redesign. Worked
+on feat/control-plane-ui-redesign, created from fetched development and fast-forwarded
+to the required existing module delivery implementation. The
+[research and reviewed plan](docs/thaarei/control-plane-ui-redesign.md) inventories every
+screen, role, conditional control and workflow state. Used the Emil design engineering
+skill; the plan was self-reviewed, not an external usability study.
+
+Implemented responsive workspace navigation, Overview/account, client search/registration,
+guided fresh/existing installation paths, independent product/pairing/policy progress,
+explicit pairing review and conditional revocation input, catalogue release/classification,
+module selection/delivery/activation stages, dependency graph/text, reports/history,
+staff and every access/recovery mode. Next-action guidance separates product approval,
+module authority, inventory and current acknowledgement; technical evidence remains
+available in disclosures. Archived/Viewer restrictions and Admin-only actions are
+explained. Pending module reviews lock competing changes and retain retry identity.
+Publication is blocked while classification changes are unsaved. Mobile navigation
+supports keyboard entry and Escape/focus return; authenticator setup/recovery has
+explicit actions, manual setup/copy controls and contextual assistance. Architecture,
+app README and docs index reference the redesign. No backend authority, database schema,
+API endpoint, package dependency or customer deployment configuration changed.
+
+2026-11-12 verification: `pnpm check`, `pnpm build`, `pnpm test` and full
+`pnpm test:integration` pass. All 11 central unit tests pass, including guidance precedence
+regressions. Full integration exercised real central HTTPS/PostgreSQL/browser flows,
+DMS/Turnstile HTTP, owning migrations/auth/isolation and authenticated SeaweedFS transfers.
+The existing six conditional database cases remain skipped; no new UI regression is skipped.
+After the final keyboard change, reran workspace check/build/test and the central integration
+suite successfully. New browser coverage exercises the actual production handlers through
+lost committed responses for registration and pairing, same-operation recovery, fresh
+reservation review without premature writes, conditional pairing fields, Viewer/Admin
+boundaries, invalid reset recovery, mobile pointer/keyboard navigation, expanded dependency
+graph overflow and 390px layouts across catalogues/reports/history/staff/account/access.
+Actual nonsecret screenshots were visually reviewed and retained in
+`/tmp/thaarei-control-plane-ui-mPrUNm`; a review gallery is at
+`/tmp/thaarei-control-plane-redesign.html`. Final Biome/whitespace checks pass.
+
+Historical implementation handoff: UI changes were initially uncommitted for owner
+review. TCP-UX-RUN-01 above subsequently records their PR publication/merge, central
+image rebuild and retained local runtime startup. Dokploy rollout and production
+acceptance remain separate. Existing module-release frozen artifacts remain
+historical; deploying the redesigned central UI requires its normal new-image qualification.
+Existing installations, reserved ports and preexisting Docker volumes were preserved.
+
+MOD-PR — **Completed** (owner: Codex, 2026-11-12). Committed all 253 accumulated
+MOD-I01–10 paths on feat/centrally-managed-module-delivery and opened
+[PR #16](https://github.com/nishanthturnstile/turnstile-360/pull/16) against development.
+Implementation commit: 336a3e2. Origin/development matched the local base before branching.
+Frozen source verification, staged private-material scan and whitespace checks pass;
+required/focused execution evidence is the unchanged MOD-I10 qualification above.
+No runtime source change, deployment or merge was performed by this publication task.
+
+MOD-I10 — **Completed** (source/local module POC; owner: Codex, 2026-11-11).
+Added the MOD-R01–20 handler/test/execution trace, immutable source/contract/catalogue/
+profile/assignment/image record, read-only drift verification, exact-image material
+collector and operator/support handoff. The public record has 1,339 file byte/executable
+identities, all four selected profiles plus the promoted-Core cutover profile, safe
+historical revision/epoch/order/acknowledgement and independent product IDs, nine final
+execution log hashes and explicit production-pending gates. No token, private signer,
+cookie, credential or customer data is published. Its checksum is
+`c6eeb468f72450afe191c6d8e9b63b3403627e9317178e709e414e6f9d57801c`.
+Corrected the limited bundle's inaccurate complete-DMS source-offer references, preserved
+the original contacts/offer, and included offer/notices/proprietary-license in package
+cache identity. The new signed combined manifest is
+`7ed81c812c18ca22cc47b66c371a9730e63eb49dc481ed23c659862945553729`;
+only the source-offer covered file changed. All five transferred image IDs, selected
+Incident profile, catalogue and source `eb9ea073ec2e75e729e9b146e2338529c499ebd31baed6fb286bd7812d9ee5d5`
+remain the same as MOD-I09. Separate rebuilt central/DMS qualification images are recorded
+independently. Pinned Syft archive and executable verification, five actual SPDX/Syft/
+source inventories and retained per-image notice archives pass. The 22 undeclared license
+metadata entries remain visible; zero restricted declarations is not distribution approval
+or proof of complete corresponding source.
+All four required gates pass: `pnpm check`, `pnpm build`, `pnpm test`, sequential
+`pnpm test:integration`. The latter ran actual central HTTPS/PostgreSQL/browser policy,
+owning SQL/migration/auth/isolation and authenticated SeaweedFS/transfer paths; six existing
+non-module conditional OCR/assessment/standalone cases are skipped, no module regression
+skipped. Current-source four-profile actual API/web login/permission/negative-access,
+add/remove/Core cutover/interruption/lost-ack/restore/trust, and corrected exact-package
+fresh installer/real email/client/normal login/setup/explicit Incident/DMS integration
+pass. Real Docker create/start response loss, post-effect checkpoint obstruction and
+confirmed pre-effect role retry pass with preserved secrets/no duplicate execution.
+Fresh, retained rerun, recovery and negative/conflict evidence are separately identified.
+Fixed browser-fixture cleanup ordering so all own attached containers are removed before
+its network; the explicit serial browser /24 avoids default-pool exhaustion. Removed only
+one empty network proven created by this task's failed first run; older networks/volumes
+are preserved. The selected substitution test now retains the actual release signer ID
+so archive substitution reaches its intended production verifier rather than an earlier
+wrong-key rejection.
+Final frozen checksum/source verification, all 20 references and nine final log hashes,
+private-data projection scan, Biome and Git whitespace checks pass. Public artifacts:
+[record](docs/qualification/module-release-20261111.json),
+[handoff](docs/turnstile/modules/module_release_handover.md),
+[support](docs/runbooks/module-release.md). Protected detailed evidence remains in
+`/tmp/mod-i10-{selected,cutover,installation,materials}-20261111` and
+`/tmp/mod-i10-{check,build,test,integration,installer,inventories}.log`.
+Separate clean Linux/Dokploy/TLS/mail, off-host recovery, authenticated production
+distribution, real-document/capacity, corresponding-source/license completeness,
+independent human replay and accountable target acceptance remain wider IA/release gates.
+Proposed IA-I06 public scoped proof UX remains separate; current protected private proof
+is supported. No live deployment, migration, account/credential/trust change, preexisting
+database volume deletion, commit, push or merge occurred. No module-plan work remains
+for this local POC; production readiness is not claimed.
+
+MOD-I09 — **Completed** (source/local module POC; owner: Codex, 2026-11-11).
+Implemented `@thaarei/installation-engine` 0.1.0, the Docker-only artifact launcher and
+signed five-image release assembly. Strict signatures/current key policy, exact physical
+profile/images, protected inputs, kernel locking and durable owning-command receipts
+preserve committed identities/secrets across retries. The engine invokes owning private
+configuration/role/migration/bootstrap, independent pairing/sync, verified identity/client
+and administrator/module handover commands; it imports no application/database source.
+Current unexpired intent and live desired checks gate affected mutations/opening. Explicit
+rebind uses existing protocol/floors; unknown fresh-only outcomes stop for reconciliation.
+Role provision waits for final TCP readiness and retries only confirmed pre-effect connection
+failures. Generated ingress uses actual container names and per-server private-safe logging.
+Central validates/persists exact decision application proofs and exposes authenticated own-
+product status. Staff separately sees inventory, central authority, acknowledged grant and
+independent DMS/Turnstile pairing/approval/reporting, with reviewed v2 enforcement/checklist.
+Actual fresh signed Incident-only artifacts passed the separate customer-operator journey:
+no checkout/host Node/Python dependency, UUID transcription or customer SQL seed; owning
+fresh PostgreSQL setup; independent pair/approve/activate/ack/report; real STARTTLS email
+verification before clients; three purpose-specific clients and real DMS enrollment/probe;
+normal login, protected administrator bootstrap/open, UI company/first unit, no implicit
+module read, explicit Incident landing/API and DMS capabilities, Risk absence and changed-
+assignment stop without reset. Real Docker dropped create/start responses, post-effect
+checkpoint failure, failed-plan retry, concurrent resume, expired publication evidence,
+tamper/revocation/private-mode rejection and general-log privacy checks passed. Fixed
+initial startup-path, identity-audience, public preparation-route and journal-key mismatches
+found by the actual journey. Reports remain claims, never user-access/runtime attestation.
+`pnpm check`, `pnpm build`, `pnpm test` and final sequential `pnpm test:integration` passed.
+Integration includes actual central HTTPS/SQL/browser, owning migration/privilege/isolation,
+auth persistence and authenticated SeaweedFS/transfer checks. Six existing conditional
+non-module native OCR/assessment/standalone profile cases remain skipped. Default Docker
+subnet exhaustion was resolved with explicit isolated POC /24s and the existing source-mode
+legacy compatibility path; no preexisting networks/volumes were removed. The selected
+customer path uses actual images, and auxiliary source compatibility is labeled separately.
+Source/profile/catalogue/release and all image identities, actual cases and limits:
+[qualification](docs/turnstile/modules/module_installation_qualification.md). Supported
+commands/custody: [handover runbook](docs/deployment/customer_deployment_guide.md#customer).
+Separate Linux/Dokploy, off-host recovery, production HTTPS distribution, processing/target
+acceptance and the proposed public scoped proof UX remain wider IA/release gates. Existing
+protected private proof remains authoritative; global status does not infer universal readiness.
+MOD-I10 is the next planned increment, not started. No live installation, credential, old
+volume, commit, push or merge changed. Final logs: `/tmp/mod9-{check,build,test}-qualified.log`,
+`/tmp/mod9-customer-qualified.log`, `/tmp/mod9-integration-qualified.log`. Private fixture
+state and database volumes remain under operator custody; no secrets are recorded here.
+
+MOD-I01–08-REVIEW — **Completed** (owner: Codex review sub-agent, 2026-11-11).
+Review every accumulated tracked and untracked module-delivery change against HEAD,
+including source, migrations, selected artifacts, preparation/cutover, tests and docs.
+OCR delegation provides deterministic inventory/rules only; review and confirmed fixes
+remain local. Initial inventory: 206 changed paths (167 OCR reviewable, 39 OCR-excluded
+paths also included for manual/structural review). No live customer state, credentials,
+volumes or deployment changes are authorized. Milestone: production source/configuration,
+SQL/snapshot chains and full fixture paths reviewed. Confirmed/fixed cutover trust custody:
+the helper no longer reconstructs installed trust with every delivery key marked active;
+it validates the target against provisioned installed trust and preserves key status/revision.
+Real-helper regressions cover absent/revoked/retired target signers before closure. Refreshed
+stale operational references to implemented v2 authority/restriction/activation. All 206
+original paths are reviewed (167 OCR reviewable plus all 39 excluded paths), with zero
+skips. `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` pass, including
+real central HTTPS/PostgreSQL/browser, owning migration/isolation and authenticated storage
+checks. Six existing conditional non-module database cases remain skipped (native OCR/
+assessment and standalone profile/image cases); required module runtime checks were available.
+The final exact-version `pnpm test:module:cutover /tmp/mod-i08-cutover-final-20261111 --resume`
+passes: specific installed-trust rejections before closure, all selected API/web/reporter
+cutovers, interrupted archive/resume, protected reconciliation, retained setup/grants/floors
+and actual customer/central restore fences. Qualifier runs were sequential with separate
+disposable run directories; all their temporary containers/databases were cleaned up.
+No confirmed implementation defect remains from this review. MOD-I09 launcher/full staff
+status/handover and MOD-I10/wider Linux/Dokploy/off-host target gates remain planned scope.
+No live/customer state, trust, secret, deployment or preexisting volume changed; no commit,
+push or merge occurred. Detailed findings, full path ledger, verification and limits:
+[module implementation review](docs/turnstile/modules/module_implementation_review.md).
+Final logs: `/tmp/module-review-{check,build,test,integration,cutover-final}.log`.
+
+MOD-I08 — **Completed** (source/local qualification; owner: Codex, 2026-11-11).
+Implemented strict current-MFA staff activation with current product/desired revision,
+active basis, pairing epoch, authenticated installed observation and independently verified
+package checks. Desired approval atomically restricts explicit Individual removals and
+active dependants before staging additions, within and across catalogues. Historical receipts
+cannot replay activation over later restrictions; conflicting operator revisions are fenced.
+Drizzle-generated migrations 0016/0017 add observation and the bounded authority writer
+while preserving permanent v2 floors and direct runtime authority-update denial.
+
+The private Linux/Docker tools-checkout helper verifies complete source/target bundles,
+closes feature access, stops exact old processes, quarantines the owning store, creates a
+checksummed product-only database/private-state archive, stages exact artifacts and applies
+forward migrations. Its locked durable plan supports same-request resume and preserves
+unknown staging data. Replacement pairing, current product/module approval and verification
+retain fixed identities, completed setup, local grants/data and v2/release-trust floors.
+A protected current administrator can review intervening local access changes without
+replacing them. Normal administrator opening stays explicit. See the
+[architecture](architecture.md#mod-i08-reviewed-transitions-and-private-cutover),
+[runbook](docs/runbooks/module-transitions.md) and generated activation OpenAPI.
+
+Verification: `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` passed,
+including real central HTTPS/PostgreSQL and database/storage suites. Final check/build/test
+rerun and `pnpm test:module:cutover /tmp/mod-i08-cutover-final-20261111 --resume` passed.
+The latter verified four signed profiles/eight actual selected API/web images plus real
+central/DMS images: normal login, Incident-to-both-to-Risk-to-Core-Risk cutovers, missing
+package/current approval, stopped old processes, interrupted archive/same-request resume,
+lost acknowledgements/stale replay, distinct-operator conflicts, intervening local revocation/
+protected reconciliation, retained identities/setup/grants/trust floors, target API access
+and independent DMS approval. Actual product archive restore retained active/desired/floor
+evidence, stayed closed without independent evidence and rejected retired credentials;
+actual central restore retired the module-managed customer credential while preserving v2.
+Standalone central transition fixtures use synthetic signed inventory; the selected-image
+journey separately verifies the actual installed path. Separate legacy v1 compatibility
+runs from source here; legacy candidate-image/reporter coverage remains the TCP qualifier.
+
+Disposable containers/databases were cleaned up. Existing customer installations/volumes
+were preserved; no live rollout, commit, push or merge occurred. The helper still requires
+the owning tools checkout. MOD-I09 owns the distributed combined launcher, full staff
+handover/status integration and wider installer target gates; separate Linux/Dokploy and
+off-host production recovery acceptance remain pending under their owning plans.
+
+
+MOD-I07 — **Completed** (source/local qualification; owner: Codex, 2026-11-11).
+Implemented platform-independent capability/entry contracts and generated OpenAPI;
+`GET /api/modules` plus selected `/api/modules/<id>/entry` controllers; service-level
+admission before feature execution; and lazy selected web routes, backend-derived Home/
+navigation links, bounded loading/denial/retry states and obsolete-response exclusion.
+Existing login/setup/private handover/release barriers and independent DMS policy remain.
+
+People catalogue v2 adds company-only Incident/Risk read permissions without changing system
+templates or three-action legacy grants. Drizzle-generated migrations 0030 and 0032 extend
+permission/receipt constraints; owning custom migration 0031 extends deferred scope guards
+and actual SQL People coverage/mutations. The private module operator assigns exact custom
+reader roles to verified admitted users under existing locks/revisions/audit/receipts.
+Replay after intervening revocation reports current state without restoring rights.
+`TURNSTILE_DISABLED_MODULES` removes local modules/dependants and cannot expand signed rights.
+
+Verification: final `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration`
+passed, including real central HTTP, PostgreSQL ownership/roles/setup/People/invitation/
+recovery suites and authenticated storage/browser/Node/Python transfer checks. Existing
+configured optional native/model skips remain. Focused contract tests pass. Real production
+API/web images for Core-only, Incident-only, Risk-only and both (eight selected images,
+plus an independent DMS image) passed physical exclusion/inventory/archive/signature/reuse,
+normal HTTPS login, absent implicit rights, private handover/release opening, explicit
+reader grants, direct URL/API denial, excluded 404s, service-level callback denial, private/
+no-store headers, actual deferred SQL company-scope rejection, local disablement preserving
+the other module, permission revocation/receipt replay, signed removal/expiry/suspension,
+anonymous denial and independent DMS approval/live machine scopes, where applicable.
+
+The real-image run found the missing module receipt constraint; migration 0032 corrected it.
+Older catalogue-count and implicit-all-permissions invitation fixtures now assert current
+explicit rights. An intermittent SMTP fixture startup failure was captured privately;
+browser setup now verifies the real production STARTTLS transport before account creation,
+without retrying partial provisioning or bypassing verification/TLS. The final complete
+four-profile run passed with this preflight. Qualified image source digest matches current
+owned source inventory. Private qualification evidence is
+`/tmp/mod-i07-selected-fixed-20261111/qualification.json`; logs are
+`/tmp/mod-i07-selected-final.log` and `/tmp/mod-i07-{check,build,test,integration}.log`.
+Test signing material remains private in the fixture directory.
+
+See [the runbook](docs/runbooks/module-access.md). Staff activation/cutover and broader
+change/recovery behavior remain MOD-I08; the browser fixture privately seeded real signed
+active authority and did not add a production activation writer. No business-domain schema,
+live customer migration/deployment/configuration/authority change, volume deletion, commit
+or push occurred. Existing dirty work was preserved; no MOD-I07 blocker remains.
+
+MOD-I06 — **Completed** (source/local qualification; owner: Codex, 2026-11-11).
+Implemented strict versioned Turnstile sync/decisions, full binding/epoch/order/context
+verification and separate module access evaluation. Same-revision renewal cannot change
+active/desired/assignment/allowed-set facts. Module reads deny on expiry or durable denial;
+existing foundation read exceptions stay separate. Shared client journals exact requests,
+refuses downgrade/profile substitution, preserves candidate recovery and commits accepted
+proof/credential promotion/ack state atomically.
+
+Central migrations 0014/0015 add permanent product v2 fences independent of credentials.
+Current-MFA Admin, origin, expected revision, atomic receipt and audit protect restrictive
+enforcement. Runtime can insert only a closed fence; it cannot delete/downgrade it or
+write active policy. Issuance validates active context and rechecks floor/epoch/policy after
+signing. Ordinary product approval, desired assignment and reported inventory grant no
+module authority. Replacement remains suspended until product approval, then pending
+until current-epoch module activation. Active transitions remain gated for MOD-I08.
+
+Selected image composition embeds the exact compiled profile. Separate protected signed
+release evidence/public trust feed API evaluation and reporter SQL application, including
+unchanged-proof persistence. Durable v2/release-trust floors prevent rollback. Fresh
+preparation writes and pins those files in its immutable plan and completion receipt.
+Legacy v1 Turnstile/DMS retain their existing foundation/product semantics. Central Docker
+packaging uses the existing pinned pnpm caches with supply-chain policy intact.
+
+Actual qualification:
+- Final `pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration` pass. Central
+  unit tests 9/9 and deployment-control tests 14/14 pass; real database/storage suites pass.
+- Real central HTTPS/PostgreSQL handlers exercise recent MFA/enforcement receipt recovery,
+  strict version fences, exact signed context, lost sync, removal/stale replay and replacement.
+  Runtime SQL privileges explicitly deny active-policy update and version-fence deletion.
+- Fresh selected Incident API/web images pass bundle signature, archive/inventory/exclusion
+  verification. Actual API evaluator/private CLI/store run in the selected production image
+  with owning PostgreSQL roles, public trust, nonroot/read-only roots and bounded privileges.
+  The API evaluator receives no private machine or migration/reporter SQL credential.
+- Shipped selected reporter completes canonical TLS sync, owning SQL publication and a central
+  report, then shuts down cleanly. Full binding/catalogue/profile/release/module substitution,
+  unknown/v1 version and equal-revision conflicts are rejected by the actual SQL save handler.
+- Actual ingress loses sync/rotation acknowledgements; retry after intervening removal cannot
+  reopen Incident. A real private-file rename obstruction after SQL commit leaves the SQL
+  restriction authoritative; restoring the old file and syncing repairs the journal safely.
+- Fresh customer processes with a controlled clock exercise outage/expired module reads and
+  signed suspension, retaining only the prior-activated foundation read exception. An old
+  approval row with a changed independent host marker triggers durable quarantine; reviewed
+  replacement/rebind changes epoch, blocks old proofs and leaves modules pending. Invalid
+  release proof closes access; proof repair alone cannot clear quarantine.
+- Final real central-container TLS run with two separate customer PostgreSQL clusters and
+  legacy v1 DMS/Turnstile reporters passes isolation, independent credentials, actual central
+  pre-denial backup/restore, key rollover/retirement/revocation and explicit recovery approval.
+
+Evidence: `/tmp/mod-i06-selected-20261111/selected-qualification.json` (13 installed-path
+checks, immutable selected API/central image IDs and final workspace gate results).
+Qualification code: scripts/fixtures/control-plane-module-machines.mjs and
+scripts/fixtures/turnstile-module-decisions.mjs; the decision runbook records exact options.
+Active module authority is explicitly seeded by private fixture SQL; this does not claim
+staff activation UI or ordinary module landing HTTP/login flows. API qualification invokes
+real owning evaluator/store functions in the selected image; legacy DMS additionally uses
+packaged HTTP. MOD-I07 owns capabilities/permissions/landing journeys, MOD-I08 activation/
+cutover, MOD-I09 status UI and MOD-I10 broader acceptance. No live migration/deployment,
+customer configuration/authority, volume deletion, commit or push occurred. Existing dirty
+work was preserved. Earlier Docker-unavailable/incomplete notes are superseded.
+
+MOD-I05 — **Completed** (source/local qualification; owner: Codex, 2026-11-10).
+Owner explicitly requested completion of the remaining combined initializer/recovery gate.
+Preserved existing dirty changes and all live installations. Central reservations, strict
+signed intents and their prior role/MFA/revision/audit/receipt verification remain intact.
+
+Implemented the combined private coordinator and owning DMS/Turnstile configuration CLIs.
+Read-only/no-network validation precedes private identity/secret-plan commits. Synced private
+plans and atomic file publication retain exact IDs, independent role/product keys and all
+committed credentials across interrupted writes and lost completion responses. Existing
+configuration, symlinks/unsafe modes, changed identity/context/settings and incompatible
+inputs are refused without replacement. The coordinator verifies selected artifacts and
+local DMS image identity, checks central HTTPS freshness before/after generation, and
+records only a binding/file-digest completion receipt. Pairing candidate/product state is
+preserved independently. OAuth client secrets start empty; public metadata never creates
+a credential, grant, approval or customer database. Added real staff reservation and
+reviewed intent-download controls, explicit typed relay settings, private-plan ignore rules,
+Windows/WSL guidance and source/operational architecture updates.
+
+DMS owning bootstrap now accepts a reserved local installation UUID and rejects replacement;
+the default standalone-generated UUID path remains compatible. Turnstile uses its existing
+immutable owning bootstrap and real manifest/application identity checks. No new SQL schema
+or live migration was needed. Packaging reuses dependency and registry-metadata caches
+without weakening pinned pnpm supply-chain validation.
+
+Verification so far: all four workspace gates pass, including disposable PostgreSQL/RLS,
+existing auth/HTTP/browser integration and authenticated SeaweedFS storage. Nine shared
+client/preparation tests pass, including a real interrupted filesystem write/replay,
+private modes, existing-state refusal and symlink rejection. The actual end-to-end gate
+passed for the selected source-backed package, central HTTPS/catalogue/assignment/intent,
+Docker initializer validation/generation, private file failure/resume, expiry/renewal,
+wrong/independent reservations, owning PostgreSQL provisioning/bootstrap, configuration/
+access initialization, partial and duplicate product pairing, unchanged credentials and
+changed desired-assignment refusal. Both products remain pending/unapproved after pairing.
+The final immutable images are under `/tmp/mod-i05-completion-qualified`. After one central
+page check returned 500 during overlapping build/verification work, the final central fixture
+was rerun alone and passed completely. Exact final command:
+`MOD_I05_PREPARATION_FIXTURE=/tmp/mod-i05-completion-qualified/fixture.json node scripts/test-control-plane.mjs`.
+This includes the actual initializer, owning configuration/access initialization, bootstrap,
+partial/duplicate pairing and changed-state refusal checks. Final check/build/test also pass;
+the complete workspace integration gate passed with PostgreSQL and storage. Build/output
+verification must run sequentially when sharing Next's compiled output. No fixture
+replaces the production initializer, bootstrap or central machine handlers; private Docker
+initializers are exercised, while owning bootstrap/pairing also run as compiled Node commands.
+
+No live customer configuration, account/client, database, Docker data volume or deployment
+changed. No production catalogue/key/reference was seeded. Broader installer journals,
+production distribution/host rollout and module runtime activation remain their IA and
+MOD-I06–10 owners. Changed assignment/context intentionally stops for reviewed reconciliation,
+not fresh reset or implicit cutover. MOD-I05's required local gate is complete. MOD-I06 signed Turnstile module decisions is
+next on the owner's request; current package/preparation evidence grants no module access. See the
+[intent/preparation runbook](docs/deployment/thaarei_ecosystem_guide.md#registration).
+
+MOD-I04 — **Completed** (source/local POC qualification; owner: Codex, 2026-11-10).
+Owner requested the next increment: selected Incident/Risk placeholder composition,
+allowlisted customer packaging, trusted release request/result and artifact exclusion
+verification across all four profiles. Preserve existing changes and local installations.
+2026-11-10 milestone: added isolated resolver-backed source selection, explicit foundation/
+Individual ownership, Incident/Risk placeholder entries and selected API/web Docker inputs.
+Added strict generic build requests, separate signed result context and local private-bundle
+build/verify/reuse/reference tooling. Central exports approved requests and verifies a
+read-only provisioned descriptor index; package availability never activates modules.
+2026-11-10 verification: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` all pass. The latter exercises actual central HTTPS/Next/PostgreSQL/
+Chromium export/reference handlers, wrong-purpose/expired/forged/context-mismatched
+results, separate availability/authority, existing authentication/integration journeys,
+owned database roles/migrations and authenticated storage. Four focused delivery tests
+cover canonical customer-free requests, source/catalogue/profile/platform/image binding,
+forgery/expiry/type/audience/key rejection and private historical renewal fencing.
+The initial auth rate-budget preflight saw an SMTP 503; the final complete integration
+run passed unchanged production handlers/limits. No authentication policy was weakened.
+
+`node scripts/test-selected-module-images.mjs /tmp/mod-i04-profiles-20261110-qualified`
+passed all four linux/amd64 profiles with eight actual API/web images. Checks start real
+packaged Nest/Nginx non-root/read-only without network/host ports/credentials, prove closed
+business access, compare feature ownership and runtime/dependency/map/chunk inventories,
+verify exact archive image identities, reject missing/substituted content, recover/reuse
+committed bundles and exercise actual CLI load/publication/renewal. A separate actual
+archive check also rejected a correctly signed result substituting a required image ID;
+the original descriptor was restored. Private fixture qualification/inventories remain
+under that /tmp directory; its signing key is disposable test trust, not a release key.
+
+BuildKit's lack of /.dockerenv is handled by a stage-created private marker; pnpm's extra
+README/lock output is excluded by fixed runtime assembly. Source digests now include all
+workspace manifests, compiler/boundary/runtime probes and owning release tools; code UUIDs
+are deterministic per source/platform. The runbook and architecture describe the explicit
+read-only filesystem POC reference adapter, 24-hour expiry/renewal and production adapter
+limits. No live installation, database migration, customer volume, deployment or credential
+changed; no production catalogue/reference was seeded. Production registry/HTTPS retrieval,
+clean target acceptance and signed customer activation remain later owning work.
+Next authorized increment on owner request: MOD-I05; do not treat package availability,
+ordinary v1 product approval or fixture success as module/user access authority.
+
+MOD-I03 — **Completed** (source/local verification; owner: Codex, 2026-11-09).
+Owner requested the next reviewed increment: per-Turnstile-product module assignments,
+dependency selection/confirmation and separate desired/draft/observed/effective views.
+Preserve existing edits and running installations. Reuse current staff admission/MFA,
+CSRF, immutable catalogue/resolver and revision/receipt/audit patterns. Verify real
+central browser/API/PostgreSQL races, lost responses and intervening policy changes.
+Customer packaging, v2 activation and live migration/deployment remain later work.
+2026-11-09 milestone: added owning generated assignment migrations, append-only draft/
+approval snapshots with product/kind-constrained pointers, atomic product revision/
+receipt/audit service and exact published-catalogue/profile confirmation. Added the
+Turnstile product Modules link and staff page with locked Core controls, dependency graph,
+equivalent keyboard/text selection, full-set review and separate desired/draft/status views.
+Current v1 reports/approvals never populate module-aware observed/effective authority.
+Unit status checks and production Next build pass. Actual HTTPS/PostgreSQL/Chromium
+assignment checks pass: binding/catalogue/closure, role/MFA/CSRF, revision races, audit
+rollback, lost responses, desired narrowing/suspension replay, cross-product pointers,
+independent installations and keyboard dependency review/save/approval. Expanded central
+fixture hit its real MFA rate budget; harness now honors bounded Retry-After with a fresh
+TOTP, without changing production limits. The complete central fixture passes. Added
+the assignment runbook and architecture/contract references for shared product revisions,
+immutable snapshots, historical receipts and unknown observed/effective staging state.
+Final fixture also verifies MFA expiry after lost approval and live writer demotion before
+receipt retry; both pass through actual handlers. pnpm check/build/test/test:integration
+all pass on 2026-11-09 with Node 24.21.0/pnpm 12.16.1 and valid Turbo caches where
+applicable. Verification includes the central/independent-product HTTPS suites, owned
+database migrations/isolation, existing conditional DMS skips and pinned SeaweedFS
+boundaries. No new feature checks are skipped. Final Biome, relative documentation
+targets and git diff --check pass. No live database migration/deployment or production
+catalogue was performed; exact production-image/target rollout remains a release check.
+Observed/effective read fields are explicitly null until MOD-I04/06 supplies owning
+evidence adapters; no staff command fabricates those facts or grants module access.
+MOD-I04 is next; actual customer v2 activation and active transitions remain MOD-I06/08.
+
+MOD-I02 — **Completed** (source/local verification; owner: Codex, 2026-11-09).
+Owner requested the next reviewed increment: central catalogue persistence, verified
+code/release intake, classification drafts/publication and staff read/admin screens.
+Reuse live staff/MFA/CSRF, revision/receipt/audit patterns and separate release trust.
+Preserve all existing edits/data; do not deploy/migrate the live installation.
+2026-11-09 milestone: implemented owning migrations 0010/0011, immutable code/released
+catalogues, category-only drafts, separate public release trust/signature intake, atomic
+receipt/audit services, bounded routes and Admin review/confirm with staff read views.
+Real Next HTTPS/PostgreSQL and Chromium classification checks pass, including current
+MFA/roles/CSRF, conflicting revisions, lost responses, expiry-safe exact receipts,
+matching publication evidence, audit rollback and runtime privilege/immutability guards.
+Workspace pnpm check/build/test/test:integration pass on 2026-11-09 with Node 24.21.0
+and pnpm 12.16.1; valid Turbo build caches reused where applicable. Initial full
+integration reached an existing invitation SMTP assertion failure (unknown versus
+smtp_accepted); its focused 21-test rerun and subsequent complete integration rerun
+both pass without changing that test or mail handling. Full rerun includes actual
+central/independent product HTTPS integration, owned database/isolation suites and
+pinned SeaweedFS boundaries; three existing DMS document cases remain skipped.
+Final repository Biome, document links and git diff --check pass.
+No live migration/deployment, customer assignment, production catalogue seed or customer
+protocol change occurred. Exact production-image/target rollout and public-trust custody
+remain release checks. Next: MOD-I03 per-product assignments/dependency UI; actual
+selected artifact and customer placeholder delivery remain MOD-I04–07.
+
+MOD-I01 — **Completed** (shared foundation; owner: Codex, 2026-11-09).
+Owner authorized starting the reviewed module delivery plan. Implement shared strict
+catalogue/profile/assignment/intent/decision contracts, deterministic dependency resolution
+and canonical profile hashing, source-backed foundation inventory and ownership/retry/
+compatibility documentation. Preserve existing planning edits and running installations;
+no central schema/UI or customer activation changes in this increment.
+Implemented packages/module-catalog with strict metadata payloads, dependency proposals,
+explicit closure confirmation, portable canonical hashes, active removal closure and
+profile/release context checks. Added framework/Node boundary enforcement and the frozen
+foundation/ownership/retry/compatibility reference. Twenty focused tests pass, including
+fixed catalogue/profile SHA-256 vectors, all four selections, invalid dependency graphs,
+Core promotion/foundation preservation, explicit dependency confirmation, active-catalogue
+removals and strict legacy/v2/context/intent failures. pnpm check/build/test and
+test:integration pass on 2026-11-09; valid Turbo cache reused where applicable, real
+central HTTP/PostgreSQL, owning database/isolation and pinned SeaweedFS checks completed.
+Final Biome, git diff --check and new documentation-target checks pass. Node 24.21.0 and
+pnpm 12.16.1 match; lockfile adds only the new workspace importer, no dependency upgrades.
+No application protocol issuer/verifier or customer state changed. Schemas/context parsing
+do not verify signature/time-now/binding epoch/order or grant authority: owning runtime
+verification remains MOD-I06. Next: MOD-I02 owning catalogue persistence/intake/UI;
+selected image exclusion and actual placeholder/customer flow remain MOD-I04–07.
+
+MODULE-CENTRAL-PLAN-01 — **Completed** (reviewed planning only; owner: Codex, 2026-11-09).
+Owner requests a final implementation plan for Thaarei staff choosing customer Turnstile
+modules centrally, visualizing dependencies, classifying core/individual modules and
+delivering/activating the selected customer profile. Incorporate the Incident/Risk POC
+and installer ordering; obtain an Astra sub-agent review after drafting, then resolve
+findings. Scope is reviewed planning documents and references, not application/SQL
+implementation or target deployment. Preserve the preceding assessment/proposal entries.
+Created docs/turnstile/modules/module_delivery_specification.md (MOD-R01–20) and the
+ten-increment module_delivery_implementation_plan.md, with canonical proposed design in
+architecture.md. Updated installer prerequisites, control-plane scope and docs index.
+Resolved global classification versus per-product assignment, closed Core dependencies,
+central-first reserved identities, separate catalogue attestation/profile build evidence,
+external artifact delivery, exact profile-bound v2 decisions, desired/installed/effective
+states, explicit removal/read policy and recovery/downgrade fences.
+Independent gpt-6-astra review verified seven draft fingerprints and found one high and
+one medium issue. Parent resolved both: mixed changes apply confirmed active removals/
+dependant restrictions first (including cross-catalogue replacement), while additions
+wait for delivery/approval; all catalogue-managed business operations, including reads,
+need current signed authority, with a separate matrix preserving fixed-foundation rules.
+Added delayed Incident-to-Risk replacement/lost-ack tests and expiry/suspension/offline
+tests to the future gates. Clarified complete combined initialization is new MOD-I05
+work. module_delivery_review.md retains the review link, draft hashes and dispositions;
+no independent Astra re-review of the parent's corrected revision is claimed.
+Verification on 2026-11-09: pnpm check, pnpm build, pnpm test and pnpm test:integration
+pass (valid Turbo cache reused where applicable; owning central HTTP/PostgreSQL,
+uncached database/migration/isolation and pinned SeaweedFS checks completed). Final
+Biome, git diff --check, 219 local documentation links/anchors, 20 unique requirements
+and ten increments pass. Only documentation/progress changed; disposable test fixtures
+ran, with no customer state or live configuration changes. Handoff: start MOD-I01 shared
+strict contracts/resolver/source inventory. All runtime module, profile-exclusion,
+fresh combined setup, real-user POC and independent-target/recovery acceptance remain
+future implementation gates; existing real-document smoke also remains separately open.
+
+MODULE-POC-SOLUTION-01 — **Completed** (design proposal only; owner: Codex, 2026-11-09).
+Owner requests the solution first for a small modular-delivery POC: current core plus
+Incident Management and Risk Management placeholder modules, selectable customer images,
+dependency representation and future optional-to-core reclassification. Define a single
+catalogue with derived core/individual lists, safe profile/dependency validation, selective
+API/web packaging and a bounded demonstrable scope. Preserve previous assessment entries.
+No application implementation, entitlement-policy adoption, schema changes or live
+deployment is part of this proposal. Proposed one publisher-owned versioned catalogue
+with stable module IDs/category/required dependencies/optional integrations and derived
+Core/Individual lists. Current foundation stays fixed; Incident Management and Risk
+Management start as independent individual placeholders requiring only the foundation.
+Profiles cover core-only, incident-only, risk-only and both. Real POC acceptance must
+verify excluded API/web artifacts/dependencies/routes/jobs, actual authenticated message
+endpoints/screens, server-authoritative enablement and dependency refusal. Existing login
+and permission checks remain in force. Use an explicit test profile for initial selection;
+production control-plane module entitlement integration remains separate, not simulated
+as an implemented central capability. Optional-to-core promotion preserves identity/code
+location but is a validated publisher release change, with closed core dependencies and
+explicit upgrade/approval compatibility; it cannot silently modify installed customers.
+Prepared /tmp/turnstile-module-delivery-proposal.html as a self-contained illustrative
+interactive catalogue/profile/dependency view, including category changes and a clearly
+labelled hypothetical Risk-requires-Incident validator example. This preview does not
+build images, exercise backend handlers or qualify physical artifact exclusion. Verified
+728px dark and 390px light layouts with html_preview; both report no console errors.
+Reviewed owning source/architecture and official Nest module/Docker multi-stage guidance.
+Only progress metadata and the standalone visual explanation changed. Biome and git diff
+--check pass; application/runtime suites were not rerun for this solution-only proposal.
+Next implementation scope, if requested: catalogue/resolver and two real placeholders,
+selective build/image verification and negative dependency/access checks before wiring
+module profiles into IA-I01/02/03. No Incident/Risk business workflows or tables proposed.
+
+MODULE-PACKAGING-ASSESS-01 — **Completed** (advice only; owner: Codex, 2026-11-08).
+Owner asks how to ship only purchased Turnstile modules, control cross-module dependencies
+and sequence that foundation relative to the proposed installer. Inspect current module/
+build/access boundaries and recommend a scoped design and delivery order. Advice only:
+do not implement module selection/entitlements, adopt new policy, change the installation
+plan or alter the running installation. Current AppModule has fixed imports; Nest build
+and pnpm deploy package the compiled API. Central's strict v1 approved decision carries
+product-business entitlement, not a commercial feature-module catalogue. Existing Nest
+modules and permission gates are not selective shipping or module licensing.
+Recommendation: one codebase with explicit required core and versioned feature catalogue,
+mandatory/optional dependency graph and supported release profiles. Generate selected API/
+web composition and assemble only selected artifacts/dependencies/assets/private tools;
+verify physical image absence as well as absent routes/jobs and runtime denial. Retain
+separate installed, centrally approved, locally enabled and actor-authorized checks.
+Missing mandatory dependencies reject a profile; optional integration loads only when
+both modules are available/authorized. Shared primitives belong in core only when their
+product scope warrants it, not as hidden delivery of an unpurchased business module.
+Keep module contracts/data ownership explicit, enforce import boundaries and avoid cycles;
+no microservice per feature or new tenant/application identity is implied. Future addition/
+removal uses a verified compatible profile/update and preserves retained data.
+Sequence: extend IA-I01 with module/profile/entitlement design and prove a narrow selection/
+dependency/enforcement path before freezing IA-I02 packaging and IA-I03 installer inputs.
+General preflight/owned-provisioning work need not wait for every business module.
+Verification: repository source/design inspection, NestJS architecture skill and official
+Nest modules/Docker multi-stage/Vite build configuration documentation. Only this progress
+assessment changed; no plan adoption, implementation, schema or runtime changes. Biome and
+git diff --check pass; runtime suites were not rerun for this advice-only assessment.
+
+INSTALLATION-AUTOMATION-PLAN-01 — **Completed** (planning only; owner: Codex, 2026-11-07).
+Owner authorized creation of the installer specification and implementation plan after
+the successful local setup and processing-readiness assessment. Capture supported
+release packaging, operator-owned repeatable stages, guided staff/customer checkpoints,
+safe retries/resume, secret handling and clean-host/functional/recovery acceptance.
+Read the existing distribution, private handover and deployment-control boundaries
+before defining the proposal. This task writes planning documents only; it does not
+implement an installer, provision another host or change the running installation.
+Created docs/deployment/installation_specification.md (IA-R01–18) and the nine-increment
+installation_implementation_plan.md, with proposed technical design in architecture.md
+and a documentation-index entry. Requirements cover complete releases, typed intent,
+durable owner-command reconciliation, real MFA/approval/customer proof, processing and
+independent-host recovery/acceptance. Kept adoption/update/reset and target rollout
+outside this planning scope. Reviewed stage dependencies, actual owner-command retry
+guarantees, the verification/client ordering and the proposed private login-proof boundary.
+Verification on 2026-11-07: Node 24.21.0/pnpm 12.16.1 match; pnpm check, pnpm build,
+pnpm test and pnpm test:integration pass. Build/unit tasks reused valid Turbo cache;
+integration exercised actual central HTTPS/PostgreSQL, both product adapters, uncached
+owning database/migration/isolation tests and pinned SeaweedFS transfer checks. Biome,
+git diff --check, 187 local documentation links/anchors and unique requirement/increment
+IDs pass. No application code or live installation configuration/data changed; only
+disposable test fixtures ran. Handoff: IA-I01 is the first implementation increment;
+current-install document smoke, installer failure/resume qualification, independent
+Linux/Dokploy and off-host recovery/target acceptance remain unpassed future gates.
+
+INSTALLER-PLANNING-PREFLIGHT-01 — **Completed** (assessment; owner: Codex, 2026-11-07).
+Owner reports successful DMS processing setup and working Turnstile organization/setup
+and asks whether anything blocks installer planning. Inspect actual selected-profile
+readiness, worker/policy configuration, capabilities and central reporting. Keep any
+remaining document/recovery/target acceptance checks distinct from prerequisites for
+writing the plan. No new provisioning or business-data changes are authorized by this
+readiness assessment.
+Private PROCESSING.json records successful startup at 14:44 UTC. Source/SQL and
+container inventory confirm exactly one authorization for publisher/scanner/extractor/
+heavy, admission revision 1 enabled for text/plain, application/pdf and image/png, and
+healthy processing dependencies. Live installed Turnstile CapabilitiesService read
+succeeds with binding validation, deploymentAccess=full, three formats, two profiles
+and English. Both canonical HTTPS readiness endpoints return 200/ready=true. Central
+reports are approved/acknowledged and independent, with DMS processingReady=true;
+observed report ages are within the configured 13.5–15 minute successful-sync cadence.
+Company setup is complete, writes open and no current documents were present. No
+fresh-install real-file upload/scan/extraction/OCR/download journey was claimed verified.
+These functional checks, failed/restarted install resume, independent clean Linux target,
+versioned reviewed release and target recovery acceptance belong in the installer plan;
+none prevents drafting it now. T3 project scheduled-task listing returned no tasks, so
+no separate scheduled automation was claimed inspected or validated; organization setup
+was confirmed directly. No runtime, policy, data, code or schedule was changed. Evidence:
+private PROCESSING-READINESS.json, installed service probe, read-only SQL and container/
+central report state. git diff --check passes; workspace suites were not rerun for this
+operational assessment. No installer implementation or architecture adoption performed.
+
+
+INSTALLATION-AUTOMATION-ASSESS-01 — **Completed** (proposal/assessment only; owner: Codex, 2026-11-07).
+Owner requests an evidence-based opinion on streamlining repeated fresh infrastructure
+setup across independent test regions and customer installations, based on this manual
+journey and its issues. Review supported distribution/private commands, topology,
+qualification and temporary local helpers; recommend reusable automation and explicit
+identity/approval gates without implementing an installer or changing accepted design.
+Preserve current runtime and all user work.
+Reviewed existing DMS bundle/init/wrapper, combined Turnstile overlay, control-plane
+qualification, private local prototypes, deployment and administrator-release procedures.
+Recommendation: a versioned combined customer release, validated nonsecret installation
+manifest with separate private secret delivery, and an operator-run resumable installer
+wrapping existing owning commands. Proposed actions include preflight/plan/install/status/
+resume/verify, durable receipts and live-state reconciliation, and separate update/restore
+operations. Reruns preserve identity/secrets/data; destructive test reset is never implicit.
+Proposed UX: import generated identity manifests, validate pairing files and normalize
+Windows/WSL paths, check/recover recent MFA, handle expired/reset/verification links with
+correct states, sequence local client provisioning before exposing ordinary login, and
+replace manual cookie copying with a separately designed short-lived login-proof handoff
+that leaves privileged grants in the private owning command. No new auth flow is claimed
+implemented. Preserve real production email/MFA, explicit staff approvals and accountable
+first-admin/customer business choices; isolated fixture workflows can automate test actors.
+Complete selected-profile readiness must include worker identities/admission/scanner data,
+processing and DMS capabilities as well as login, activation acknowledgements and fresh
+independent reports. Distinguish installed/awaiting human action/ready/target accepted.
+Keep central as registry/approval/reporting per TCP-R13, without remote shell or arbitrary
+customer deployment execution. An external operator/CI adapter may use existing Dokploy
+Compose create/environment/deploy APIs (official docs checked); do not embed customer
+migration/provider credentials in central/runtime services. Independent regions receive
+separate installation state/identities/credentials; replicas and DR follow their distinct
+identity/recovery designs. Reuse the recipe and release, never this local environment's
+private files. Keep test/local CA/Mailpit and production DNS/TLS/SMTP configuration explicit.
+Prioritize closing the still-pending local processing/document journey, then complete
+customer packaging and installer, then guided claim UX and repeated clean-Linux/failure-
+resume acceptance before customer rollout. No installer implementation, architecture
+adoption, infrastructure provisioning or runtime mutation was authorized/performed.
+Verification: source/runbook/history review, official Dokploy API reference and git diff
+--check. No application code changed; workspace tests were not rerun for this assessment.
+
+
+LOCAL-INTEGRATION-READY-01 — **Completed** (live assessment; owner: Codex, 2026-11-07).
+Owner asks whether setup and the Turnstile/DMS/central integration are complete. SQL
+confirms company setup complete with three organization units, access writes open,
+three customer OAuth clients and one active local DMS application. Both central products
+are approved, paired and activation-acknowledged. Latest independent reports were received
+at 14:37 (DMS) and 14:38 (Turnstile); DMS honestly reports processingReady=false.
+Invoked the installed compiled Turnstile CapabilitiesService/MachineTokenService inside
+the running product API container: real token acquisition and DMS HTTP request succeed,
+binding validation passes and deployment access is full. Its arrays are empty because
+admission is not configured. This exercises the production machine service path and
+does not replace user/session/permission-gated route or browser verification.
+Current containers include the coordinator/reporter but no publisher/scanner/extractor/
+heavy worker or scanner daemon. DMS work identities count is zero and processing setup
+has not run. Explained that processing.mjs is the remaining local document-runtime
+setup; Turnstile document screens/business integration and Linux/Dokploy rollout remain
+separate. Customer backends make outbound HTTPS sync/report calls to central; central
+returns signed decisions, with no customer-database access. No worker provisioning,
+policy changes or new feature work was performed for this status request. Source/SQL,
+container inventory, recent central reports and actual machine HTTP probe are the
+verification; workspace suites were not rerun for this operational assessment.
+
+
+CUSTOMER-ADMIN-HANDOVER-01 — **Completed** (owner: Codex, 2026-11-07).
+User reran completed client provisioning and sees Waiting for setup after normal login.
+CLIENTS.json and read-only SQL confirm three clients, active DMS enrollment, explicit
+initial product membership and closed user-management writes. No administrator handover
+result/cookie file exists. Confirm release preflight/image consistency, make completed
+client script return a clear nonmutating message, then obtain genuine signed-in product
+cookie through secure secret input for the existing private administrator handover.
+Preserve all accounts/configuration and use the owning release CLI, never direct grants
+or fabricated session proof.
+Final handoff: user submitted their normal __Host-turnstile cookie through the third
+secure request. Read the delivered secret only inside a command, normalized it into a
+mode-0600 private input and refreshed it through the real HTTPS /api/auth/session route.
+Confirmed the selected customer identity, then ran the supported release bootstrap CLI.
+SQL confirms one protected administrator and access revision 3. Refreshed the ordinary
+session/cookie again through the same API, then ran release open using the verified
+image inventory; it succeeded at revision 4 with public writes enabled, release ID bound
+and invitation recovery epoch bound. Final owning release verify reports ready=true.
+The authenticated /api/organization read returns 200 and session permissions confirm
+configuration management. No password, email flag or session proof was fabricated.
+The user began entering company configuration during verification; an initial empty-state
+assertion became stale and was replaced with access/shape checks. Current user-entered
+configuration was preserved, with organization/time-zone saved and setup not yet complete.
+No sample organization or units were created by Codex. Removed task-owned cookie and
+bootstrap/open input files after successful receipt/state reconciliation; retained only
+nonsecret results and protected operational logs. Evidence: private ADMIN-HANDOVER.json,
+HANDOVER-SESSION-CHECK.json and handover bootstrap/open result JSON. No application
+source/schema/image change or commit; normal authenticated CLI/API/SQL and exact image
+checks are operational verification. Full workspace suites were not rerun for supported
+operator commands. User can continue company setup, first unit, review and completion.
+Historical preparation/input-wait chronology follows.
+Milestone: private client helper now exits successfully with an explicit already-complete
+message when CLIENTS.json exists; syntax check and nonmutating rerun passed. Owning
+release verify reports ready=true at revision 2 with public writes closed. All three
+running authority/API/web images match the existing verified release inventory.
+Two secure cookie requests expired without a value (60s then 180s). No cookie was
+received, no administrator assignment/open command ran, and the workspace remains
+unchanged awaiting genuine normal-login cookie proof. Do not obtain/fabricate a cookie
+from DB secrets or bypass the supported release procedure. Next continuation: request
+current __Host-turnstile securely again when the user is ready, run bootstrap through
+handover.mjs, refresh the ordinary session/cookie and run open, then verify setup readiness.
+Private helper/documentation changes require no application rebuild; actual release
+preflight, exact image checks, safe helper rerun and git diff --check passed.
+
+
+CUSTOMER-LOCAL-CLIENTS-01 — **Completed** (client/enrollment bootstrap; owner: Codex, 2026-11-07).
+User reports invalid_client after opening the customer verification link. Read-only SQL
+confirms verification actually succeeded; both central products are approved and activation
+acknowledged, but auth has zero OAuth clients and DMS has zero application registrations.
+The verification callback reaches /sign-in, whose normal BFF login then hits the missing
+login client. Complete the already planned local login/machine/identity-service client
+provisioning, machine enrollment and initial explicit product access through supported
+private commands. Preserve user's manual first login/administrator handover. Never print
+verification tokens or credentials, and do not replay the shared verification URL.
+Ran the supported private customer-clients helper successfully. Provisioned three distinct
+managed OAuth clients (login, DMS machine, private identity service); registered/enrolled
+Turnstile through real canonical HTTPS, identified the verified subject read-only, granted
+explicit initial shell/connection access through the owning private product command,
+installed secrets only in private server env files and recreated only the product API.
+SQL confirms verified customer, three clients, one active DMS application, one product
+member and user-management writes still closed. No password or verification flag was
+changed by Codex; no protected administrator handover was bypassed. Ordinary HTTPS
+/api/auth/login redirects now reach the signed /sign-in entry (200) rather than invalid_client;
+no credentials were submitted in that probe. Evidence: private CLIENTS.json,
+CUSTOMER-LOGIN-ENTRY.json and protected helper output. No application source or schema
+changed; supported CLI results, read-only SQL and actual HTTPS redirect journey are the
+operational verification, so workspace suites were not rerun. User's first normal login
+and genuine-cookie administrator handover remain next, followed by company setup.
+
+
+CUSTOMER-VERIFY-RESEND-01 — **Completed** (delivery; owner: Codex, 2026-11-07).
+Owner explicitly requests a fresh customer verification email after expiry. Read-only
+state confirms admin@customer.test remains unverified. Request delivery through the
+normal customer-local HTTPS identity endpoint with its approved sign-in callback;
+confirm fresh capture in Mailpit without printing a verification link or changing flags.
+The guarded /identity/send-verification-email POST returned 200 with trusted local-CA
+TLS and exact Origin/callback. Mailpit confirms Verify your account email for the
+customer administrator at 14:10:26 UTC. Token/link/password were not printed; account
+verification remains for the user to complete through the captured email. Evidence:
+ignored latest-customer-verification.json. No code/schema/account flag changed; HTTPS
+response and captured delivery are the relevant checks, so workspace suites were not rerun.
+
+
+CENTRAL-MANUAL-SYNC-GUIDANCE-01 — **Completed** (explanation/current-state assessment; owner: Codex, 2026-11-07).
+User asks what the two sync commands and background Compose startup do after approval.
+Read-only central SQL confirms DMS and Turnstile approved and pairing verified, but
+neither current activation acknowledged. Inspected private helper/wrapper and both
+reporters: one-time sync authenticates with each paired credential, retrieves/verifies/
+persists its signed decision and acknowledges; coordinator and dedicated Turnstile
+reporter maintain scheduled sync and independent operational summaries. Explained -d
+and --no-build, expected central acknowledgement/report checks, and next separate local
+identity/enrollment/administrator-handover stage. No sync, startup or other mutation was
+performed because this request asks for explanation. Source/SQL inspection and git diff
+--check are the verification; no workspace suites rerun for guidance.
+
+
+CENTRAL-MANUAL-TURNSTILE-PAIR-01 — **Completed** (owner: Codex, 2026-11-07).
+Owner explicitly requests running Turnstile pairing using the downloaded JSON in the
+same WSL temp location. Confirmed product/origin, installation/tenant/application matches
+against its local manifest without printing the code. Run the supported private helper
+and verify central/local state. Preserve separate staff approval and customer enrollment.
+Supported helper succeeded through canonical HTTPS. Central SQL confirms DMS and
+Turnstile both pairing verified, each with one consumed pairing code; local Turnstile
+binding is persisted. Both policy states remain pending. Downloaded Turnstile file is
+mode 0600; code/credentials were not printed. User next refreshes Clients and explicitly
+approves both with recent MFA, then operator syncs signed decisions. No source/schema,
+account, product approval or local DMS enrollment changed. Command result and read-only
+central/local SQL are the operational verification; no workspace suites rerun.
+
+
+CENTRAL-MANUAL-DMS-PAIR-01 — **Completed** (owner: Codex, 2026-11-07).
+User downloaded a genuine DMS pairing file into WSL but supplied its Windows UNC path
+to a Linux Node command. Confirmed the corresponding Linux path under projects - WSL/temp,
+valid DMS product/origin and matching local installation/tenant bindings without printing
+the code. Run the already attempted authorized pairing with that Linux path, then verify
+central/local state. Preserve explicit staff approval as the next separate manual step.
+Executed the existing private helper with the actual Linux file path; command succeeded.
+Central confirms DMS pairing_verified_at set, consumed code and a non-revoked machine
+credential; local DMS binding is persisted. DMS remains pending approval. Turnstile is
+pending/unpaired. Restricted the downloaded secret file to mode 0600; neither code nor
+machine secret was printed. User should refresh Clients, then pair Turnstile and
+explicitly approve both products through fresh MFA. No code or database schema changed;
+normal HTTPS pairing plus read-only central/local SQL are the operational verification.
+Workspace test suites were not rerun for this supported private command. No approval,
+customer account, enrollment or business state was changed by this task.
+
+
+CENTRAL-MANUAL-PAIR-MFA-01 — **Completed** (operational diagnosis/guidance; owner: Codex, 2026-11-07).
+User reports pairing form disabled with Retry same request and no file download.
+Read-only state confirms an active verified MFA-enabled staff account and session,
+but latest MFA at 13:22:59 UTC is older than the required ten minutes at the observed
+13:48 request activity. Both products still have zero pairing rows. Owning executePairing
+requires recent MFA before writing; frontend retains the exact request/code after a
+rejected/uncertain result and disables changed intents while offering retry. Guided user
+to /access in a separate tab, choose Authenticator code, complete a fresh code, then
+return to the original tab and Retry same request. Preserve the original tab because
+the private pending code lives only in memory. No application code, credential, MFA
+proof or registry state changed. Private START-HERE now records fresh-MFA/retry steps.
+Read-only SQL/source inspection and git diff --check are the relevant verification;
+workspace suites were not rerun for operational guidance. User MFA/retry/download remain
+pending; no secrets were printed and no authentication requirement was bypassed.
+
+
+CENTRAL-MANUAL-PAIR-PATH-01 — **Completed** (diagnostics and guidance; owner: Codex, 2026-11-07).
+User ran pairing helper with the literal example /absolute/path/to/dms-pairing.json.
+Windows Downloads contains only dms-deployment-manifest.json, which has no pairing
+code. Read-only central SQL confirms zero pairing rows for either product. Improve
+ignored local helper diagnostics and replace placeholder guide paths with concrete
+Windows-through-WSL paths; guide user through actual initial pairing-file issuance.
+Do not issue/consume a code or change approval without the downloaded file.
+Ignored local operator helper now reports a missing file explicitly and rejects a
+nonsecret manifest with actionable pairing-file instructions before any private setup.
+Private START-HERE now gives actual Windows Downloads paths through /mnt/c, exact UI
+issuance steps, file naming and the unused-code-revocation meaning of Pairing ID.
+Verification: node --check passes; literal placeholder and actual manifest invocations
+both exit 1 with expected safe messages and no mutations. No production source changed,
+so workspace suites were not rerun. Actual code issuance/download and pairing remain
+pending with the manual tester; no secrets were printed or central state changed.
+
+
+CENTRAL-MANUAL-ACTIVATION-01 — **Completed** (state assessment/next-step guidance; owner: Codex, 2026-11-07).
+User asks the planned next sequence after creating an installation and two products.
+Read-only central SQL confirms exactly one installation, DMS and Turnstile both pending,
+neither pairing verified, no machine activation acknowledgements and zero pairing rows.
+Explained the existing plan: user issues/downloads distinct initial pairing files; private
+backend setup exchanges one-use codes for separate central machine credentials; user
+reviews verified bindings and approves each; operator syncs signed decisions/acknowledges
+and starts independent reporters. Customer identity, local Turnstile-to-DMS enrollment,
+normal-login administrator handover and company setup follow activation. Prepared private
+operator helpers already implement the local commands. Immediate user action is DMS and
+Turnstile Deployment setup and credentials > Issue initial pairing file. No code, registry
+policy, pairing, account or installation state was changed. Relevant verification was
+read-only SQL and owning source/runbook inspection; no workspace tests rerun.
+
+
+CENTRAL-MANUAL-INSTALL-01 — **Completed** (field guidance; owner: Codex, 2026-11-07).
+User requests installation registration values. Read both exported local manifests and
+current installation-create contract/form. Both manifests have matching local installation
+and tenant IDs and environment local-manual. Provided those nonsecret binding values
+with a descriptive local label/reason, and guided review/confirmation followed by separate
+DMS and Turnstile product registration under the same installation. No registry write or
+application/database change was performed. Read-only manifest/contract inspection is the
+verification; no workspace tests rerun for this guidance.
+
+
+CENTRAL-MANUAL-AUTH-02 — **Completed** (diagnosis and fresh verification delivery; owner: Codex, 2026-11-07).
+User reports generic authentication failure after another password reset. Read-only
+state confirms credential updated at 13:13:32 UTC, no remaining reset token/sessions,
+and central administrator email still unverified. Latest central verification message
+is from 11:57 and expired under the configured 30-minute lifetime. Request a fresh
+verification email through the normal HTTPS route into local Mailpit; leave the user
+to click it and complete their own login/MFA. Do not change password or verification flags.
+Normal HTTPS POST /api/auth/send-verification-email returned 200 using the trusted local
+CA, exact Origin and same-origin context. Mailpit confirms a fresh Verify your email
+message for the central administrator at 13:15:07 UTC. No verification link/token or
+password was printed. User must open this newest verification message, then sign in
+with their latest chosen password and enroll MFA. Password/verification/MFA flags were
+not changed by Codex. No application code changed; relevant verification was read-only
+state inspection, the normal guarded HTTPS request and fresh captured delivery. No
+workspace build/integration rerun for this operational diagnosis. Evidence is private
+latest-central-verification.json; actual user verification and sign-in remain pending.
+
+
+CENTRAL-RESET-INPUT-01 — **Completed** (owner: Codex, 2026-11-07).
+User reports Invalid input while choosing a new central password from the recovery
+page. Trace token handoff/form state and owning HTTP validation without exposing or
+changing their password or completing account setup on their behalf.
+Read-only evidence: user's credential updated at 12:45 UTC, no reset token remains and
+email is still unverified. Production browser reproduction confirmed that a callback
+with flow=reset and INVALID_TOKEN offers a new-password form and submits token=''.
+Added reset-entry validation, a once-only initialization fence preserving valid tokens
+through URL cleanup, a defensive empty-token submit guard and visible 15–128 character
+password guidance. Two focused regression tests pass. pnpm check/build/test pass;
+pnpm test:integration also passed. Built thaarei-manual-central:reset-fix and updated
+only the isolated central Compose image; database, secrets and accounts preserved.
+Deployed production UI browser check passes invalid/missing-token handling and a valid
+synthetic token through URL cleanup. A read-only HTTPS request to the actual provider
+invalid-token callback confirms its redirect; the browser checks that actual destination.
+Valid POST is intercepted with synthetic data, not a target password change.
+Preview automation failed twice with ERR_CERT_AUTHORITY_INVALID; fallback uses isolated
+Playwright and an HTTPS bridge verifying upstream GETs with the local CA, without
+disabling TLS checks. User's password/email verification/MFA remain untouched.
+Files: AccessForm.tsx, reset-entry.ts and test/reset-entry.test.ts in the control-plane
+application. Evidence: ignored reset-fix-{check,build,test,test-integration}.log,
+reset-fix-verification.log, reset-fix-image.json and the private browser regression
+helper. All four workspace gates, focused parser regressions, deployed browser form
+regression and canonical HTTPS entrypoints passed; git diff --check passes. No commit,
+push or production-host rollout occurred. User should refresh the page, verify their
+email if still pending, then sign in with the password they already chose. A fresh
+reset email is needed only when choosing another password or replacing an invalid link.
+
+
+CENTRAL-MANUAL-AUTH-01 — **Completed** (diagnosis/manual guidance; owner: Codex, 2026-11-07).
+Manual tester reports central /access showing generic authentication failure after
+Windows trust setup. Read-only SQL confirms central admin@thaarei.test is unverified,
+MFA disabled and zero sessions. Installed Better Auth configuration explicitly requires
+email verification; the owning HTTP wrapper deliberately returns the generic message
+for provider authentication failures. No relevant recent error log was emitted. Guided
+user to request a fresh link with Verify email, open the newest central verification
+message in Mailpit, then use central credentials and enroll MFA. No account flag,
+password, session, verification or MFA was changed by Codex. Browser tool status reports
+unavailable; no browser tab opened. Source/configuration inspection and read-only runtime
+state are the diagnosis evidence. No application code changed or workspace test rerun;
+manual verification/login/MFA remain pending with the user.
+
+
+WINDOWS-LOCAL-TRUST-01 — **Completed** (Windows configuration; owner: Codex, 2026-11-07).
+Owner requested Windows-side local test CA trust and loopback resolution for the WSL
+manual installation. Validated the public CA SHA-256 fingerprint and imported it only
+into Windows CurrentUser Root (thumbprint C73C3D4678F2F9DFF804F5C66BFC4D79B463F238).
+CA private key remains in WSL and was neither copied nor printed. Existing trust entries
+were preserved. All four names were unresolved through Windows DNS; Windows UAC elevation
+succeeded for a narrowly scoped hosts edit. Added central.localhost, turnstile.localhost,
+dms.localhost and files.localhost at 127.0.0.1 in a marked block, preserving other entries
+and backing up the original under the current user's LocalAppData/Thaarei/TurnstileManualTesting.
+Flushed Windows DNS and confirmed all four loopback resolutions. Native Windows HTTPS
+requests to central /access, Turnstile /sign-in and DMS /health/live returned 200 with
+normal certificate validation and no custom validation callback. Windows curl's stricter
+revocation policy returned CRYPT_E_NO_REVOCATION_CHECK because the local CA has no
+revocation service; no global revocation/TLS setting was changed. Browser verification
+remains with the manual tester after restarting the browser. Private Windows scripts,
+WINDOWS-TRUST.json and updated START-HERE.md are in the ignored manual directory.
+No application code, database, account verification, pairing or approval changed. Only
+progress documentation changed in the workspace; OS/DNS/HTTPS probes are the relevant
+verification, and workspace builds/integration tests were not rerun for this setup.
+
+
+DMS-I20-FINAL-01 — **Completed** (local qualification and fresh manual-test bootstrap; owner: Codex, 2026-11-07).
+Final handoff: qualification passed at 11:53 UTC; fresh local initialization and trusted
+HTTPS probes passed afterward. Report/ledger: docs/qualification/dms-i20-release.json
+and docs/qualification/dms-i20-ledger.json (203 FR/NFR acceptance states). Synthetic
+metadata p95 was 196.6 ms across 80 reads; interrupted capture/coherent restore passed
+with 127 objects. This does not establish sustained capacity or independent off-host
+survival. No historical pre-enforcement image is a qualified rollback target.
+
+Reset affected only turnstile-local's three old stopped application containers and its
+selected PostgreSQL/RabbitMQ/SeaweedFS volumes. Central/customer owning roles, migrations
+and empty initialization are complete. Setup preparation exposed a missing generated
+broker definition and an accidentally emptied storage identity JSON map; regenerated
+both from the retained dedicated private configuration and resumed without another reset.
+Both bootstrap accounts and their verification deliveries succeeded. A resume helper's
+final bookkeeping ReferenceError was corrected by finalizing SETUP.json after confirming
+the successful operations; no accounts were provisioned twice. Failure logs are retained.
+
+Central access, Turnstile sign-in, DMS liveness and canonical identity discovery pass
+HTTPS with the generated CA and certificate validation enabled. SQL confirms zero central
+registry rows, zero documents/product members/organization units, empty incomplete setup,
+one unverified account per authority and zero paired products. Mailpit captured exactly
+two bootstrap verification messages. Unrelated nilumi containers remain running.
+
+Private handoff: .dms-manual-testing-20261107/START-HERE.md, CREDENTIALS.txt, SETUP.json,
+ENTRYPOINTS.json, customer-release-inventory.json and per-product exported manifests.
+Credentials remain ignored/mode 0600 and were never printed. The private local CA must
+be trusted in the user's browser before manual HTTPS testing. Both registries remain
+empty for the user to register/pair/approve from scratch. The private operator helpers
+for clients/enrollment, genuine normal-login administrator handover and processing
+configuration are prepared and syntax-checked; their user-dependent journeys have not
+been executed. No sample users, units, documents, approvals or verification bypasses
+were created. Manual acceptance/customer release/target rollout remain pending.
+
+Actual verification: run-5 passes pnpm check/build/test/test:integration, exact-image
+standalone identity/native OCR, independent consumers/performance, interrupted backup/
+restore/quarantine/reapproval, processing/restarts/key rotation/log privacy, final source/
+image/input fingerprints. Customer API/authority compiled files/migrations and frontend
+assets/routes/security policy pass the exact-image UM inventory checks. Final generated
+evidence consistency and git diff --check pass. Browser/manual and production-host
+acceptance remain separate. No commit, push or real-host deployment occurred.
+
+Historical qualification/reset chronology follows.
+Frozen run-5 completed successfully: docs/qualification/dms-i20-release.json and the
+requirement ledger now record localQualified=true, customerReleased/targetAccepted/
+manualTested=false. All four workspace gates, exact-image identity/OCR, independent
+consumer/performance, interrupted capture/coherent restore/quarantine/reapproval, optional
+structured processing, restarts, key rotation and log privacy passed. Beginning the
+owner-authorized guarded local reset/initialization now; unrelated projects remain excluded.
+Resumed after provider interruption at 10:41 UTC: run-3 process is still alive;
+static/build/unit gates passed and integration remains active. Owner-selected local
+Docker preparation is recovered; reset stays gated on the successful final report.
+The recovered run-3 subsequently exited without final/FAILED evidence; it cannot count
+as complete. Removed only its four abandoned disposable fixture containers and started
+fresh frozen run-4 in this session. Private preflight corrected the recovery-epoch
+encoding and invitation SMTP host/certificate to match existing production validators.
+Run-4 passes all four workspace gates, exact-image standalone identity and native OCR;
+full distribution/independent-consumer/performance/recovery is active. Manual customer
+API images pass exact compiled/migration checks. Fresh frontend image and removal of
+one stale ignored host asset now pass exact route/asset/security-header verification;
+private customer release inventory is prepared. No owner reset has occurred.
+Owner authorized completing DMS-I20 frozen qualification/report before preparing a fresh
+manual-test installation, including deletion of this application’s existing database
+entries and registration from scratch. Preserve unrelated projects and credentials;
+finish qualification first, then scope the reset and document exact manual/operator steps.
+Qualification preparation found the pre-central I20 harness lacked signed approval and
+selected an unenforced I19 rollback image. Updated only qualification helpers/runbook:
+current DMS receives a genuine fixture-signed decision through its owning migrator;
+API mounts contain public trust/marker only, never the fixture signer. Restored HTTP
+must return DEPLOYMENT_RESTRICTED under an independently replaced marker, then a fresh
+fixture-owned signed epoch permits the owning recovery checks. Real central pairing is
+covered separately by workspace HTTPS integration. Removed unenforced historical rollback
+from I20 qualification; report explicitly retains the accepted no-prior-enforcing-release
+limit. Production handlers/guards remain unchanged. Draft manual checklist is
+docs/runbooks/fresh-manual-testing.md. Static checks pass; exact candidate rebuild is
+active (native Tesseract compilation), then frozen qualification will run. No owner
+runtime/database reset has occurred.
+Seven exact images and the complete bundle assembled successfully. Frozen qualification
+run-1 is active under .dms-i20-final-20261107; source/helpers are now frozen for this run.
+The manual checklist and documentation index were prepared before fingerprinting.
+Owner selected local isolated Docker testing. Prepared only ignored private configuration
+and certificates in .dms-manual-testing-20261107, with separate central/customer databases
+and networks, one loopback HTTPS ingress on reserved 23600 and Mailpit on 23605. No
+installation services/database reset/start has occurred while qualification runs.
+Frozen run-1 has passed all four workspace commands, exact-image standalone authority
+and native OCR, and is executing the full isolated distribution/independent-consumer/
+recovery lane. Planned local reset retains customer database name turnstile360 and
+Compose project turnstile-local. Read-only inventory identifies precisely three exited
+old application containers and the three project-labeled PostgreSQL/RabbitMQ/SeaweedFS
+volumes; unrelated projects remain outside scope. No deletion has occurred.
+Frozen run-1 failed correctly at scan-worker freshness: the preserved daily CVD is
+2026-11-05T06:26:24Z and exceeds 48 hours at the current clock. API upgrade, signed
+fixture approval, auth, workspace gates and native OCR passed before this input failure.
+No successful I20 report is claimed. Preserve run-1/FAILED.json and private logs; refresh
+signed scanner inputs without relaxing the bound, then run a new frozen qualification.
+Owner database/reset remains untouched.
+Freshclam obtained and verified complete daily CVD 28176; frozen scanner inputs are
+copied into signed-inputs and bound by new report hashes/rechecks. Run-2 passed static,
+build and unit gates, but integration failed during the private Python broker topology
+startup before I07 cases. No cause is assigned. Added finite command-phase/error-class
+failure diagnostics only (no raw stderr/credentials), and three fresh isolated broker
+startup/topology runs pass. Frozen run-3 is now active with fresh signed inputs and the
+same exact production candidate; no production handler, limit or test deadline changed.
+Local manual config/guarded reset/pairing commands are prepared privately but not run.
+Run-4 passed workspace gates, exact-image identity/OCR and independent-consumer/performance
+checks, but failed the new restored-deployment assertion: capabilities is intentionally
+a recovery/diagnostic route. Corrected the fixture to require capabilities reporting
+closed access and a real document GET returning DEPLOYMENT_RESTRICTED. Production guards
+are unchanged. A fresh frozen run is required; no successful report or owner reset claimed.
+Frozen run-5 is active with that corrected fixture and the same immutable production
+candidate. Its source remains frozen; inspect .dms-i20-final-20261107/qualification-run-5.log
+and run-5 step logs. Private reset script is ready but must not execute before localQualified
+is true for this run. Manual commands/guide are in ignored .dms-manual-testing-20261107;
+start with START-HERE.md after SETUP.json exists. Transient customer credentials are never
+printed. Three local client issuance, initial shell/connection access and real-login
+administrator handover helpers are prepared for user-driven verification/approval steps.
+Next: user follows the private START-HERE guide and fresh-manual-testing checklist.
+Codex supports the private pairing/client/handover/processing steps as the user completes
+verification, MFA and registration; retain the new volumes between manual tests.
+
+INTEGRATION-STATUS-01 — **Completed** (assessment; owner: Codex, 2026-11-07).
+Owner requested the completion inventory, central registration/customer login/backend
+trust trace and next delivery scope, and confirmed apps/thaarei-control-plane is the
+separate central application. Fetched origin/development and fast-forwarded the stale
+local checkout from 2939714 to 4d4810e, preserving this entry and upstream handoffs.
+GitHub confirms PR #15 merged with all sixteen reviewed-head push/PR checks successful;
+the development post-merge workflow 42355243157 is also successful. The merge tree matches
+reviewed head 96bf413. Older TCP-CI-001 pending statements below are historical; this
+assessment does not overwrite its owner's entry.
+
+Source inspection confirms central staff UI/MFA/registry/pairing/approval/reporting,
+independently credentialed DMS and Turnstile reporters, signed decision enforcement,
+customer-local OIDC/login/identity-service integration and locally enrolled DMS machine
+authorization. Central deployment approval does not create customer sessions or local
+consumer grants. Turnstile's active DMS adapter and machine token still provide only
+capability/status reads; document upload/retrieval/business workflows are not integrated
+into Turnstile. DMS-I01–19 implement the standalone document/processing capabilities.
+DMS-I20's final frozen qualification/report remains unfinished after its recorded
+interruption. TCP-I08 isolated local qualification passed; target acceptance is deferred.
+
+Current production inputs (817 files) exactly match the accepted
+control-plane-local-final.json fingerprint; both packaging-helper hashes match. Six
+verification helpers changed after that frozen run, so its exact helper inventory remains
+historical. Subsequent reviewed-head CI and this fresh integration run cover the updated
+helpers; no new full-image browser qualification is claimed here.
+
+Verification, 2026-11-07: current pnpm check/build/test/test:integration all pass.
+Build and unit pipelines used existing Turbo caches; the fresh integration run took
+691 seconds, including actual central registry/report/pairing and both product HTTPS
+journeys, 28 Fastify cases, 305 PostgreSQL passes across 18 files and authenticated
+SeaweedFS browser/Node/Python transfers. Six existing optional native database skips
+remain explicit, not newly qualified. Markdown Biome and git diff --check pass.
+An initial check on the stale checkout
+failed on pre-existing untracked DMS verification artifacts; the latest committed ignore
+rules exclude them, and current check passes without modifying those artifacts.
+
+Runtime limit: three old owner-test app containers are exited with missing Docker Desktop
+WSL bind mounts; their stateful project containers are absent from the current engine.
+The persistent installation therefore has no current live end-to-end pass. No restart,
+reset, reseed, migration, credential change, deployment, commit or push was performed.
+Only this progress assessment/current-position note was edited; other worktrees and
+handoffs were preserved, and disposable test resources cleaned up normally.
+
+Recommended next scope: finish DMS-I20's frozen qualification and evidence report, prepare
+an explicitly scoped restoration/current-version combined owner-test installation without
+resetting data, and agree APP-001's first business feature (Document Approval is the
+already recorded candidate) before its backend/contracts/UI implementation. Actual
+central/customer Linux/Dokploy DNS/TLS/SMTP/time, off-host recovery, existing-installation
+cutover and operator acceptance remain separate target work. Source/data migration and
+mobile remain outside this assessment's scope.
+
+TCP-CI-001 — **Completed** (owner: Codex control-plane implementation thread,
+2026-11-07). PR #15 CI remediation and verification complete on `96bf413`. All 16
+checks across both push and pull-request workflows passed. No merge, deployment or
+persistent-installation change occurred.
+
+Fixed standalone verification's clean-checkout bootstrap: fixture modules consuming compiled
+workspace packages now load only after the owning Turbo dependency build. Missing output
+reproduced `ERR_MODULE_NOT_FOUND`; the fixed entrypoint rebuilt that output. Replaced Docker
+archive-copy delivery, which is rejected on a read-only rootfs even with `/tmp` tmpfs, with
+a read-only test-helper mount at container creation. These fixes were pushed as `aad1230`.
+
+That CI head passed bootstrap but failed inside the packaged explorer with suppressed
+stderr. Reproduced mode-0600 bind-file `EACCES` under a nonmatching container UID and readable
+files under their owner. The disposable image now runs as the non-root POSIX fixture owner,
+retaining 0600 file permissions and read-only rootfs/mounts. The image's shipped/default
+user and production configuration are unchanged. Added fixed phase/type-only failure
+classification and preserved nonzero exits; invalid-input verification confirms that raw
+input, credentials, URLs and error details are not printed.
+
+Local verification passes: `pnpm check`, `pnpm build`, `pnpm test`, `pnpm test:integration`
+and the actual standalone image lane (10/10 tests, including protected explorer/browser,
+real machine reads and expired-token denial). The first integration attempt encountered an
+S3 unavailable response during I10 restoration; the full quiet recheck passed, including
+that lane, all owning PostgreSQL tests and authenticated SeaweedFS/browser/Node/Python
+transfer checks. No storage cause is assigned and no speculative production storage change
+was made. The safe diagnostic failure path and mismatched/owner file-read probes also pass.
+
+Prior control-plane qualification remains historical evidence for its recorded helper
+hashes; these CI changes affect test harnesses only. GitHub's original workspace and
+container-build checks passed; subsequent standalone success must be verified on the new
+fix head. `2b14ced` now passes standalone in both push/PR runs. One workflow's eight
+checks passed, but the other run's `checks` job failed with a worker-test reset deadlock
+and a subsequent RabbitMQ timing assertion. The full PR is therefore not yet green.
+Next: await actual worker process-group exit and private HTTP completion before fixture
+reset, observe the native confirmed-retry failure rather than a fixed sleep/cached queue
+statistic, validate and push that focused fixture correction. No production handler is
+being replaced. The existing watch remains active; close TCP-CI-001 only after all
+latest-head push/PR checks pass.
+
+Worker cleanup now awaits native process-group close and real private-handler `onSend`
+completion before parent fixture deletion can start. All three explicit worker-stop callers
+await exit; the killed-prefork regression asserts actual process termination. The lost
+confirmed-retry check observes Celery's native postrun `REJECTED/Unroutable` outcome via a
+finite fixture-only event, then reads the actual queue with basic-get instead of sleeping
+one second and trusting periodically sampled management counts. The production task,
+confirmed publisher, private HTTP handlers and database locking remain unchanged. Focused
+full enrollment/work verification passes 81 tests with 3 existing optional native skips.
+Current `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` all pass;
+the complete integration run includes PostgreSQL and authenticated SeaweedFS/browser/
+Node/Python transfer checks. No production handler, retry budget or database locking
+policy was changed.
+
+Accepted remote verification on `96bf4132b2f743257d96070a8e7478e268c25b7f`:
+[workflow run 42354537415](https://github.com/nishanthturnstile/turnstile-360/actions/runs/42354537415)
+and [workflow run 42354542531](https://github.com/nishanthturnstile/turnstile-360/actions/runs/42354542531)
+each passed all eight jobs, including standalone, workspace checks and all six image
+builds. GitHub reports the open PR's merge state CLEAN. This verifies both runs rather
+than relying on a deduplicated eight-check notification. Earlier failed runs are historical.
+All CI fixes are committed/pushed; this completion handoff is recorded locally after
+verification without another code push. Remaining release/deployment scope stays deferred
+under TCP-I08. No further CI remediation is pending.
+
+
+TCP-I08 — **In progress** (release/recovery qualification; owner: Codex control-plane
+implementation thread, 2026-11-07). **The selected isolated local implementation and
+qualification gate is Completed. Target release/acceptance is Deferred** under the owner's
+explicit instruction not to deploy. No further local implementation blocker is recorded;
+this does not mark the full target release qualified.
+
+Accepted evidence: [control-plane-local-final.json](docs/qualification/control-plane-local-final.json).
+The frozen run on 2026-11-07 passed all eleven checks: `pnpm check`, `pnpm build`,
+`pnpm test`, `pnpm test:integration`, all four candidate image builds, the two-customer
+container/recovery lane, and both full-image auth and People browser suites. Production
+and verification/packaging helper integrity checks passed (`inputsStable:true`). Production
+fingerprint remains `dd7daf4a2b3916eea836b846fb87266be176aef888ca9f4e02c3d255437644cd` across 817 files; exact immutable image IDs,
+platform/users, dirty source/head, helper hashes, coverage and timings are in the evidence.
+`localQualification:passed` and `releaseQualified:false` deliberately describe different gates.
+Existing optional native processing skips are not newly qualified by this control-plane work.
+
+Extended `scripts/qualify-control-plane.mjs`, `scripts/test-control-plane.mjs`,
+`scripts/test-auth-browser.mjs` and the owning fixtures. Added container ingress, shipped
+reporter and key-recovery fixtures. The runner now inventories exact image IDs, records
+verification-helper hashes, rejects changed inputs and executes the actual DMS authority,
+Turnstile API and Nginx candidates in the browser lanes. Runtime containers mount exact
+public trust/marker/CA files; migration credentials and machine journals are not delivered
+to APIs. Private administrator handover uses the candidate maintenance command in a
+separate container. The telemetry regression assertion now reads the serving containers,
+not provisioning-process counters, and validates bounded latency fields.
+
+Verified local coverage and its limits:
+
+- Central candidate HTTPS ingress runs with production profile and verified STARTTLS.
+  Central application/database and each customer database have separate Docker networks;
+  only ingress joins customer networks. Both installations have distinct protected files,
+  PostgreSQL clusters and independently registered DMS/Turnstile products. Actual crossed
+  credentials, reports and signed grants are denied; machine keys have no staff authority.
+- Both shipped worker entrypoints run: DMS coordinator and Turnstile reporter. Container
+  DNS/TLS, authoritative SQL aggregate/report acknowledgement and clean shutdown pass.
+  A real lost DMS report acknowledgement followed by suspension and worker restart proves
+  durable replay. Report success is not represented as frontend availability.
+- Central pre-suspension backup restore stays quarantined by the independent marker;
+  missing-evidence reconciliation revokes credentials and requires fresh pairing/approval.
+  Both customers' full DMS authority/DMS database and private-journal restores pass actual
+  candidate API HTTP under marker quarantine and blocked central transport, then recover
+  through reviewed rebind and explicit approval.
+- DMS candidate HTTP passes actual central signer rollover/retirement, a forged renewal
+  while the compromised key remains trusted, independent trust-file revocation with central
+  transport blocked, and fresh-key rebind/reapproval. Separate network-disabled packaged
+  verifier checks use controlled clocks for expiry; seven-day validity does not constrain
+  successive forged grants from a still-trusted compromised key.
+- Turnstile database/private-journal restore, disconnected quarantine and actual private
+  rebind/reapproval pass owning PostgreSQL and production preflight. This restore lane is
+  not an authenticated image HTTP restore journey. The separate actual-image People lane
+  proves HTTP trust rollover/revocation and fixture-owner fresh-epoch recovery with genuine
+  signed proofs. These coverage boundaries are retained explicitly in the evidence.
+- Full-image browser suites pass canonical container discovery/JWKS DNS/TLS, real SMTP,
+  normal login/permissions/logout/recovery/session revocation, onboarding/Settings restart
+  and resume, invitations/recipient identity/setup/acceptance, private administrator release
+  opening, activation/restriction/expiry, write denial and safe browser storage/events.
+  Public browser ingress blocks private identity/work routes; backend identity uses private
+  canonical transport. Setup uses separate owning fixture processes, not replacement handlers.
+
+Upgrade/rollback handover is in [the qualification runbook](docs/runbooks/control-plane-qualification.md),
+with technical boundaries in [architecture.md](architecture.md). Owning schema upgrade tests,
+candidate restart and quarantined database/journal restores pass. No previously published
+enforcing release exists for a historical image downgrade; older unenforced runtimes,
+credential deletion, old markers and unsupported destructive schema downgrades are not
+rollback mechanisms. Arbitrary root/VM snapshot rollback remains outside the guarantee.
+
+The earlier first-stage record `control-plane-local.json` is historical. All functional
+checks also passed in `control-plane-local-attempt-1.json`, but its helper-integrity guard
+correctly rejected a browser-helper change during execution; that attempt is not accepted
+qualification. The final frozen record supersedes both for current local acceptance.
+
+Remaining TCP-I08 work is target-only and deferred: actual central/customer hosts and
+operators, Dokploy routing/headers, external DNS/TLS/SMTP/time, independent off-host recovery,
+existing-installation cutover and operator acceptance. Recheck source/images, time and
+release preflight when that separately authorized stage begins. No deployment or persistent-installation change occurred. No real customer credentials/data
+were used, and no commit or push occurred. Existing uncommitted work
+and the historical backup stash are preserved. All disposable fixtures are removed; only
+unrelated persistent services remain. Next product work is APP-001 scope agreement and a
+Document Approval specification/implementation plan; business implementation and migration
+remain outside the completed local control-plane scope.
+
+TCP-I07 — **Completed** (central usage/health reporting; owner: Codex control-plane
+implementation thread, 2026-11-07). Local implementation and required verification are
+complete on `feat/thaarei-control-plane-implementation`. Prior uncommitted work and the
+historical backup stash are preserved. No persistent customer installation, credentials or
+data were used; no commit, push or deployment occurred.
+
+Implemented central CLI-generated migrations 0008/0009 and owned `report.schema.ts`,
+`report-ingestion.ts` and `report-service.ts`: bounded snapshots with server receipt time,
+atomic immutable sync receipts, durable sequence order, independently ordered counter
+epochs and latest projections. Late/duplicate reports cannot replace newer data; epoch
+replacement makes current usage unknown until a new report arrives. Legacy reports remain
+compatible and labeled unordered. Private `report-maintenance.ts` / `reports:prune` removes
+90-day historical/latest payloads and 365-day central audit in bounded batches. Runtime
+cannot prune; identity, approval/activation, decision/receipt and minimal replay/counter
+fences survive. Staff reads enforce retention even before maintenance runs.
+
+DMS CLI-generated migrations 0058/0059 and `deployment/usage.schema.ts` capture publication
+and non-scan successful-job counts in the owning commit, with a local deduplication ledger,
+explicit baseline/epoch and safe overflow. New/restored versions never become additional
+logical documents. Existing records seed only the ledger, not fabricated lifetime totals.
+Active documents/original bytes and Turnstile canonical active members remain gauges.
+Both product reporters allocate durable per-binding sequences and journal the exact payload
+before HTTPS. Missing metrics remain unknown and cannot block a newer policy decision.
+Fixed JSON-null sequence metadata and fractional backoff values rejected by SQL schedulers.
+
+Added staff `/reports` and `/reports/[id]`, authenticated read APIs, client/environment/product
+filters, bounded cursor history, a gauge chart with missing-interval/epoch gaps, independent
+policy/freshness/self-reported-health displays, approval/contact dates and read-time notices.
+Version review uses explicit optional exact allowlists, never guessed security verdicts.
+Updated shared contracts/generated machine OpenAPI, Compose configuration, architecture and
+central/DMS operation runbooks. No alert worker, billing or automatic suspension was added.
+
+Verification: `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` all pass.
+The complete PostgreSQL lane passes **305 cases across 18 files, with six existing native
+skips**; pinned SeaweedFS passes authenticated storage and browser/Node/Python transfers.
+Unit verification retains Python 32 passes/24 optional native skips; those native paths are
+not newly qualified. Real DMS publication/restoration/result-replay and production extraction
+handlers verify one logical-document effect and once-only completed processing. Turnstile
+People HTTP checks verify the canonical gauge through failed/concurrent suspensions.
+
+Source and rebuilt central-image HTTPS checks pass lost acknowledgements/restarts, replay
+after suspension, out-of-order/missing-counter intervals, resets and safe-integer bounds,
+invalid metrics/privacy, Viewer/live-role access, filters/pagination, stale/version
+notices, retention and preserved evidence. The actual scheduled DMS reporter recovers its
+committed lost response under an intervening suspension without a second sample. The
+PostgreSQL adapter test terminates the reporter's operation-lock connection and proves its
+late response cannot advance accepted state; a fresh reporter recovers the durable journal.
+Metrics-provider failure still permits denial synchronization through the real central API.
+
+Rebuilt `thaarei-control-plane:tcp-i07` image
+`sha256:e0c0019fb76d0bfa56bc7324824961951910fab12541df45ed6d9ac9f9ef644b`
+passes the full central HTTPS suite. Its nonroot/read-only inventory includes owned report
+migrations and the private maintenance entrypoint. All disposable fixtures were removed;
+unrelated persistent services remain untouched. This is local source/central-image evidence,
+not target hosting, external SMTP or coordinated customer-image release qualification.
+
+Next: TCP-I08 exact central/DMS/Turnstile inventory, isolated target-like topology, supported
+restore/key-compromise/credential recovery drills, existing-installation rollout and target
+acceptance. There is no implementation blocker for TCP-I07.
+
+TCP-I06 — **Completed** (Turnstile activation/reporting; owner: Codex control-plane
+implementation thread, 2026-11-07). Local implementation and verification are complete on
+`feat/thaarei-control-plane-implementation`, against the TCP-I05/development foundation.
+Existing uncommitted work and the retained backup stash are preserved. No persistent
+installation, customer credentials, source/data migration, feature push or deployment occurred.
+
+Implemented owned CLI-generated migrations 0028/0029, durable binding/verified decision and
+clock/quarantine state, dedicated reporter role/process, private manifest/setup/rebind/rotation,
+replica/product locking, durable cadence and read-only credential mounts. The only reported
+Turnstile usage gauge is canonical active-member count; missing activity metrics stay absent.
+API runtime cannot rewrite approval or read machine credentials. Private bootstrap consumes
+`INSTALLATION_LOCAL_ID` from the nonsecret DMS manifest, so both independent product
+credentials bind to the same central customer installation/tenant. Retry cannot replace that
+identity; runtime/reporters have no identity insert/update privilege.
+
+Business guards and owning transactions retain current session/CSRF/permission/readiness
+checks, require full approval for changes, and allow qualified existing reads after
+suspension/expiry. Identity/session recovery and recipient identity setup remain accessible;
+acceptance/new delivery require approval. Added safe activation/restriction UI and explicit
+mid-form restriction guidance while preserving drafts. The authenticated DMS status field
+is opt-in through `Prefer: include-deployment-status`, preserving ordinary strict v1 consumer
+response shape. Complete customer Compose mappings separate public API trust from private
+reporter/setup credentials; architecture, generated OpenAPI and the
+[private Turnstile runbook](docs/runbooks/turnstile-deployment-control.md) document the flow.
+
+Verification: `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` pass.
+The full PostgreSQL lane passes **304 cases across 18 files, with six existing native skips**;
+pinned SeaweedFS verifies authenticated storage and browser/Node/Python transfers. Unit
+verification retains the existing Python 32 passes/24 optional native skips; those native
+paths are not newly qualified. Focused BFF transport passes 22 cases; historical configuration
+and user-management upgrades pass six cases each, preserving legacy rows while requiring
+explicit current bootstrap and valid signed approval before upgraded business reads.
+The two owned deployment cases verify DB-before-file recovery, generation fencing, shared
+locks/cadence, read-only credentials, SQL privacy, immutable identity and bounded cold start.
+
+Real production-profile browser HTTPS/OIDC journeys pass normal login, current permission
+removal/restoration, invitation issuance, private identity token/audience/client transport,
+recipient setup/verification/acceptance and account projection. The same journey verifies
+pending/never-activated suspension denial, approval/retry, qualified suspended/expired reads,
+mutation denial, independent DMS restriction, central-proof session rejection and safe status/
+browser-storage boundaries. The real central HTTPS suite pairs both products under one
+registry installation and verifies signed publication/ack, committed rotation-response loss,
+reapproval and independent central outage. A further actual scheduled reporter run sends its
+own SQL aggregate through the real central handler and persists the successful receipt/cadence.
+No fixture bypasses production proof verification or replaces the failing production handler.
+
+Fixed verification issues rather than relaxing policy: preserve the preference through the
+BFF fixture proxy; seed historical schema contracts before current bootstrap; use real focus
+revalidation instead of a disappearing-button race; and start the SMTP outage case with a
+fresh native rate window. An overlapping host rebuild caused an intermediate fixture startup
+failure; final integration ran sequentially with frozen source. Auth/proof validation,
+local policy, time fences and runtime rate limits were not weakened.
+
+The rebuilt `thaarei-turnstile-api:tcp-i06` image
+`sha256:3bd42e73ab5a44311b49113a575e0d53fcb8f9ab98adedd5ec9851661a0d4f02`
+passes packaged reporter module startup/shutdown with missing keys and no network. This is
+local build/startup evidence, not whole-release or target egress qualification. All owned
+disposable containers are removed; the unrelated pre-existing database remains untouched.
+Next: TCP-I07 central report retention/projections and staff usage/health views, then TCP-I08
+coordinated source/image inventory, target DNS/TLS/SMTP and restore/rollout acceptance.
+Implementation remains local and uncommitted. The pre-merge TCP-I01–04 stash is already
+reapplied historical backup; do not apply it over this tree.
+
+TCP-I05 — **Completed** (DMS activation/reporting integration; owner: Codex control-plane
+implementation thread, 2026-11-06). Owner authorized resuming after the DMS handoff. Fetched
+origin/development `f75c34f` (PR #13) and merged it locally as `9571576`, preserving both
+progress histories. The verified uncommitted TCP-I01–04 work was saved in a retained Git
+stash, reapplied and reconciled with DMS tooling/notices/dependencies. No source was copied
+from another checkout. The source blocker is resolved; no push or deployment occurred.
+
+Implemented DMS-owned deployment identity/decision/credential metadata and
+separate clock/quarantine persistence (CLI-generated 0054/0056 plus reviewed custom 0055/0057),
+transactional API admission/read classification with DEPLOYMENT_RESTRICTED errors, private
+setup/rebind/rotation and credential-generation recovery adapter, replica-shared operation
+lock and durable reporter cadence in the existing coordinator. API processes receive only
+public trust and an independent recovery marker. Coordinator secrets stay in owner-managed
+read-only directory mounts; private commands own file promotion. DMS operational summaries
+use the existing owned snapshot and strip per-application details. No customer business rows
+or credentials are reported. The clock fence commits before business transactions and has
+its own row, preserving decision-row sharing and quarantine after rejected requests.
+
+Public/private dispatch and admission require current approval. Restricted qualified reads
+retain local resource/consumer checks. Previously admitted scan/processing continuation may
+complete, with additional stages held durably without a new dispatch until approval returns;
+never-approved or recovery-quarantined installs cannot publish business results. Added a
+DMS-only activation entry and complete combined Turnstile customer entry/overlays, preserving
+local issuer/private identity routes, dedicated process settings and trusted-CA delivery.
+Both complete profiles resolve successfully; production-image HTTPS integration now passes.
+
+Verification: `pnpm check`, `pnpm build`, `pnpm test` and `pnpm test:integration` pass. The
+database lane passes 302 cases across 17 files with six existing native skips; pinned
+SeaweedFS verifies authenticated storage and browser/Node/Python transfer boundaries. The
+focused DMS handler rerun passes 81 cases with three existing native skips, including exact
+private-command deployment denials and qualified reads. Unit tasks include the existing
+Python lane's 32 passes/24 optional native skips; those native paths are not newly qualified.
+Both real PostgreSQL/private-file adapter cases pass with durable rebind continuation,
+DB-before-file promotion recovery, operation contention, read-only credentials, shared cadence,
+safe summaries and bounded unavailable-central startup.
+
+Actual central/DMS HTTPS passes from source and both rebuilt production images, including
+owned bootstrap/manifest, pairing, approval, committed rotation-response loss,
+suspension/reapproval, credential isolation and central outage independent of local identity.
+The isolated fixture uses its explicit loopback test authentication profile; production
+validation remains intact. DMS-only and complete combined Compose configurations resolve,
+and deployment checks verify process settings/private mounts/CA delivery. Private commands
+now reject mismatched local installation identity before touching the deployment clock fence;
+the full rerun verifies the regression fix. No proof validator or local policy was weakened.
+
+Verified image IDs: `thaarei-dms-api:tcp-i05`
+`sha256:78f3913f62cbfea64740934632dc2030ba0230ff94df8d23161dc5e311330004`;
+`thaarei-control-plane:tcp-i05`
+`sha256:a1b71cb384fc63f10ca637d5135eae214e3c46fcd28fcc0020cb736a5871d88e`.
+Owning architecture and [private deployment runbook](docs/runbooks/dms-deployment-control.md)
+document configuration, approval, retries, rotation, restriction and supported restore/rebind.
+Disposable containers were removed; the unrelated pre-existing database remains untouched.
+
+Next: TCP-I06 Turnstile-owned activation/reporting, then TCP-I07 central report projections
+and TCP-I08 coordinated qualification/rollout. Actual customer DNS/TLS/SMTP, candidate
+inventories, restore drills and target acceptance remain release work. No persistent
+installation, customer credentials or source/data migration was changed. Implementation
+remains uncommitted locally; no feature push or deployment occurred. The retained pre-merge
+stash is a historical backup of TCP-I01–04, already reapplied; do not apply it over this tree.
+
+TCP-I04 — **Completed** (machine pairing, signed deployment decisions and credential recovery;
+owner: Codex control-plane implementation thread, 2026-11-06). Implementation and local
+acceptance pass on `feat/thaarei-control-plane-implementation`. The owner restored Docker
+Desktop WSL integration; the native CLI and Unix socket connect to engine 29.9.2. The earlier
+container-verification blocker is resolved. No customer installation was modified.
+
+Implemented platform-independent `@thaarei/control-plane-contracts`, strict version-1 local/
+expected manifests and machine activation/sync/rotation contracts, discriminated signed
+states, safe errors and generated `docs/api/control-plane.openapi.json`. Contract generation,
+dependency boundaries and Turbo builds include the new Node-only
+`@thaarei/deployment-control` package. No customer source/schema or deployed installation
+was changed; the DMS modification is one focused Fastify authentication-isolation regression.
+
+Central Route Handlers and additive CLI-generated migrations through
+`0007_productive_living_lightning.sql` implement digest-only pairing/machine credentials,
+atomic one-use consume/receipts, per-product binding epoch and generation, immutable issued
+signed-decision evidence/receipts and narrow owning runtime grants. Authentication resolves
+scope by unique live credential digest before binding comparison. Signing reserves sequence,
+releases the SQL transaction for JOSE cryptography, then fences current policy/state/epoch/
+generation/sequence/key before returning. Staff controls provide protected manifest export,
+transient pairing-file download/retry/revocation, Admin-only replacement/credential revocation
+and recent-MFA/audit/revision checks. Replacement suspends prior approval and requires fresh
+pairing/reapproval. Registry dates now distinguish first issuance, first/current-epoch
+product-reported valid application and authenticated contact; activity/version await TCP-I07.
+The earlier registry fixture's pairing stand-ins now use actual HTTP pairing.
+
+The public server package uses pinned production JOSE RS256 verification, full binding/type/
+issuer/audience/algorithm/key/time checks, revision/sequence ordering and durable denial beyond
+envelope expiry. It retains valid-at-application proof for the qualified read exception and
+closes on corrupt stored proof, revoked/downgraded trust, backward clock or restore quarantine.
+Invalid incoming proofs preserve usable retained state. Private setup/rotation persist exact
+request/binding/current/candidate/operation before HTTPS, recover with candidate sync (including
+past pairing receipt expiry), confirm generation/operation, then atomically promote. The
+Linux file adapter uses kernel flock across processes and fsynced atomic state files; APIs
+must not mount these credentials. Protected origin checks prevent an existing secret being
+sent to a changed central endpoint. Product-owned DB adapters/schedulers/enforcement remain
+TCP-I05/I06. Private CLIs, independent trust/authority markers, replacement/key overlap/
+revocation and supported restore/rebind procedures are documented in architecture/runbook;
+central restore reconciliation deliberately requires fresh pairing and approval. TCP-I08
+still owns target recovery/release qualification.
+
+Actual verification on 2026-11-06: `pnpm check`, `pnpm build`, `pnpm test`, and
+`git diff --check` pass. All six new server-package tests pass with the maintained production
+verifier, including algorithm/type/key/audience/issuer/binding/epoch/time rejection, delayed
+approval and equal-revision ordering, persisted denial expiry, invalid/corrupt proof,
+independent trust revocation/downgrade, restart without network, bounded transport,
+response-loss recovery, crashes before/after local promotion, origin mismatch, clock/restore
+quarantine, and actual cross-process lock release after process death. The DMS Fastify unit
+suite rejects opaque central-format machine credentials. The source production-build fixture and the same suite against the actual packaged image
+now also pass actual central registry/machine/staff HTTP and PostgreSQL behavior, including
+pairing expiry/revocation/concurrency/loss, candidate recovery beyond receipts, signed current
+policy/denial/replay, malformed reports, rotation loss/concurrency/promotion crashes, epoch
+replacement, clock/host-marker quarantine, recent MFA/roles and database privileges. These
+replace the earlier runtime-unavailable status; prior TCP-I03 results were not reused as
+TCP-I04 qualification.
+
+Actual container/workspace verification on 2026-11-06: `pnpm check`, `pnpm build`, `pnpm test`,
+`pnpm test:integration` and `git diff --check` pass. The owning disposable database suite
+passes 230 tests with its 3 existing skips. Built `thaarei-control-plane:tcp-i04`, image ID
+`sha256:6b35b394e2ad9bfec6f26db5bde82726651e83d1e6d1477c253a2d49bacc6ec5`, using the committed
+production Dockerfile. `CONTROL_PLANE_TEST_IMAGE=thaarei-control-plane:tcp-i04 node
+scripts/test-control-plane.mjs` passes packaged migrations and the actual read-only non-root
+image behind verified fixture HTTPS with protected auth/signer/recovery file mounts. The
+fixture's isolated containers/networks were cleaned up. No persistent volumes/ports/credentials
+were changed and no commit/push/deployment was made.
+
+Next: TCP-I05 DMS-owned integration, after its owning DMS-I18 operational/packaging contracts
+are available. TCP-I05/I06 must supply actual product identity exporters, persistence adapters,
+reporter scheduling and business admission/read enforcement; the current package does not
+change customer application behavior. TCP-I07 reporting and TCP-I08 target release/recovery
+qualification remain pending. Browser UI behavior and target DNS/TLS/SMTP/restore acceptance
+are not claimed by these HTTP/image checks.
+
+TCP-I03 — **Completed** (client/deployment registry and approval records; owner: Codex
+control-plane implementation thread, 2026-11-06). Implemented TCP-R04–06/R08/R13 on
+`feat/thaarei-control-plane-implementation`, preserving TCP-I01/I02 and review corrections.
+App-owned platform-independent Zod contracts, additive CLI-generated registry persistence,
+reviewed runtime column privileges and server-only transactional services now support the
+Clients UI and guarded staff HTTP surface. No customer or machine-protocol schema was added.
+
+Delivered client search/create/detail/edit/archive with permanent normalized code, explicit
+contact preservation/clearing, revisions and durable actor/input-bound request receipts.
+A response lost after commit can recover the same receipt/record with one audit mutation.
+Fresh readback uses a coherent snapshot rather than treating historical receipts as current
+policy. Installation/client/environment/local-installation/tenant and product/application
+bindings are immutable; composite FKs and uniqueness prevent inconsistent references and
+duplicate deployed product types. Runtime cannot rewrite bindings/codes, hard-delete
+identities, assert pairing, rewrite receipts or rewrite/delete audit. Drizzle metadata now
+tracks the existing staff custom migration and new registry privilege migration without
+changing existing staff SQL/filenames, keeping future CLI numbering consistent.
+
+Pending/approved/rejected/suspended transitions check current role/recent MFA, saved policy
+revision, pairing prerequisite and reason, and commit actor/time, before/after audit and
+receipt atomically. Staff/registry writes share the owning authorization lock and policy
+rows lock against future owning writers. Admin alone suspends; Operator/Admin may maintain
+registry and approve/reject/reapprove; Viewer reads. Rejection is pending-only, reapproval
+explicit, repeated/stale states conflict. Archive does not change product approval and blocks
+new deployment registration until unarchived. Registration/first/latest approval dates are
+separate; activation/activity/contact/version/health remain unavailable without their real
+sources. Reviewed UI changes preserve uncertain requests for retry, offer canonical reload,
+show saved data, and keep MFA reauthentication in another tab available.
+
+The production runtime cannot set pairing evidence. Positive policy cases use only a
+migrator-owned disposable pairing metadata stand-in, explicitly labelled as a contract
+fixture. Actual pairing, signing, activation/reporting and customer enforcement remain
+TCP-I04–08. No paired/allow-business flag, fake machine API or private production bypass
+was introduced. Configured bounds and transaction/privilege contracts are maintained in
+architecture; workflow and HTTP/receipt semantics are in the central operator runbook.
+
+Verification on 2026-11-06: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` passed. Three central unit cases include two critical registry
+contract regressions. The real Next HTTPS/PostgreSQL/Mailpit chain passed against built
+source and the new non-root/read-only production image. Registry cases cover actual lost
+response after commit, identical retries, duplicate creation and approve/suspend races,
+stale revisions, cross-record FK integrity, runtime privilege denial, forged pairing fields,
+never-approved suspension, live roles/recent MFA, explicit reapproval, archive independence,
+historical receipt replay, audit atomicity, literal search and bounded keyset reads. The
+existing auth chain also passes. Existing owning PostgreSQL suites passed 230 cases with
+3 existing skips; valid Turbo caches were used where available. Final Biome, local
+references and Git whitespace checks pass. No interactive browser or target qualification
+is claimed.
+
+Docker was initially unavailable through WSL and the Windows Linux-engine pipe. The owner
+restored it; no agent host/Desktop setting change or port fallback occurred. Runtime tests
+then exposed an unnecessary installation FOR SHARE lookup requiring update privilege on an
+immutable table; removed the lock while retaining protected binding columns, owning parent
+serialization and composite FK. The complete corrected runtime suites pass and disposable
+fixtures were removed.
+
+Verified local image: `thaarei-control-plane:tcp-i03`, ID
+`sha256:3bcb3cb1760d7942e234bb6a53319e928d97f14233390ac725096c237b3ce28e`.
+No commit/push/PR, target deployment, persistent central/customer provisioning, customer
+migration or DMS checkout change occurred. No customer services, credentials or data were
+changed by this workspace work.
+
+Handoff: TCP-I03's local gate is complete with an explicit closed pairing boundary.
+TCP-I04 machine pairing, per-product credentials, strict versioned machine contracts,
+signed decisions and durable ordering/rotation/trust recovery are next. Integrate actual
+pairing metadata only through that owning authenticated transaction and a separately
+reviewed runtime grant. Preserve customer integration/cutover and target TLS/SMTP/backup/
+restore gates. No TCP-I03 blocker remains.
+
+TCP-REVIEW-02 — **Completed** (TCP-I01/I02 defect review and corrections; owner: Codex
+control-plane implementation thread, 2026-11-06). Owner requested a review subagent using
+the review-agent skill, fixes for confirmed issues and next-step advice. One native,
+read-only subagent inspected the full tracked/untracked adoption/foundation change and
+confirmed two P2 defects, with no other qualifying findings. No extra independent recheck
+or reviewer-executed runtime suite is claimed. The parent validated both call paths and
+implemented the corrections; the [review record](docs/thaarei/control-plane-review.md#tcp-i01i02-implementation-review-tcp-review-02-2026-11-06)
+retains findings and scope separately from the historical Astra planning review.
+
+Fixed recovery SMTP preflight before rate limiting: native auth's before hook now checks
+the transport after the persistent HTTP rate budget and before account lookup. Exhausted
+budgets never probe SMTP, and relay failures still consume their request budget. Fixed
+post-commit bootstrap receipt loss when delivery runtime initialization fails: cleanup
+closes only a successfully initialized delivery runtime; the committed administrator ID/
+verification-required receipt and delivery-pending message remain available. Updated auth
+options/runtime/wrapper and private operator, owning HTTP regressions, architecture and
+operator/review documentation. No schema, product-policy or TCP-I03 feature was added.
+
+Verification on 2026-11-06: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` passed. Build used valid Turbo cache; the central source build and
+new real HTTP regressions also ran directly. Existing disposable PostgreSQL suites passed
+230 cases with 3 existing skips. The updated HTTPS/PostgreSQL/Mailpit chain passed on
+built source and on the rebuilt non-root/read-only production image. Regressions exhaust
+both recovery budgets before removing their own relay, prove 429 precedes SMTP probing,
+and show fresh relay-unavailable 503 requests are charged. Bootstrap deliberately uses a
+missing auth-secret file, checks the committed receipt against the owning row, rejects a
+second bootstrap, and resumes verification with repaired configuration. Final Biome,
+relative-reference and Git whitespace checks passed. Temporary central fixtures were
+removed; no interactive browser, production relay/TLS or target qualification is claimed.
+
+Verified local image: `thaarei-control-plane:tcp-review-02`, also retagged locally as
+`thaarei-control-plane:tcp-i02`; image ID
+`sha256:55b22d9d90532749e5c1347901ad321219f8206b1019412b20fa2d58c337ac41`.
+This supersedes the historical pre-review image recorded in TCP-I02 below. No commit,
+push, PR, deployment, existing customer/central provisioning or DMS checkout change occurred.
+Customer services, credentials and data remain untouched.
+
+Handoff: no findings from this review remain open. TCP-I03 is next: client registry,
+installation/deployed-product records, immutable bindings, retry-safe creation/readback,
+revision-checked policy transitions and transactional audit with fixed staff roles. Approval
+stays closed until actual pairing is verified through TCP-I04. Customer activation/reporting/
+enforcement and target TLS/SMTP/backup/restore/trust qualification stay in their owning
+increments. This review supplies next-step advice; it did not start TCP-I03 implementation.
+
+TCP-I02 — **Completed** (central foundation and employee access; owner: Codex
+control-plane implementation thread, 2026-11-06). Implemented TCP-R01–03/R08/R14's staff
+foundation on `feat/thaarei-control-plane-implementation`, preserving the uncommitted
+TCP-I01 adoption. Generated `apps/thaarei-control-plane` with installed create-next-app
+16.4.5 and the owned Better Auth/Drizzle schema with installed auth 1.7.14/drizzle-kit.
+Preserved existing Node/pnpm/library pins, Better Auth patch, LICENSE and third-party
+notices. Workspace build/type/boundary/schema/deployment checks and CI include the app.
+
+Delivered separate central auth/staff persistence and migration/runtime roles, bounded
+pools/deadlines, checksum-checked private migrations, explicit private first-admin bootstrap
+and proof-bound maintenance recovery. Public auth uses a strict route/body/origin allowlist,
+verified email/password, mandatory TOTP/single-use recovery codes, database-backed rate
+limits, secure host-only cookies and redacted responses. Native token-bearing session
+responses, public signup and MFA-disable are unavailable. Safe session reads and every
+protected page/handler enforce current staff membership/role and actual session MFA proof,
+with absolute/idle/recent-MFA limits. No Server Actions ship. Staff admission/change UI and
+HTTP serialize acting authorization, revision conflicts, verified-MFA last-admin protection,
+target session revocation and safe attributed before/after audit in owning transactions.
+Only implemented staff/auth tables exist; client/approval/report schemas remain TCP-I03+.
+
+Added independent `deploy/compose.control-plane.yaml` and non-root Node image, read-only
+runtime, protected host auth-secret delivery, explicit SMTP/proxy configuration and private
+maintenance entrypoints. [Operator runbook](docs/deployment/thaarei_ecosystem_guide.md#central) covers fresh
+roles/migrations, admission/verification/password/MFA, recovery, secret ownership and
+release limits. Fixed a real container packaging failure: Next 16.4 hashes external `pg`
+aliases under .next/node_modules, which pnpm deploy excludes; the build now reconstructs
+only emitted aliases against version-matched deployed production dependencies and includes
+production Next configuration. Provisioning refuses an absent URL rather than falling back
+to pg defaults, and malformed private JSON never echoes credential text in parser errors.
+
+Verification on 2026-11-06: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` passed; existing disposable PostgreSQL suites passed 230 cases with
+3 existing skips. Central real Next HTTP verification passed against both built source and
+the production image behind HTTPS with isolated PostgreSQL/Mailpit. It exercises unverified/
+public denial, direct protected handlers/pages, actual verification/password setup/reset,
+TOTP and single-use backup recovery, role removal/disablement with old sessions, concurrent
+last-admin self-demotion, revision/fresh-MFA/idle fencing, private recovery, logout, origin
+policy, secure cookie attributes, no-store recovery and safe DTO/log boundaries. The image
+lane additionally runs packaged migrations, validates the non-root read-only filesystem and
+protected secret mount on its own Docker network. Temporary fixtures were removed. Final
+Biome, local document references and Git whitespace checks passed; no interactive browser
+or production target verification is claimed. Source compatibility is checked by the real
+Next build and exact pinned offline auth CLI schema comparison.
+
+Tested local image: `thaarei-control-plane:tcp-i02`, image ID
+`sha256:79355c612f20b983d2cdf7f10c4d306ceb7a6acdeca3dcbefe2904a819d6e018`.
+No image push, persistent central/customer provisioning, deployment, commit, PR or DMS
+checkout change occurred. Existing customer services, credentials and data remain untouched.
+
+Handoff: TCP-I02's local gate is complete. TCP-I03 client/installation/product registry and
+approval records are next. No functioning central approval/reporting/customer enforcement
+is advertised by this foundation. Target central HTTPS/proxy policy, real SMTP TLS delivery,
+off-host backup and full restore/trust/two-host release qualification remain TCP-I08/target
+work; this fixture's explicit test SMTP profile is not production relay acceptance. Keep
+future DMS integration coordinated through development and preserve current-installation
+cutover gates. No TCP-I02 blocker remains.
+
+TCP-I01 — **Completed** (scope and architecture adoption; owner: Codex control-plane
+implementation thread, 2026-11-06). Owner authorized starting implementation and explicitly
+accepted the remaining read/recovery, local staff email/password with mandatory MFA and
+Admin/Operator/Viewer roles, reporting/retention and two-host/outbound HTTPS defaults.
+Seven-day approval/daily renewal remains selected. Work is on
+`feat/thaarei-control-plane-implementation`, based on current fetched `origin/development`
+`a2ac3a8` plus the planning handoff.
+
+Adopted the specification/overview/delivery status and architecture's operation classes,
+signed versus derived decision states, staff policy, selected Next/CLI 16.4.5 and existing
+Better Auth/Drizzle pins, central isolated fixed-port/configuration contract, secret/backup
+ownership and supported restore/trust recovery. Classified current Turnstile routes and
+DMS admission/read/private-work families, including invitation setup versus acceptance and
+publication quarantine. TCP-I04 supplies executable schemas; I05/I06 must enumerate the
+then-current integration handlers against this classification. Updated DMS requirements
+FR-02.10, FR-19.02 and NFR-09, product blueprint, DMS delivery boundary and standalone
+install/recovery references coherently. Updated docs index and planning review follow-up.
+Technical policy stays in architecture; these references do not duplicate runtime defaults.
+
+Verification on 2026-11-06: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` passed. Build (7 tasks) and unit-test graph (9 tasks) used valid
+Turbo caches; live API integration and disposable PostgreSQL verification ran, with 230
+database cases passed and 3 existing skips. Final Biome CI, relative-link/heading validation
+and Git diff whitespace checks passed. No new tests were added for this documentation-only
+adoption. Package metadata was checked without adding central dependencies; actual Next/
+Better Auth plugin generation, build and HTTP compatibility belong to TCP-I02. No central
+container, browser, two-host DNS/TLS/SMTP or recovery qualification is claimed.
+
+Handoff: the owner adoption gate is satisfied; TCP-I02 is next and authorized by the current
+implementation request. Generate the central Next app with the exact selected installed
+CLI, integrate workspace/boundary/build checks and deliver staff persistence/authentication,
+private bootstrap/recovery, mandatory MFA/live roles and focused real HTTP verification.
+Use isolated fixtures; do not bind central services on this active customer development
+machine. No schema, scaffold, runtime flag, dependency pin, deployment, customer service,
+credential or installation changed in TCP-I01. No commit/push/PR was performed. The existing
+installation and separate DMS checkout remain untouched; their integration/cutover gates
+remain in force. No unresolved TCP-I01 product-policy blocker remains.
+
+TCP-PR-01 — **Completed** (documentation integration and branch preparation;
+owner: Codex control-plane planning thread, 2026-11-06). Committed only the eight
+control-plane planning/reference/progress Markdown files and merged
+[PR #12](https://github.com/nishanthturnstile/turnstile-360/pull/12) into development as
+`a2ac3a815da768258b21c1a7f810232a5a27745f`. Both push and PR workflows passed all 12
+checks on `e805efc`, including workspace check/build/test/integration/smoke and all five
+container builds per workflow. The initial Markdown-formatting failure was corrected
+with installed Biome 2.6.4; local full Biome CI, document-content preservation checks,
+149 local reference checks and git diff checks passed. No target deployment occurred.
+
+Fetched updated origin/development after the merge and created
+`feat/thaarei-control-plane-implementation` from that exact merge commit. Only this
+administrative handoff changes on the new branch; no control-plane implementation,
+scaffold, schema, dependency or runtime configuration has started. Customer services,
+credentials, data and the separate DMS checkout remain untouched. The GitHub connector
+returned HTTP 403 when creating the PR; the already-authenticated GitHub CLI completed
+PR creation/merge and T3 linking succeeded.
+
+Handoff: branch preparation is complete. Wait for a new implementation instruction before
+starting TCP-I01 or later increments. The planning merge does not adopt remaining product
+defaults; seven-day approval/daily renewal stays selected and the documented read/recovery,
+staff-policy and metric/retention decisions remain proposed. Implementation must follow
+the merged specification, architecture proposal and reviewed delivery plan.
+
+DMS-REVIEW-02 — **In progress** (owner: Codex, 2026-11-06). Address the four
+review findings: terminal upload accounting, recovery inventory of unconfirmed copies,
+transient binary-restore storage failures and disposal fairness. Add focused production-path
+regressions, run workspace checks, then commit all authorized branch work and open/merge
+a PR to development after checks/review. Preserve installed services and private evidence.
+
+Implemented and locally verified all four findings. Added terminal no-scanner accounting
+reconciliation using expired capabilities and authenticated exact-key storage observations;
+required backup inventory excludes unconfirmed copy destinations; transient binary-restore
+HEAD errors remain retryable; disposal eligibility precedes the bounded batch limit.
+Regression coverage runs the production services against PostgreSQL/SeaweedFS, with HTTP
+503 injection for restore, copy failure, repeated settlement and blocked cleanup intents.
+2026-11-06: pnpm check/build/test/test:integration PASS. DMS database: 80 passes/three
+explicit native skips; full DB: 299 passes/six skips across 16 files. Browser/Node/Python
+transfer verification passes. Merged current origin/development planning documentation,
+preserving both progress histories. All authorized DMS implementation is committed.
+All changes are pushed to feat/dms-i01-standalone-foundation;
+[PR #13](https://github.com/nishanthturnstile/turnstile-360/pull/13) targets development.
+The GitHub connector returned 403, so authenticated gh created the PR; T3 linking succeeded.
+Push/PR CI is running; no review comments or reviews are present at this handoff.
+2026-11-06 CI follow-up: both checks and standalone authority lanes failed on runner
+prerequisites: Bubblewrap sandbox unavailable and pinned Playwright Chromium absent.
+Added Bubblewrap plus an explicit namespace smoke check on the disposable Ubuntu runner,
+and installed the pinned Chromium/runtime dependencies in both browser-using CI jobs.
+No parser fallback or test skip was introduced. Revalidating Python and standalone lanes
+locally before pushing; remaining CI/container readiness still gates merge.
+Local follow-up: uncached Python 32 passed/24 optional-runtime skips; Biome, workflow
+YAML assertions, namespace smoke and git diff --check pass. The first standalone fixture
+lost its PostgreSQL connection (ECONNRESET); a fresh isolated rerun passed 9 tests with
+one explicit packaged-image skip (no DMS_STANDALONE_IMAGE supplied). CI's standalone
+lane supplies the built image and must pass its packaged browser case before merge.
+2026-11-06 cdab180 CI follow-up: prerequisites now work; checks reached the backup
+crypto regression and timed out at the default five-second test budget. Its 1 MiB
+round-trip assertion used recursive Buffer object equality. Replaced that comparison
+with Buffer.equals for the same exact-byte assertion without per-byte object traversal.
+Revalidating the focused test and uncached API unit suite before push; no production
+crypto, tamper/component-swap assertions or runtime limits are changed.
+Local verification: focused crypto test passes in 70 ms versus 2.24 seconds before;
+uncached API unit suite 24/24 passes across four files. Biome and git diff --check pass.
+Remaining CI on the corrected head gates merge.
+2026-11-06 a7cffd0 CI follow-up: all seven PR jobs passed, including standalone
+packaged browser tests and workspace/container checks. The duplicate push checks job
+was cancelled at its 15-minute deadline: Chromium setup alone consumed 8m35s; subsequent
+check/build/test passed and database tests were still passing at cancellation. GitHub's
+annotation confirms the job time limit. Raised only the checks job budget to 25 minutes;
+application/test deadlines are unchanged. Workflow YAML/Biome/diff verification applies;
+await corrected-head push and PR checks before merge.
+Final implementation/verification handoff, 2026-11-06: f118cb3 passes every push and
+pull-request job (14 successful job instances: seven per event), including workspace
+check/build/test/integration/smoke, standalone authority plus packaged browser and all
+five container builds. PR #13 is CLEAN/MERGEABLE against development, with no reviews,
+comments or unresolved review threads. All four review fixes and their verification are
+complete. This handoff commit changes only progress documentation. Merge is authorized
+once its checks pass; no further implementation is outstanding. The linked PR is the
+authoritative integration/merge record. I20 qualification remains a separate work item.
+I20 exact-candidate/customer acceptance remains pending under its existing handoff.
+
+
+DMS-I20 — **In progress** (owner: Codex, 2026-11-06), on
+feat/dms-i01-standalone-foundation. Implementing the requirement evidence ledger, independent
+consumer/manual qualification, exact candidate inventory, upgrade/rollback and handover
+recipes, operating-mix measurements and controlled target acceptance. Preserve all existing
+uncommitted work and the installed environment. Development/test mail stays in Mailpit.
+Local evidence must not imply customer deployment or target acceptance.
+
+Implemented the 0.20.0 draft candidate configuration, generated 203-ID FR/NFR evidence
+ledger, standard-library-only independent A/B HTTPS consumer, synthetic 24-file timed mix
+plus 13 format-family cases, separate read-only private queue/resource observations,
+exact-image qualification wrapper, standalone DMS CI job and handover/target templates.
+The selected local profile is owner-authorized; working days/hours, arrival/burst bounds,
+OCR/structured share and measurement limitations are explicit. No new migration or consumer
+API was added. Compatibility qualification adds explicit I19 application rollback/forward;
+full recovery and optional structured on/off checks reuse the isolated distribution lane.
+All human/customer/legal approvals remain false/pending. External authority qualification
+is explicitly conditional rather than inferred from the bundled authority tests.
+
+2026-11-06 verification: pnpm check, build and test pass (Turbo cache use recorded in private
+logs). Fastify integration passes 28 tests across seven files, then pnpm test:integration
+fails entering the database lane because Docker Desktop disconnected. Candidate build
+also stopped with Docker EOF during the optional structured image build. The Linux socket
+is absent; docker desktop start reports "Docker Desktop terminated unexpectedly". No I20
+exact-image, operating-mix, recovery or rollback pass is claimed; no release acceptance report
+has been generated. Candidate/evidence remain private under .dms-i20-verification, outside
+/tmp. No fixture stack was created and no installed environment was changed by this work.
+Docker/WSL integration is restored as of the owner-requested retry on 2026-11-06:
+Engine 29.9.2, Compose 5.6.1 and /var/run/docker.sock respond. Resuming the isolated
+candidate build and runtime qualification; the earlier failed checks remain historical.
+The resumed seven-image 0.20.0 bundle assembled, and fresh workspace integration passed
+(296 DB passes/six explicit native skips), standalone authority and native OCR checks passed.
+The first run needed the missing pinned Chromium binary installed; its launch now passes.
+The independent burst exposed task-scoped private HTTP clients discarding their token cache,
+with delivered/unclaimed work entering dead queues under the authority token request ceiling.
+Fixed FixedTask to reuse one role-bound client per registered worker task/process across claim
+and execution, preserving token expiry/renewal and live server grant fences. Focused production
+task/token-cache regression: nine passes; Ruff/mypy pass. The interrupted failed fixture was
+cleaned up. Rebuilding the changed images before a fresh exact-candidate run; no workload or
+recovery pass is claimed yet. Next: finish rebuilt bundle and rerun qualification before marking
+I20 complete. The rebuilt images pass full workspace, standalone authority and native OCR
+checks in run-3. The independent journey then correctly rejected the selected upstream ODS
+sample for declared expansion/cell limits. The qualification now generates an owned bounded
+ODS file instead, verified through actual inspection/extraction; processor limits are unchanged.
+Safe filename/source-line diagnostics were added to the independent consumer. Starting the
+fresh frozen qualification run-4 with that harness correction. Customer deployment/target
+acceptance remain separate and unauthorized.
+
+Latest 2026-11-06 handoff after the intentional turn interruption: run-6's host controller
+was terminated while its isolated consumer container completed successfully. Current code
+passes pnpm check/build/test and full pnpm test:integration; 296 database passes/six explicit
+native skips, standalone authority and exact-image native OCR pass. The independent consumer
+passes all 24 timed files, 13 format-family cases, A/B grants/revocation, metadata/references,
+three-version binary restoration, logical deletion/restoration and token renewal. The bounded
+mix finished in 76.02 seconds at 18.94 documents/minute; metadata p95 is 22.45 ms across
+51 samples. These are synthetic sample measurements, not sustained/customer capacity.
+Harness corrections preserve the documented 404 write denial, current metadata on version
+creation and deterministic source selection across parallel completions. They do not change
+server authorization/admission policy. The earlier ODS limit rejection remains correct.
+The controller did not execute final recovery, optional structure/restart/security checks or
+final source/image verification. No I20 acceptance report was generated; I20 remains in progress.
+Private partial evidence: .dms-i20-verification/run-6/INTERRUPTED.json and its referenced
+consumer result. All orphaned fixture containers, volumes and the unique ingress network
+were removed after interruption; no installed environment was touched. Next: rerun the final
+frozen qualification to completion and generate the report/ledger before marking I20 complete.
+
+DMS-I19 — **Completed** (owner: Codex, 2026-11-06), on
+feat/dms-i01-standalone-foundation. Implemented and locally qualified the standard 0.19.0
+coherent backup/recovery/disposal increment. All prior uncommitted work/review fixes and the
+installed environment are preserved; these changes remain uncommitted. No customer restore,
+cutover, external email or actual off-host destination was used.
+
+Migrations 0046–0053 provide forced-RLS recovery state, reserved/sealed catalog horizons and
+application-bound durable disposal intents. Private Docker-operator workflows capture and
+verify DB/base/WAL, complete SeaweedFS data/metadata, configuration, signatures, inventories
+and pinned images, with streamed encryption and remote readback before the completion marker.
+Empty-target recovery stays CLOSED until full hash/system/catalog verification and fresh
+administrator/operator access review. JWT/storage signing epochs reset, broker authority is
+discarded, and pending jobs retain budgets with new generations. Controlled cleanup protects
+shared references and recovery horizons, confirms authenticated absence before quota release,
+and preserves required provenance. REUSE sessions never require nonexistent staging bytes.
+
+Latest pnpm check/build/test/test:integration PASS. Database: 296 passed/6 native skips across
+16 files; owning DMS: 77 passed/3 native skips; Python: 31 passed/24 optional-runtime skips.
+Real S3 lost DELETE acknowledgement + failed HEAD/retry and shared-original exactly-once
+accounting pass. Crypto tamper/component-swap checks and browser/Node/Python storage pass.
+Final exact-image drill PASS: I18 upgrade, three historical/restored versions, hard-killed
+real base-backup controller/keyless source release, wrong-key rejection, new empty project,
+repeated CLOSED verification, keyless reviewed reopening, old-token/URL and stale-work
+rejection, retained results and native pending execution. Follow-up restart/rotation/recovery
+checks pass. Fixture resources were removed; installed resources were not changed.
+
+Measured fixture: 9 objects/3,076 bytes, 980,318,982 encrypted cohort bytes including DB,
+images/signatures/configuration; recovery-point age at remote completion 73.096 seconds;
+restore plus application acceptance 122.23 seconds. Tool limit: 1 CPU/2 GiB; Docker Desktop
+host 12 CPUs/~20.97 GB. These measurements qualify only this synthetic local dataset.
+Durable summary: docs/qualification/dms-i19-recovery.json. Private evidence and candidate:
+.dms-i19-verification/fixtures/dms-i18-qualification-8Yf0W1 and
+.dms-i19-verification/candidate/bundle. The WSL restart's lost /tmp run was superseded by
+this completed persistent-evidence run. Next: I20 customer release/target acceptance,
+including independent off-host survival and realistic operating-volume/hardware RPO/RTO.
+The local bundle remains a draft customer release; optional structure was not rerun in
+this standard-profile I19 recovery drill.
+
+DMS-I18 — **Completed** (owner: Codex, 2026-11-06). Implemented and locally qualified
+versioned standalone distribution 0.18.0 on feat/dms-i01-standalone-foundation. All prior
+uncommitted implementation/review fixes are preserved; these changes remain uncommitted.
+No installed services, volumes, credentials or customer data were changed or deployed.
+
+Migrations 0044–0045 and private contracts provide forced-RLS service evidence, bounded
+operational snapshots/alerts, backup attestations, controlled enrichment redrive and narrow
+90-day legacy/security-history pruning. Liveness, API and processing readiness are separate.
+Eligible dispatches receive application rounds before the batch limit. Bounded fixed-label
+telemetry/correlation, safe request/error serializers and orderly drain/recovery are implemented.
+Backup attestation does not implement or prove the I19 recovery process; accepted provenance,
+artifacts, original/reference history and business audit are retained.
+
+Complete Compose entries cover private stateful/processing services, explicit ownership tools,
+nonroot runtime/resource/log limits, trusted canonical TLS and optional offline structure.
+The Docker-only target wrapper initializes protected raw configuration and invokes dedicated
+private provisioning/operator/application/key commands without secret arguments. Scanner
+imports verify complete signed CVD sets before atomic activation; failed imports preserve
+active data. The separate read-only online updater starts successfully. Explicit configured
+scanner health replaces the incompatible upstream probe. Private maintenance inherits the
+selected structure profile. Signing-key staging/activation prepublishes public keys and
+preserves bounded retired-key grace; root AUTH_SECRET is preserved.
+
+The sealed seven-image local candidate at /tmp/dms-i18-candidate/bundle has verified archive
+checksums, 1,523 package occurrences in per-image SPDX/Syft inventories, actual image legal
+archives (1,533 files plus 338 embedded JAR notice copies), model/data records and covered-source
+access/offer material. All three owner-provided source contacts are configured: nishanth@thaarei.com,
+technology@thaarei.com and muthurema@thaarei.com. Development/testing mail uses Mailpit;
+no external email was sent. The root proprietary LICENSE remains intact. Assembly remains
+a local candidate; complete customer redistribution review/release belongs to I20.
+
+Verification on 2026-11-06:
+
+- `pnpm check`, `pnpm build`, `pnpm test` and full `pnpm test:integration` pass. Database
+  verification passes 294 cases with six explicit native-runtime skips across 16 files;
+  owning DMS passes 75 with three native skips. Python unit execution passes 31 with 24
+  optional-runtime skips. Real storage/browser/Node/Python boundary checks pass.
+- The sealed bundle passes actual isolated Linux-container fresh provisioning and I17-to-I18
+  upgrade, canonical container DNS/TLS/issuer, Mailpit STARTTLS verification/recovery/session
+  revocation, private exposure checks, native upload/scan/extraction/download hash checks,
+  offline signed/invalid scanner updates, updater startup, real service restarts and independent
+  readiness, optional structure on/off/accepted artifact delivery, private structure commands,
+  signing/secret rotation and live local-first application revocation. All Docker health,
+  nonroot/resource and no-published-port assertions pass. Disposable containers/volumes removed.
+- Both processing images pass offline preflight under production isolation/resource settings.
+  A production authentication-failure probe confirms its credential/query marker is absent
+  from response and real API logs. Partial-initialization export guard passes.
+
+See [qualification evidence](docs/qualification/dms-i18-distribution.json) and the
+[distribution runbook](docs/deployment/customer_deployment_guide.md#standalone-dms). The actual engine is Docker Desktop
+with a WSL2 Linux kernel; this is local container evidence, not bare-server/Dokploy or customer
+acceptance. External authority is not selected and no single-host HA claim is made.
+At the I18 handoff, next increments were I19 coherent backup/recovery/disposal and I20 customer
+release/target/hardware/redistribution acceptance; no work on them has begun here.
+
+DMS-I17 — **Completed** (owner: Codex, 2026-11-06). Implemented permission-aware
+English discovery on feat/dms-i01-standalone-foundation, preserving all prior uncommitted
+implementation/review fixes. Changes remain uncommitted. Installed services, credentials,
+volumes and customer data were not changed; no deployment was performed.
+
+POST /v1/search provides bounded English source-chunk FTS, pg_trgm title/filename matching,
+exact title/name/tag/application-owned reference filters and string-only category/status
+metadata filters. Strict body validation rejects unsupported historical selectors, arbitrary
+metadata paths and PostgreSQL-invalid text. Signed cursors bind installation/application/
+filters/limit. SQL eligibility and forced RLS apply live READ, active applications, current
+available version, lifecycle epoch and passed matching source evidence before results,
+snippets or pagination; there is no broad count. Metadata-only discovery supports secure-only.
+Source provenance and snippets are untrusted data, not HTML or business/tool authority.
+
+Migrations 0042–0043 add stage-bound search generations, bounded source chunks/generated
+English vectors, GIN/trigram and two metadata indexes, restricted grants and eligibility/
+index-status projections. Trusted validated artifact acceptance stages the index in its
+transaction; existing final-run promotion makes it visible atomically. Failed/pending
+replacement preserves prior useful results; historical/intermediate/unsafe generations
+remain private despite retained rows. Document searchable uses the same live eligibility
+helper. Index state is independently PENDING/READY/PARTIAL/NOT_INDEXED. Pre-I17 artifacts
+retain metadata/title matching and require explicit reprocessing for text indexing.
+
+Contracts/generated API docs, readiness checks, capabilities, architecture, independent
+protected Python example and the [discovery runbook](docs/runbooks/dms-discovery.md) are
+current. No additional search service, runtime model or new service credential is required.
+
+Verification on 2026-11-06:
+
+- Final `pnpm check`, `pnpm build` and `pnpm test` pass, including Biome, boundaries,
+  generated contracts, TypeScript, Ruff/mypy, deployment and auth-schema checks. Python
+  execution passes 31 cases with 24 explicit optional-runtime skips. Contract regressions
+  cover valid Unicode, PostgreSQL-invalid text and the optional default-limit input schema.
+- Full `pnpm test:integration` passes: 28 Fastify cases, 292 PostgreSQL cases across 16 files
+  (six explicit skips: three optional native cases and three standalone-image cases),
+  and real pinned SeaweedFS/browser/Node/Python transfer checks. The owning suite passes
+  73 cases, including real Celery acceptance/index replacement and live RLS exclusion.
+  Log: /tmp/dms-i17-integration-3.log.
+- After the final searchable-eligibility correction, native owning qualification passes
+  77 cases with one explicitly unselected ClamAV-native case. Actual pinned OCR and offline
+  Docling PDF/image processing exercise the index acceptance path. Regressions include
+  pending/failed replacement, exact accepted source-unit identity, grant revocation while
+  rows remain, security invalidation, current-version isolation, secure-only filters,
+  cursor binding, and Unicode-heavy source chunk/snippet bounds. The first attempt stopped
+  during private broker/Python fixture startup before work tests; its retry passed.
+  Log: /tmp/dms-i17-final-native-2.log.
+- Final generated-contract/default-limit documentation checks and focused API-docs tests
+  pass. Final nonroot offline API/coordinator package checks verify authenticated public
+  search, absence from the private worker API, private work routes and migration/schema
+  inclusion. Actual final image standalone readiness/discovery and all 10 standalone
+  assertions pass. Log: /tmp/dms-i17-standalone-final.log.
+- `git diff --check` passes. Disposable fixtures/workers were cleaned up. No validation
+  runner remains; the fixture/build lane is released.
+
+Final local verification image: thaarei-dms-i17-api:verification =
+sha256:1f3352e983c0fa322d4e95949df6b827a66a95012602429fa0b304b2240f5568.
+This is not a production release. Customer deployment and representative large-corpus
+latency/throughput qualification remain separate. No I17 blocker remains; I18 is unstarted.
+
+DMS-REVIEW-01 — **Completed** (owner: Codex review/fix thread, 2026-11-05).
+Fixed all four validated I01–I15 findings in parallel on the existing
+feat/dms-i01-standalone-foundation branch, preserving concurrent I16 work. Changes remain
+uncommitted; no installed services, credentials, volumes or customer data were changed.
+
+- Dispatch selection filters live jobs/current generations before LIMIT, preventing completed
+  jobs with lost delivery acknowledgements from starving new work.
+- Transfer ingress accepts a finite set of proxy metadata headers and discards them before
+  storage forwarding, retaining signature/header restrictions and socket-based rate limits.
+- Production worker transport errors enter the existing bounded retry mechanism for temporary
+  connection/timeouts and selected HTTP statuses; permanent errors remain terminal.
+- Restore idempotency binds stable operation/document/revision/profile/source inputs, retaining
+  the original descriptor and operation identity after intervening metadata edits.
+
+Focused regressions cover forty completed jobs with expired unacknowledged dispatches,
+restore replay and conflicting inputs/current access, actual proxy-header PUT/GET through
+SeaweedFS, and eight schema-validated production task transport failure cases. Updated the
+owning architecture paragraphs and added one focused failure-path verification rule to the
+existing root AGENTS.md. No additional skills or agent framework were introduced.
+
+Verification on 2026-11-05: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. Combined integration completed Fastify/API-docs, 290 PostgreSQL
+cases across 16 files (six explicit skips: three standalone-only and three optional native
+runtime cases), and real pinned SeaweedFS/browser/Node/Python transfer checks. The owning
+DMS database suite passes 71 cases, including the dispatch and restore regressions. Python
+unit execution passes 29 cases with 21 optional native/JVM/OCR runtime skips. Targeted
+Biome, Python Ruff/mypy and `git diff --check` also pass. Initial integration failures in
+I16 route inventory, result-code fixtures and cleanup order were corrected by the I16 owner
+before the successful combined rerun. Disposable verification fixtures were cleaned up.
+
+No blocker or remaining work for these four fixes. Actual Dokploy/customer ingress and a
+new production image release were not exercised; I16 completion and packaging remain with
+its owning thread. Fixture/build validation lane is released to that thread.
+
+DMS-I16 — **Completed** (owner: Codex, 2026-11-05). Implemented version/run-bound
+results, authorized artifacts, owner/private-operator reprocessing and optional offline
+Docling layout/table extraction on feat/dms-i01-standalone-foundation. Preserved all
+uncommitted I04–I15 and concurrent DMS-REVIEW-01 changes. All changes remain uncommitted;
+installed services, credentials, volumes and customer data were not changed.
+
+Migrations 0040–0041 establish forced-RLS processing runs, actor-bound replay receipts,
+immutable accepted provenance, exact version/run selection and fenced active promotion.
+Pending/failed replacement preserves the previous active result; stale/duplicate work cannot
+replace it. Public history/content and owner-only reprocessing use live rights, source hash,
+security/lifecycle checks, signed bounded pagination and read-only artifact capabilities.
+Private operator reprocessing uses the same authoritative admission/quota/audit function.
+Reprocessing allocates no binary/revision and grants its own work deadline without changing
+lifecycle recovery state or contributor upload authority. Valid receipts remain replayable
+after profile disablement; new requests reject. Index status remains NOT_INSTALLED for I17.
+
+The separate structured image locks Docling 2.146.0, CPU-only Torch and pinned hash-verified
+Heron/TableFormer models with licenses/notices. Its secret-free no-network namespace,
+per-page processing, fixed English OCR, resource/output bounds and explicit partial/failure
+coverage preserve native text and original bytes. Default images exclude the optional
+models/dependencies. Versioned approximate layout/table artifacts are untrusted data and
+cannot write authoritative business fields. Contracts, generated documentation, deployment
+overlays, independent protected Python example, architecture and the
+[results runbook](docs/runbooks/dms-results.md) are current. Actual packaged table/mixed-page
+outcomes and enforced resource bounds are recorded in docs/qualification/dms-i16-structure.json.
+
+Verification on 2026-11-05:
+
+- `pnpm check`, `pnpm build`, `pnpm test` and full `pnpm test:integration` pass. Full
+  all-native integration passed 295 database cases across 16 files (three standalone-image
+  skips), all 76 owning cases, 28 Fastify cases, and real storage/browser/Node/Python checks.
+  Log: /tmp/dms-i16-verified-integration.log.
+- After the final work-deadline fix, check/build/unit gates pass again; the final owning
+  suite passes 72 cases with three explicit optional-runtime skips, including expired
+  contributor-upload reprocessing. The preceding native rerun passed all OCR/structure
+  cases; its one new-fixture expiry-order failure was corrected and verified by this rerun.
+  Log: /tmp/dms-i16-final-owning-corrected.log.
+- Final API image standalone verification passes all 10 cases, including auth/DMS-only
+  readiness, discovery and packaged route/DB assertions. Offline nonroot API/coordinator
+  isolation checks also pass. Log: /tmp/dms-i16-standalone-image.log.
+- Parser qualification passes 55 cases (54 in the complete native suite plus the added
+  blank/nontext structure regression); ordinary Python execution passes 31 with 24 explicit
+  optional-runtime skips. Actual read-only nonroot offline structured packaging passes
+  PNG/PDF tables and mixed native/scanned/blank pages at 4 GiB/one CPU. Default packaging
+  rejects structured processing and excludes its dependencies/models.
+- Generated contract checks, Biome/Ruff/mypy, deployment checks and `git diff --check` pass.
+  Production capacity pulses and real OAuth token renewal keep longer native fixtures valid.
+  Disposable fixture containers/workers are cleaned up; no validation runner remains.
+
+Final verification images (local verification tags only, not a deployment):
+API thaarei-dms-i16-api:verification =
+sha256:eb3c1eecb2234ad4172b8293e3562756258e75f36cf47edb9aa4ed0b410751e1;
+default thaarei-dms-i16-processing:verification =
+sha256:4d51ff7ee08005e56dc6b9890f36fd76ed6257791536a0cbafa60c065b651725;
+structured thaarei-dms-i16-structured:verification =
+sha256:e44057c7cb2941d57f69308a462af64e4d7d4d303e1fe4cc092e407cc6acb63c.
+
+No I16 blocker remains. Actual customer deployment/ingress and general-document accuracy
+qualification are separate; the committed qualification covers owned fixtures only.
+I17 permission-aware discovery remains unstarted. Fixture/build lane is released.
+
+DMS-I15 — **Completed** (owner: Codex, 2026-11-05). Implemented selective bounded
+English OCR on feat/dms-i01-standalone-foundation, preserving uncommitted I04–I14.
+Changes remain uncommitted. Installed services, credentials, volumes and customer data
+were not migrated, initialized or deployed; disposable verification fixtures were removed.
+
+Searchable JPEG/PNG/TIFF/BMP/static WebP sources queue private heavy work after independent
+security approval. PDFs retain ordinary native extraction first and atomically schedule
+heavy OCR only for incomplete pages. Pinned Tesseract 5.5.4 and English/orientation data,
+isolated per-page PDFium/Pillow processing, glyph-based duplicate suppression, EXIF/rotation,
+ordered TIFF frames, source word boxes and engine-specific confidence are implemented.
+Native text and original bytes are preserved. Partial/time-bound results retain completed
+units and explicitly identify missing coverage. Lease-aware budgets leave output/acceptance
+time; heavy workers cannot assert security approval. Migration 0039 projects current-epoch
+heavy processing status, while stage history and generation/lifecycle/accounting fences
+remain authoritative. Effective capabilities, generated private contracts, notices,
+architecture and the [OCR runbook](docs/runbooks/dms-ocr.md) are updated.
+
+Verification on 2026-11-05: `pnpm check`, `pnpm build`, `pnpm test` and
+`pnpm test:integration` pass. Full integration passes 28 Fastify tests, 290 database cases
+across 16 suites (three standalone-only skips), and real SeaweedFS/browser/Node/Python
+transfer checks. A final native-security/OCR owning rerun passes all 71 cases after the
+lease-budget adjustment, using production Celery, private HTTP, RabbitMQ and real storage.
+The complete isolated parser suite passes all 42 cases with pinned OCR and Tika/Java
+available; the ordinary workspace Python run passes 21 and explicitly skips the 21
+runtime-dependent cases. Fresh official ClamAV plus isolated structural assessment passes
+all 23 supported content types. Offline, non-root production image checks pass for the
+API/coordinator and OCR worker, including native/mixed/rotated PDFs, images, TIFF order,
+coordinates, pinned models and immutable sources. Qualified image IDs:
+processing `sha256:bf6cb0d2c8dfd9fbc68262f74b673b724ccb437dc734b4bead90ed951c04a6c9`;
+API `sha256:3377761c204cc29ba083d19618dc683126d4a2b8527e9cf6fefe3140fe35c8d9`.
+
+The committed [qualification record](docs/qualification/dms-i15-english-ocr.json) measures
+0% normalized word error on four versioned clean-print PNG/JPEG/rotated/mixed-PDF cases
+against the 10% ceiling. Total measured CPU is 17.555 seconds, maximum observed per-process
+RSS 66,080 KiB, peak parser scratch 204,800 bytes and largest artifact 23,513 bytes under
+the enforced runtime bounds. This evidence is limited to generated clean English print
+with the pinned font; arbitrary real-world, handwriting, table and multilingual accuracy
+is not claimed. I16 result selection/reprocessing/optional structure remains unstarted.
+
+DMS-I14 — **Completed** (owner: Codex, 2026-11-05). Implemented bounded native,
+Office, tabular and email extraction on feat/dms-i01-standalone-foundation, preserving
+uncommitted I04–I13. Changes remain uncommitted. Installed services, credentials, volumes
+and customer data were not migrated, initialized or deployed.
+
+The selected paths cover 18 content types: PDFium native PDF text, UTF-8 text/Markdown,
+standard CSV/TSV, Calamine XLS/XLSX/XLSB/ODS and Tika Word/PowerPoint/OpenDocument/RTF/EML/MSG.
+Versioned private manifests/artifacts bind document/version/job, work and lifecycle
+generations, source SHA-256, processor/configuration/profile and actual source units.
+Coverage distinguishes native text, blank/mixed/OCR-needed PDF pages, paragraphs/slides,
+lines, sheet/cached-cell values and omitted attachment inventory. Formula expressions
+unavailable in the binding are disclosed; no recalculation, markup/document execution,
+external fetch, invented pagination or attachment import occurs. secure-only explicitly
+omits enrichment; existing admission policies are unchanged and capabilities intersect
+installed support with current operator policy, including explicit format capabilities.
+
+Private extractor-only input/output/result handling uses current lease/identity, passed
+source/security and lifecycle fences, unpredictable attempt-specific create-only artifact
+keys and exact capacity reservation before signing. Stored output hash, schema, coverage
+and manifest/source bindings are verified before immutable acceptance. Verified outputs
+become charged artifact bytes once; ambiguous issued outputs retain reservations pending
+I19 disposal. Original availability remains independent of extraction failure. Required
+structural assessment discards enrichment text and uses metadata-only Tika traversal,
+so enrichment text limits cannot replace a security decision. Upload and batch status
+project independent waiting/queued/running/success/partial/failure outcomes. Forced-RLS
+migrations 0037–0038 add composite attempt/job integrity, limited grants and an authorized
+status projection; public/coordinator readiness includes the new owning table.
+
+Parser supervision clears secrets, denies network access, mounts only approved runtime
+and read-only input, and bounds CPU, wall time, output, scratch, memory and native process
+failure. ZIP/XML/embedded expansion, macros/encryption, sparse ranges and image dimensions
+are checked under the declared limits. The image bundles locked PDFium/Calamine/Pillow,
+SHA-512-verified Tika 4.2.0 and digest-pinned Java, retaining upstream licenses/notices;
+no parser fetcher/emitter plugins, OCR recognizers or runtime downloads are enabled.
+Architecture, generated public/private artifacts, deployment budgets and the
+[extraction runbook](docs/runbooks/dms-extraction.md) describe actual behavior. I16 consumer
+content/history/reprocessing/promotion APIs and I17 search are not installed by this stage.
+
+Verification (2026-11-05): pnpm check, pnpm build, pnpm test and sequential
+DMS_TEST_NATIVE_ASSESSMENT=true pnpm test:integration pass. Full integration passed
+288 cases across 16 disposable database-lane suites, 28 Fastify cases and seven real
+pinned-SeaweedFS storage cases; three standalone-only cases were skipped. After final
+artifact limits/readiness and structural-inspection separation, workspace check/build/unit
+and all 69 native owning cases pass again, including production Celery/private HTTP/
+RabbitMQ/storage, failed extraction preserving verified original bytes, foreign/mismatched
+artifacts, runtime privilege denial and lifecycle/role fences. Default unit execution has
+21 passing Python cases and eight explicit Tika/Java skips; direct qualification with the
+pinned runtimes passes all 29. Fresh official ClamAV plus isolated structural assessment
+passes representative inputs from all 18 content types. Offline non-root processing-image
+qualification passes ten routed inputs with no network; the API/coordinator image passes
+guarded private extraction routes, packaged migrations/schema and product-package exclusion.
+Verification images: thaarei-dms-i14-api:verification
+(sha256:2ba5e55070fd95c2ac655bb87c09e0c156b22f24e98b1ec4ff50c0eab55ad5e0)
+and thaarei-dms-i14-processing:verification
+(sha256:909c5a1d118864f926d057710633a95c25d376f61faf88349ab34b8490cba7ce).
+Disposable fixtures were removed; git diff --check passes. No implementation blocker
+remains. DMS-I15 OCR is the next planned package and has not been started.
+
+DMS-I13 — **Completed** (owner: Codex, 2026-11-05). Implemented revision-checked
+owner/operator soft deletion, lifecycle inspection and 30-day logical restoration on
+feat/dms-i01-standalone-foundation, preserving uncommitted I04–I12. Installed services,
+credentials, volumes and customer data were not migrated or deployed; changes remain
+uncommitted.
+
+The Lifecycle module owns public lifecycle/delete/restore routes and private restoration
+coordination. Strong expected revisions, actor-bound restore receipts, current machine
+scope/ownership and fresh explicit DMS operator authority protect mutations. Migrations
+0035–0036 add forced-RLS lifecycle queues, immutable assessment history and a narrowly
+granted lifecycle command. Generation fences and cancellation prevent stale uploads,
+leases, result replays or publication from reactivating a deleted document. Normal owned
+and shared projections/download issuance disappear immediately. Retained versions,
+objects, grants and physical usage remain; previously issued bounded GET capabilities
+retain their documented lifetime.
+
+Logical restore verifies retained original bytes against immutable integrity evidence,
+then schedules fresh security assessment under a new generation without allocating a
+binary version or reopening an expired upload window. Current policy/capacity may defer
+work; unavailable, changed or failed originals remain unavailable, with explicit pending,
+partial and failed status and no fallback to an older current version. Fresh work uses
+separate bounded reservation/deadline accounting. Restore rejects expired deadlines and
+PURGING/PURGED states. Physical purge remains disabled until I19. Public/private contracts,
+generated artifacts, architecture and the [lifecycle runbook](docs/runbooks/dms-lifecycle.md)
+describe the implemented behavior; the current text/plain secure-only processing matrix
+remains unchanged. Format extraction/search remain future packages.
+
+Verification (2026-11-05): pnpm check, pnpm build, pnpm test and sequential
+DMS_TEST_NATIVE_ASSESSMENT=true pnpm test:integration pass. Full integration passed
+285 PostgreSQL cases across 16 suites, 28 Fastify cases and seven pinned-SeaweedFS storage
+cases; only three standalone-only cases were skipped. Following final Lifecycle module
+wiring and native-fixture retry alignment, workspace check/build/unit, 11 DMS Fastify cases
+and all 66 owning cases passed again. Owning regressions exercise expired original upload
+windows, stale leases/results, policy pause/resume, owner/shared isolation, fresh operator
+proof/grant, deadlines/PURGING, direct runtime privilege denial and actual missing/changed
+storage. Native qualification uses production Celery/ClamAV over private HTTP/RabbitMQ and
+real storage, restores the same binary version, verifies downloaded bytes and retained
+quota. The non-root production image thaarei-dms-i13:verification
+(sha256:ab4e66d9652130ab43aefc3962e1b6f8e1f1ba5c76b034e12179dd3a1896ebd6)
+passed offline packaged API/coordinator startup, guarded lifecycle routes, private surface
+separation and compiled migration/restoration checks. Disposable fixtures were removed;
+git diff --check passes. No implementation blocker remains; DMS-I14 is the next planned
+package and has not been started.
+
+DMS-I12 — **Completed** (owner: Codex, 2026-11-05). Implemented explicit application
+sharing (FR-13.01–06) on feat/dms-i01-standalone-foundation, preserving uncommitted I04–I11.
+Installed services, credentials, volumes and customer data were not migrated or deployed.
+
+Owner GET/PUT document permissions and fresh private document-permissions-read/set commands
+manage bounded same-installation consumer grants with strong expected revisions and atomic
+attributed audit/outbox. READ, EDIT_METADATA and ADD_VERSION are independent resource rights;
+current machine scopes remain an additional ceiling. Document/list/history/version/upload
+status, original capabilities, logical edits, references, version admission/replay and upload
+controls enforce their current rights. Batch projections require READ independently from
+control rights. Audit, grant administration and binary restoration remain owner/operator-only.
+Self, unknown, pending, disabled, worker and foreign targets cannot receive new grants.
+Authority administration alone cannot invoke private operator commands without a current
+tenant-bound DMS operator grant. Operator target validation holds registration locks without
+granting registration-update privilege to the operator role.
+
+Migrations 0032–0034 add composite tenant/owner/recipient grant integrity, forced RLS,
+restricted migrator-owned resource evaluators, owner/contributor admission and batch
+identities, and caller-private completion receipts with tenant-aware upload FKs and a
+restrictive current-control insert policy. Ownership, storage paths and physical/work
+quota charges remain with the document owner. Both owner and current contributor can
+complete a shared upload without reading each other's receipts. Reference creators are
+explicit application IDs; shared editors manage their own reference namespace and the
+owner can remove any reference. Internal helper queries reveal no unrelated document IDs.
+An installation sharing fence serializes grant replacement with public transactions/signing;
+current SQL authorization filters before selection/pagination. Revocation stops new
+projections, capabilities and upload replays/controls. Previously issued bounded storage
+capabilities and accepted owning work retain their documented lifetime/ownership semantics.
+
+Public/private schemas, generated artifacts, capabilities, guard/route coverage, architecture
+and the [sharing runbook](docs/runbooks/dms-sharing.md) describe the implemented policy.
+No new HTTP operator surface, ownership transfer or SaaS tenant selection was introduced.
+
+Verification (2026-11-05): pnpm check, pnpm build, pnpm test and sequential
+DMS_TEST_NATIVE_ASSESSMENT=true pnpm test:integration pass. Full integration passed
+279 PostgreSQL cases across 16 suites, 28 Fastify cases and seven pinned-SeaweedFS storage
+cases; only three standalone-only cases were skipped. The initial authority-fixture startup
+failure during concurrent builds did not recur with sequential verification. After final
+helper/receipt tightening, static/build/unit checks and fresh native owning qualification
+pass again: 60/60 cases, including actual private HTTP/storage/RabbitMQ, production Celery,
+current ClamAV signatures and verified native transfer/replacement/restoration. Sharing
+regressions cover independent rights, stale revisions, caller/owner disablement, current
+scope ceilings, cross-installation RLS, private operator revocation, owner storage/quota,
+contributor batch binding, READ-only versus ADD_VERSION-only batch projections, owner and
+contributor completion, revocation/signing contention, retained preissued GET and denial
+of later capabilities. Biome, TypeScript, Ruff/mypy, contract drift, repeated migrations,
+runtime privilege isolation and git diff --check pass.
+
+thaarei-dms-i12:verification builds and passes network-disabled non-root API bootstrap,
+GET/PUT/HEAD permissions authentication, private operator/work exclusion, rights schema
+and packaged migration qualification; image
+sha256:a99c5aee651ad3ad29daca6880903b10effd276a63f2fcfb9e193bec5b5b0666.
+No customer deployment or production acceptance is claimed. Verification fixtures are
+cleaned up; I04–I12 remain uncommitted. I13 owns logical lifecycle/delete/restore; broader
+content/search, format assessment and recovery-aware disposal retain their owning increments.
+
+DMS-I11 — **Completed** (owner: Codex, 2026-11-05). Implemented FR-12.01–07 on
+feat/dms-i01-standalone-foundation, preserving uncommitted I04–I10. Installed services,
+credentials, volumes and customer data were not migrated, initialized or deployed.
+
+PATCH document supports bounded title/metadata/tags replacement without allocating a
+binary revision. Metadata remains scalar/scalar-array JSON with key/value/encoded-size
+bounds; NUL and unpaired-surrogate strings fail before PostgreSQL. Reference POST/DELETE
+retains multiple opaque namespace/type/external-ID tuples in bounded owning arrays with
+generated reference IDs. The fixed tenant and registered owner application namespace
+every tuple; references neither grant access nor fetch external records. Mutations use
+current live owner/scope policy, strong If-Match, a canonical document fence and row lock,
+logical revision increments and atomic identifier-only audit/outbox. Duplicate links are
+documented no-ops after revision checking; stale requests return 412.
+
+Document detail exposes tags/references; list summaries expose tags. Exact title, filename,
+tag and complete reference-tuple filters combine with AND. Signed bounded cursors bind
+all filters to the installation/application. Arbitrary metadata queries remain unsupported.
+Migrations 0030–0031 add default-empty arrays, bounds/indexes, audit actions and narrowly
+scoped runtime UPDATE privileges under existing forced owner RLS. Runtime receives no
+publication privilege. Shared schemas, generated public/private artifacts, route/guard
+coverage, capabilities, architecture and the [metadata runbook](docs/runbooks/dms-metadata.md)
+are updated. The independent stdlib example uses authenticated HTTP to edit metadata and
+link/unlink multiple records without any Turnstile contract/source dependency.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration pass. Full integration passed 274 PostgreSQL cases across 16 suites,
+28 Fastify cases and seven pinned-SeaweedFS storage cases. Three standalone-only cases
+and the explicit online native-assessment case were skipped in the default combined lane;
+I10's separate native qualification remains recorded below. A final focused owning rerun
+passes 55 cases with one online-only skip, including unsafe/oversized inputs, concurrent
+edits, stale revisions, unchanged binary identity/history, attributed audit, namespace
+isolation, filter-bound cursors and the independent Python link/unlink round trip.
+The capability enum and PATCH method coverage omissions found during verification are fixed.
+Biome, TypeScript, Ruff/mypy (including the new example), contract drift, repeated owned
+migrations/bootstrap, runtime privilege checks and git diff --check pass.
+
+thaarei-dms-i11:verification builds and passes network-disabled non-root API bootstrap,
+metadata/reference route authentication, private-work exclusion, metadata string validation
+and packaged owning migration checks; image
+sha256:97b0940a76b6759ee5d08961524ecdf25e2b523fe8500c00ebd4ca3dbb50370c.
+This is packaged-image qualification, not a customer deployment or production acceptance.
+Handoff: I04–I11 remain uncommitted. I12 owns explicit sharing; lifecycle restoration,
+broader format assessment and recovery-aware disposal remain with their owning increments.
+
+DMS-I10 — **Completed** (owner: Codex, 2026-11-05). Implemented guarded
+new-version uploads, bounded history/status, explicit historical downloads and binary
+restoration as a new reassessed revision on feat/dms-i01-standalone-foundation.
+Uncommitted I04–I09 are preserved. Verification used disposable fixtures; installations,
+credentials, volumes and stored customer data were not migrated, initialized or deployed.
+
+New-version uploads and restore require current owner/scopes, an expected logical revision
+and an idempotency key. New-version batch items bind exactly once. History uses bounded,
+application/document-bound signed cursors and exposes authoritative per-version upload,
+security, availability and restoration status. Pending replacement leaves the current valid
+original available, and late lower revisions cannot replace a higher current revision.
+Binary restoration preserves document identity and current logical metadata, allocates a
+new highest candidate and reuses the protected object with an immutable owning reference.
+It verifies source integrity and captures the source invalidation generation; fresh
+coordinator work hashes and reassesses the bytes before publication. Approval is not copied.
+Shared-object invalidation closes every affected reference; other valid originals remain
+eligible. Retained physical bytes stay charged once, while restore reserves/releases its
+own work capacity without charging duplicate storage or allowing premature source removal.
+
+Migrations 0025–0029 own restoration references, forced RLS, constrained runtime/coordinator
+privileges, candidate immutability/generation checks, attributed audit and reference indexes.
+Runtime receives no publication/candidate mutation authority. Public/private contracts,
+generated artifacts, capabilities, architecture and the
+[version runbook](docs/runbooks/dms-versions.md) describe the implemented boundary.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+DMS_TEST_NATIVE_ASSESSMENT=true pnpm test:integration pass. Full integration passed
+272 PostgreSQL cases across 16 suites, 28 Fastify cases and seven pinned-SeaweedFS storage
+cases; the combined lane skips three standalone-only cases. The owning suite passes all
+53 cases with the native lane enabled, including independent backend HTTP, real storage,
+RabbitMQ/production Celery, current ClamAV signatures, fresh replacement/restoration
+assessment and SHA-256-verified current/historical GET. Focused regressions cover stale
+revisions, replay, concurrent publication/restores, lower-revision completion, application
+isolation, missing source objects, reference retention, invalidation generations, storage
+accounting and new-version batch binding. git diff --check passes.
+
+thaarei-dms-i10:verification builds and passes network-disabled non-root API/coordinator
+bootstrap, protected history/upload/restore routes, private-work exclusion and packaged
+restoration/migration checks; image
+sha256:929f7b773acda9d5639e3acba26d60b90f10d9a51b807db2d3aae8e9f129db59.
+This packaging check is distinct from native component-chain qualification; no complete
+customer deployment or production acceptance is claimed.
+
+Handoff: I04–I10 remain uncommitted. Metadata/tags/references are I11, explicit application
+sharing is I12, lifecycle restoration is I13 and recovery-aware physical disposal is I19.
+The installed assessment matrix remains text/plain + secure-only. Physical purge and
+other format families remain unavailable.
+
+DMS-I09 — **Completed** (owner: Codex, 2026-11-05). Implemented the first usable
+secure document transfer increment on feat/dms-i01-standalone-foundation, preserving
+uncommitted I04–I08. Scope remains text/plain + secure-only; this is not full DMS v1,
+customer deployment or production acceptance. Existing installation data, volumes,
+credentials and services were not migrated, initialized or deployed.
+
+Implemented: guarded GET /v1/documents/{documentId}/download returns a short-lived
+current-original capability after live registration/scope, owner, lifecycle, version and
+accepted-candidate checks. The same SQL predicate drives detail/list downloadable flags.
+A canonical UUID per-document shared/exclusive advisory fence serializes issuance with
+publication/invalidation through signing and audit commit. Runtime receives no new
+publication or write privilege. Unknown/unowned documents, unavailable originals, invalid
+tokens, current disablement/scope changes and unsupported historical queries fail closed.
+
+The dedicated original-read signer supplies attachment/octet-stream response overrides,
+bounded ASCII/UTF-8 safe filenames and at most 120 seconds of authority. Ingress preserves
+no-store/no-referrer/nosniff and supports single prefix/open-ended/suffix byte ranges;
+unsigned override edits and multiple ranges are rejected. Previously issued URLs remain
+usable only for their disclosed bounded lifetime after disablement/invalidation.
+Migration 0024 adds document.download-authorized to owning audit/outbox constraints.
+Signing failures roll back; identifier-only issuance audit never claims actual byte fetch.
+Public audit schemas now include the I08 security/publication actions and I09 issuance,
+so current business audit pages remain readable. No auth schema migration was added.
+
+Public/private contracts, generated OpenAPI/operator artifacts, route catalog and shared
+installed-catalog DI are updated. Capabilities project configured supported formats/profiles
+and token-permitted download operations. The optional downloads overlay adds only the API
+original-read credential, without published ports or privileged storage roles. The
+independent stdlib backend example obtains create-only transfer authority, uploads known
+bytes, sends a separately keyed completion command, polls authoritative state and verifies
+full downloaded size/SHA-256 against its input and server evidence. Configuration/tokens
+enter protected files/stdin; capabilities, credentials and bodies are never printed.
+Architecture and the secure-transfer/assessment runbooks document the exact boundary.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration pass. Full integration passed 266 PostgreSQL cases across 16 suites,
+28 Fastify cases and seven pinned-SeaweedFS storage cases with real browser/Node/Python
+transfers. The default combined lane skips three standalone-only cases and the explicit
+online native transfer case. DMS_TEST_NATIVE_ASSESSMENT=true owning qualification passes
+48/48, including the independent backend over actual HTTP, S3, confirmed RabbitMQ,
+production Celery scanner task, current official ClamAV signatures, isolated text checks,
+fenced publication and SHA-256-verified GET. Regression coverage includes wrong/unrelated
+principals, unavailable/invalidation states, scope/disablement, signing rollback and audit,
+uppercase UUID fence contention, live URL use after disablement and actual expiry,
+range/disposition hardening and signed-override tampering. Repeated disposable migrations,
+contract drift, Python/Ruff/mypy, Biome, private Compose validation without installed env
+files and git diff --check pass.
+
+thaarei-dms-i09:verification builds and passes network-disabled non-root public bootstrap,
+download-route 401 gating, private-work exclusion and packaged migration checks; image
+sha256:0280de6836537fb3472959555d21bb6dc9f8fa847bbbf4d5bb654f20c5627ba5.
+Native component-chain qualification is distinct from that offline packaged-image check;
+no complete production/customer rollout is claimed. Interrupted-run disposable fixtures
+were explicitly cleaned up, and completed verification leaves no test containers running.
+
+Handoff: I04–I09 remain uncommitted. I10 owns version history, explicit historical
+selection and binary restoration; application sharing remains I12. Other format-family
+assessment/enrichment, lifecycle restoration and recovery-aware physical disposal remain
+with their owning increments. The secure-transfer runbook records installation prerequisites,
+protected backend examples and the bounded signed-URL revocation behavior.
+
+DMS-I08 — **Completed (initial staged matrix)** (owner: Codex, 2026-11-05).
+Implemented assessment/isolation/publication for text/plain + secure-only on
+feat/dms-i01-standalone-foundation, preserving uncommitted I04–I07. Other document
+families are explicitly not installed/advertised; adding a family requires its complete
+qualified assessment before enrichment can use it. No installed environment, credentials,
+volumes or customer data were changed; all verification fixtures were disposable.
+
+Implemented: server-owned immutable candidate intent persisted before source-conditional
+S3 copy, bounded crash handling and retained exact ambiguous references; current scanner-
+only candidate capabilities and closed evidence under the existing attempt/lease fence;
+streamed SHA-256/size, unchanged native ClamAV signature generation and 48-hour freshness;
+isolated bounded UTF-8 inspection, quarantine and atomic availability/current-pointer,
+audit/outbox publication. Lower binary revisions cannot replace higher current revisions.
+Explicit invalidation closes availability without automatically choosing older bytes.
+Measured quarantined bytes remain charged; only settled mandatory work is released.
+COPYING/selected identity and terminal evidence are protected by an owning database trigger.
+No extraction-role result can assert approval. Downloads remain I09; no format or
+configuration value substitutes for an installed qualified security handler.
+
+Owning migrations 0016–0023 add forced-RLS security candidates, bounded evidence,
+column-specific coordinator privileges, current-operator read policy, immutable-copy
+protection and publication/audit/outbox states. No auth schema migration. Private generated
+work contracts add candidate/evidence shapes independently of consumer OpenAPI; public
+status/batch projections expose truthful security and availability, with plain-text
+examples. The architecture and assessment/work/upload/admission runbooks are updated.
+
+Native runtime: pinned ClamAV 1.5.1 daemon with limit/encryption alerts and isolated
+signature updates; processing image pins Bubblewrap 0.8.0-2+deb12u1 and util-linux
+2.38.1-5+deb12u3. Trusted supervision supplies stdin only to a fresh user/mount/PID/network
+namespace with cleared environment and hidden application mounts. CPU, memory, wall,
+scratch/input and regular-file output limits apply; no unrestricted fallback exists.
+The scanner uses a vendored Apache-2.0 Moby default filter with only namespace/mount
+setup calls added. The default Docker filter fails closed; the dedicated filter is
+qualified with a non-root, read-only, capability-free, network-disabled final image.
+ClamAV limit alerts produce INCONCLUSIVE, malware detections REJECTED; neither publishes.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration pass. Full integration passed 266 PostgreSQL cases across 16 suites,
+28 Fastify cases and seven pinned-SeaweedFS storage cases (three standalone-only database
+cases remain skipped in the default combined lane). All 47 focused owning cases pass.
+The additional DMS_TEST_NATIVE_ASSESSMENT=true owning lane passes 47/47 using actual fresh
+ClamAV evidence for the protected S3 candidate, accepted over private JWT HTTP into the
+publication transaction. The explicit native daemon qualification with current official
+daily signatures passes clean text, EICAR, streamed hash, hash mismatch, malformed UTF-8,
+exceeded-limit distinction and outage checks. Seven actual isolated-parser regressions
+pass. Repeated disposable migrations/bootstrap, contract/schema drift, Python/Ruff/mypy,
+Compose validation without installed env files, Biome and git diff --check pass.
+
+Final images build and pass offline packaging/runtime qualification:
+thaarei-dms-i08:verification, sha256:59e62b8b8cb5355aac31813aaa3067be8f1cf35bf4985af166ea2786cab9e315;
+thaarei-dms-processing-i08:verification, sha256:5459f472603d5c90a4d0ae90c8ea935d383137d66fd11c159eeca4cb854ac5b3.
+The API image boots the private coordinator as non-root, gates the candidate route with
+401, excludes the public surface from that listener and packages the owning migrations.
+The final processing image verifies a separate parser network namespace, hidden application
+mount, cleared environment and enforced CPU/memory/output limits. Native component-chain
+verification is distinct from these offline image checks; no complete customer deployment
+or production rollout is claimed.
+
+Handoff: I04–I08 remain uncommitted. I09 owns authorized content/download and the first
+consumer transfer increment. Additional format-family security inspectors remain staged
+and unavailable until separately implemented/qualified; enrichment, reassessment/redrive,
+reference-aware physical cleanup and broader operational acceptance stay with their owning
+increments. Preserve exact installation/project/volume bindings and qualify the target's
+user-namespace support before enabling the optional assessment overlay.
+
+DMS-I07 — **Completed** (owner: Codex, 2026-11-05). Implemented authoritative work
+and private execution on feat/dms-i01-standalone-foundation, preserving uncommitted I04–I06.
+Scope: coordinator/private HTTP entry, persisted jobs/dispatch/attempt fences and recovery,
+versioned private contracts, Python Celery publisher/fixed tasks and locked runtime image.
+Real RabbitMQ confirms/routing/retries and PostgreSQL execution budgets are verified
+with disposable fixtures. Security assessment/publication remain I08; no existing
+installation, credentials or stored data are migrated/deployed by this work.
+Implemented: separate private coordinator listener, purpose-bound authority clients and
+live DMS work grants, forced-RLS jobs/dispatch/attempt records, fenced claims/results,
+ordinary retry eligibility and bounded recovery, leased callback-independent upload
+observation and periodic batch/session expiry. Python fixed Celery tasks/publisher use
+mandatory confirmed JSON publication for both initial sends and retries, separate native
+broker roles and an explicitly locked production image. Private contracts and operator
+inspection are separate from consumer OpenAPI. No absent security/parser handler passes.
+Owning migrations 0013–0015 constrain work identities, jobs, dispatches, attempts and
+upload observation/expiry. Source checks hold the current application, batch/session and
+admission fences in the public issuance order and require a held mandatory-work reservation;
+released accounting cannot authorize new execution. No auth-schema migration or document
+publication/current-pointer privilege was added. Private work-authorize/disable/inspect
+commands require fresh verified identity and a current explicit DMS operator grant.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration pass. Full integration passed 265 PostgreSQL cases across 16 files,
+28 Fastify cases and seven pinned-SeaweedFS storage cases with real Chromium/Node/Python
+transfers. All 46 focused owning access/admission/upload/work cases pass, including 14
+new I07 cases over actual private JWT HTTP, RabbitMQ and Celery prefork workers. Coverage
+includes native queue/topic ACLs, non-JSON dead-lettering, durable/persistent Celery protocol,
+mandatory routing/returns/confirms, lost delivery receipts, normal/lost retry publication,
+killed workers, concurrent claims/recovery, stale leases/results, one execution/elapsed
+budget, live role revocation, released accounting and missed completion callbacks.
+Repeated disposable migrations/bootstrap, schema/contract drift, Python/Ruff/mypy,
+deployment checks and git diff --check pass. Three standalone-only database cases remain
+skipped by the default combined-mode run.
+
+Both images build: thaarei-dms-i07:verification and
+thaarei-dms-processing-i07:verification. Network-disabled container checks verify non-root
+locked Celery/AMQP/native dependencies and packaged private contracts, the coordinator
+module/bootstrap and owned migrations, private 401 gating and absence of work routes on
+the public application. The combined optional Compose reference validates without loading
+installed secrets. Source-based broker/worker integration is distinct from this offline
+image packaging verification; no complete installed target rollout is claimed.
+
+Handoff: I04–I07 remain uncommitted on feat/dms-i01-standalone-foundation. All runtime
+fixtures were disposable and cleaned up; the existing installation, volumes, stored data
+and credentials were unchanged. I08 owns immutable candidate selection, streamed security
+evidence, native assessment and publication. Production task handlers explicitly return
+UNSUPPORTED until their owning implementation exists, and effective formats/profiles
+remain empty. No arbitrary job creation, public work endpoint, automatic redrive, object
+inventory/purge or security-pass substitute was introduced. The work runbook documents
+explicit role/broker provisioning, preserved project/volume bindings and bounded inspection.
+
+DMS-I06 — **Completed** (owner: Codex, 2026-11-05). Implemented upload and batch
+lifecycle on feat/dms-i01-standalone-foundation while preserving uncommitted I04/I05.
+Scope: guarded begin/status/complete/refresh/cancel, bounded manifest-only batches,
+transactional request receipts and race/expiry handling, exact single-PUT capabilities.
+Processing dispatch/security/publication remain later increments. Existing installation
+data and credentials stay unchanged; migrations/tests use disposable fixtures.
+Implemented: upload/session/batch/receipt persistence and constrained RLS, guarded lifecycle
+routes, stable item binding, current-state retries/refresh, exact bounded PUT issuance,
+completion intent with atomic audit/outbox, per-stage batch status/cursors, and fresh private
+upload/batch inspection. Added the optional API upload-signer network overlay and lifecycle
+runbook. Effective installed formats remain empty; trusted verification/publication and
+recurring reconciliation stay with their owning later increments.
+Owning migrations 0010–0012 enforce one session per batch item, owner/composite integrity,
+immutable keys/descriptors/receipts and separate coordinator/operator privileges. Issuance
+holds the admission row through signing/max-expiry recording, verifies RESERVED state and
+orders refresh's policy fence before its session lock. This prevents new capabilities after
+trusted accounting settlement/release and avoids reversing admission's lock order.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration all pass. Full integration passed 251 PostgreSQL cases across 16
+files, 28 Fastify cases and seven pinned-SeaweedFS storage cases with real Chromium,
+Node and Python transfers. The 32 owning access/admission/lifecycle cases include 14 new
+I06 cases: real signed PUT/repeated 412, stable replay and changed hashes, signing rollback,
+current policy/scopes/ownership, cancellation/completion/expiry, reservation settlement,
+allocation-free manifests, item binding and isolated admission pressure, batch close/cancel
+races, pagination isolation, metadata/control envelope limits, application/tenant batch
+ceilings, receipt contention/expiry and runtime immutability. Fresh private upload/batch
+inspection and repeated fresh migrations/bootstrap pass. Generated public/private
+contracts, examples/Python parity, role boundaries and git diff --check pass. Three
+standalone-only database cases remain skipped in the default combined-mode run; no new
+production-image or target-deployment verification is claimed.
+
+Handoff: I04–I06 remain uncommitted on this branch. All runtime fixtures were disposable;
+the existing installation, stored data and credentials were unchanged. I07 owns recurring
+discovery, authoritative verification/work and coordination; security/publication remain
+later increments. I06 records completion intent, not measured-byte verification or security
+approval, and the production format/profile catalog remains empty. New-version HTTP
+admission stays gated by I11. The lifecycle runbook covers explicit operator setup and
+safe independent/backend/browser transfers; no scheduler or processor starts automatically.
+
+DMS-I05 — **Completed** (owner: Codex, 2026-11-05). Implemented document registry
+and admission while preserving uncommitted I04 on feat/dms-i01-standalone-foundation.
+Scope: owning persistence for stable documents/candidates, transactional bounded admission
+and usage, versioned policy/capability projection, authorized registry/audit reads and
+private policy/capacity administration. Upload lifecycle HTTP/signing stays I06; no future
+processor/format is advertised, and no existing installation is migrated or deployed.
+Implemented: forced-RLS registry/admission/policy/usage persistence (0008–0009), internal
+transactional upload-begin allocation, version/revision guards, owner-only registry/audit
+reads, effective policy projection, fresh operator policy/inspection commands and private
+capacity observation/measured accounting kernels. Generated public/private contracts and
+the admission runbook describe the I06 boundary. The implementation-owned upload/format
+catalog remains empty.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration all pass. Full integration passed 28 Fastify cases, 237 PostgreSQL
+cases across 16 files (including all 18 owning access/admission cases), and seven real
+pinned-SeaweedFS storage cases with Chromium/Node/Python transfers. Three explicit
+standalone-only database cases are skipped by the default combined-mode run; no I05
+production-image or target-deployment verification is claimed. Admission coverage verifies
+concurrent capacity contention, rollback after allocation, stable replay/version identity,
+revision conflict, application isolation, audit attribution, unavailable-version protection,
+stale/failed observations including lock-wait expiry, shared filesystem pressure, metadata/
+control envelope bounds, measured usage/work release, backlog limits and current private
+operator authority. Generated contracts, Python parity and runtime privilege isolation pass.
+git diff --check passes. All runtime fixtures are disposable; the existing installation,
+credentials and stored data were not changed.
+
+Handoff: I04 and I05 changes remain uncommitted. I06 owns public upload/batch routes,
+transfer issuance and storage-verified completion wiring; recurring capacity observation,
+work coordination, security assessment and publication remain their planned increments.
+The runbook documents explicit policy/capacity setup; no policy or scheduler is created
+automatically, and configuration alone cannot advertise installed document processing.
+
+DMS-I04 — **Completed** (owner: Codex, 2026-11-05). Implemented the planned
+storage boundary on feat/dms-i01-standalone-foundation after committed I01–I03.
+Scope: role-separated S3 adapter, restricted signed transfer ingress, immutable snapshots,
+exact-key cleanup and pinned SeaweedFS integration verified with browser/Node/Python.
+No document admission, parser credentials, live storage changes or deployment.
+Implemented explicit path-style SigV4 clients with separate bucket/role policies, private
+identity-file/bucket/CORS provisioning, structured UUID keys, source-conditional immutable
+snapshots, exact-key cleanup and safe ambiguous-copy cleanup references. Added a separate
+credential-free Nest/Fastify streaming ingress with signed length/type/create-only checks,
+extension rejection, exact CORS, bounded transfer/rate budgets and no capability logging.
+The new optional profile binds internal SeaweedFS interfaces to loopback and exposes only
+private authenticated S3 to transfer ingress. Missing/unusable backend authentication
+fails closed per operation, including after restart.
+
+Final verification (2026-11-05): pnpm check/build/test/test:integration pass. Full
+integration includes 28 Fastify cases, 230 PostgreSQL cases across 16 files and seven
+real pinned-SeaweedFS storage cases. Storage verification covers signed length/type,
+concurrent atomic create-only PUT, source/destination copy preconditions, HEAD, range,
+read-after-write, expiry, staging-independent snapshots, exact deletion, artifacts,
+chunked rejection, unsigned header/query/vendor injection, anonymous access, restricted
+IAM/enumeration, loopback-only non-S3 interfaces and authentication-loss fail-closed
+behavior. Real Chromium Blob upload/GET, Node transfers and independent Python upload/
+range-download agree. All disposable fixtures cleaned up; no installed data was used.
+
+Both final images build: thaarei-dms-storage-i04:verification and
+thaarei-dms-i04:verification. The packaged DMS image resolves the S3 adapter/provisioning
+SDK imports and its actual Nest/Fastify transfer entrypoint starts in network isolation
+and denies unsigned requests with no-store headers. Core storage byte-transfer checks
+use the same source ingress and wrapper against the real pinned provider; a packaged
+browser/full customer TLS deployment is not claimed. Deployment/schema/boundary/Python
+checks and git diff --check pass. SDK versions/integrities/licenses and configuration,
+limits, topology and setup are recorded in architecture and docs/runbooks/dms-storage.md.
+
+Changes remain uncommitted on feat/dms-i01-standalone-foundation. No live installation,
+credentials, existing containers, data, migration, commit, push or deployment changed.
+Consumer capability discovery still advertises only implemented application operations;
+document admission, signing issuance/resource policy and publication orchestration extend
+these internal storage primitives in I05–I06. Customer DNS/TLS and actual rollout remain
+operator deployment work.
+TCP-PR-01 — **In progress** (owner: Codex control-plane planning thread,
+2026-11-06). Owner authorized committing the control-plane planning documentation only,
+opening a PR to development, completing its integration and creating a fresh implementation
+branch from updated development. No implementation is authorized. Scope includes the linked
+specification, delivery plan, review record, architecture proposal and documentation/progress
+references needed to keep the planning package self-contained. Fetched origin/development;
+this branch has the same ebd9fdb base, with only this thread's documentation changes.
+Local verification: 149 local references/headings across seven planning/reference documents,
+15 requirement mappings, eight delivery stages, seven review dispositions, final newlines
+and git diff --check pass. No application build/runtime tests ran for this docs-only change;
+the PR's existing full CI must complete before merge. The eight documentation paths were
+committed and pushed; [PR #12](https://github.com/nishanthturnstile/turnstile-360/pull/12)
+is open against development. The connector returned HTTP 403 on PR creation, so the
+already-authenticated GitHub CLI created it; T3 linking succeeded. CI/review readiness is
+pending. The initial d224a2f CI checks stopped at Biome formatting in five changed
+Markdown files; no application failure was reached. Applied installed Biome 2.6.4 to those
+files and confirmed the correction preserves their text apart from whitespace/table rules.
+Local full Biome CI and refreshed documentation-reference checks pass. Next: push the
+format-only correction and follow the new full CI/review checks before merging the PR.
+Handoff while CI runs: after merge, fetch updated development, then create
+feat/thaarei-control-plane-implementation from freshly fetched development and stop before
+implementation. The plan's remaining product defaults are not adopted by this docs merge.
+
+TCP-REVIEW-01 — **Completed** (planning review and corrections; owner: Codex
+control-plane planning thread, 2026-11-06). Owner requested review against separate
+central/customer Linux hosts and an independent GPT Astra reviewer. One read-only delegate
+ran as gpt-6-astra and completed with three high and four medium planning findings. Parent
+validated and corrected all seven; no second independent recheck or runtime validation
+is claimed. The [review record](docs/thaarei/control-plane-review.md) maps each finding to
+its correction and implementing acceptance gate.
+
+Updated architecture, proposed specification, detailed delivery plan, overview and docs
+index. The two-host inventory now explicitly includes central Next.js/PostgreSQL and the
+customer Turnstile web/API, DMS/local auth, separately owned auth/DMS/Turnstile persistence,
+and selected transfer/coordinator/storage/broker/worker/scanner/parser dependencies.
+Customer combined-origin login and private identity-service audience/client/scopes/token/
+invitation/account transport are mapped to actual configuration. Standalone DMS screen
+policy alone is not Turnstile auth compatibility. Defined separate central configuration,
+explicit Compose delivery, durable protected reporter secret files, public-key trust,
+read-only-container recovery, qualified egress and startup/approval readiness separation.
+
+Corrected signed decision state/revision/sequence and durable-denial semantics, candidate
+pairing recovery after receipt expiry, generation-fenced concurrent/crashed rotation,
+prior-activation read eligibility versus never-approved/invalid-proof/clock states, and
+supported restore quarantine. Central recovery requires independent decision evidence or
+fresh approvals; cached rollback records cannot provide missing evidence. Signing-key
+compromise requires an independently authenticated trust update, including operator delivery
+for disconnected installations. Arbitrary root/VM rollback and automatic offline emergency
+revocation are explicitly outside the guarantee. Seven-day approval/daily renewal remains
+selected; read/recovery exceptions and other documented product defaults remain proposed.
+
+Verification on 2026-11-06: source/example/Compose review, including read-only inspection of
+the separate DMS checkout, covered actual auth validators, private identity transport,
+Nginx/Vite routing and the I18 distribution/network declarations without reading private
+environments. Parent final checks passed 150 local links/headings across seven documents
+and this handoff; 15 requirements map to eight increments and all seven review findings
+have correction/gate references. Document whitespace/final-newline checks and git diff
+--check pass. No pnpm check/build/test/test:integration, container or target-host checks
+ran for these documentation-only changes; no implemented/runtime security claim is made.
+
+Handoff: proceed with TCP-I01 adoption of remaining product defaults and final isolated
+runtime configuration, then the documented I02–08 sequence. No active review blocker
+remains. Implementation, target qualification and customer cutover remain future work.
+All work stays on feat/thaarei-control-plane-plan; no application code, schemas, runtime
+configuration, services, credentials or customer data changed; no commit/push/PR/deployment.
+The running standalone DMS checkout and other agents' entries remain untouched.
+
+TCP-PLAN-02 — **Completed** (detailed planning; owner: Codex control-plane planning
+thread, 2026-11-06). Owner clarified a separate central application with an integrated
+backend, approval before customer Turnstile/DMS operation, and health/usage reporting.
+The owner then selected seven-day signed approval with daily renewal; this policy is
+agreed but unimplemented. Read/recovery access after expiry/suspension, other defaults
+and staff-role choices remain proposals for review.
+
+Replaced the earlier registry-only overview and added the proposed
+[specification](docs/thaarei/control-plane-specification.md) with TCP-R01–15 and
+[detailed implementation plan](docs/thaarei/control-plane-implementation-plan.md) with
+TCP-I01–08. The architecture's explicitly proposed central-control section owns topology,
+identity/authorization matrix, pairing/credential lifecycle, signed-decision validation,
+outage/revocation policy, product-owned reporting sources and versioned machine protocol.
+Updated the documentation index and DMS plan cross-reference without adopting a new guard
+or rewriting accepted DMS requirements. The earlier TCP-PLAN-01 scope is superseded.
+
+Recommended topology is one Next.js app with its own PostgreSQL and staff identity, plus
+separate outbound Turnstile and DMS reporters using distinct product credentials. Local
+customer sessions, DMS OAuth/enrollment, resource permissions and single-tenant boundaries
+remain separate. No central per-request lookup, customer inbound polling, remote shell,
+document/user-content collection, billing or automatic deployment is introduced. Product
+approval and reporting freshness/health have distinct state; offline suspension cannot be
+instant and reported usage is not tamper-proof billing evidence. Initial setup manifests,
+activation acknowledgement, epoch/revision/retry fencing, two-customer isolation,
+backup/restore, signing recovery and existing-installation cutover have explicit gates.
+
+Verification on 2026-11-06: read-only inspection covered this branch's architecture,
+enrollment services/operator, contracts/plans, workspace standards/toolchain and the
+separate DMS checkout's current I18 handoff/enrollment design. Consulted official Next.js
+Route Handler/auth/self-hosting documentation, Better Auth v1.7.14 adapter/session sources
+and RFC 8725. Local reference/heading checks and requirement-to-increment coverage pass;
+manual scope/policy review and git diff --check pass. An inline architecture visual was
+previewed at desktop/mobile widths. No pnpm check/build/test/test:integration or container/
+target qualification ran for these documentation-only edits; no implementation behavior
+is claimed.
+
+Handoff: continue with TCP-I01 to adopt the remaining defaults, client metrics/privacy,
+connectivity and isolated fixed-port topology, then I02–04 central app/protocol. Integrate
+DMS only after coordination with its owning I18 baseline, followed by Turnstile and full
+release qualification. Existing installs need explicit registration/approval before opening
+enforcement. The branch remains feat/thaarei-control-plane-plan, with no runtime/schema/
+credential/customer-data changes, commit, push, PR or deployment. The running DMS branch
+and its uncommitted work were not changed.
+
+TCP-PLAN-01 — **Completed** (planning assessment; owner: Codex control-plane
+planning thread, 2026-11-06). Reviewed the DMS delivery plan, accepted architecture,
+workspace plan/standards, toolchain pins and documentation index. The existing DMS plan
+explicitly excludes a separate management portal. Drafted the proposed
+[Thaarei employee control-plane plan](docs/thaarei/control-plane-plan.md) with TCP-R01–10,
+TCP-I01–05, acceptance gates and open decisions; added it to docs/README.md.
+
+Work is isolated on feat/thaarei-control-plane-plan in its own worktree, based on fetched
+origin/development ebd9fdb. The first proposed usable slice is employee access and an
+audited client registry; installation inventory follows. The proposal distinguishes client
+records from DMS/OAuth registrations, preserves one customer tenant per installation and
+standalone runtime independence, and excludes remote provisioning and unspecified business
+activities. Proposed architecture remains unaccepted; architecture.md was not changed.
+Local runtime topology must be settled before service work because reserved host ports
+23600–23608 are already assigned. Later DMS implementation in the separate checkout was
+not copied into this branch or reassessed; preserve its newer handoffs when integrating.
+
+Verification: local link/heading validation passed for all 27 references in the new plan
+and documentation index; 10 unique requirement rows and five delivery increments checked.
+Manual scope/boundary review and git diff --check passed. Documentation-only work: pnpm
+check/build/test/test:integration and container/runtime qualification were not run; no
+runtime behavior or deployed acceptance is claimed. No code, schemas, credentials,
+services or customer data changed; no commit/push/PR/deployment performed.
+
+Handoff: owner reviews first-release activities, staff identity/MFA/recovery and client
+visibility, required client fields/retention, and repository/hosting/test topology. Next
+planned step is TCP-I01 scope/design adoption, followed by TCP-I02–03. Implementation has
+not started; no DMS dependency blocks drafting or the proposed registry work.
+
+DMS-I03-REVIEW — **Completed** (owner: Codex, 2026-11-05). Owner requested
+Open Code Review plugin review of I03, fixes and commit. Used the installed OCR
+host-delegation skill for deterministic selection/rules and a separate read-only reviewer.
+All 93 staged I01–I03 paths were reviewed (73 OCR-selected plus 20 supplemental exclusions),
+with zero skips; I03 was the primary scope. No critical/high finding or authorization/RLS
+bypass was found. Both reported findings are corrected: the medium formatted-timestamp
+alias sort now orders on stored timestamp/ID and has a real PostgreSQL EXPLAIN regression
+against the production page SQL; the low fresh-setup omission now explains optional private
+role credentials, distinct passwords and NOLOGIN behavior. Reviewer inspected both fixes.
+
+Post-fix pnpm check/build/test/test:integration pass; integration ran uncached with 28
+Fastify and 230 PostgreSQL cases across 16 database files. All three generated contract
+drift checks and git diff checks pass. No post-fix image rebuild is claimed; I03's earlier
+standalone image evidence remains recorded below. OCR artifacts:
+/tmp/dms-i03-ocr-{preview,rules,review}.json and pagination-explain.txt. The review report
+accounts for every path and records both finding dispositions. The owner-authorized local
+commit includes the staged I01/I02 dependencies, I03 and these corrections on
+feat/dms-i01-standalone-foundation. No live installation/data/credentials changes,
+deployment, push or PR. Future document audit and dispatch remain with their owning features.
+
+DMS-I03 — **Completed** (owner: Codex, 2026-11-05). Implemented owning
+persistence/access/audit on feat/dms-i01-standalone-foundation while preserving I01/I02
+and the existing installation. Scope: transaction-scoped principal/tenant context on
+the owning pool, live resource policy, immutable bounded application audit and atomic
+outbox intent, narrowly privileged private operator reads with fresh identity/current
+grants, generated public/private contracts and real PostgreSQL boundary verification.
+Document-specific records/routes extend this boundary with their owning feature; no
+placeholder document schema, live installation migration or deployment is authorized.
+Implemented owning machine transactions with live locked registration/scope checks, local
+principal context reset and failed-rollback pool eviction; migrated enrollment/capabilities
+to this boundary. Added forced-RLS bounded application audit/outbox with composite
+references and atomic enrollment/replay behavior, owner-scoped GET /v1/audit, signed keyset
+cursors, a distinct private operator read context and dedicated least-privilege operator/
+coordinator roles. Private reads authenticate every invocation, recheck installation/current
+grant and record attributed inspection evidence; supported grant/revoke uses the same
+command fence. Generated public and separate private command contracts, documented the
+explicit role-provision-before-migration upgrade, and preserved I01/I02 behavior.
+
+Final verification (2026-11-05): pnpm check, pnpm build, pnpm test and
+pnpm test:integration pass. Integration ran uncached: 28 Fastify cases and 230 PostgreSQL
+cases across 16 files. Real database regressions cover role escalation/auth separation,
+forced RLS, cross-tenant/application references, pooled context after commit/rollback,
+owner isolation, live scopes/operator grants, supported revocation/recovery, signed cursor
+binding/timestamp tie-breakers, no fictitious state-change replay and failed-outbox atomic
+rollback. The freshly built thaarei-dms-i03:verification image passes all ten isolated
+standalone cases, including independent consumers and source/packaged Chromium explorer.
+Generated consumer, legacy auth and private operator contracts pass drift checks;
+git diff --check passes. Fixture cleanup preserves independent first-bootstrap testing.
+The interrupted run's two disposable fixtures were removed, and final fixtures cleaned up.
+
+No existing installation data, credentials, live containers or deployed release were
+changed. At the implementation handoff these changes were uncommitted and no I03 review had
+been claimed; the subsequent authorized OCR review/fixes and local commit are recorded
+above. The feature branch contains freshly fetched development and preserves I01/I02. Before target rollout, provision the new private roles and run
+the owned DMS migrations using the audit runbook. Document-specific audit/resource-grant
+extensions and actual outbox dispatch remain with their later owning features.
+
+DMS-I02-REVIEW — **Completed** (owner: Codex, 2026-11-04). Owner requested an
+OpenCode DeepSeek V4.1 Flash review with high thinking effort and fixes for findings.
+The read-only delegate ran opencode-go/deepseek-v4.1-flash with variant high and found
+one confirmed P2 stock-explorer alias issue, one P3 generated-description defect, and an
+unverified operational concern about ambient proxies. No authority bypass was reported.
+
+Fixed the stock entry/config surface in the docs scope after its existing access check:
+index/directory aliases redirect to /docs/, only explicit schema/static assets are served,
+and stock top-level initializer/other wildcard files are rejected. Required local assets
+and packaged third-party notices remain available. Added authenticated/unauthenticated
+alias/config regressions and real Chromium checks that index.html reaches the hardened
+UI; image checks also probe canonicalization and stock-initializer rejection.
+Corrected public identity, capability and enrollment create/replay descriptions in the
+shared OpenAPI builder, regenerated the artifact and added semantic distinction checks.
+Made Python and curl examples explicitly direct-only (ProxyHandler({}), noproxy), updated
+the runbook/architecture and verified Python ignores unusable ambient proxy settings with
+an isolated HTTP probe. Existing I01 work and owner installation remain preserved.
+
+Post-fix verification: pnpm check/build/test/test:integration all pass with normal Turbo
+caches. Integration runs uncached: 28 Fastify tests and 225 PostgreSQL cases across 16
+files. The freshly built thaarei-dms-i02-review:verification image passes the reviewer's
+bare-Fastify reproducer; the dedicated standalone/image lane passes all ten cases,
+including independent Python/curl, source/packaged real Chromium, alias handling,
+read-only enrollment, cleared bearer state, expired-token denial and no external loads.
+Biome and git diff --check pass. Parent verified the corrections; no second delegated
+review is claimed. No remaining actionable finding, live data/credential change,
+installation migration, deployment, commit or PR. Changes remain uncommitted on
+feat/dms-i01-standalone-foundation. Customer ingress/TLS/SMTP acceptance stays separate.
+
+DMS-I02 — **Completed** (owner: Codex, 2026-11-04). Owner authorized contract growth
+and manual testing. Extended feat/dms-i01-standalone-foundation, preserving I01's
+uncommitted implementation and the existing installation.
+
+Delivered explicit consumer/private package exports with a compatibility root barrel;
+the public client uses the consumer entrypoint under dependency-rule enforcement.
+Generated docs/api/dms.openapi.json from shared Zod schemas and the implemented
+route/security catalog; retained and drift-checked the legacy dms-auth artifact. Root
+checks cover finite errors/status families, request/header examples, local references,
+unique operations and shared positive/negative fixtures in Zod, Ajv 2020 and Python.
+Runtime checks observe every physical versioned Fastify route (including HEAD) and
+compare Nest handler/guard metadata with the catalog. Responses retain authoritative
+request IDs/no-store caching and now provide bounded 503 retry guidance; revision/202
+conventions are reserved without introducing future feature endpoints or schemas.
+
+The protected bundled explorer serves /docs and /docs/openapi.json on the DMS listener,
+with protected JSON/YAML/configuration/assets. It is off by default; enabled access uses
+a separate generated key, loopback/controlled binding policy and production HTTPS.
+The browser offers only ephemeral machine bearer input, clears it on reload and disables
+enrollment execution/key input. It loads local assets only, with restricted CSP and no
+validator/CDN/analytics. Independent stdlib Python/curl recipes obtain a token, enroll and
+read capabilities without workspace imports. Architecture, environment examples and the
+manual operator-to-token runbook are updated. Exact dependencies/lockfiles and packaged
+third-party notices retain the Swagger asset licenses; Scarf's install script is disabled.
+
+Verification (2026-11-04): pnpm check/build/test/test:integration all pass, retaining
+normal Turbo caches. Integration runs uncached: 27 Fastify tests plus 225 PostgreSQL
+cases across 16 database files. The dedicated standalone lane with the freshly rebuilt
+thaarei-dms-i02:verification image passes all ten cases, including independent Python/curl,
+real Chromium source/packaged explorer, token acquisition outside the browser, capability
+read, missing/wrong/genuinely expired JWT denial, cleared auth after reload, disabled
+enrollment execution and no external requests/browser storage. Docker Desktop carries
+image browser requests over private fixture IPC to real container HTTP; authorization
+and responses are not mocked and no host service port is published. Manual image
+inventory verifies nonroot execution, local assets/LICENSE/NOTICE/bundled dependency
+notices and no Turnstile package/schema. All 180 checked relative documentation targets
+resolve; Biome and git diff --check pass. Browser verification corrected an upstream
+query/relative-URL issue and fixture selectors/transport; initial failing attempts are
+not represented as passing. The final complete checks and image qualification pass.
+
+No I02 database migration, live credential/data modification, deployment, commit or PR
+was performed. Documentation stays disabled on the preserved owner installation. Actual
+customer ingress/TLS/access-control/SMTP rollout remains separate. No I02 blocker or
+remaining implementation work; next planned package is DMS-I03, pending owner instruction.
+Changes remain uncommitted on the current branch for review.
+
+DMS-I01 — **Completed** (owner: Codex, 2026-11-04). Owner authorized standalone
+foundation implementation and subsequent DeepSeek V4.1 Flash high-effort review.
+Implemented on feat/dms-i01-standalone-foundation from fetched origin/development.
+
+Delivered explicit standalone configuration, exact per-client login/recovery/logout
+policies, persisted browser-bound authorization continuation, auth/DMS-only provisioning
+and foundation Compose/environment/runbook. Private operator bootstrap, assignment,
+revocation and recovery use fresh verified identity, separate maintenance authority,
+explicit tenant-bound grants, forced RLS migration 0005 and attributed atomic audit.
+No document capability, Swagger UI, Turnstile schema or new runtime dependency is added.
+
+Post-review verification: pnpm check/build/test/test:integration all pass with normal
+Turbo caches retained; integration runs uncached and passes 21 Fastify plus 225 PostgreSQL
+tests across 16 database files. The separate standalone lane passes all eight cases,
+including real Chromium, two independent machine enrollments/capability reads, recovery,
+operator denial/recovery, unchanged audit on rejected commands and bounded continuation
+cleanup preserving active/provider records. DMS_STANDALONE_IMAGE verification proves the
+refreshed production image becomes ready and serves direct discovery with auth/DMS-only
+schemas/runtime credentials. Separate manual image inventory confirms nonroot execution,
+private tools and auth/DMS migrations without Turnstile packages/schema/source. An
+unprovisioned image returns liveness 200/readiness 503. Installed Docker Compose validates
+the standalone profile; relative documentation targets and git diff --check pass.
+An initial overlapping local build/compiled-fixture run failed; serial reruns pass.
+
+DeepSeek V4.1 Flash (opencode-go/deepseek-v4.1-flash, variant high) completed the requested
+read-only review. Fixed both P2 findings: operator commands now validate installation
+read-only, installation bootstrap audits only real creation, and interaction capture
+reclaims at most 100 expired continuation rows with SKIP LOCKED. Addressed both P3
+findings with supported new-client destination migration, current combined/standalone
+auth guidance and concrete private-network/environment-file commands. Aligned subject
+input with the 128-character audit bound. Existing authority SDK tests already cover the
+reviewer's suggested combined login-page regression; no duplicate test was added.
+The parent verified the corrections; no second delegated review is claimed.
+
+No existing installation migration, data/credential reset, deployment, commit or PR was
+performed. Customer Dokploy/TLS/SMTP acceptance remains separate from isolated local
+verification. No I01 blocker or remaining implementation work. Subsequent owner-authorized
+I02 work is tracked above. Changes remain uncommitted on the requested branch for review.
 
 DOC-ORG-01 — **Completed** (owner: Codex, 2026-11-04).
 Owner requested organizing documentation before DMS implementation and updating references.
@@ -3211,7 +7975,7 @@ DNS/TLS verification remain pending; local evidence does not establish deployed 
 | WSP-004       | 2026-10-31 | Python package created with uv; processing folders, Ruff, mypy, pytest, and packaging configured                                                                                                                                                              | [Processing project](apps/dms-processing/README.md), [Python configuration](apps/dms-processing/pyproject.toml)                                                                                                                                                                                                                                                                  |
 | WSP-005       | 2026-10-31 | DMS/Turnstile contracts and internal DMS client package boundaries established                                                                                                                                                                                | [DMS contracts](packages/dms-contracts/README.md), [DMS client](packages/dms-client/README.md), [Turnstile contracts](packages/turnstile-contracts/README.md)                                                                                                                                                                                                                    |
 | WSP-006       | 2026-10-31 | Biome, TypeScript 6.0.3 strict checks, Nest decorator metadata support, and dependency rules configured and validated                                                                                                                                         | [Tooling](tooling/README.md), [standards](docs/standards/workspace.md)                                                                                                                                                                                                                                                                                                           |
-| WSP-007       | 2026-10-31 | Dockerfiles, local infrastructure Compose, Dokploy application Compose, Nginx frontend serving, and CI workflow added                                                                                                                                         | [Deployment runbook](docs/runbooks/dokploy.md), [workflow](.github/workflows/workspace.yml); image builds/deployment remain unverified                                                                                                                                                                                                                                           |
+| WSP-007       | 2026-10-31 | Dockerfiles, local infrastructure Compose, Dokploy application Compose, Nginx frontend serving, and CI workflow added                                                                                                                                         | [Deployment runbook](docs/deployment/customer_deployment_guide.md#ingress), [workflow](.github/workflows/workspace.yml); image builds/deployment remain unverified                                                                                                                                                                                                               |
 | WSP-008       | 2026-10-31 | Application-specific identities replaced generated demo responses; proprietary Thaarei ownership recorded                                                                                                                                                     | [License](LICENSE), private package metadata, Python wheel license verified                                                                                                                                                                                                                                                                                                      |
 | ARC-001       | 2026-10-31 | Future web/mobile clients share the Turnstile backend; authoritative business logic stays server-side                                                                                                                                                         | [Client architecture](architecture.md#turnstile-application-architecture); no mobile project added                                                                                                                                                                                                                                                                               |
 | ARC-002       | 2026-10-31 | Codex clarified one customer tenant per installation with multiple independent applications; separate installations per customer, shared Turnstile web/mobile backend registration, no SaaS tenant provisioning                                               | [Customer deployment model](architecture.md#customer-deployment-and-application-model), blueprint v1.6, requirements v1.3 (FR-01.01/03/06, FR-06.06), DMS-001 bootstrap acceptance, README/runbook/agent rules; design only                                                                                                                                                      |
@@ -3749,7 +8513,7 @@ These are recorded follow-ups, not active tasks or additional release commitment
 
 | ID         | Status      | Scope                                                                                    | Next step when authorized                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ---------- | ----------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OPS-001    | Planned     | Remaining infrastructure/container validation                                            | All four application images and isolated startup checks pass. Verify broker/storage behavior, production stateful/processing services, persistence and actual Linux-container canonical issuer DNS/TLS; the Docker Desktop-to-WSL fixture probe was unavailable.                                                                                                                                                                                                                                                              |
+| OPS-001    | Planned     | Remaining infrastructure/container validation                                            | I18 now qualifies the complete standalone images, broker/storage/processing persistence and real canonical container DNS/TLS in isolated Linux containers. I19 coherent backup/recovery/disposal is locally qualified; target Linux/Dokploy ingress, independent off-host survival and hardware acceptance remain I20; older AUTH-07 unavailable probes are historical.                                                                                                                                                       |
 | OPS-002    | Planned     | Dokploy deployment verification                                                          | Deploy the implemented services to the intended Linux environment and verify domains, TLS, API routing, and health checks.                                                                                                                                                                                                                                                                                                                                                                                                    |
 | OPS-003    | In progress | Stable host/WSL time for reliable authentication verification                            | UM-VERIFY-02 now passes the 180-second preflight and 573-second runtime observation with no backward intervals/steps above 5 ms, plus complete integration and four browser suites. Prior enrollment failure did not recur; cause is not assigned. Windows latest resync still reports stale time data (error 2) despite leap 0/stratum 5: follow up source freshness and recheck time before cutover/after resume. No additional host setting, kernel clocksource change, WSL restart or target cutover was performed.       |
 | UM-REL-001 | Planned     | Coordinated user-management installation cutover and target acceptance                   | Private bundle and complete UM-VERIFY-02 local suites now pass, including measured clock stability. Before cutover, recheck target time/source freshness and obtain separate target authorization; then follow the user-management runbook: coherent backup/rehearsal, stopped incompatible processes, credential retirement, owning migrations/import, distinct service provisioning, real first-administrator handover, exact-image startup/opening and target verification. No existing-installation cutover has occurred. |
@@ -3760,10 +8524,11 @@ These are recorded follow-ups, not active tasks or additional release commitment
 | MOB-001    | Deferred    | Expo/React Native application                                                            | Add the mobile client only when explicitly requested; preserve the shared backend and platform-independent contracts now.                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 Authentication contracts/OpenAPI, owned migrations, the BFF and machine enrollment are
-implemented, including the typed cross-service capability request. Remaining feature contracts,
-coordinator/publisher/worker execution, scanning, extraction, search, and document workflows
-remain pending their respective DMS requirements. Empty modules and folders do not count
-as implemented capabilities.
+implemented, including the typed cross-service capability request. DMS-I01–I19 now implement
+and locally qualify document workflows, coordinator/publisher/private execution, scanning,
+extraction/OCR/optional structure, results, discovery and the standalone distribution.
+I19 coherent backup/recovery/disposal is locally qualified; customer release and target off-host/hardware acceptance remain I20.
+Empty modules and folders do not count as implemented capabilities.
 
 ## Reference documents
 
@@ -3775,5 +8540,5 @@ as implemented capabilities.
 - [Workspace standards](docs/standards/workspace.md)
 - [DMS product blueprint](docs/dms/headless_dms_product_blueprint_v1.md)
 - [Sequenced DMS functionality requirements](docs/dms/headless_dms_functionality_requirements_v1.md)
-- [Dokploy runbook](docs/runbooks/dokploy.md)
+- [Dokploy runbook](docs/deployment/customer_deployment_guide.md#ingress)
 - [Development commands](README.md#start-locally)

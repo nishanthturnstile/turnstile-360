@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import {
   CONFIGURATION_LIMITS,
+  deploymentStatusSchema,
   onboardingJsonSchemas,
   onboardingSchemas,
   PEOPLE_PERMISSIONS,
@@ -438,6 +439,30 @@ const spec = {
       ...schemas,
       AuthError: auth.components.schemas.AuthError,
       AccessContextChanged: auth.components.schemas.AccessContextChanged,
+    },
+  },
+};
+spec.paths['/api/deployment/status'] = {
+  get: {
+    operationId: 'getTurnstileDeploymentStatus',
+    summary: 'Read safe installation activation status',
+    description:
+      'Requires a current customer session and turnstile:access. Available before workspace or deployment approval. Returns derived state only, with private/no-store caching; no registry binding, signed token, key, user grant mutation or central network call. Retry re-reads the owning verified decision; it does not pair or approve the product.',
+    security: security(false),
+    responses: {
+      200: {
+        description: 'Derived local access and activation/recovery state.',
+        headers: { 'Cache-Control': { schema: { type: 'string', const: 'private, no-store' } } },
+        content: {
+          'application/json': {
+            schema: deploymentStatusSchema.toJSONSchema(),
+            example: { access: 'closed', state: 'unpaired' },
+          },
+        },
+      },
+      401: { description: 'Current local session required.' },
+      403: { description: 'Current local product permission required.' },
+      503: { description: 'Local identity dependency unavailable.' },
     },
   },
 };

@@ -9,7 +9,7 @@ import {
   identityServiceEmptySchema,
   identitySetupCompleteSchema,
   identitySetupExchangeSchema,
-} from '@thaarei/dms-contracts';
+} from '@thaarei/dms-contracts/private';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { z } from 'zod';
 import { IdentityServiceError, type IdentityServiceService } from './identity-service.service.js';

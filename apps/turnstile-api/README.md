@@ -44,3 +44,5 @@ new action permission. No browser credentials, actor headers or tenant selectors
 
 Local host testing uses fixed port 23602. Browser authentication uses
 http://localhost:23600. See the [reserved ports](../../architecture.md#reserved-local-ports).
+
+Deployment approval and the private reporter use the [owning runbook](../../docs/runbooks/turnstile-deployment-control.md).

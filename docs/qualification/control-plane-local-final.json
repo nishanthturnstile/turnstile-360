@@ -1,0 +1,689 @@
+{
+  "version": 1,
+  "scope": "isolated-local",
+  "startedAt": "2026-11-07T06:40:11.675Z",
+  "source": {
+    "sha256": "dd7daf4a2b3916eea836b846fb87266be176aef888ca9f4e02c3d255437644cd",
+    "files": 817,
+    "head": "95715761355774621394bbee1b8f533cc6321dd8",
+    "dirty": true,
+    "scope": "production directories and workspace configuration; packaging helpers recorded separately"
+  },
+  "images": {
+    "central": {
+      "id": "sha256:f0a7ccaa5934f02cd80de9e6355af52da0a392ed2958c47003af647cbc436711",
+      "tag": "thaarei-tcp-i08-central:local",
+      "source": "dd7daf4a2b3916eea836b846fb87266be176aef888ca9f4e02c3d255437644cd",
+      "os": "linux",
+      "architecture": "amd64",
+      "user": "node"
+    },
+    "dms": {
+      "id": "sha256:ce12f2263a584300ce7587488bc0758e23cfa9acebfe1e3ed9fa6d5cb6ba11ae",
+      "tag": "thaarei-tcp-i08-dms:local",
+      "source": "dd7daf4a2b3916eea836b846fb87266be176aef888ca9f4e02c3d255437644cd",
+      "os": "linux",
+      "architecture": "amd64",
+      "user": "node"
+    },
+    "turnstile": {
+      "id": "sha256:6ce504d7915f80cdf7a60a3d687c37d09c3129fb0b27f5953311feb6c91fba11",
+      "tag": "thaarei-tcp-i08-turnstile:local",
+      "source": "dd7daf4a2b3916eea836b846fb87266be176aef888ca9f4e02c3d255437644cd",
+      "os": "linux",
+      "architecture": "amd64",
+      "user": "node"
+    },
+    "web": {
+      "id": "sha256:6563cbf0f4c1b81db36ae80dfdc477ff8977295b3bd797430f5bcea0108be099",
+      "tag": "thaarei-tcp-i08-web:local",
+      "source": "dd7daf4a2b3916eea836b846fb87266be176aef888ca9f4e02c3d255437644cd",
+      "os": "linux",
+      "architecture": "amd64",
+      "user": "nginx"
+    }
+  },
+  "checks": [
+    {
+      "name": "workspace:check",
+      "status": "passed",
+      "seconds": 27
+    },
+    {
+      "name": "workspace:build",
+      "status": "passed",
+      "seconds": 0
+    },
+    {
+      "name": "workspace:test",
+      "status": "passed",
+      "seconds": 1
+    },
+    {
+      "name": "workspace:test:integration",
+      "status": "passed",
+      "seconds": 655
+    },
+    {
+      "name": "image:central:build",
+      "status": "passed",
+      "seconds": 145
+    },
+    {
+      "name": "image:dms:build",
+      "status": "passed",
+      "seconds": 159
+    },
+    {
+      "name": "image:turnstile:build",
+      "status": "passed",
+      "seconds": 58
+    },
+    {
+      "name": "image:web:build",
+      "status": "passed",
+      "seconds": 25
+    },
+    {
+      "name": "container-images:two-customers-reporters-key-recovery-restores",
+      "status": "passed",
+      "seconds": 173
+    },
+    {
+      "name": "candidate-images:browser:auth",
+      "status": "passed",
+      "seconds": 137
+    },
+    {
+      "name": "candidate-images:browser:people",
+      "status": "passed",
+      "seconds": 119
+    }
+  ],
+  "targetAcceptance": "pending",
+  "releaseQualified": false,
+  "remaining": [
+    "Actual host DNS/TLS/SMTP/time, existing-installation cutover and operator acceptance"
+  ],
+  "packagingHelpers": [
+    {
+      "path": "scripts/package-control-plane.mjs",
+      "sha256": "5a2b14bd05c123e5965a96a1a7443a6cbb02a07eb86741c4c6b261a5ad7250ef"
+    },
+    {
+      "path": "scripts/provision-auth-database.mjs",
+      "sha256": "eaf3a257d89d43982a563d1d6c555acc8f037d3b4100148de4e8c7d59760db8b"
+    }
+  ],
+  "verificationHelpers": [
+    {
+      "path": "apps/dms-api/test/api-docs.e2e-spec.ts",
+      "sha256": "1f90aeeaf38f292a97d0b4284a063e0e181d9ab79ca3fe243016c83f5b2ab290"
+    },
+    {
+      "path": "apps/dms-api/test/api-explorer-fixture.ts",
+      "sha256": "bf3d718ee42782039a1070e47e65fc3948bcdae2b36e40490e915c344dd291bd"
+    },
+    {
+      "path": "apps/dms-api/test/app.e2e-spec.ts",
+      "sha256": "cafef07171d5dd80a6572f055e7cdd2d50ea3c4cd9b7ff8a933bff91077cc6a5"
+    },
+    {
+      "path": "apps/dms-api/test/assessment-daemon-fixture.ts",
+      "sha256": "ecb83f123797e1a5772dd227bdb85f61ec2de0b88423b5c2f2fb7036c99801f7"
+    },
+    {
+      "path": "apps/dms-api/test/auth-environment.ts",
+      "sha256": "9d70eef21d84bcc44856067b246efe85b16c5d7daadaaf2bdbd26c6b7ae543ff"
+    },
+    {
+      "path": "apps/dms-api/test/auth-foundations.e2e-spec.ts",
+      "sha256": "d706002e0189dfaf1e18a5e3f2d8c3583d3e1c9c6a8864d0a710487a176b2ed5"
+    },
+    {
+      "path": "apps/dms-api/test/authority.database-spec.ts",
+      "sha256": "4d8666993874890cde2402ad01518fa8425ca24fc3ac5b06e08e516909ec830a"
+    },
+    {
+      "path": "apps/dms-api/test/bff-authority-fixture.mjs",
+      "sha256": "c27d6b9ae8c51a0b46179bacae9a9cb2459e519159e8e7b70986a9589a1489f0"
+    },
+    {
+      "path": "apps/dms-api/test/deployment.database-spec.ts",
+      "sha256": "0fa63f68cb38c92ec1812ea51b9b35695c9b13e0f38913f743355b4c785fe943"
+    },
+    {
+      "path": "apps/dms-api/test/enrollment.database-spec.ts",
+      "sha256": "e75a8bc1c6feb06735a0442e8a5ad0c4fc653228ecd880c89986da03c552538a"
+    },
+    {
+      "path": "apps/dms-api/test/identity-authority-fixture.mjs",
+      "sha256": "0f461d3ed8c849ff20ae77692c7a6b16758f550820b6aa212f3536992d0dff75"
+    },
+    {
+      "path": "apps/dms-api/test/oauth.database-spec.ts",
+      "sha256": "6c4344bf731ab5fea28d9dee24876c7d543e8960418f9f8839a0a1b72a724e8c"
+    },
+    {
+      "path": "apps/dms-api/test/packaged-explorer.mjs",
+      "sha256": "a9a0382fa10c549ea5f7beb2bbd65adcea63afa6e4e84d7d1ee72bed0841f1a4"
+    },
+    {
+      "path": "apps/dms-api/test/recovery.spec.ts",
+      "sha256": "24c44c074ba918d4d88649aa83b2d87b827c0f4578d68cebe3e0978647d8868f"
+    },
+    {
+      "path": "apps/dms-api/test/smtp-fixture.ts",
+      "sha256": "58ad488c3ed0322f5e7c4a1e8f986a387dcf812218fc05f15114096ceafd7d95"
+    },
+    {
+      "path": "apps/dms-api/test/standalone.database-spec.ts",
+      "sha256": "c189fafc12a0320277b2b8b5c1c2beba85876424a542a53a5ac24fc71724e9b9"
+    },
+    {
+      "path": "apps/dms-api/test/storage.storage-spec.ts",
+      "sha256": "b582e385ee585f9ff2e8b42aa8c4e755f4a54ebf5e1080eb90479ad792b1521f"
+    },
+    {
+      "path": "apps/dms-api/test/upload-storage-fixture.ts",
+      "sha256": "d546fb03c5b2ac0f1d4987f9e918bba78ebdf7ec361640082cce6792981e4167"
+    },
+    {
+      "path": "apps/dms-api/test/work-broker-fixture.ts",
+      "sha256": "9cdf54a89eeb5e74724d7cfbe8bfe16f7fce7c774c4a70eb8e75f6c0da2c4a10"
+    },
+    {
+      "path": "apps/dms-processing/tests/assessment_native.py",
+      "sha256": "bfc8bc555d6c201c5a843f874e336739ad272263ff0003c715c03e7b1d3dd1d4"
+    },
+    {
+      "path": "apps/dms-processing/tests/extraction_native.py",
+      "sha256": "9d9c01d0ad38bb00b58b2d77d4659aa86b7f9046a020a51f02660f64701e951e"
+    },
+    {
+      "path": "apps/dms-processing/tests/fixtures/extraction/sources.json",
+      "sha256": "1dd08d5f505916ea7cbe59a62ad81b7f3900f645a669d11ec6b4e9dfbe8e2c80"
+    },
+    {
+      "path": "apps/dms-processing/tests/fixtures/ocr/ground-truth.json",
+      "sha256": "5246a4f3193c1b2e097e40a3f9eff35c034e71c95ac9fe579052125191c5d773"
+    },
+    {
+      "path": "apps/dms-processing/tests/make_ocr_fixture.py",
+      "sha256": "c1c44f2a72455655ce7dfae73335703a325484d2633e5a0d0e7265ef10b8666c"
+    },
+    {
+      "path": "apps/dms-processing/tests/ocr_fixtures.py",
+      "sha256": "8ccc8d5b91d532a189e62d761ba5f9285dad9b1d92fa9096cd79e67c0b6b1424"
+    },
+    {
+      "path": "apps/dms-processing/tests/qualify_ocr.py",
+      "sha256": "0a3fefd555e757ff290b4f1a7fed12bd28357c52963b5dff86fcbfef33e5e38b"
+    },
+    {
+      "path": "apps/dms-processing/tests/test_assessment.py",
+      "sha256": "4d3c00f846257d8b6842e43c80c0c65cf1d0d269565c2ee8ff84f946f4bbbf84"
+    },
+    {
+      "path": "apps/dms-processing/tests/test_extraction.py",
+      "sha256": "49655ea389669c0a6054b7ec0473562281c8cd7d1eb6b6f81535877c03cb56ab"
+    },
+    {
+      "path": "apps/dms-processing/tests/test_ocr.py",
+      "sha256": "e68efec9b5cdc7d7788e3cd1378d00a95130e47e3e10b0e0300d41a9bd11245e"
+    },
+    {
+      "path": "apps/dms-processing/tests/test_structure.py",
+      "sha256": "24072b56126a8377a175b64aff1eed27329d5f0e2b3f00c930112ba15f8472df"
+    },
+    {
+      "path": "apps/dms-processing/tests/test_task_transport.py",
+      "sha256": "98fa9863fbf01ad9bc34054686d60d46f46faed7283fe5717ce74e9f97003f0f"
+    },
+    {
+      "path": "apps/dms-processing/tests/work_acl.py",
+      "sha256": "ecdb9cb1dc987c57dc373aa4d5e209737d99637e90b874901c1725fd096b023f"
+    },
+    {
+      "path": "apps/dms-processing/tests/work_invalid.py",
+      "sha256": "7832a43fa3c8b3450a9d4b5d899534db8ef6f01aa609b64640ba74a8e08a3b52"
+    },
+    {
+      "path": "apps/dms-processing/tests/work_publish.py",
+      "sha256": "077894390a3b14c3b686c483bf459692c4529e82e3a4a5ab27d9c1b637500e1f"
+    },
+    {
+      "path": "apps/dms-processing/tests/work_worker.py",
+      "sha256": "ceef3001ff0e01af87d90d0f49a953dcbcd7d4cdd3669a8def45226b91632a52"
+    },
+    {
+      "path": "apps/thaarei-control-plane/test/config.test.ts",
+      "sha256": "e3410496760349ae81b0786a8a050a63ea96647fb8fbdc8fb0db6fa73127c6e7"
+    },
+    {
+      "path": "apps/thaarei-control-plane/test/registry-contracts.test.ts",
+      "sha256": "bdc4a3f8c5e30a2e99ce5b25852389cdbebb34abeabfc1ae72257d6feff64e98"
+    },
+    {
+      "path": "apps/turnstile-api/test/access-boundary.e2e-spec.ts",
+      "sha256": "19f7ad867ccec7eec363f09f1f4199e464036de37ede5c97e09b19a215b9e39a"
+    },
+    {
+      "path": "apps/turnstile-api/test/access-fixture.ts",
+      "sha256": "933de8a79a99303cd9440353b019deba04c46eaa6a966b752032974c3b4bc1e1"
+    },
+    {
+      "path": "apps/turnstile-api/test/access.database-spec.ts",
+      "sha256": "bcbc526d9eebe30a75a5924678a38ab412cc0fa38b14c962b7a041b40e692b98"
+    },
+    {
+      "path": "apps/turnstile-api/test/app.e2e-spec.ts",
+      "sha256": "5fdf8c461e28188082cf8945cb1212d2c4bf414028da7757700d9963c75bb3ff"
+    },
+    {
+      "path": "apps/turnstile-api/test/auth-environment.ts",
+      "sha256": "11b1f7670cdc8ae9264f1a251ab3842ed5f9f0b235e1165a13f13a3a7e82419c"
+    },
+    {
+      "path": "apps/turnstile-api/test/auth-foundations.e2e-spec.ts",
+      "sha256": "b5ef05009d29eb3a0bf3bbf2d6addc547e296d32a0fe21504c3ba30944cf0cd7"
+    },
+    {
+      "path": "apps/turnstile-api/test/bff.database-spec.ts",
+      "sha256": "3d41f00e0ac15f9b923968955f4ba7cba5d9100dd7b2e1103eb78527f6342ce8"
+    },
+    {
+      "path": "apps/turnstile-api/test/configuration-http.e2e-spec.ts",
+      "sha256": "60f696eb304f1f4d6ed1dccaeddc7a770885a9403b5d7f01b6b92811c87d7397"
+    },
+    {
+      "path": "apps/turnstile-api/test/configuration-move.database-spec.ts",
+      "sha256": "1a20b5e922381512df3dc91bcb7847ab015567ca18cbc8bada2ff3b1599b270c"
+    },
+    {
+      "path": "apps/turnstile-api/test/configuration-upgrade.database-spec.ts",
+      "sha256": "2d6ed323861d601bc22799d3c0e8c50aebf78dbeab5905d25f2ec820eb1311bf"
+    },
+    {
+      "path": "apps/turnstile-api/test/configuration.database-spec.ts",
+      "sha256": "a92327cdab117598b127880e6773268eedec17fe9f467557e0e2be4d0d7b9a29"
+    },
+    {
+      "path": "apps/turnstile-api/test/deployment-fixture.ts",
+      "sha256": "65b0091f8158cf238337eaf4de9a843fbf220da6e87b4e456c45c36b722dc248"
+    },
+    {
+      "path": "apps/turnstile-api/test/deployment.database-spec.ts",
+      "sha256": "716aab36d194c062e6ea14a7b5ab76afa79300840db05113d29e89237c83bbed"
+    },
+    {
+      "path": "apps/turnstile-api/test/identity-service.database-spec.ts",
+      "sha256": "cb0344f65824843ab393a263601347c575a2c07d0bf75b0fe7bfa02843a6e0ee"
+    },
+    {
+      "path": "apps/turnstile-api/test/invitation-smtp-fixture.ts",
+      "sha256": "59f9858b2d5373043e60c4319a43fe0551ed2910933acea91961612d4530d175"
+    },
+    {
+      "path": "apps/turnstile-api/test/invitations.database-spec.ts",
+      "sha256": "c8a7984d5ca4bbca5a71c2f959dc2852508ba4c982844b131c8fd366142f5c65"
+    },
+    {
+      "path": "apps/turnstile-api/test/people-browser-fixture.mjs",
+      "sha256": "4fcd49f6ce9af3eaee1fc712558f66ba5ccb723b6527fbc58373237a3573dc49"
+    },
+    {
+      "path": "apps/turnstile-api/test/people.database-spec.ts",
+      "sha256": "668b65153fcf2922bfdddb52df1a8763a793fa12eaf4540952d379ee17afd5f8"
+    },
+    {
+      "path": "apps/turnstile-api/test/persistence.database-spec.ts",
+      "sha256": "92370b89a1863e26a2fb4624a4ebd925b0e8aeb3ea0e15775b8be54067c492a2"
+    },
+    {
+      "path": "apps/turnstile-api/test/recipients.database-spec.ts",
+      "sha256": "a8db19049ab765d53852778d93a1aa1fdb519085b411b1cbb227a72077496224"
+    },
+    {
+      "path": "apps/turnstile-api/test/scoped-structure.database-spec.ts",
+      "sha256": "f614451e0f94e0bc3fd3f7b3c5e22c00523a3623a2646fb33335f859fe110486"
+    },
+    {
+      "path": "apps/turnstile-api/test/user-management-upgrade.database-spec.ts",
+      "sha256": "471a8da0dd543a682bc01df85c8ce9fd9e6872cd471d5d3aad4448b3d7334dac"
+    },
+    {
+      "path": "apps/turnstile-web/test/invitation-client.test.ts",
+      "sha256": "4ff1e746a7879045e667d0de482a926d0640424a3a411f94e6ea190f5b517f4c"
+    },
+    {
+      "path": "apps/turnstile-web/test/people-client.test.ts",
+      "sha256": "81b2c2a57684207a97b95ba85411d24528fbd631eabaffe976ba56c7a14cdf15"
+    },
+    {
+      "path": "apps/turnstile-web/test/product-session.test.ts",
+      "sha256": "e3bbba1b0251e02114f86b789677bc682e5ffabaaccc5cc5da72d4b204f03b23"
+    },
+    {
+      "path": "apps/turnstile-web/test/structure-camera.test.ts",
+      "sha256": "05a87beee1702376ea05c6d692b483e20964e4a561d8b325f956e152b7c2a2e9"
+    },
+    {
+      "path": "apps/turnstile-web/test/structure-layout.test.ts",
+      "sha256": "fc03ee06440f250ca081daf0599705bdfb4eace309879db3a9e328f7457d4242"
+    },
+    {
+      "path": "apps/turnstile-web/test/structure-model.test.ts",
+      "sha256": "bdd576569a198e08bec110ef5ff022e270e69d9cb6077be768591821fb91d633"
+    },
+    {
+      "path": "apps/turnstile-web/test/structure-outline.test.ts",
+      "sha256": "fe838e7eee8a61963356c5b17182a91e45f98c1cbc92b3cb3cb87e863eee0727"
+    },
+    {
+      "path": "packages/deployment-control/test/decisions.test.mjs",
+      "sha256": "ae1be650256d78ec7efcef5d999fdb35cd082f78d77dd57bbb39136ac81147de"
+    },
+    {
+      "path": "packages/deployment-control/test/durability.test.mjs",
+      "sha256": "7640b2430ed15be5befd1715c7fe363ae0cd6fed951af2ba7e3dc78aba9e3ceb"
+    },
+    {
+      "path": "packages/dms-contracts/test/identity-service.test.mjs",
+      "sha256": "5696aec1dea4c71b9993d6a82372c2445864286b0f5822dedc7bedc36877f3d2"
+    },
+    {
+      "path": "packages/dms-contracts/test/public-boundary.test.mjs",
+      "sha256": "f04fd8989e2613671e8ee7e5329176ae5d4b505d72749a85c0460fe457c71287"
+    },
+    {
+      "path": "packages/turnstile-contracts/test/onboarding.test.mjs",
+      "sha256": "79122d11e9d35057b7d71f17412c08ed7d9c822336737cae58898a8f32619c62"
+    },
+    {
+      "path": "packages/turnstile-contracts/test/people.test.mjs",
+      "sha256": "9eff3be34b53d5e2a2960fc566b92ce4b27840cf77baa5c1d18f5531c665213c"
+    },
+    {
+      "path": "scripts/backup-local-onboarding.mjs",
+      "sha256": "4b7d8e7dff8b2cef8ca2cc162bb3c95d7e9b56f5a200674c9d2ed2612b6d4e28"
+    },
+    {
+      "path": "scripts/backup-local-user-management.mjs",
+      "sha256": "87180f0360f4cd84a067e6fe346704db68d4b0c9d6679ccebe5b49ac7cb4ab55"
+    },
+    {
+      "path": "scripts/check-auth-cli.mjs",
+      "sha256": "2e0814a21aa187a46031ea7b0348216451e6d51cc3667b236d5e49e1fb651bb5"
+    },
+    {
+      "path": "scripts/check-control-plane-cli.mjs",
+      "sha256": "0b33c1a582ccafb99ecf929769a97f0df6b7cca6d3cbf0c730a7ad4b7ea17474"
+    },
+    {
+      "path": "scripts/check-deploy.mjs",
+      "sha256": "f12622c88e7f9922f007ed42c348b93841a2b44f74dbfce6eb786a235d93333b"
+    },
+    {
+      "path": "scripts/check-dms-contracts.py",
+      "sha256": "c7972c5ecf27ed43945706b71921465c465c2ac764ec29c471509635b735c48d"
+    },
+    {
+      "path": "scripts/collect-dms-notices.py",
+      "sha256": "d98b5a9cdf46da16ccb97c5b9f03035ff651c55089cc837270667cbc2954db58"
+    },
+    {
+      "path": "scripts/dev-container.mjs",
+      "sha256": "c4580550e6c7ed5b7f344bd8bf019909a1fa90b6eadd7170b4b8208156083172"
+    },
+    {
+      "path": "scripts/dev-container.test.mjs",
+      "sha256": "567790be84c01f9d872a167cf3cb25536753e5c0e9d27071064d0b8738e39f76"
+    },
+    {
+      "path": "scripts/dms-evidence.mjs",
+      "sha256": "79d375201da5073daef3c02f047e826cac8674d15c82fec6c7e7e940eef3cf68"
+    },
+    {
+      "path": "scripts/dms-release.mjs",
+      "sha256": "03949079072c9743d9063d6b60d65bf22aad8c8567172ff7820ddeb01f4664e5"
+    },
+    {
+      "path": "scripts/fixtures/control-plane-ingress.mjs",
+      "sha256": "ddfcc713981a0ef03795ba6909dd02b6232196d9fcd083b687c6dafaa3ad7bed"
+    },
+    {
+      "path": "scripts/fixtures/control-plane-key-recovery.mjs",
+      "sha256": "8f764be4765295a04a6e1bc0cbb61832c10e7ce98e68b7a9a8b2f17580f82cb3"
+    },
+    {
+      "path": "scripts/fixtures/control-plane-machines.mjs",
+      "sha256": "e59a804330389cc5732e517912a098c044ea3fd7b85c2b80b144c54c49b133ae"
+    },
+    {
+      "path": "scripts/fixtures/control-plane-offline.mjs",
+      "sha256": "e63b21fcef0a2e2107e29803febdac910e99b95311e97b6babd6e47e84d53397"
+    },
+    {
+      "path": "scripts/fixtures/control-plane-registry.mjs",
+      "sha256": "c66a3fc137227e7e9f367d8c33e75ad62245832fcfa6aa50ed3555355bfc72bc"
+    },
+    {
+      "path": "scripts/fixtures/control-plane-reporter.mjs",
+      "sha256": "965b8cb20eab44666a69fb5f16a4f0f45cd2c70c23d381c8dd4198cd4c2aa13f"
+    },
+    {
+      "path": "scripts/fixtures/control-plane-reports.mjs",
+      "sha256": "d75950cf56a2713a3fb8c9b1abb8e24413ee145b206423ab24d56486093e93c4"
+    },
+    {
+      "path": "scripts/fixtures/customer-browser-ingress.mjs",
+      "sha256": "acf3dbb61b481eb46525e8517abb429c5afcd5fd68759f2e1452c41b4a3da3a7"
+    },
+    {
+      "path": "scripts/fixtures/deployment-policy.mjs",
+      "sha256": "36989e1ead71e70220f4ac6da09750d40b8af6d571dc8404b54f0e2b93a6c1e3"
+    },
+    {
+      "path": "scripts/fixtures/dms-central-http.mjs",
+      "sha256": "c714158e1e61c348401ddd444e473c3975fec3d101d8d5d1260943da367cdbd6"
+    },
+    {
+      "path": "scripts/fixtures/dms-deployment.mjs",
+      "sha256": "d13968144645c411fe740a3e63945483847fc3a892bffa8a05a5c92cb5d81fff"
+    },
+    {
+      "path": "scripts/fixtures/dms-distribution/driver.mjs",
+      "sha256": "63624f5a8e1233e695cf153f62995194ffd93924ac5e0cee509384987f222218"
+    },
+    {
+      "path": "scripts/fixtures/dms-distribution/log-privacy.mjs",
+      "sha256": "9e785214cc9dff2a64c9473842079eac5685f6d70b0f307dbaf478b7f694d94a"
+    },
+    {
+      "path": "scripts/fixtures/dms-distribution/make-ods.py",
+      "sha256": "f578e5986fb66e6dcf73c82d8079e9536d4d2d03fd989481f4f27cb8ef89b1f4"
+    },
+    {
+      "path": "scripts/fixtures/dms-distribution/observe.mjs",
+      "sha256": "85f41a9e80933d9594df65389b283fbfdbfc79dcf5fa4f9135ded7bb755b1543"
+    },
+    {
+      "path": "scripts/fixtures/dms-distribution/proxy.mjs",
+      "sha256": "9cbebe6e9ab2860425f7d63788fd84ca945859c2a2d7901aca85d77c0ec25882"
+    },
+    {
+      "path": "scripts/fixtures/dms-distribution/qualification.mjs",
+      "sha256": "e12192c11daef630bd40bb93c091b3488cec08041605609e837172e60fff47ca"
+    },
+    {
+      "path": "scripts/fixtures/dms-distribution/recovery.mjs",
+      "sha256": "2d60950b54b1dfbf3d42d0442e95b3bd768d6930c58d5aac7ed60ebfa462f285"
+    },
+    {
+      "path": "scripts/fixtures/turnstile-central-http.mjs",
+      "sha256": "35a4bb23f6a3c7547f81c9fe89f5c858b6f05d57eab05e8d7a1d0a84e5a6f284"
+    },
+    {
+      "path": "scripts/fixtures/turnstile-deployment.mjs",
+      "sha256": "7969bfe7ef4e9fc2cbf02d418d73db7a8ed6a14d03081b85903fc36b4ee5b523"
+    },
+    {
+      "path": "scripts/fixtures/user-management.mjs",
+      "sha256": "98eca2b9a6f0c1fe00b27ba57016ca54585f32f3865aa28dd5663b9302d0674e"
+    },
+    {
+      "path": "scripts/generate-control-plane-openapi.mjs",
+      "sha256": "208d8b037b7cccb253412468cd68ec745252281d1af3428234c7c8a3a3948388"
+    },
+    {
+      "path": "scripts/generate-dms-auth-openapi.mjs",
+      "sha256": "566f1c0eb71cc3bee1d448903dfca2953b15ae9f62daf117caa3bb411191de73"
+    },
+    {
+      "path": "scripts/generate-dms-evidence.mjs",
+      "sha256": "8cd4ceab9357dd10a9e8f95805319f620b00e4a14e534e9ad80dbddc6d6318bf"
+    },
+    {
+      "path": "scripts/generate-dms-openapi.mjs",
+      "sha256": "ed0460a2ecc48365f1053d47d316b0e50b5b5238d66d21c6699cf961040f4861"
+    },
+    {
+      "path": "scripts/generate-dms-operator-contract.mjs",
+      "sha256": "2d887e2204ff21553904699a60de79a197431713e15728b165478c3090089162"
+    },
+    {
+      "path": "scripts/generate-dms-work-contract.mjs",
+      "sha256": "bf850b70a7a273ed61b4f7a2d3fb4a60584cb3ba8c370453b53366c1b7a51106"
+    },
+    {
+      "path": "scripts/generate-turnstile-onboarding-openapi.mjs",
+      "sha256": "ffbf636babc34a65f5682892f9b42bb2bbb52fdb2287182816bedf6d573296d0"
+    },
+    {
+      "path": "scripts/generate-turnstile-time-zones.mjs",
+      "sha256": "353de201e98d9c245d2010efaab64ad9f69762f1b5247a90a5e097b8af483369"
+    },
+    {
+      "path": "scripts/generate-user-management-openapi.mjs",
+      "sha256": "cb8afaebd757826043edfef68a094726a2866bcd50fdeb943d671aa438a15c6e"
+    },
+    {
+      "path": "scripts/package-control-plane.mjs",
+      "sha256": "5a2b14bd05c123e5965a96a1a7443a6cbb02a07eb86741c4c6b261a5ad7250ef"
+    },
+    {
+      "path": "scripts/provision-auth-database.mjs",
+      "sha256": "eaf3a257d89d43982a563d1d6c555acc8f037d3b4100148de4e8c7d59760db8b"
+    },
+    {
+      "path": "scripts/provision-control-plane.mjs",
+      "sha256": "ac0809f44953a0b59a5773eec22466ff3dc7cf9f1d4053ce7e61e206ec1c7e16"
+    },
+    {
+      "path": "scripts/qualify-control-plane.mjs",
+      "sha256": "5f580e139ef38045b9bc4db8a5d53c5951a1ddc24ef4457538013ced13d3a7f7"
+    },
+    {
+      "path": "scripts/qualify-dms-release.mjs",
+      "sha256": "ed4f374c045605984957552e0e9390647f4aac3fd02604bfa33b9c8da4454141"
+    },
+    {
+      "path": "scripts/rehearse-local-onboarding-upgrade.mjs",
+      "sha256": "01d340d7d2f8bd306ac8625eb5b1f74ef168f05e121d85a6d383c36e425d1b8b"
+    },
+    {
+      "path": "scripts/rehearse-local-user-management.mjs",
+      "sha256": "19ae30b68f8fb8556da8df2ffc9926ea42a688477b8e16ef07eec6c3411a24c8"
+    },
+    {
+      "path": "scripts/retire-local-user-management-credentials.mjs",
+      "sha256": "4fdd611cb5231f0d27cd283d1db6d0da447cdf5d9fad57c51e6b3ead5c294ddf"
+    },
+    {
+      "path": "scripts/smoke-runtime.mjs",
+      "sha256": "d97bad799802a9460a9c178024272db869ef0bfd792cc331080262138ec08960"
+    },
+    {
+      "path": "scripts/test-auth-browser.mjs",
+      "sha256": "aa7a6e0457c3a3082f9652b49cd23dee0f3797859ed8b226776a01c9ef107794"
+    },
+    {
+      "path": "scripts/test-auth-database.mjs",
+      "sha256": "2e1a5a0b09d48c4602be2f8115e748bb7b44f6ba0d667d7968a32a29a5614685"
+    },
+    {
+      "path": "scripts/test-control-plane.mjs",
+      "sha256": "d007df7c7490bb20513d29f13f90856f34e95d9742adbec808a9ec3592a26b9d"
+    },
+    {
+      "path": "scripts/test-deployment-browser.mjs",
+      "sha256": "7b72ca87364f0e5122efad95bf9deb68a4e6fcf479f9a3e05616e8f51db8457a"
+    },
+    {
+      "path": "scripts/test-dms-distribution.mjs",
+      "sha256": "0340bb3e64f008aff612630c7eb7af30816f6ead2bb8034bfab2e2280e82117d"
+    },
+    {
+      "path": "scripts/test-dms-storage.mjs",
+      "sha256": "c6799e26593a5c114571ef22044a32e7051762326de386ea4b70014b69f8f837"
+    },
+    {
+      "path": "scripts/test-onboarding-browser.mjs",
+      "sha256": "ae9ca83a79861628c0cd2473d3799bb356c3719c893cae21d20d1fcc49ce9511"
+    },
+    {
+      "path": "scripts/test-onboarding-images.mjs",
+      "sha256": "ca71b4c425bd1808eda3704f07b85a19d11047a71c27da073d7c4c6ad312cc78"
+    },
+    {
+      "path": "scripts/test-people-browser.mjs",
+      "sha256": "79e1beb37a1e251673e10b6e5accb72fa1e9e52727e3057971a7eda173f0fa7b"
+    },
+    {
+      "path": "scripts/test-settings-browser.mjs",
+      "sha256": "da9ac40222d925ce13080a1022027f2d3c724f18cc16faeb614fece0d1626301"
+    },
+    {
+      "path": "scripts/test-structured-onboarding-browser.mjs",
+      "sha256": "0af9bd12afb0d21afae0f38e50e4308c51f5a37f9b0cef75c32346cd7d808d10"
+    },
+    {
+      "path": "scripts/test-user-management-images.mjs",
+      "sha256": "86f35ae181d2bc9ecc7c44b05b2b84a9ea6f8e1272e93fc3e46ec5254a113910"
+    },
+    {
+      "path": "scripts/test-workspace-navigation-browser.mjs",
+      "sha256": "d81379f4d5a8bb5ef5947265e924a9ed988a89c860324bebd016512234bd344f"
+    },
+    {
+      "path": "scripts/user-management-credentials.mjs",
+      "sha256": "65a0a195847990e68a690fcdf9ca043cbbcdc616cc19dae5b98f8738b5034b8c"
+    },
+    {
+      "path": "scripts/user-management-release-inventory.mjs",
+      "sha256": "76d08f272a624e9eb2e2a508544dafca029aeb4bb0e73e78d09d963164d12546"
+    },
+    {
+      "path": "scripts/verify-local-onboarding-release.mjs",
+      "sha256": "903362bb2a15aa9b58c40d5b543205d0e9284cf6450026956eba598247c2ecd6"
+    },
+    {
+      "path": "scripts/verify-local-user-management-release.mjs",
+      "sha256": "409a21f90541097a6b5bcacbf78d4c3b88393781568cc00a0f346cdada6e9287"
+    }
+  ],
+  "coverage": {
+    "central": "candidate image through container TLS ingress, production profile and verified STARTTLS",
+    "isolation": "two separately networked customer PostgreSQL clusters and independent registrations",
+    "reporters": "shipped DMS coordinator and Turnstile reporter entrypoints, real container HTTPS and owning SQL",
+    "dmsRecovery": "candidate API HTTP: real central rollover, offline compromised-key revocation, rebind/reapproval and full database/journal restore",
+    "turnstileRecovery": "owning PostgreSQL and production preflight restore/rebind; candidate API HTTP trust rollover/revocation in the browser fixture",
+    "browser": "DMS authority, Turnstile API and Nginx candidate images, canonical container DNS/TLS, real SMTP, auth and People/deployment journeys; fixture provisioning uses separate owning processes",
+    "rollback": "owning schema upgrade tests, quarantined database/journal restores and candidate restart; no prior published enforcing release exists for a historical image downgrade"
+  },
+  "inputsStable": true,
+  "localQualification": "passed",
+  "localChecksResult": "passed",
+  "finishedAt": "2026-11-07T07:05:14.004Z"
+}

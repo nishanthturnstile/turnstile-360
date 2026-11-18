@@ -5,6 +5,7 @@ import {
   type OnApplicationBootstrap,
 } from '@nestjs/common';
 import { featureWritesOpen } from '../access/release-state.js';
+import { deploymentStatus } from '../deployment/access.js';
 import { openPayload } from './invitation-crypto.js';
 import { InvitationMailService, type MailOutcome } from './invitation-mail.service.js';
 import { invitationAudit } from './invitation-policy.js';
@@ -52,7 +53,8 @@ export class InvitationDeliveryService
   }
   async claim(): Promise<DeliveryClaim[]> {
     return this.store.run(async (db, tenant, config) => {
-      if (!(await featureWritesOpen(db, tenant))) return [];
+      if ((await deploymentStatus(db)).access !== 'full' || !(await featureWritesOpen(db, tenant)))
+        return [];
       await db.query('SELECT turnstile.maintain_invitations($1,$2)', [
         tenant,
         config.recoveryEpoch,

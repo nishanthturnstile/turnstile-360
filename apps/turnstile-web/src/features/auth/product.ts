@@ -9,9 +9,11 @@ import {
   type DmsIntegrationErrorDto,
   type LogoutDto,
   type UserSessionDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 
 type ProductErrorCode =
+  | 'MODULE_ACCESS_DENIED'
+  | 'MODULE_UNAVAILABLE'
   | AuthErrorCode
   | DmsIntegrationErrorDto['code']
   | ConfigurationErrorDto['code'];
@@ -50,6 +52,7 @@ export async function productRequest<T>(
       signal: AbortSignal.timeout(CONFIGURATION_LIMITS.requestTimeoutMs),
       headers: {
         accept: 'application/json',
+        'x-turnstile-access-contract': '3',
         ...options.headers,
         ...(method !== 'GET'
           ? { 'x-csrf-token': csrf ?? '', 'content-type': 'application/json' }
@@ -66,6 +69,9 @@ export async function productRequest<T>(
       if (domain.success && CONFIGURATION_ERROR_STATUS[domain.data.code] === response.status)
         throw new ProductError(response.status, domain.data.code, domain.data);
       const known: ProductErrorCode[] = [
+        'MODULE_ACCESS_DENIED',
+        'MODULE_UNAVAILABLE',
+        'DEPLOYMENT_RESTRICTED',
         'IDENTITY_REQUIRED',
         'LOGIN_REQUIRED',
         'PRODUCT_ACCESS_DENIED',

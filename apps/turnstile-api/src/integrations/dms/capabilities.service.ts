@@ -1,6 +1,9 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { DmsClient, DmsClientError } from '@thaarei/dms-client';
-import type { DmsCapabilitiesDto, DmsIntegrationErrorDto } from '@thaarei/turnstile-contracts';
+import type {
+  DmsCapabilitiesDto,
+  DmsIntegrationErrorDto,
+} from '@thaarei/turnstile-contracts/runtime';
 import { DmsConfigurationService } from './dms-configuration/dms-configuration.service.js';
 import { MachineTokenService } from './machine-token.service.js';
 
@@ -23,13 +26,17 @@ export class CapabilitiesService {
   async read(userId: string, requestId: string): Promise<DmsCapabilitiesDto> {
     try {
       if (!this.client || !this.settings.config) throw new DmsClientError('DMS_UNAVAILABLE');
-      const result = await this.client.capabilities({ userId, requestId });
+      const result = await this.client.capabilities(
+        { userId, requestId },
+        { deploymentStatus: true },
+      );
       if (
         result.tenantId !== this.settings.config.INSTALLATION_TENANT_ID ||
         result.applicationId !== this.settings.config.TURNSTILE_APPLICATION_ID
       )
         throw new DmsClientError('DMS_INVALID_RESPONSE');
       return {
+        ...(result.deploymentAccess ? { deploymentAccess: result.deploymentAccess } : {}),
         formats: [...result.formats],
         profiles: [...result.profiles],
         languages: [...result.languages],

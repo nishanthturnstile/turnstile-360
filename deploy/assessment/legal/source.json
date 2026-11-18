@@ -1,0 +1,21 @@
+{
+  "url": "https://codeload.github.com/Cisco-Talos/clamav/tar.gz/refs/tags/clamav-1.5.1",
+  "sha256": "94cd2c7992b6ae69b09951a857777619ec14451b0ae7bb0fc914c8fb26f4d408",
+  "licenseFiles": "Unmodified COPYING* and root README.md from pinned ClamAV release.",
+  "files": [
+    "COPYING.txt",
+    "COPYING/COPYING.LGPL",
+    "COPYING/COPYING.YARA",
+    "COPYING/COPYING.bzip2",
+    "COPYING/COPYING.curl",
+    "COPYING/COPYING.file",
+    "COPYING/COPYING.getopt",
+    "COPYING/COPYING.llvm",
+    "COPYING/COPYING.lzma",
+    "COPYING/COPYING.pcre",
+    "COPYING/COPYING.regex",
+    "COPYING/COPYING.unrar",
+    "COPYING/COPYING.zlib",
+    "README.md"
+  ]
+}

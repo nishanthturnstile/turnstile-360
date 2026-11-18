@@ -7,7 +7,7 @@ import {
   peopleIdSchema,
   peopleSubjectSchema,
   peopleVersionSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { z } from 'zod';
 import { pruneInvitationRecords } from '../../infrastructure/database/invitation-maintenance.js';
 import { invitationSchemaSafe } from '../../infrastructure/database/invitation-safety.js';

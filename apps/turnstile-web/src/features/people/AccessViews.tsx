@@ -7,8 +7,12 @@ import {
   Shield01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import type { RoleDefinitionDto, scopedUnitsResponseSchema } from '@thaarei/turnstile-contracts';
+import type {
+  RoleDefinitionDto,
+  scopedUnitsResponseSchema,
+} from '@thaarei/turnstile-contracts/runtime';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { AppLink } from '@/components/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -88,7 +92,9 @@ export function RoleTable({
   selectedId,
   disabled,
   onSelect,
+  usage,
 }: {
+  usage?: { roleId: string; memberCount: number; invitationCount: number }[] | undefined;
   roles: RoleDefinitionDto[];
   selectedId?: string | undefined;
   disabled?: boolean;
@@ -120,6 +126,26 @@ export function RoleTable({
                     {role.description ||
                       (role.systemKey ? 'Built-in workspace role' : 'Defined for your workspace')}
                   </p>
+                  {usage
+                    ?.filter((u) => u.roleId === role.id)
+                    .map((u) => (
+                      <p key={u.roleId}>
+                        <AppLink
+                          href={`/people/members?roleId=${role.id}`}
+                          aria-label={`Members using ${role.name}`}
+                        >
+                          {u.memberCount} {u.memberCount === 1 ? 'member' : 'members'}
+                        </AppLink>
+                        {' · '}
+                        <AppLink
+                          href={`/people/invitations?roleId=${role.id}&actionable=true`}
+                          aria-label={`Open invitations using ${role.name}`}
+                        >
+                          {u.invitationCount} open{' '}
+                          {u.invitationCount === 1 ? 'invitation' : 'invitations'}
+                        </AppLink>
+                      </p>
+                    ))}
                   <div className="access-badges">
                     <Badge variant={role.systemKey ? 'secondary' : 'outline'}>
                       {role.systemKey ? 'System' : 'Custom'}
@@ -132,12 +158,15 @@ export function RoleTable({
               </div>
             </TableCell>
             <TableCell>
-              <div className="access-permission-summary">
-                {role.permissions.map((p) => (
-                  <Badge variant="outline" key={p}>
-                    {permissionLabel(p)}
-                  </Badge>
-                ))}
+              <div className="role-permission-preview">
+                <span>
+                  {role.permissions.length}{' '}
+                  {role.permissions.length === 1 ? 'permission' : 'permissions'}
+                </span>
+                <p className="member-meta">
+                  {role.permissions.slice(0, 2).map(permissionLabel).join(' · ')}
+                  {role.permissions.length > 2 ? ' · …' : ''}
+                </p>
               </div>
             </TableCell>
             <TableCell>

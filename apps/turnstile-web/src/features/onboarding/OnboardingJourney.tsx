@@ -1,4 +1,4 @@
-import type { UserSessionDto } from '@thaarei/turnstile-contracts';
+import type { UserSessionDto } from '@thaarei/turnstile-contracts/runtime';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ButtonLink } from '@/components/button-link';

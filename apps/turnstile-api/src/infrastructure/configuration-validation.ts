@@ -1,4 +1,4 @@
-import { configurationValidationError } from '@thaarei/turnstile-contracts';
+import { configurationValidationError } from '@thaarei/turnstile-contracts/runtime';
 import type { z } from 'zod';
 import { ConfigurationException } from './configuration-exception.js';
 

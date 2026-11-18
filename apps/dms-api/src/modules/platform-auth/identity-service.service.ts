@@ -16,7 +16,7 @@ import {
   type IdentitySetupComplete,
   identityPreparationSchema,
   identityProjectionResponseSchema,
-} from '@thaarei/dms-contracts';
+} from '@thaarei/dms-contracts/private';
 import { createLocalJWKSet, decodeProtectedHeader, type JWTPayload, jwtVerify } from 'jose';
 import type { PoolClient } from 'pg';
 import { withTenant } from '../../infrastructure/database/postgres.js';

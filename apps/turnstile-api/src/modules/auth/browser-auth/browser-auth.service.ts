@@ -1,5 +1,5 @@
 import { HttpException, Injectable } from '@nestjs/common';
-import { type LogoutDto, type UserSessionDto } from '@thaarei/turnstile-contracts';
+import { type LogoutDto, type UserSessionDto } from '@thaarei/turnstile-contracts/runtime';
 import type { FastifyReply, FastifyRequest, Session } from 'fastify';
 import type { PoolClient } from 'pg';
 import { AccessContextChangedException } from '../../../infrastructure/access-context-exception.js';

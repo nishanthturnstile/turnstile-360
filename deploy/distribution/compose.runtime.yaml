@@ -1,0 +1,219 @@
+x-logs: &logs
+  driver: json-file
+  options: { max-size: 10m, max-file: "3", mode: non-blocking, max-buffer-size: 1m }
+x-node: &node
+  image: thaarei-dms-api:0.20.0
+  build: { context: .., dockerfile: apps/dms-api/Dockerfile, args: { DMS_RELEASE: 0.20.0 } }
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  pids_limit: 128
+  tmpfs: ["/tmp:size=128m,noexec,nosuid,nodev"]
+  restart: unless-stopped
+  logging: *logs
+x-worker: &worker
+  image: thaarei-dms-processing:0.20.0
+  build:
+    {
+      context: ..,
+      dockerfile: apps/dms-processing/Dockerfile,
+      target: default,
+      args: { DMS_RELEASE: 0.20.0 },
+    }
+  environment: { DMS_OPERATIONS_ENABLED: "true" }
+  networks: [work, broker, authority-egress]
+  stop_grace_period: 660s
+  restart: unless-stopped
+  logging: *logs
+  healthcheck:
+    test: [CMD, turnstile-processing, service-check]
+    interval: 30s
+    timeout: 5s
+    start_period: 90s
+    retries: 3
+services:
+  dms-api:
+    <<: *node
+    environment:
+      { DMS_OPERATIONS_ENABLED: "true", DMS_PROCESSING_ORIGIN: "http://coordinator:3003" }
+    networks: [default, storage, work, ingress]
+    mem_limit: 768m
+    cpus: 1
+    stop_grace_period: 45s
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3001/health/ready/api').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  dms-transfer:
+    <<: *node
+    mem_limit: 256m
+    cpus: 0.5
+    stop_grace_period: 135s
+  coordinator:
+    <<: *node
+    networks: [default, storage, work, authority-egress]
+    environment: { DMS_OPERATIONS_ENABLED: "true" }
+    mem_limit: 768m
+    cpus: 1
+    stop_grace_period: 90s
+  work-publisher:
+    <<: *worker
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 64
+    tmpfs: ["/tmp:size=32m,noexec,nosuid,nodev"]
+    mem_limit: 256m
+    cpus: 0.5
+    stop_grace_period: 60s
+  scan-worker:
+    <<: *worker
+    networks: [work, broker, storage, dms-scan, authority-egress]
+  extract-worker:
+    <<: *worker
+    networks: [work, broker, storage, authority-egress]
+  heavy-worker:
+    <<: *worker
+    networks: [work, broker, storage, authority-egress]
+  postgres:
+    user: postgres
+    pids_limit: 256
+    mem_limit: 2048m
+    cpus: 2
+    restart: unless-stopped
+    stop_grace_period: 90s
+    logging: *logs
+  storage:
+    image: thaarei-dms-storage:0.20.0
+    build: { context: .., dockerfile: deploy/storage/Dockerfile, target: standalone }
+    user: "10001:10001"
+    environment: { DMS_STORAGE_IDENTITY_FILE: /run/dms/storage-identities.json }
+    volumes: [storage-config:/run/dms:ro]
+    mem_limit: 1536m
+    cpus: 1
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: ["/tmp:size=128m,noexec,nosuid,nodev"]
+    restart: unless-stopped
+    stop_grace_period: 90s
+    logging: *logs
+  work-broker:
+    user: rabbitmq
+    volumes:
+      - broker-config:/var/lib/rabbitmq-config:ro
+      - ./distribution/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    mem_limit: 768m
+    cpus: 1
+    pids_limit: 256
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    stop_grace_period: 90s
+    logging: *logs
+  dms-scan:
+    user: clamav
+    volumes: [./distribution/clamd.conf:/etc/clamav/clamd.conf:ro]
+    restart: unless-stopped
+    logging: *logs
+    healthcheck:
+      test: [CMD, clamdscan, --config-file=/etc/clamav/clamd.conf, --ping=1:1]
+      interval: 30s
+      timeout: 5s
+      start_period: 90s
+      retries: 3
+  signature-updater:
+    profiles: [signature-updates]
+    # This process updates data; scanner freshness is measured by the running daemon.
+    healthcheck: { disable: true }
+    user: clamav
+    entrypoint: [freshclam]
+    command: [--daemon, --foreground, --stdout, --datadir=/var/lib/clamav/current]
+    volumes: [./distribution/freshclam.conf:/etc/clamav/freshclam.conf:ro]
+    mem_limit: 1536m
+    cpus: 0.5
+    pids_limit: 32
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: ["/tmp:size=128m,noexec,nosuid,nodev"]
+    restart: unless-stopped
+    logging: *logs
+  dms-maintenance:
+    image: thaarei-dms-api:0.20.0
+    profiles: [tools]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:size=128m,noexec,nosuid,nodev"]
+    volumes: [..:/configuration]
+    networks: [default, storage, work, authority-egress]
+    entrypoint: [node]
+    command: [--version]
+  storage-init:
+    image: thaarei-dms-storage:0.20.0
+    profiles: [tools]
+    user: "0:0"
+    network_mode: none
+    entrypoint: [/bin/sh, -ec]
+    command:
+      [
+        "cp /run/secrets/storage-identities/storage-identities.json /run/dms/storage-identities.json; chown 10001:10001 /run/dms/storage-identities.json; chown -R 10001:10001 /data; chmod 400 /run/dms/storage-identities.json",
+      ]
+    volumes: [storage-config:/run/dms, storage-data:/data]
+    secrets:
+      - source: storage-identities
+        target: storage-identities/storage-identities.json
+  broker-init:
+    image: rabbitmq:4.3.7-management-alpine@sha256:1528a88eebf2bc4d0ab7e9d5d9bc542e9bdf5e1b105e65848fcf8de5c2186528
+    profiles: [tools]
+    user: "0:0"
+    network_mode: none
+    entrypoint: [/bin/sh, -ec]
+    command:
+      [
+        "cp /run/secrets/work-broker-definitions /var/lib/rabbitmq-config/definitions.json; chown rabbitmq:rabbitmq /var/lib/rabbitmq-config/definitions.json /var/lib/rabbitmq; chmod 400 /var/lib/rabbitmq-config/definitions.json",
+      ]
+    volumes: [broker-config:/var/lib/rabbitmq-config, work-broker-data:/var/lib/rabbitmq]
+    secrets: [work-broker-definitions]
+  signatures-init:
+    image: clamav/clamav:1.5.1_base@sha256:f4bb8882123f505292b4ead6826ff79c56e01d0abaa46b20b42b65f11fce8b21
+    profiles: [tools]
+    user: "0:0"
+    network_mode: none
+    entrypoint: [/bin/sh, -ec]
+    command:
+      [
+        "mkdir -p /var/lib/clamav/sets/initial; if [ ! -e /var/lib/clamav/current ]; then ln -s sets/initial /var/lib/clamav/current; fi; chown clamav:clamav /var/lib/clamav /var/lib/clamav/sets /var/lib/clamav/sets/initial",
+      ]
+    volumes: [dms-signatures:/var/lib/clamav]
+  signature-import:
+    image: clamav/clamav:1.5.1_base@sha256:f4bb8882123f505292b4ead6826ff79c56e01d0abaa46b20b42b65f11fce8b21
+    profiles: [tools]
+    user: clamav
+    network_mode: none
+    entrypoint: [/bin/sh, /tools/import-signatures.sh]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:size=32m,noexec,nosuid,nodev"]
+    mem_limit: 512m
+    volumes:
+      - dms-signatures:/var/lib/clamav
+      - ./distribution/import-signatures.sh:/tools/import-signatures.sh:ro
+      - ${DMS_SIGNATURE_IMPORT_DIR:-../signatures-incoming}:/incoming:ro
+networks:
+  # Trusted supervisors need outbound canonical TLS/JWKS; parser namespaces remain offline.
+  authority-egress: {}
+  ingress: { external: true, name: "${DMS_INGRESS_NETWORK:?Set the Dokploy ingress network}" }
+volumes:
+  storage-config: {}
+  broker-config: {}

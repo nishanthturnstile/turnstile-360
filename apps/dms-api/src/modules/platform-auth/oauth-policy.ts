@@ -1,19 +1,37 @@
 import { getOAuthProviderApi } from '@better-auth/oauth-provider';
-import { DMS_MACHINE_SCOPES, IDENTITY_SERVICE_SCOPES } from '@thaarei/dms-contracts';
+import {
+  DMS_MACHINE_SCOPES,
+  IDENTITY_SERVICE_SCOPES,
+  WORK_ROLE_SCOPE,
+} from '@thaarei/dms-contracts';
 import type { GenericEndpointContext } from 'better-auth';
 import { APIError } from 'better-auth/api';
 import { z } from 'zod';
-import type { AuthorityConfiguration } from './authority-configuration.js';
+import { type AuthorityConfiguration, loginPolicy } from './authority-configuration.js';
 
 export const LOGIN_SCOPES = ['openid', 'profile', 'email', 'offline_access'] as const;
 export const clientApproval = z.object({
   version: z.literal(1),
-  kind: z.enum(['login', 'machine', 'identity_service']),
+  kind: z.enum([
+    'login',
+    'machine',
+    'identity_service',
+    'work_publisher',
+    'work_scanner',
+    'work_extractor',
+    'work_heavy',
+  ]),
   tenantId: z.uuid().toLowerCase(),
   applicationId: z.uuid().toLowerCase(),
   resource: z.string(),
 });
 
+export function workResource(config: Pick<AuthorityConfiguration, 'AUTH_ISSUER_URL'>) {
+  return `${config.AUTH_ISSUER_URL}/services/work`;
+}
+export function workRole(kind: string) {
+  return kind.startsWith('work_') ? (kind.slice(5) as keyof typeof WORK_ROLE_SCOPE) : undefined;
+}
 export function userInfoResource(config: AuthorityConfiguration) {
   return `${config.AUTH_ISSUER_URL}/oauth2/userinfo`;
 }
@@ -80,23 +98,31 @@ export async function enforceOAuthPolicy(
   )
     return reject('invalid_client');
   const login = approval.kind === 'login';
+  const policy = loginPolicy(config, clientId, login);
+  if (login && !policy) return reject('invalid_client');
+  if (!login && loginPolicy(config, clientId)) return reject('invalid_client');
   const identity = approval.kind === 'identity_service';
+  const role = workRole(approval.kind);
   if (
     identity &&
     (!config.IDENTITY_SERVICE_CLIENT_ID || clientId !== config.IDENTITY_SERVICE_CLIENT_ID)
   )
     return reject('invalid_client');
   if (!identity && clientId === config.IDENTITY_SERVICE_CLIENT_ID) return reject('invalid_client');
-  const resource = login
-    ? userInfoResource(config)
-    : identity
-      ? config.IDENTITY_SERVICE_RESOURCE_URL
-      : config.DMS_RESOURCE_URL;
-  const allowedScopes: readonly string[] = login
-    ? LOGIN_SCOPES
-    : identity
-      ? IDENTITY_SERVICE_SCOPES
-      : DMS_MACHINE_SCOPES;
+  const resource = role
+    ? workResource(config)
+    : login
+      ? userInfoResource(config)
+      : identity
+        ? config.IDENTITY_SERVICE_RESOURCE_URL
+        : config.DMS_RESOURCE_URL;
+  const allowedScopes: readonly string[] = role
+    ? [WORK_ROLE_SCOPE[role]]
+    : login
+      ? LOGIN_SCOPES
+      : identity
+        ? IDENTITY_SERVICE_SCOPES
+        : DMS_MACHINE_SCOPES;
   const grants = login ? ['authorization_code', 'refresh_token'] : ['client_credentials'];
   if (
     approval.resource !== resource ||
@@ -112,9 +138,9 @@ export async function enforceOAuthPolicy(
         !client.skipConsent ||
         client.clientCredentialsScopes?.length ||
         client.redirectUris?.length !== 1 ||
-        client.redirectUris[0] !== config.AUTH_LOGIN_CALLBACK_URL ||
+        client.redirectUris[0] !== policy?.callbackUrl ||
         client.postLogoutRedirectUris?.length !== 1 ||
-        client.postLogoutRedirectUris[0] !== `${config.AUTH_PUBLIC_ORIGIN}/sign-in`
+        client.postLogoutRedirectUris[0] !== policy?.logoutUrl
       : !client.clientCredentialsScopes?.length ||
         client.clientCredentialsScopes.some((scope) => !allowedScopes.includes(scope)) ||
         client.redirectUris?.length
@@ -132,6 +158,7 @@ export async function enforceOAuthPolicy(
   )
     return reject('invalid_scope');
   if (authorize) {
+    if (input.redirect_uri !== policy?.callbackUrl) return reject('invalid_request');
     if (
       input.response_type !== 'code' ||
       input.code_challenge_method !== 'S256' ||

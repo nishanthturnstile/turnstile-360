@@ -11,7 +11,7 @@ import {
   peopleMutationRequestSchema,
   type ResolvedRoleAssignmentDto,
   roleDefinitionSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { z } from 'zod';
 import type { ConfigurationActor } from '../../infrastructure/configuration-context.js';
 import { IdentityClientService } from '../../integrations/identity/identity-client.service.js';

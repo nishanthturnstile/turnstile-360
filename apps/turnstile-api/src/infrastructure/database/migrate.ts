@@ -58,6 +58,7 @@ export async function migrateDatabase(owner: Owner, environment = process.env) {
 
 export async function bootstrapInstallation(environment = process.env) {
   const owner = 'turnstile';
+  const localInstallationId = z.uuid().toLowerCase().parse(environment.INSTALLATION_LOCAL_ID);
   const tenantId = z.uuid().toLowerCase().parse(environment.INSTALLATION_TENANT_ID);
   const customerKey = z
     .string()
@@ -100,6 +101,20 @@ export async function bootstrapInstallation(environment = process.env) {
         row.application_id !== applicationId
       )
         throw new Error('Installation identity cannot be replaced');
+      await client.query("SELECT set_config('app.tenant_id',$1,true)", [tenantId]);
+      await client.query(
+        'INSERT INTO turnstile.deployment_control(tenant_id,local_installation_id) VALUES($1,$2) ON CONFLICT DO NOTHING',
+        [tenantId, localInstallationId],
+      );
+      if (
+        (
+          await client.query(
+            'SELECT local_installation_id FROM turnstile.deployment_control WHERE tenant_id=$1',
+            [tenantId],
+          )
+        ).rows[0]?.local_installation_id !== localInstallationId
+      )
+        throw new Error('Installation deployment identity cannot be replaced');
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK').catch(() => {});

@@ -1,4 +1,7 @@
-import type { ConfigurationSnapshotDto, UserSessionDto } from '@thaarei/turnstile-contracts';
+import type {
+  ConfigurationSnapshotDto,
+  UserSessionDto,
+} from '@thaarei/turnstile-contracts/runtime';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { ButtonLink } from '@/components/button-link';

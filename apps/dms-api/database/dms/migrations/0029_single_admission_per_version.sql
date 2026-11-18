@@ -1,0 +1,1 @@
+ALTER TABLE "dms"."upload_admission" ADD CONSTRAINT "admission_version_identity" UNIQUE("tenant_id","version_id");

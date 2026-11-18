@@ -1,5 +1,5 @@
 import { HttpException } from '@nestjs/common';
-import { PEOPLE_LIMITS, peopleErrorSchema } from '@thaarei/turnstile-contracts';
+import { PEOPLE_LIMITS, peopleErrorSchema } from '@thaarei/turnstile-contracts/runtime';
 import type { FastifyInstance } from 'fastify';
 
 declare module 'fastify' {

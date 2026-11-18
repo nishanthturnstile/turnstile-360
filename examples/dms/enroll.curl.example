@@ -1,0 +1,10 @@
+url = "https://dms.customer.example/v1/application-enrollments"
+request = "POST"
+header = "Authorization: Bearer <short-lived-token>"
+header = "X-Thaarei-Enrollment-Key: <private-enrollment-key>"
+header = "Idempotency-Key: <stable-uuid-for-this-body>"
+header = "Content-Type: application/json"
+data = "{\"name\":\"Independent backend\"}"
+
+# Direct connections only; never inherit ambient proxy settings.
+noproxy = "*"

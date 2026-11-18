@@ -3,7 +3,7 @@ import {
   CONFIGURATION_ERROR_STATUS,
   type ConfigurationErrorDto,
   configurationErrorSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 
 // Shared HTTP adapter for the upcoming feature handlers; never accepts raw validation issues.
 export class ConfigurationException extends HttpException {

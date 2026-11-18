@@ -1,4 +1,4 @@
-import type { scopedUnitsResponseSchema } from '@thaarei/turnstile-contracts';
+import type { scopedUnitsResponseSchema } from '@thaarei/turnstile-contracts/runtime';
 
 type Snapshot = ReturnType<typeof scopedUnitsResponseSchema.parse>;
 export type OutlineNode = {

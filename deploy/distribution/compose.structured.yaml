@@ -1,0 +1,11 @@
+services:
+  dms-maintenance:
+    environment: { DMS_STRUCTURE_ENABLED: "true" }
+  heavy-worker:
+    image: thaarei-dms-processing-structured:0.20.0
+    networks: [work, broker, storage, authority-egress]
+    build:
+      context: ..
+      dockerfile: apps/dms-processing/Dockerfile
+      target: structured
+      args: { DMS_RELEASE: 0.20.0 }

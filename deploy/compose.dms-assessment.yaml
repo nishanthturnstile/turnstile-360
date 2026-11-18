@@ -1,0 +1,65 @@
+# Optional I08 scanner. No host port, ingress, application secrets or document mounts.
+services:
+  dms-scan:
+    image: clamav/clamav:1.5.1_base@sha256:f4bb8882123f505292b4ead6826ff79c56e01d0abaa46b20b42b65f11fce8b21
+    entrypoint: ["clamd", "--config-file=/etc/clamav/clamd.conf"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 64
+    mem_limit: 1536m
+    cpus: 2
+    tmpfs: ["/tmp:size=128m,noexec,nosuid,nodev"]
+    volumes:
+      - ./assessment/clamd.conf:/etc/clamav/clamd.conf:ro
+      - dms-signatures:/var/lib/clamav:ro
+    networks: [dms-scan]
+  scan-worker:
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=./assessment/scanner-seccomp.json
+    mem_limit: 2048m
+    cpus: 2
+    pids_limit: 128
+    tmpfs: ["/tmp:size=384m,noexec,nosuid,nodev"]
+    environment:
+      DMS_CLAM_HOST: dms-scan
+      DMS_CLAM_PORT: "3310"
+    networks: [work, broker, storage, dms-scan]
+  extract-worker:
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=./assessment/scanner-seccomp.json
+    mem_limit: 1024m
+    cpus: 1
+    pids_limit: 128
+    tmpfs: ["/tmp:size=384m,noexec,nosuid,nodev"]
+    networks: [work, broker, storage]
+  heavy-worker:
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=./assessment/scanner-seccomp.json
+    mem_limit: 1536m
+    cpus: 1
+    pids_limit: 128
+    tmpfs: ["/tmp:size=384m,noexec,nosuid,nodev"]
+    networks: [work, broker, storage]
+  signature-updater:
+    image: clamav/clamav:1.5.1_base@sha256:f4bb8882123f505292b4ead6826ff79c56e01d0abaa46b20b42b65f11fce8b21
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      ["chown -R clamav:clamav /var/lib/clamav; exec freshclam --daemon --foreground --stdout"]
+    volumes: ["dms-signatures:/var/lib/clamav"]
+    networks: [signature-egress]
+networks:
+  signature-egress: {}
+  dms-scan:
+    internal: true
+volumes:
+  dms-signatures:

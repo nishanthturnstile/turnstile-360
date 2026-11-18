@@ -1,0 +1,86 @@
+# Optional private I07 overlay. Use after foundation, secured storage and uploads overlays.
+services:
+  dms-api:
+    networks: [default, storage, work]
+  work-broker:
+    image: rabbitmq:4.3.7-management-alpine@sha256:1528a88eebf2bc4d0ab7e9d5d9bc542e9bdf5e1b105e65848fcf8de5c2186528
+    volumes:
+      - work-broker-data:/var/lib/rabbitmq
+      - ./work/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    secrets: [work-broker-definitions]
+    networks: [broker]
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+  coordinator:
+    image: thaarei-dms-foundation:local
+    build: { context: .., dockerfile: apps/dms-api/Dockerfile }
+    command: [node, dist/main.coordinator.js]
+    env_file: [{ path: ../.env.coordinator, format: raw }]
+    networks: [default, storage, work]
+    volumes:
+      - storage-data:/capacity/storage:ro
+      - work-scratch:/capacity/scratch:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+      storage: { condition: service_healthy }
+    stop_grace_period: 90s
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3003/health/ready/work').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  work-publisher:
+    image: thaarei-dms-processing:local
+    build: { context: .., dockerfile: apps/dms-processing/Dockerfile }
+    command: [turnstile-processing, publisher]
+    env_file: [{ path: ../.env.work-publisher, format: raw }]
+    networks: [work, broker]
+    depends_on:
+      coordinator: { condition: service_healthy }
+      work-broker: { condition: service_healthy }
+    stop_grace_period: 30s
+  scan-worker:
+    image: thaarei-dms-processing:local
+    command: [turnstile-processing, worker]
+    env_file: [{ path: ../.env.work-scanner, format: raw }]
+    networks: [work, broker]
+    depends_on:
+      coordinator: { condition: service_healthy }
+      work-broker: { condition: service_healthy }
+    stop_grace_period: 90s
+  extract-worker:
+    image: thaarei-dms-processing:local
+    command: [turnstile-processing, worker]
+    env_file: [{ path: ../.env.work-extractor, format: raw }]
+    networks: [work, broker]
+    depends_on:
+      coordinator: { condition: service_healthy }
+      work-broker: { condition: service_healthy }
+    stop_grace_period: 90s
+  heavy-worker:
+    image: thaarei-dms-processing:local
+    command: [turnstile-processing, worker]
+    env_file: [{ path: ../.env.work-heavy, format: raw }]
+    networks: [work, broker]
+    depends_on:
+      coordinator: { condition: service_healthy }
+      work-broker: { condition: service_healthy }
+    stop_grace_period: 90s
+networks:
+  work: { internal: true }
+  broker: { internal: true }
+volumes:
+  work-broker-data: {}
+  work-scratch: {}
+secrets:
+  work-broker-definitions:
+    file: ../.env.work-broker-definitions.json

@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { configurationNameKey, SYSTEM_ROLE_TEMPLATES } from '@thaarei/turnstile-contracts';
+import { configurationNameKey, SYSTEM_ROLE_TEMPLATES } from '@thaarei/turnstile-contracts/runtime';
 import type { PoolClient } from 'pg';
 import { lockConfiguration } from '../../infrastructure/database/configuration-lock.js';
 import { accessCounts } from './access-evaluator.js';
@@ -57,18 +57,20 @@ export async function recordAccessChange(
     subjectId?: string;
     userId?: string;
     additionalSubject?: { id: string; userId: string };
+    activateDocumentsContract?: boolean;
+    reviewedReason?: string;
   },
 ) {
   if (revision >= 2147483647) throw new AccessInvariantError('ACCESS_REVISION_EXHAUSTED');
   const result = await client.query(
-    'UPDATE turnstile.access_context SET revision = revision + 1 WHERE tenant_id = $1 AND revision = $2',
-    [tenantId, revision],
+    'UPDATE turnstile.access_context SET revision = revision + 1, documents_contract_required = documents_contract_required OR $3 WHERE tenant_id = $1 AND revision = $2',
+    [tenantId, revision, event.activateDocumentsContract ?? false],
   );
   if (result.rowCount !== 1) throw new AccessInvariantError('ACCESS_CONFLICT');
   await client.query(
     `INSERT INTO turnstile.access_audit
-    (tenant_id,id,actor_kind,actor_id,request_id,action,subject_id,subject_user_id,revision_before,revision_after)
-    VALUES ($1,$2,'operator',$3,$4,$5,$6,$7,$8,$8 + 1)`,
+    (tenant_id,id,actor_kind,actor_id,request_id,action,subject_id,subject_user_id,revision_before,revision_after,reviewed_reason)
+    VALUES ($1,$2,'operator',$3,$4,$5,$6,$7,$8,$8 + 1,$9)`,
     [
       tenantId,
       randomUUID(),
@@ -78,13 +80,14 @@ export async function recordAccessChange(
       event.subjectId ?? null,
       event.userId ?? null,
       revision,
+      event.reviewedReason ?? null,
     ],
   );
   if (event.additionalSubject)
     await client.query(
       `INSERT INTO turnstile.access_audit
-    (tenant_id,id,actor_kind,actor_id,request_id,action,subject_id,subject_user_id,revision_before,revision_after)
-    VALUES ($1,$2,'operator',$3,$4,$5,$6,$7,$8,$8 + 1)`,
+    (tenant_id,id,actor_kind,actor_id,request_id,action,subject_id,subject_user_id,revision_before,revision_after,reviewed_reason)
+    VALUES ($1,$2,'operator',$3,$4,$5,$6,$7,$8,$8 + 1,$9)`,
       [
         tenantId,
         randomUUID(),
@@ -94,6 +97,7 @@ export async function recordAccessChange(
         event.additionalSubject.id,
         event.additionalSubject.userId,
         revision,
+        event.reviewedReason ?? null,
       ],
     );
 }

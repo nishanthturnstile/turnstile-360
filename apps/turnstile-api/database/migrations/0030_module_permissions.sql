@@ -1,0 +1,2 @@
+ALTER TABLE "turnstile"."access_role_permission" DROP CONSTRAINT "access_permission_catalog";--> statement-breakpoint
+ALTER TABLE "turnstile"."access_role_permission" ADD CONSTRAINT "access_permission_catalog" CHECK ("turnstile"."access_role_permission"."permission" IN ('turnstile:access','turnstile:dms:capabilities:read','turnstile:configuration:manage','turnstile:people:manage','turnstile:roles:manage','turnstile:units:read','turnstile:units:manage','turnstile:incidents:read','turnstile:risks:read'));

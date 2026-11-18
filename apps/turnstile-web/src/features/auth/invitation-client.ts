@@ -2,7 +2,7 @@ import {
   PEOPLE_ERROR_STATUS,
   PEOPLE_LIMITS,
   peopleErrorSchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 
 // Capture before rendering and on same-document invitation arrivals. Never persist secrets.
 let credential: string | undefined;
@@ -44,6 +44,7 @@ export async function invitationRequest<T>(
         : AbortSignal.timeout(PEOPLE_LIMITS.requestTimeoutMs),
       headers: {
         accept: 'application/json',
+        'x-turnstile-access-contract': '3',
         ...(options.body
           ? { 'content-type': 'application/json', 'x-csrf-token': options.csrf ?? '' }
           : {}),

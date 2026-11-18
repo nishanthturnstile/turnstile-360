@@ -44,7 +44,8 @@ export const accessContext = productSchema
       tenantId: tenant().primaryKey(),
       modelVersion: integer('model_version').notNull().default(1),
       publicWritesEnabled: boolean('public_writes_enabled').notNull().default(false),
-      releaseVersion: integer('release_version').notNull().default(1),
+      documentsContractRequired: boolean('documents_contract_required').notNull().default(false),
+      releaseVersion: integer('release_version').notNull().default(2),
       releaseId: text('release_id'),
       recoveryEpoch: text('recovery_epoch'),
       releasedBy: text('released_by'),
@@ -55,7 +56,7 @@ export const accessContext = productSchema
     },
     (t) => [
       policy(t.tenantId),
-      check('access_model_version', sql`${t.modelVersion} = 1 AND ${t.releaseVersion} = 1`),
+      check('access_model_version', sql`${t.modelVersion} = 1 AND ${t.releaseVersion} = 2`),
       check(
         'access_release_state',
         sql`(${t.releaseId} IS NULL OR ${t.releaseId} ~ '^[0-9a-f]{64}$') AND (${t.recoveryEpoch} IS NULL OR ${t.recoveryEpoch} ~ '^[0-9a-f]{64}$') AND (${t.releasedBy} IS NULL OR ${t.releasedBy} ~ '^[A-Za-z0-9_-]{1,200}$') AND (NOT ${t.publicWritesEnabled} OR (${t.releaseId} IS NOT NULL AND ${t.recoveryEpoch} IS NOT NULL AND ${t.releasedBy} IS NOT NULL AND ${t.releasedAt} IS NOT NULL))`,
@@ -154,6 +155,11 @@ export const accessRole = productSchema
   )
   .enableRLS();
 
+export const permissionCatalog = productSchema.table('permission_catalog', {
+  permission: text().primaryKey(),
+  companyOnly: boolean('company_only').notNull(),
+});
+
 export const accessRolePermission = productSchema
   .table(
     'access_role_permission',
@@ -169,10 +175,11 @@ export const accessRolePermission = productSchema
         columns: [t.tenantId, t.roleId],
         foreignColumns: [accessRole.tenantId, accessRole.id],
       }),
-      check(
-        'access_permission_catalog',
-        sql`${t.permission} IN ('turnstile:access','turnstile:dms:capabilities:read','turnstile:configuration:manage','turnstile:people:manage','turnstile:roles:manage','turnstile:units:read','turnstile:units:manage')`,
-      ),
+      foreignKey({
+        name: 'access_permission_catalog',
+        columns: [t.permission],
+        foreignColumns: [permissionCatalog.permission],
+      }),
     ],
   )
   .enableRLS();
@@ -261,7 +268,7 @@ export const accessCommandReceipt = productSchema
       check('access_receipt_digest', sql`${t.digest} ~ '^[0-9a-f]{64}$'`),
       check(
         'access_receipt_operation',
-        sql`${t.operation} IN ('legacy.replace','legacy.retire','administrator.bootstrap','administrator.handover','member.assignments','member.suspend','member.reactivate','role.create','role.patch','role.delete','invitation.issue','invitation.resend','invitation.cancel','invitation.reapprove','unit.create','unit.rename','unit.delete','unit.move','release.open','release.close','release.recover')`,
+        sql`${t.operation} IN ('legacy.replace','legacy.retire','administrator.bootstrap','administrator.handover','member.assignments','member.suspend','member.reactivate','role.create','role.patch','role.delete','invitation.issue','invitation.resend','invitation.cancel','invitation.reapprove','unit.create','unit.rename','unit.delete','unit.move','release.open','release.close','release.recover','module.grant','module.revoke','documents.grant','documents.revoke','documents.handover')`,
       ),
       check(
         'access_receipt_structure_revisions',
@@ -324,6 +331,7 @@ export const accessAudit = productSchema
       revisionBefore: integer('revision_before').notNull(),
       revisionAfter: integer('revision_after').notNull(),
       occurredAt: instant('occurred_at'),
+      reviewedReason: text('reviewed_reason'),
     },
     (t) => [
       primaryKey({ columns: [t.tenantId, t.id] }),

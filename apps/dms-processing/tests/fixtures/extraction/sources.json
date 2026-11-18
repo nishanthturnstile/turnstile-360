@@ -1,0 +1,62 @@
+[
+  {
+    "file": "testWORD.doc",
+    "url": "https://raw.githubusercontent.com/apache/tika/91361891b61f6cc043a5ea81ced4867c17b93a9c/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-microsoft-module/src/test/resources/test-documents/testWORD.doc",
+    "sha256": "5ca19b67876f284a0e04ed06df44a004f850629a871fe522d014e1fdff912799"
+  },
+  {
+    "file": "testWORD.docx",
+    "url": "https://raw.githubusercontent.com/apache/tika/91361891b61f6cc043a5ea81ced4867c17b93a9c/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-microsoft-module/src/test/resources/test-documents/testWORD.docx",
+    "sha256": "67797f5691cb5346201f1c40000a959f9f08d05d0b4493b4291e8d5f16e81e65"
+  },
+  {
+    "file": "testPPT.ppt",
+    "url": "https://raw.githubusercontent.com/apache/tika/91361891b61f6cc043a5ea81ced4867c17b93a9c/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-microsoft-module/src/test/resources/test-documents/testPPT.ppt",
+    "sha256": "499ccd0de7c0778afa4f6ed08793afd2406b62547373a619a5a78658ae65c4b7"
+  },
+  {
+    "file": "testPPT.pptx",
+    "url": "https://raw.githubusercontent.com/apache/tika/91361891b61f6cc043a5ea81ced4867c17b93a9c/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-microsoft-module/src/test/resources/test-documents/testPPT.pptx",
+    "sha256": "730a6ade20208eaad375160949db37b2ffb52af4d3704b51976ff45564bff83b"
+  },
+  {
+    "file": "testEXCEL.xls",
+    "url": "https://raw.githubusercontent.com/apache/tika/91361891b61f6cc043a5ea81ced4867c17b93a9c/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-microsoft-module/src/test/resources/test-documents/testEXCEL.xls",
+    "sha256": "8f279fb44b131070347d82320c5e7900b0e4d77ead38371b1f26ce95092b211b"
+  },
+  {
+    "file": "testEXCEL.xlsb",
+    "url": "https://raw.githubusercontent.com/apache/tika/91361891b61f6cc043a5ea81ced4867c17b93a9c/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-microsoft-module/src/test/resources/test-documents/testEXCEL.xlsb",
+    "sha256": "41b0c82bfa682f968d69e05e23137232d6c89ea4f24439786f0b779be319929b"
+  },
+  {
+    "file": "testEXCEL.xlsx",
+    "url": "https://raw.githubusercontent.com/apache/tika/91361891b61f6cc043a5ea81ced4867c17b93a9c/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-microsoft-module/src/test/resources/test-documents/testEXCEL.xlsx",
+    "sha256": "960ba8f1cfa5838b563c369d281babe4ac0219100e00cecc93147fad22c549c3"
+  },
+  {
+    "file": "testMSG.msg",
+    "url": "https://raw.githubusercontent.com/apache/tika/91361891b61f6cc043a5ea81ced4867c17b93a9c/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-microsoft-module/src/test/resources/test-documents/testMSG.msg",
+    "sha256": "972901d1a0049ed54dc993ba57f6612db4c370acea818601b2133423885070cf"
+  },
+  {
+    "file": "testODFwithOOo3.odt",
+    "url": "https://raw.githubusercontent.com/apache/tika/91361891b61f6cc043a5ea81ced4867c17b93a9c/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-miscoffice-module/src/test/resources/test-documents/testODFwithOOo3.odt",
+    "sha256": "b6cd74b570a98fcb6d838dd85ab869604e0711812d9533d5ecde0000b24ba7ef"
+  },
+  {
+    "file": "testMasterFooter.odp",
+    "url": "https://raw.githubusercontent.com/apache/tika/91361891b61f6cc043a5ea81ced4867c17b93a9c/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-miscoffice-module/src/test/resources/test-documents/testMasterFooter.odp",
+    "sha256": "c786aecfc72a2ff55ede5a21c4dfda14af298cebf1e788da685262da7025c833"
+  },
+  {
+    "file": "test-columnar.ods",
+    "url": "https://raw.githubusercontent.com/apache/tika/91361891b61f6cc043a5ea81ced4867c17b93a9c/tika-parsers/tika-parsers-standard/tika-parsers-standard-integration-tests/src/test/resources/test-documents/test-columnar.ods",
+    "sha256": "12f39e34411b0d760a3e3db962ca669f621309d289cca54c6634cd5b12c1a8b1"
+  },
+  {
+    "file": "testFooter.odt",
+    "url": "https://raw.githubusercontent.com/apache/tika/91361891b61f6cc043a5ea81ced4867c17b93a9c/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-miscoffice-module/src/test/resources/test-documents/testFooter.odt",
+    "sha256": "bb7618380607111c7181867aaf6e9568f490ba0a62a2308e78f120a268d96188"
+  }
+]

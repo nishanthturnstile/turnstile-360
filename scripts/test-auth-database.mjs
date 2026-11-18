@@ -2,23 +2,41 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import pg from 'pg';
 import { parse } from 'yaml';
 import { provisionDatabase } from './provision-auth-database.mjs';
 
-function run(command, args, env = process.env) {
+function run(command, args, env = process.env, input) {
   const result = spawnSync(command, args, {
     env,
+    input,
     encoding: 'utf8',
     // Keep a finite budget for each owning database file. Separate processes
     // retain complete failure output for the expanded serial suite. This
     // runner budget does not alter application/request deadlines.
     timeout:
       args[0] === 'scripts/test-auth-browser.mjs'
-        ? 240000
+        ? process.argv.some((arg) =>
+            [
+              '--module-cutover',
+              '--documents-upload',
+              '--documents-versions',
+              '--documents-batches',
+              '--documents-lifecycle',
+              '--documents-processing',
+              '--documents-release',
+            ].includes(arg),
+          )
+          ? 900000
+          : 240000
         : args.includes('test:database')
-          ? 360000
+          ? env.DMS_TEST_NATIVE_STRUCTURE === 'true'
+            ? 900000
+            : 360000
           : 120000,
   });
   assert.equal(
@@ -35,8 +53,16 @@ const image = parse(readFileSync('deploy/compose.local.yaml', 'utf8')).services.
 // The retired Settings-only structure suite now uses the canonical scoped workflow fixture.
 if (process.argv.includes('--structure-editor')) process.argv.push('--people-ui');
 const browser = process.argv.includes('--browser');
+const documentsRelease = process.argv.includes('--documents-release');
+let installationManifestDirectory;
+let turnstileDeploymentFixture;
+let deploymentFixture;
+const standalone = process.argv.includes('--standalone');
+// biome-ignore lint/suspicious/noUndeclaredEnvVars: This root-only integration launcher is uncached and runs outside Turbo.
+const standaloneImage = process.env.DMS_STANDALONE_IMAGE;
 let created = false;
 let mailpitCreated = false;
+let standaloneImageCreated = false;
 try {
   run('pnpm', [
     'exec',
@@ -44,8 +70,14 @@ try {
     'run',
     'build',
     '--filter=@thaarei/dms-api',
-    '--filter=@thaarei/turnstile-api',
+    ...(standalone ? [] : ['--filter=@thaarei/turnstile-api']),
     ...(browser ? ['--filter=@thaarei/turnstile-web'] : []),
+  ]);
+  // Fixture modules consume compiled workspace packages. Load them only after the
+  // dependency build so direct invocations also work on a clean CI checkout.
+  const [{ seedDmsDeployment }, { seedTurnstileDeployment }] = await Promise.all([
+    import('./fixtures/dms-deployment.mjs'),
+    import('./fixtures/turnstile-deployment.mjs'),
   ]);
   // Test credentials stay in environment/memory, never shell command text or recorded output.
   run(
@@ -117,8 +149,14 @@ try {
     AUTH_SMTP_MODE: 'plain',
     AUTH_MAIL_FROM: 'identity@example.test',
   };
+  for (const key of Object.keys(env)) if (key.startsWith('CONTROL_PLANE_')) delete env[key];
   // Optional capabilities are configured only by their disposable fixtures, never inherited live secrets/transports.
   for (const key of [
+    'AUTH_BROWSER_DOCUMENTS',
+    'AUTH_BROWSER_DOCUMENTS_UPLOAD',
+    'AUTH_BROWSER_DOCUMENTS_LIFECYCLE',
+    'DMS_DOCUMENTS_TRANSFER_ORIGIN',
+    'DMS_DOCUMENTS_SCOPES',
     'IDENTITY_SERVICE_CLIENT_ID',
     'IDENTITY_SERVICE_CLIENT_SECRET',
     'IDENTITY_SERVICE_RESOURCE_URL',
@@ -133,12 +171,16 @@ try {
   delete env.AUTH_SMTP_USER;
   delete env.AUTH_SMTP_PASSWORD;
   for (const owner of ['auth', 'dms', 'turnstile']) {
-    for (const kind of ['runtime', 'migrator']) {
-      env[`${owner.toUpperCase()}_${kind === 'runtime' ? '' : 'MIGRATION_'}DATABASE_URL`] =
+    for (const kind of owner === 'dms'
+      ? ['runtime', 'migrator', 'operator', 'coordinator']
+      : ['runtime', 'migrator']) {
+      env[
+        `${owner.toUpperCase()}_${kind === 'runtime' ? '' : kind === 'migrator' ? 'MIGRATION_' : `${kind.toUpperCase()}_`}DATABASE_URL`
+      ] =
         `postgresql://thaarei_${owner}_${kind}:${randomBytes(48).toString('base64url')}@127.0.0.1:${port}/auth_fixture`;
     }
   }
-  if (!browser) {
+  if (!browser && !standalone) {
     const mailpitImage = parse(readFileSync('deploy/compose.local.yaml', 'utf8')).services.mailpit
       .image;
     run('docker', [
@@ -185,21 +227,225 @@ try {
     }
     assert.ok(mailReady, 'Disposable Mailpit did not become ready');
   }
+  if (standalone) {
+    env.DATABASE_PROFILE = 'dms';
+    env.AUTH_MODE = 'standalone';
+    for (const key of Object.keys(env))
+      if (
+        key.startsWith('TURNSTILE_') ||
+        ['AUTH_LOGIN_CALLBACK_URL', 'AUTH_LOGIN_CLIENT_ID', 'DMS_MACHINE_CLIENT_ID'].includes(key)
+      )
+        delete env[key];
+  }
+  if (!standalone) {
+    const reporter = new URL(env.TURNSTILE_DATABASE_URL);
+    reporter.username = 'thaarei_turnstile_reporter';
+    reporter.password = randomBytes(32).toString('base64url');
+    env.TURNSTILE_REPORTER_DATABASE_URL = reporter.href;
+  }
+  delete env.INSTALLATION_LOCAL_ID;
   await provisionDatabase(env);
+  async function packagedProductMigration(image, command) {
+    assert.match(image ?? '', /^sha256:[0-9a-f]{64}$/);
+    const host = run('docker', [
+      'inspect',
+      '--format',
+      '{{(index .NetworkSettings.Networks "bridge").IPAddress}}',
+      name,
+    ]);
+    const database = new URL(env.TURNSTILE_MIGRATION_DATABASE_URL);
+    database.hostname = host;
+    database.port = '5432';
+    const configuration = {
+      TURNSTILE_MIGRATION_DATABASE_URL: database.href,
+      INSTALLATION_LOCAL_ID: env.INSTALLATION_LOCAL_ID,
+      INSTALLATION_TENANT_ID: env.INSTALLATION_TENANT_ID,
+      INSTALLATION_CUSTOMER_KEY: env.INSTALLATION_CUSTOMER_KEY,
+      TURNSTILE_APPLICATION_ID: env.TURNSTILE_APPLICATION_ID,
+    };
+    run(
+      'docker',
+      [
+        'run',
+        '--rm',
+        '--read-only',
+        '--tmpfs',
+        '/tmp',
+        ...Object.keys(configuration).flatMap((key) => ['-e', key]),
+        image,
+        'node',
+        'dist/infrastructure/database/migrate.js',
+        command,
+      ],
+      { ...env, ...configuration },
+    );
+  }
+  async function installedProduct() {
+    const db = new pg.Client({ connectionString: env.PROVISION_DATABASE_URL });
+    await db.connect();
+    try {
+      return (
+        await db.query('SELECT tenant_id, application_id, customer_key FROM turnstile.installation')
+      ).rows;
+    } finally {
+      await db.end();
+    }
+  }
   // Deployment scripts are exercised as compiled Node ESM commands with dedicated migrators.
   for (let repeat = 0; repeat < 2; repeat++) {
     for (const [application, owner] of [
       ['dms-api', 'auth'],
       ['dms-api', 'dms'],
-      ['turnstile-api', 'turnstile'],
+      ...(standalone || documentsRelease ? [] : [['turnstile-api', 'turnstile']]),
     ]) {
       run('pnpm', ['--filter', `@thaarei/${application}`, `db:migrate:${owner}`], env);
     }
-    for (const application of ['dms-api', 'turnstile-api'])
+    for (const application of standalone || documentsRelease
+      ? ['dms-api']
+      : ['dms-api', 'turnstile-api']) {
       run('pnpm', ['--filter', `@thaarei/${application}`, 'db:bootstrap'], env);
+      if (application === 'dms-api' && !standalone && !env.INSTALLATION_LOCAL_ID) {
+        installationManifestDirectory = await mkdtemp(
+          join(tmpdir(), 'thaarei-shared-installation-'),
+        );
+        const outputFile = join(installationManifestDirectory, 'manifest.json');
+        run(
+          'node',
+          ['apps/dms-api/dist/modules/deployment/operator.js'],
+          env,
+          JSON.stringify({ action: 'manifest', outputFile }),
+        );
+        const exported = JSON.parse(readFileSync(outputFile, 'utf8'));
+        assert.equal(exported.tenantId, env.INSTALLATION_TENANT_ID);
+        env.INSTALLATION_LOCAL_ID = exported.localInstallationId;
+      }
+    }
+    if (documentsRelease) {
+      let previous;
+      if (repeat === 0) {
+        const legacy = JSON.parse(
+          readFileSync(
+            'packages/turnstile-contracts/test/documents-legacy-v2.fixture.json',
+            'utf8',
+          ),
+        );
+        await packagedProductMigration(legacy.provenance.apiImage, 'turnstile');
+        await packagedProductMigration(legacy.provenance.apiImage, 'bootstrap');
+        previous = await installedProduct();
+        assert.equal(previous.length, 1);
+      }
+      await packagedProductMigration(env.AUTH_BROWSER_API_IMAGE, 'turnstile');
+      await packagedProductMigration(env.AUTH_BROWSER_API_IMAGE, 'bootstrap');
+      if (previous) {
+        assert.deepEqual(await installedProduct(), previous);
+        console.log(
+          'Exact legacy-to-candidate image migrations preserved the installation identity.',
+        );
+      }
+    }
+  }
+  deploymentFixture = await seedDmsDeployment(env);
+  if (!standalone) turnstileDeploymentFixture = await seedTurnstileDeployment(env);
+  if (standalone && standaloneImage) {
+    // CI's host UID can differ from the image's default node UID. Preserve 0600
+    // trust/marker files and run this disposable fixture as their non-root owner.
+    const userId = process.getuid?.();
+    const groupId = process.getgid?.();
+    assert.ok(
+      userId !== undefined && userId > 0 && groupId !== undefined,
+      'Standalone image verification requires a non-root POSIX fixture owner',
+    );
+    const databaseHost = run('docker', [
+      'inspect',
+      '--format',
+      '{{(index .NetworkSettings.Networks "bridge").IPAddress}}',
+      name,
+    ]);
+    assert.ok(databaseHost, 'Missing isolated database network');
+    const runtime = {
+      NODE_ENV: 'test',
+      CONTROL_PLANE_ORIGIN: env.CONTROL_PLANE_ORIGIN,
+      CONTROL_PLANE_VERIFICATION_KEYS_FILE: '/run/deployment-trust',
+      CONTROL_PLANE_RECOVERY_MARKER_FILE: '/run/deployment-marker',
+      AUTH_PROFILE: 'test',
+      AUTH_MODE: 'standalone',
+      DMS_DOCS_MODE: 'controlled',
+      DMS_DOCS_ACCESS_KEY: randomBytes(32).toString('base64url'),
+      HOST: '0.0.0.0',
+      PORT: '3001',
+      AUTH_PUBLIC_ORIGIN: 'http://localhost:3001',
+      AUTH_ISSUER_URL: 'http://localhost:3001/identity',
+      DMS_RESOURCE_URL: 'http://localhost:3001/v1',
+      AUTH_SMTP_HOST: 'localhost',
+      AUTH_SMTP_PORT: '1',
+      AUTH_SMTP_MODE: 'plain',
+      AUTH_MAIL_FROM: env.AUTH_MAIL_FROM,
+      AUTH_SECRET: env.AUTH_SECRET,
+      INSTALLATION_TENANT_ID: env.INSTALLATION_TENANT_ID,
+      INSTALLATION_CUSTOMER_KEY: env.INSTALLATION_CUSTOMER_KEY,
+    };
+    for (const owner of ['AUTH', 'DMS']) {
+      const key = `${owner}_DATABASE_URL`;
+      const url = new URL(env[key]);
+      url.hostname = databaseHost;
+      url.port = '5432';
+      runtime[key] = url.href;
+    }
+    run(
+      'docker',
+      [
+        'run',
+        '--detach',
+        '--name',
+        `${name}-dms-image`,
+        '--user',
+        `${userId}:${groupId}`,
+        '--read-only',
+        '--tmpfs',
+        '/tmp',
+        '--mount',
+        `type=bind,source=${join(process.cwd(), 'apps/dms-api/test/packaged-explorer.mjs')},target=/run/packaged-explorer.mjs,readonly`,
+        '--mount',
+        `type=bind,source=${env.CONTROL_PLANE_VERIFICATION_KEYS_FILE},target=/run/deployment-trust,readonly`,
+        '--mount',
+        `type=bind,source=${env.CONTROL_PLANE_RECOVERY_MARKER_FILE},target=/run/deployment-marker,readonly`,
+        ...Object.keys(runtime).flatMap((key) => ['-e', key]),
+        standaloneImage,
+      ],
+      { ...process.env, ...runtime },
+    );
+    env.DMS_TEST_IMAGE_CONTAINER = `${name}-dms-image`;
+    env.DMS_TEST_IMAGE_DOCS_KEY = runtime.DMS_DOCS_ACCESS_KEY;
+    env.DMS_TEST_IMAGE_DATABASE_HOST = databaseHost;
+    standaloneImageCreated = true;
+    let imageReady = false;
+    for (let attempt = 0; attempt < 60; attempt++) {
+      const result = spawnSync(
+        'docker',
+        [
+          'exec',
+          `${name}-dms-image`,
+          'node',
+          '--input-type=module',
+          '-e',
+          "const ready=await fetch('http://localhost:3001/health/ready/auth');const discovery=await fetch('http://localhost:3001/identity/.well-known/openid-configuration');process.exit(ready.ok&&discovery.ok?0:1)",
+        ],
+        { stdio: 'ignore' },
+      );
+      if (result.status === 0) {
+        imageReady = true;
+        break;
+      }
+      await setTimeout(250);
+    }
+    assert.ok(
+      imageReady,
+      'Standalone production image must become ready with only auth/DMS configuration and schemas',
+    );
+    console.log('Isolated DMS image: auth/DMS-only readiness and direct discovery passed.');
   }
   // Check ownership across all six roles without importing either application's data code.
-  for (const owner of ['auth', 'dms', 'turnstile']) {
+  for (const owner of standalone ? ['auth', 'dms'] : ['auth', 'dms', 'turnstile']) {
     const pool = new pg.Pool({ connectionString: env[`${owner.toUpperCase()}_DATABASE_URL`] });
     try {
       assert.equal(
@@ -211,7 +457,9 @@ try {
         true,
         'Disposable PostgreSQL must retain normal synchronization',
       );
-      for (const other of ['auth', 'dms', 'turnstile'].filter((value) => value !== owner)) {
+      for (const other of (standalone ? ['auth', 'dms'] : ['auth', 'dms', 'turnstile']).filter(
+        (value) => value !== owner,
+      )) {
         await assert.rejects(
           pool.query(`SELECT * FROM ${other}.${other === 'auth' ? '"user"' : 'installation'}`),
           { code: '42501' },
@@ -243,37 +491,84 @@ try {
           ...(process.argv.includes('--structured-onboarding') ? ['--structured-onboarding'] : []),
           ...(process.argv.includes('--structure-editor') ? ['--structure-editor'] : []),
           ...(process.argv.includes('--people-ui') ? ['--people-ui'] : []),
+          ...(process.argv.includes('--documents') ? ['--documents'] : []),
+          ...(process.argv.includes('--documents-release') ? ['--documents-release'] : []),
+          ...(process.argv.includes('--documents-upload')
+            ? ['--documents', '--documents-upload']
+            : []),
+          ...(process.argv.includes('--documents-versions')
+            ? ['--documents', '--documents-upload', '--documents-versions']
+            : []),
+          ...(process.argv.includes('--documents-batches')
+            ? ['--documents', '--documents-upload', '--documents-versions', '--documents-batches']
+            : []),
+          ...(process.argv.includes('--documents-lifecycle')
+            ? ['--documents', '--documents-upload', '--documents-lifecycle']
+            : []),
+          ...(process.argv.includes('--documents-processing')
+            ? ['--documents', '--documents-upload', '--documents-processing']
+            : []),
+          ...(process.argv.includes('--modules') ? ['--modules'] : []),
+          ...(process.argv.includes('--module-cutover') ? ['--module-cutover'] : []),
         ],
         env,
       ),
     );
   else
-    for (const application of process.argv.includes('--identity-service') ||
+    for (const application of process.argv.includes('--documents-upgrade') ||
+    process.argv.includes('--configuration-upgrade') ||
+    process.argv.includes('--bff') ||
+    process.argv.includes('--turnstile-deployment') ||
+    process.argv.includes('--identity-service') ||
     process.argv.includes('--invitations') ||
     process.argv.includes('--recipients') ||
     process.argv.includes('--people') ||
     process.argv.includes('--scoped-structure') ||
     process.argv.includes('--user-management-release')
       ? ['turnstile-api']
-      : process.argv.includes('--dms-only')
+      : standalone ||
+          process.argv.includes('--dms-only') ||
+          process.argv.includes('--dms-deployment') ||
+          process.argv.includes('--dms-access') ||
+          process.argv.includes('--dms-admission')
         ? ['dms-api']
         : ['dms-api', 'turnstile-api']) {
-      const selected = process.argv.includes('--user-management-release')
-        ? ['test/user-management-upgrade.database-spec.ts', 'test/recipients.database-spec.ts']
-        : process.argv.includes('--identity-service')
-          ? ['test/identity-service.database-spec.ts']
-          : process.argv.includes('--people')
-            ? ['test/people.database-spec.ts']
-            : process.argv.includes('--scoped-structure')
-              ? ['test/scoped-structure.database-spec.ts']
-              : process.argv.includes('--recipients')
-                ? ['test/recipients.database-spec.ts']
-                : process.argv.includes('--invitations')
-                  ? ['test/invitations.database-spec.ts']
-                  : readdirSync(`apps/${application}/test`)
-                      .filter((file) => file.endsWith('.database-spec.ts'))
-                      .sort()
-                      .map((file) => `test/${file}`);
+      const selected = process.argv.includes('--documents-upgrade')
+        ? ['test/documents-upgrade.database-spec.ts']
+        : process.argv.includes('--configuration-upgrade')
+          ? [
+              'test/configuration-upgrade.database-spec.ts',
+              'test/user-management-upgrade.database-spec.ts',
+            ]
+          : process.argv.includes('--bff')
+            ? ['test/bff.database-spec.ts']
+            : process.argv.includes('--turnstile-deployment')
+              ? ['test/deployment.database-spec.ts']
+              : process.argv.includes('--dms-deployment')
+                ? ['test/deployment.database-spec.ts']
+                : process.argv.includes('--dms-access') || process.argv.includes('--dms-admission')
+                  ? ['test/enrollment.database-spec.ts']
+                  : standalone
+                    ? ['test/standalone.database-spec.ts']
+                    : process.argv.includes('--user-management-release')
+                      ? [
+                          'test/user-management-upgrade.database-spec.ts',
+                          'test/recipients.database-spec.ts',
+                        ]
+                      : process.argv.includes('--identity-service')
+                        ? ['test/identity-service.database-spec.ts']
+                        : process.argv.includes('--people')
+                          ? ['test/people.database-spec.ts']
+                          : process.argv.includes('--scoped-structure')
+                            ? ['test/scoped-structure.database-spec.ts']
+                            : process.argv.includes('--recipients')
+                              ? ['test/recipients.database-spec.ts']
+                              : process.argv.includes('--invitations')
+                                ? ['test/invitations.database-spec.ts']
+                                : readdirSync(`apps/${application}/test`)
+                                    .filter((file) => file.endsWith('.database-spec.ts'))
+                                    .sort()
+                                    .map((file) => `test/${file}`);
       assert.ok(selected.length, `No database tests for ${application}`);
       for (const file of selected)
         console.log(
@@ -284,6 +579,13 @@ try {
     'Disposable PostgreSQL: repeatable owned migrations/bootstrap, runtime privilege isolation and auth persistence tests passed.',
   );
 } finally {
+  if (installationManifestDirectory)
+    await rm(installationManifestDirectory, { recursive: true, force: true });
+  if (turnstileDeploymentFixture)
+    await rm(turnstileDeploymentFixture, { recursive: true, force: true });
+  if (deploymentFixture) await rm(deploymentFixture, { recursive: true, force: true });
+  if (standaloneImageCreated)
+    spawnSync('docker', ['rm', '--force', `${name}-dms-image`], { stdio: 'ignore' });
   if (mailpitCreated)
     spawnSync('docker', ['rm', '--force', `${name}-mailpit`], { stdio: 'ignore' });
   if (created) spawnSync('docker', ['rm', '--force', '--volumes', name], { stdio: 'ignore' });

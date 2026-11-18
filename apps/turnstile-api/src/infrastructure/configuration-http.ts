@@ -6,7 +6,7 @@ import {
   configurationActorSchema,
   configurationIdSchema,
   configurationQuerySchema,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ConfigurationActor } from './configuration-context.js';
 import { ConfigurationException } from './configuration-exception.js';
@@ -30,6 +30,7 @@ export function productActor(request: FastifyRequest): ConfigurationActor {
   const parsedId = configurationIdSchema.safeParse(request.id);
   request.id = parsedId.success ? parsedId.data : randomUUID();
   return {
+    deploymentMode: ['GET', 'HEAD'].includes(request.method) ? 'read' : 'full',
     userId: configurationActorSchema.parse(request.productUser.identity.user.id),
     requestId: request.id,
     ...(request.structureDeadlineAt ? { deadlineAt: request.structureDeadlineAt } : {}),

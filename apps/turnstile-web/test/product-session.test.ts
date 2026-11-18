@@ -8,7 +8,7 @@ const sessionAt = (revision = 4) => ({
   csrfToken: 'A'.repeat(43),
   session: { expiresAt: '2026-11-04T12:00:00Z', idleExpiresAt: '2026-11-04T11:00:00Z' },
   access: {
-    catalogVersion: 1,
+    catalogVersion: 2,
     accessRevision: revision,
     fingerprint: (revision === 4 ? 'a' : 'b').repeat(64),
     grants: [

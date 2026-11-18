@@ -1,4 +1,5 @@
 // Synthetic examples only. These values are never used to authorize a live request.
+import { MODULE_REGISTRY } from '../../packages/turnstile-contracts/dist/index.js';
 export const fixtureId = (number) =>
   `10000000-0000-4000-8000-${number.toString(16).padStart(12, '0')}`;
 export const fixtureSecret = 'A'.repeat(43);
@@ -207,9 +208,75 @@ const reapprove = {
   assignments: fixtureAssignmentRequests,
 };
 const mutation = (command) => ({ command, confirmation: impact });
+const importJobExample = {
+  id: fixtureId(195),
+  actorId: 'example-administrator',
+  filename: 'recipients.csv',
+  state: 'draft',
+  version: 1,
+  reason: null,
+  createdAt: at,
+  updatedAt: at,
+  reviewExpiresAt: at,
+  nextAttemptAt: at,
+  assignments: fixtureAssignments,
+  counts: { pending: 1, processing: 0, succeeded: 0, failed: 0, skipped: 0, cancelled: 0 },
+};
 export const peopleExamples = {
+  ImportCreate: {
+    id: fixtureId(195),
+    filename: 'recipients.csv',
+    csv: 'email\nalex@example.test\n',
+    assignments: [
+      {
+        roleId: fixtureRole.id,
+        expectedRoleVersion: fixtureRole.version,
+        scope: { kind: 'company' },
+      },
+    ],
+  },
+  ImportAction: { action: 'start', expectedVersion: 1 },
+  ImportRowsQuery: { after: 0 },
+  ImportJob: importJobExample,
+  ImportDetail: {
+    job: importJobExample,
+    rows: [
+      { number: 2, email: 'alex@example.test', state: 'pending', reason: null, invitationId: null },
+    ],
+    nextAfter: null,
+  },
+  ImportList: { items: [importJobExample] },
+  ImportErrors: { rows: [] },
+  PeopleAuditQuery: { limit: 25, source: 'access' },
+  PeopleAuditEvent: {
+    id: fixtureId(190),
+    source: 'access',
+    action: 'member_suspended',
+    occurredAt: at,
+    actorKind: 'user',
+    actorId: 'example-administrator',
+    actorName: 'Example Administrator',
+    subjectId: fixtureMember.id,
+    subjectLabel: fixtureMember.identity.name,
+    subjectKind: 'member',
+    revisionBefore: 2,
+    revisionAfter: 3,
+    generation: null,
+  },
+  PeopleAuditResponse: { items: [], nextCursor: null, retentionDays: 90, accessRevision: 3 },
+  AccessInspectionQuery: { permission: 'turnstile:units:read', unitId: fixtureId(2) },
+  AccessInspection: {
+    memberId: fixtureMember.id,
+    permission: 'turnstile:units:read',
+    unitId: fixtureId(2),
+    memberStatus: 'active',
+    allowed: true,
+    reason: 'granted',
+    sources: [{ id: fixtureId(30), name: fixtureRole.name, scope: fixtureAssignments[0].scope }],
+    accessRevision: 3,
+  },
   PermissionCatalog: {
-    catalogVersion: 1,
+    catalogVersion: 2,
     permissions: [
       { id: 'turnstile:access', applicability: 'scope_neutral', implies: [] },
       { id: 'turnstile:dms:capabilities:read', applicability: 'company_only', implies: [] },
@@ -220,6 +287,11 @@ export const peopleExamples = {
       },
       { id: 'turnstile:people:manage', applicability: 'company_only', implies: [] },
       { id: 'turnstile:roles:manage', applicability: 'company_only', implies: [] },
+      ...MODULE_REGISTRY.map((module) => ({
+        id: module.permission,
+        applicability: 'company_only',
+        implies: [],
+      })),
       { id: 'turnstile:units:read', applicability: 'scope_aware', implies: [] },
       {
         id: 'turnstile:units:manage',
@@ -252,13 +324,13 @@ export const peopleExamples = {
   },
   ScopedUnitContext: { unit: site, ancestors: [root] },
   ScopedUnitDetail: { revision: 5, accessRevision: 3, unit: site, ancestors: [root] },
-  UserAccessContext: { catalogVersion: 1, accessRevision: 3, fingerprint: fixtureDigest, grants },
+  UserAccessContext: { catalogVersion: 2, accessRevision: 3, fingerprint: fixtureDigest, grants },
   AccessAwareUserSession: {
     user: { id: 'example-recipient', name: 'Samira Example', email: 'samira@example.test' },
     permissions: ['turnstile:access', 'turnstile:units:read', 'turnstile:units:manage'],
     session: { expiresAt: '2026-11-03T18:00:00Z', idleExpiresAt: '2026-11-03T10:30:00Z' },
     csrfToken: fixtureSecret,
-    access: { catalogVersion: 1, accessRevision: 3, fingerprint: fixtureDigest, grants },
+    access: { catalogVersion: 2, accessRevision: 3, fingerprint: fixtureDigest, grants },
   },
   PeoplePath: { id: fixtureMember.id },
   PeopleMutationHeaders: { 'idempotency-key': fixtureId(99) },

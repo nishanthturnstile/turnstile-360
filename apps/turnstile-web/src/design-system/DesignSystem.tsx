@@ -25,13 +25,16 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { Progress, ProgressLabel, ProgressValue } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { WorkspaceNavigation, workspaceDestinations } from '@/components/workspace-navigation';
+import { DocumentIdentity, DocumentState } from '@/features/documents/DocumentUi';
 import { cn } from '@/lib/utils';
 import { PeopleGallery } from './PeopleGallery';
+import { ScopedHierarchyGallery } from './ScopedHierarchyGallery';
 import { StructureGallery } from './StructureGallery';
 
 const swatches = [
@@ -81,6 +84,7 @@ export default function DesignSystem() {
           </Button>
         </header>
         <Separator />
+        <ScopedHierarchyGallery />
         <StructureGallery />
         <PeopleGallery />
         <Separator />
@@ -400,6 +404,41 @@ export default function DesignSystem() {
               <CardFooter>
                 <Badge variant="outline">Example state</Badge>
               </CardFooter>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>File transfer</CardTitle>
+                <CardDescription>Example · Site register.pdf</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Progress value={42}>
+                  <ProgressLabel>File transfer</ProgressLabel>
+                  <ProgressValue />
+                </Progress>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Document library row</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap items-center justify-between gap-3">
+                <DocumentIdentity name="register.csv">Site register</DocumentIdentity>
+                <DocumentState tone="ready">Available</DocumentState>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Processing coverage</CardTitle>
+                <CardDescription>Example · Scanned register, version 2</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                <div className="flex flex-wrap gap-2">
+                  <Badge>Original available</Badge>
+                  <Badge variant="secondary">Extraction partial</Badge>
+                  <Badge variant="outline">Index pending</Badge>
+                </div>
+                <p className="text-sm">3 completed · 4 attempted · 1 needs OCR</p>
+              </CardContent>
             </Card>
           </div>
         </section>

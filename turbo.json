@@ -25,6 +25,43 @@
     "test:integration": {
       "dependsOn": ["^build"],
       "cache": false
+    },
+    "@thaarei/dms-api#typecheck": {
+      "dependsOn": ["@thaarei/dms-api#build"],
+      "outputs": []
+    },
+    "@thaarei/thaarei-control-plane#build": {
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": ["NEXT_TELEMETRY_DISABLED"],
+      "dependsOn": ["^build"]
+    },
+    "@thaarei/thaarei-control-plane#typecheck": {
+      "dependsOn": ["@thaarei/thaarei-control-plane#build"],
+      "outputs": []
+    },
+    "@thaarei/thaarei-control-plane#test:integration": {
+      "dependsOn": ["@thaarei/thaarei-control-plane#build"],
+      "cache": false,
+      "passThroughEnv": [
+        "PATH",
+        "DOCKER_HOST",
+        "DOCKER_CONTEXT",
+        "DOCKER_CONFIG",
+        "CONTROL_PLANE_TEST_IMAGE",
+        "DMS_CONTROL_TEST_IMAGE"
+      ]
     }
-  }
+  },
+  "globalPassThroughEnv": [
+    "MODULE_BUNDLE_STORE",
+    "MODULE_REFERENCE_STORE",
+    "MODULE_RELEASE_SIGNING_KEY_FILE",
+    "MODULE_RELEASE_TRUST_FILE",
+    "MOD_I05_PREPARATION_FIXTURE",
+    "THAAREI_INSTALLER_COMMAND_REFERENCE",
+    "THAAREI_INSTALLATION_DIRECTORY",
+    "THAAREI_INSTALLER_IMAGE",
+    "THAAREI_INSTALLER_NETWORK",
+    "AUTH_SETUP_COMPLETION_URL"
+  ]
 }

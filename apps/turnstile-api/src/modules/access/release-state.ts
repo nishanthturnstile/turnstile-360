@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
-export const ACCESS_RELEASE_VERSION = 1;
+export const ACCESS_RELEASE_VERSION = 2;
 
 export function invitationRecoveryEpoch(environment: NodeJS.ProcessEnv = process.env) {
   const value = environment.TURNSTILE_INVITATION_RECOVERY_EPOCH;
@@ -20,6 +20,11 @@ export async function releaseStateReady(
       safe: boolean;
     }>(
       `SELECT recovery_epoch, model_version=1 AND release_version=$2
+      AND (SELECT count(*)=2 AND bool_and(t.tgenabled='O' AND pg_get_userbyid(p.proowner)='thaarei_turnstile_migrator'
+        AND p.proconfig IS NOT DISTINCT FROM ARRAY['search_path=pg_catalog, pg_temp']::text[])
+        FROM pg_trigger t JOIN pg_proc p ON p.oid=t.tgfoid
+        WHERE (t.tgrelid='turnstile.access_context'::regclass AND t.tgname='documents_barrier_monotonic' AND t.tgfoid=to_regprocedure('turnstile.guard_documents_barrier()'))
+           OR (t.tgrelid='turnstile.access_role_permission'::regclass AND t.tgname='documents_permission_barrier' AND t.tgfoid=to_regprocedure('turnstile.guard_documents_permission()')))
       AND NOT has_any_column_privilege('thaarei_turnstile_runtime','turnstile.user_access','SELECT')
       AND EXISTS(SELECT 1 FROM pg_trigger t JOIN pg_proc p ON p.oid=t.tgfoid
         WHERE t.tgrelid='turnstile.user_access'::regclass AND t.tgname='access_inventory_guard'

@@ -379,6 +379,7 @@ export const configurationUnavailableSchema = z.strictObject({
   code: z.literal('CONFIGURATION_UNAVAILABLE'),
 });
 export const configurationErrorSchema = z.discriminatedUnion('code', [
+  z.strictObject({ code: z.literal('DEPLOYMENT_RESTRICTED'), requestId: z.uuid().optional() }),
   configurationInvalidSchema,
   configurationConflictSchema,
   configurationNotFoundSchema,
@@ -388,6 +389,7 @@ export const configurationErrorSchema = z.discriminatedUnion('code', [
   configurationUnavailableSchema,
 ]);
 export const CONFIGURATION_ERROR_STATUS = {
+  DEPLOYMENT_RESTRICTED: 403,
   CONFIGURATION_INVALID: 400,
   CONFIGURATION_NOT_FOUND: 404,
   CONFIGURATION_CONFLICT: 409,

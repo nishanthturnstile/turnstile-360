@@ -1,0 +1,1 @@
+CREATE POLICY "operator_read" ON "dms"."security_candidate" AS PERMISSIVE FOR SELECT TO "thaarei_dms_operator" USING (tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND EXISTS (SELECT 1 FROM dms.operator_authorization oa WHERE oa.tenant_id=security_candidate.tenant_id AND oa.subject_id=current_setting('app.actor_id',true) AND oa.revoked_at IS NULL));

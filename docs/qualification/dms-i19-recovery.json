@@ -1,0 +1,100 @@
+{
+  "version": "0.19.0",
+  "checkedAt": "2026-11-06T10:21:03.718012+00:00",
+  "scope": "Completed isolated local standard-profile qualification; no installed environment or customer target changed.",
+  "implementation": "completed",
+  "localQualification": "passed",
+  "customerTargetAccepted": false,
+  "authority": "bundled-better-auth",
+  "mail": "Private Mailpit STARTTLS; no external email sent.",
+  "images": [
+    {
+      "name": "thaarei-dms-api:0.19.0",
+      "id": "sha256:689a2474634e033c1dc1e1c6afbfe688b114948d987a49efd4beec4bb8d5d83e"
+    },
+    {
+      "name": "thaarei-dms-processing:0.19.0",
+      "id": "sha256:0b09a019e598512f4876626192d297513a3ea4d3483b4de8e1cf1447c7b9028b"
+    },
+    {
+      "name": "thaarei-dms-storage:0.19.0",
+      "id": "sha256:cbd84b4dd87c6dc81db889ce5e9c62d9bebabd727474c05f004d8035ffa34b62"
+    },
+    {
+      "name": "thaarei-dms-bundled-scanner:0.19.0",
+      "id": "sha256:12e4b9d0bb758babc09c958467c59b449cb8cd924802280d7e7e9d775dc6ef72"
+    },
+    {
+      "name": "thaarei-dms-bundled-postgres:0.19.0",
+      "id": "sha256:5c4783a8cc3f0074912164f94dfa1be4e043438f0f707cf968d7af9a0d31a2c8",
+      "upstream": "postgres:18.6-bookworm@sha256:5c4783a8cc3f0074912164f94dfa1be4e043438f0f707cf968d7af9a0d31a2c8"
+    },
+    {
+      "name": "thaarei-dms-bundled-broker:0.19.0",
+      "id": "sha256:1528a88eebf2bc4d0ab7e9d5d9bc542e9bdf5e1b105e65848fcf8de5c2186528",
+      "upstream": "rabbitmq:4.3.7-management-alpine@sha256:1528a88eebf2bc4d0ab7e9d5d9bc542e9bdf5e1b105e65848fcf8de5c2186528"
+    }
+  ],
+  "recovery": {
+    "hardware": "12 CPUs; 20974444544 bytes; Docker Desktop; x86_64",
+    "passed": true,
+    "interruptedCapture": true,
+    "fixtureOnly": true,
+    "confirmedOffHost": false,
+    "backupId": "07d98a35-6211-4fcb-9302-8a7ed4beaa24",
+    "objects": 9,
+    "sourceBytes": 3076,
+    "encryptedBytes": 980318982,
+    "captureSeconds": 53.342,
+    "backupSeconds": 95.476,
+    "restoreSeconds": 122.23,
+    "totalSeconds": 291.511,
+    "cpuLimit": 1,
+    "memoryLimitBytes": 2147483648,
+    "rpoSeconds": 73.096,
+    "targetAcceptancePending": true,
+    "recoveryPoint": "2026-11-06T10:13:15.605Z",
+    "backupCompletedAt": "2026-11-06T10:14:28.701150+00:00",
+    "rpoMeasurement": "Recovery point to protected backup-completion log mtime, including upload/readback and final catalog sealing (conservative upper bound)."
+  },
+  "verified": [
+    "I18 installation upgraded through owned migrations 0046\u20130053, retaining authority identity, signing keys, operator/work grants and enrolled consumer.",
+    "Three historical/restored versions share immutable original bytes and retain accepted extraction results.",
+    "Real pg_basebackup controller killed after fencing; source roles/services and HTTP readiness recovered without encryption-key custody.",
+    "Reserved incomplete backup horizon survives interruption; completed proof seals once.",
+    "Six AES-256-GCM components, full remote ciphertext readback and final encrypted completion marker.",
+    "Wrong-key restore rejected before configuration import; distinct empty project and physical PG/WAL verification.",
+    "Full object inventory/hash and PostgreSQL system identity verification repeated while CLOSED; explicit fresh administrator/operator review required.",
+    "New JWT and storage-signing epochs reject old tokens/capabilities; recovered historical/current downloads and accepted artifacts match hashes.",
+    "Recovered pending work executes with fresh generations and preserved budgets; old delivery returns WORK_STALE without resurrection.",
+    "Production S3 lost DELETE acknowledgement plus failed HEAD retains quota, then retry completes exactly once for the shared original.",
+    "Version/security/artifact provenance retained; runtime cannot write recovery catalog or invoke private operator disposal.",
+    "Readiness isolation, broker/coordinator/worker restarts, signing/client-secret rotation, revocation and Mailpit recovery.",
+    "Disposable fixture containers/volumes removed after verification."
+  ],
+  "workspace": {
+    "check": "pass",
+    "build": "pass",
+    "test": "pass",
+    "integration": "pass",
+    "databasePassed": 296,
+    "databaseRuntimeSkips": 6,
+    "databaseFiles": 16,
+    "owningDmsPassed": 77,
+    "owningDmsRuntimeSkips": 3,
+    "pythonUnitPassed": 31,
+    "pythonOptionalRuntimeSkips": 24
+  },
+  "evidence": {
+    "directory": ".dms-i19-verification/fixtures/dms-i18-qualification-8Yf0W1",
+    "integration": ".dms-i19-verification/integration-restored.log",
+    "release": ".dms-i19-verification/candidate/bundle",
+    "privacy": "Private evidence/key/configuration files are ignored and not included in this public summary.",
+    "restart": "Earlier /tmp evidence was lost on WSL restart; this completed run uses workspace-persistent private evidence."
+  },
+  "remaining": [
+    "Actual independent off-host survival and RPO/RTO on realistic operating volume/target hardware remain I20 acceptance.",
+    "Optional structured profile was qualified in I18; this I19 exact-image recovery drill used the standard profile.",
+    "Local bundle remains a draft customer release (qualified=false) pending I20."
+  ]
+}

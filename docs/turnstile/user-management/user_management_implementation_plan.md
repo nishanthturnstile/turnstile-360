@@ -34,9 +34,10 @@ Keep all confirmed choices:
   DMS machine trust. The future mobile client uses the same backend/contracts; no mobile
   app is part of this work.
 
-No bulk import/invite, employee records, workflow/document authorization, role inheritance,
-explicit-deny engine, delegated unit people administration, public signup, SaaS tenancy or
-new organization model is included. The earlier HTML concept is a historical company-wide
+The initial UM baseline excludes bulk import/invite; the later bounded invitation UI and
+UE-08 sequence extend that scope explicitly. Employee records, workflow/document authorization,
+role inheritance, explicit-deny rules, delegated unit people administration, public signup,
+SaaS tenancy and a new organization model remain outside scope. The earlier HTML concept is a historical company-wide
 illustration; it is not the scoped feature contract or evidence of implemented UI.
 
 ## Current implementation and mandatory transition points
@@ -77,6 +78,107 @@ gated until the safe access/structure foundations exist. Independent implementat
 not permit deploying half of the access-reader/writer transition. Keep each package's
 schema changes with the feature behavior it implements; do not create invitation/outbox
 tables in the access-foundation package merely because a later package needs them.
+
+## Users enhancement sequence (2026-11-14)
+
+The owner requested implementation of the final-review corrections and a sequenced plan
+for the remaining capabilities. Each phase must leave a usable increment and record
+actual verification in IN_PROGRESS.md. Technical decisions belong in architecture.md.
+Existing UM-R01–22 and UX-R01–07 remain in force.
+
+1. **UE-01 — Recover interrupted bulk invitations.** Distinguish definite pre-save
+   rejection from an unknown acknowledgement. Keep uncertain command payloads and keys
+   unchanged. Offer receipt lookup and explicit re-review/retry of the same command;
+   never infer failure from a missing receipt or automatically replay a write. Preserve
+   partial successes, stop later recipients, and correct role-deletion blocker guidance.
+   Validate: real HTTP failure before commit, lost response after commit, recovery after
+   intervening cancellation, busy/uncertain dismissal, and no duplicate invitations.
+2. **UE-02 — Expose product audit history.** Add an authorized, bounded, paged read of
+   existing product access/invitation audit events, with time/action/subject filtering,
+   attributable actors, retention information and an explicit bounded CSV export.
+   Enforce tenant/People authority on every request and SQL read policy. Display only
+   facts recorded by the source; historical field differences cannot be reconstructed
+   from revision numbers. Validate: unauthorized/role-only/cross-tenant denial, ordering,
+   cursor binding, retention boundary, export escaping, empty/error/loading states.
+3. **UE-03 — Explain current access and offboarding.** Add a server-evaluated contextual
+   access inspector for a selected member and company/unit context, including matching
+   grant sources, suspension precedence and retained imported access. Add an offboarding
+   checklist and clear consequences for suspension/reactivation using existing commands.
+   Validate evaluator agreement, scoped-read restrictions, independent sources and last
+   administrator protections. Account-wide deletion/security changes remain authority-owned.
+4. **UE-04 — Make role references actionable.** Open members and actionable invitations
+   using a role from its usage counts/detail view. Reuse server-side filters; show current
+   blockers before deletion and preserve protected/in-use constraints. Validate role-only
+   privacy, combined filters, zero references and references changed during a review.
+5. **UE-05 — Improve invitation troubleshooting.** Add delivery-state filtering, full
+   available lifecycle dates, recipient-specific preflight errors and an explicit copy
+   action for unsent batch recipients. Saved invitations remain individually manageable.
+   Validate mixed recipients, normalization, partial results, SMTP-accepted versus actual
+   delivery wording and long values at phone/tablet/desktop widths.
+6. **UE-06 — Improve large-directory navigation.** Make filters shareable in the URL,
+   provide useful server-side sorting with stable cursors, and expose membership dates
+   only where their provenance exists. Never invent historical join or last-active dates.
+   Validate fresh navigation/back/forward, filter/sort cursor fencing and larger fixtures.
+7. **UE-07 — Qualify and release the increment.** Run pnpm check, pnpm build, pnpm test
+   and pnpm test:integration, then the expanded production-handler HTTPS browser journey.
+   Verify task focus/dismissal, permission changes, empty/loading/failure/recovery and
+   phone/tablet/desktop layouts. Publish through the supported signed local release flow;
+   preserve installation data, grants, setup, licence and activation. Distinguish source,
+   fixture, live-browser and deployed-image evidence in the handoff.
+
+The following enterprise extensions follow the above foundations. Their prerequisites
+are explicit delivery gates, not implied feature completion:
+
+Owner confirmed existing identity authority first on 2026-11-14. Enterprise SSO/SCIM
+integration is deferred; no customer provider is configured or implied by this increment.
+
+8. **UE-08 — Durable imports and bulk operations.** Define CSV columns, validation,
+   duplicate handling, permissible operations and job cancellation. Implement an owning
+   backend job/row-receipt model with bounded workers, per-row current authorization,
+   idempotent resume and downloadable errors. Preserve existing rate safeguards; qualify
+   capacity before raising limits. Validate worker crashes, lost acknowledgements,
+   permission changes during a job and replay after intervening membership changes.
+9. **UE-09 — Enterprise identity integration.** Select the customer identity provider
+   and authority-owned SSO/SCIM/group-mapping contracts, including source precedence,
+   deprovisioning, group removal, recovery and application isolation. Implement/test in
+   that boundary before exposing connection/status links in Users. Requires actual
+   provider metadata and credentials; the product must not collect global credentials.
+10. **UE-10 — Access governance.** Define review owners/frequency, temporary-access
+    expiry, privileged-action verification and audit-retention/export policy. Implement
+    explicit backend policy and durable expiry/review work only after those rules are
+    adopted. Validate concurrent expiry, revocation, reactivation, administrator survival
+    and unavailable identity verification. Define read-only support/auditor powers
+    separately rather than weakening existing management authorization.
+
+Later phases must be assessed against actual customer needs. No tenant switcher, mobile
+application, role inheritance or document/workflow authorization is introduced by this plan.
+
+## UE-08 implementation sequence — CSV invitation jobs
+
+1. Freeze UE08-R01–07 and the technical limits/state model in architecture.md.
+   Import email recipients only, with shared reviewed access. No membership mutation,
+   automatic acceptance, role creation or identity-provider integration.
+2. Add strict platform-independent create/action/list/detail/error contracts and checked
+   OpenAPI examples. Parse CSV on the server; number nonblank records with the header as record 1, normalize
+   email with the existing authority rules and report duplicate/invalid rows individually.
+3. Add owning job/row persistence, tenant RLS, indexed due work and readiness assertions
+   through generated migrations. Persist normalized rows, reviewed access and actor IDs;
+   retain no raw uploaded file, browser session, credential or invitation secret in jobs.
+4. Implement explicit draft/start/resume/cancel transitions and durable row command IDs.
+   Freeze shared assignment/organization context and recheck live creator authority for
+   each row. Save a successful row receipt in the invitation commit transaction.
+5. Add one bounded worker per API process, durable leases, safe restart recovery,
+   current deployment/release gates, existing rate-budget scheduling and finite retries.
+   Cancellation serializes with invitation commit and leaves completed invitations intact.
+6. Compose upload/template, server validation review, assignment summary, saved history,
+   paged row progress, resume/cancel and escaped complete error CSV into Invitations.
+   Closing a saved job never cancels it; unsaved entries retain draft-dismissal protection.
+7. Exercise real PostgreSQL/identity/HTTP failure paths: duplicate uploads/start responses,
+   crash before/after commit, lease takeover, permission/role changes, concurrent cancel,
+   rate waits and unchanged saved invitations after retry. Check large/malformed CSV and
+   formula-neutralized exports. Browser validation covers narrow layouts and navigation.
+8. Run the four workspace gates, focused production browser journey, source-matched signed
+   local build/cutover and retained-data checks. Record actual evidence in IN_PROGRESS.md.
 
 ## Final review reconciliation
 

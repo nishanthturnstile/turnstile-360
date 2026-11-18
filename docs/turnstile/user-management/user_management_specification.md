@@ -41,7 +41,7 @@ selection and production email/domain/TLS remain rollout inputs, not unresolved 
 questions. Web and future mobile share backend policy and platform-independent contracts;
 a mobile application is outside this release.
 
-Exclude bulk invitations/import, employee records, reporting lines, responsible people,
+Exclude unbounded bulk invitations/import, employee records, reporting lines, responsible people,
 workflow/document permissions, role inheritance, explicit deny, delegated unit people
 administration, public signup, a second organization tree, tenant selection/provisioning,
 source/data migration and global identity administration.
@@ -275,3 +275,79 @@ UM-I01 establishes acceptance and architecture only. UM-I02 owns strict runtime
 contracts and generated API documentation; persistence and public handlers follow their
 dependency gates. No schema, invitation/account/access mutation or deployment is delivered
 by adoption of this specification.
+
+## Users administration redesign (2026-11-14)
+
+Owner-adopted presentation and scale refinement of UM-R09, UM-R10, UM-R19 and UM-R22:
+
+- UX-R01: One stable Users header with independently authorized Members, Invitations and
+  Roles sections. Consistent compact directories, responsive task editors and direct invitations.
+- UX-R02: Explicit role templates, grouped supported permissions and deliberate role actions.
+  Preserve protected role identity, role/scope pairing and the actor grant ceiling.
+- UX-R03: Automatically obtain current impact on entering review; require explicit
+  operation-specific confirmation. Retain drafts, stale-review recovery and uncertain-write readback.
+- UX-R04: Filter the full member directory by role and covered unit, matching one saved
+  assignment. Require unit read authority; bind counts and cursors to filters/current access.
+- UX-R05: Show distinct saved-member and actionable-invitation role usage only when both
+  People and Roles administration are authorized; omit usage for role-only administrators.
+- UX-R06: Invite up to ten distinct recipients with a common reviewed assignment set.
+  Use separately durable single-recipient commands and visible partial outcomes. Stop on
+  failure or uncertain acknowledgement; check receipts without automatically resending.
+
+- UX-R07: Users task sheets preserve directory width, keyboard focus containment/return,
+  guarded Escape/close, same-subject hidden/inert draft retention and protected pending/
+  uncertain saves. Show inline recipient errors, persistent selected unit context,
+  state-specific invitation dates/actions and before/after access differences. Role View
+  opens an overview; duplication creates an explicitly reviewed editable custom-role draft.
+  Verify action spacing, active links and internal directory overflow at phone/tablet/desktop.
+
+The accepted technical design is in architecture.md; actual completion and verification
+are recorded in IN_PROGRESS.md. These refinements add no identity-directory administration,
+implicit membership, new tenant selection, role inheritance or optimistic access grants.
+
+## Owner-adopted Users enhancements (2026-11-14)
+
+- UE-R01: Recover an uncertain bulk invitation using authorized receipt lookup and explicit
+  re-review/retry of the identical command/key. A missing receipt is not proof of failure.
+  Definite readiness rejection must not trap the editor in uncertain recovery.
+- UE-R02: Authorized People managers can inspect bounded, paged product access/invitation
+  activity within retention and export the displayed records. Enforce installation and
+  current authority in the owning SQL reader; runtime keeps no direct access-audit SELECT.
+  Preserve attributable IDs, exact ordering, no-store and CSV formula/quote protections.
+  Show only recorded facts; existing revision-only events have no reconstructed field diff.
+- UE-R03: Explain a selected member's saved authorization for one implemented permission
+  in company or exact-unit context through the canonical evaluator. Require the actor's
+  unit-read authority for a selected unit; show independent matching sources and suspension
+  precedence. This is separate from live identity authentication and installation availability.
+- UE-R04: Provide offboarding guidance and clear suspension/reactivation consequences,
+  using existing protected commands. Do not imply that workspace suspension deletes the
+  identity account or revokes unrelated application sessions.
+- UE-R05: Make role references actionable through authorized member/invitation drilldowns.
+  Improve invitation delivery/lifecycle troubleshooting and copy unsent batch recipients.
+- UE-R06: Support shareable directory filters and stable server-side sorting. Show dates
+  only where their provenance is recorded, and retain bounded paging and cursor fencing.
+
+The implementation plan sequences these requirements and separately gates durable imports,
+enterprise provider integration and governance policy. Those extensions require their own
+adopted contracts and customer/provider inputs before implementation or completion claims.
+
+## CSV invitation imports (UE-08)
+
+- **UE08-R01:** Accept a UTF-8 CSV with one `email` column, optional BOM, quoted fields,
+  CRLF/LF and blank lines. Reject malformed CSV/header/size/row capacity before saving a
+  draft. Report invalid addresses/column counts and later duplicate records by row.
+- **UE08-R02:** An authorized People manager reviews server validation and one shared
+  role/coverage selection before starting. Existing members and actionable invitations
+  are skipped and never overwritten, reactivated or resent by an import.
+- **UE08-R03:** Persist accepted jobs and row outcomes beyond browser/API restarts.
+  Background work uses the original creator's current authority and frozen reviewed
+  role/organization context; changed authority/context pauses work for explicit resolution.
+- **UE08-R04:** Successful rows atomically retain their invitation identity. Retry/recovery
+  must never create a second invitation or revive a cancelled/accepted invitation.
+- **UE08-R05:** Expose saved history, counts, due time and paged row outcomes. Resume
+  paused work with fresh creator authorization; cancel only remaining work. Completed
+  invitations and their independent delivery/acceptance lifecycle remain intact.
+- **UE08-R06:** Export all unsuccessful rows with source record number and finite reason,
+  with spreadsheet-safe CSV escaping. No raw file, secret or global credential is retained.
+- **UE08-R07:** Preserve invitation limits, deployment/release fences, tenant integrity,
+  audit and private identity authority. Limits and deployment behavior are in architecture.md.

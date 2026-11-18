@@ -1,0 +1,1 @@
+ALTER TABLE "turnstile"."people_import_job" ADD CONSTRAINT "people_import_job_tenant_id_installation_tenant_id_fk" FOREIGN KEY ("tenant_id") REFERENCES "turnstile"."installation"("tenant_id") ON DELETE no action ON UPDATE no action;

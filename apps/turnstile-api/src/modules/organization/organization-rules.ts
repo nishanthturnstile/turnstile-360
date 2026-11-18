@@ -2,7 +2,7 @@ import {
   CONFIGURATION_LIMITS,
   configurationNameKey,
   type OrganizationUnitDto,
-} from '@thaarei/turnstile-contracts';
+} from '@thaarei/turnstile-contracts/runtime';
 import { ConfigurationException } from '../../infrastructure/configuration-exception.js';
 import {
   type ConfigurationRecord,
