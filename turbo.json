@@ -26,6 +26,10 @@
       "dependsOn": ["^build"],
       "cache": false
     },
+    "@thaarei/dms-api#typecheck": {
+      "dependsOn": ["@thaarei/dms-api#build"],
+      "outputs": []
+    },
     "@thaarei/thaarei-control-plane#build": {
       "outputs": [".next/**", "!.next/cache/**"],
       "env": ["NEXT_TELEMETRY_DISABLED"],
