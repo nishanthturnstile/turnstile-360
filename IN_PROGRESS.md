@@ -417,7 +417,7 @@ Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**
 
 ## Active work
 
-PTW-PUB01 — **In progress** (owner Codex, 2026-11-19). Publish the reviewed PTW planning documents on development. CS-01 is the implementation handoff.
+PTW-PUB01 — **Completed** (owner Codex, 2026-11-19). Verified the remote development branch contains the reviewed PTW planning documents at 49cbccf. CS-01 is the implementation handoff.
 
 PTW-D02 — **Completed** (planning, owner Codex, 2026-11-19).
 The [final confined-space implementation plan](docs/turnstile/ptw-confined-space-implementation-plan.md) supersedes the discovery pilot order. Two independent reviews covered field safety and optional-module/LMS delivery. Incorporated role authority, restricted-mode muster, versioned dependency publication, provider provenance and stale-evidence races. Workspace check, build, unit and integration gates passed, including disposable database, ingress and storage. Implementation starts with CS-01. Operational release requires a real LMS and qualified site procedure.
