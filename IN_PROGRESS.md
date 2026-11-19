@@ -1,6 +1,6 @@
 # Project progress
 
-Last updated: 2026-11-18
+Last updated: 2026-11-19
 
 This is the shared implementation status and handoff record for Turnstile 360 and the
 Thaarei DMS. All agents must read it before starting work and update it as work progresses.
@@ -416,6 +416,14 @@ The technical design is maintained in [architecture.md](architecture.md).
 Statuses: **Planned**, **In progress**, **Blocked**, **Completed**, **Deferred**.
 
 ## Active work
+
+PTW-PUB01 — **In progress** (owner Codex, 2026-11-19). Publish the reviewed PTW planning documents on development. CS-01 is the implementation handoff.
+
+PTW-D02 — **Completed** (planning, owner Codex, 2026-11-19).
+The [final confined-space implementation plan](docs/turnstile/ptw-confined-space-implementation-plan.md) supersedes the discovery pilot order. Two independent reviews covered field safety and optional-module/LMS delivery. Incorporated role authority, restricted-mode muster, versioned dependency publication, provider provenance and stale-evidence races. Workspace check, build, unit and integration gates passed, including disposable database, ingress and storage. Implementation starts with CS-01. Operational release requires a real LMS and qualified site procedure.
+
+PTW-D01 — **Completed** (research and planning, owner Codex, 2026-11-19).
+The [workflow and delivery proposal](docs/turnstile/ptw-workflow-plan.md) links the industry comparison, site policy decisions and selected-build audit. Source inspection and two registry tests verified the existing module mechanism. Workspace check, build and unit tests passed. Workspace integration stopped in the DMS enrollment fixture because disposable RabbitMQ was unavailable. Real PTW images, implementation and customer/site qualification remain future work. Next decision is the pilot site and its approved procedure.
 
 DV-PUBLISH-01 — **In progress** (owner Codex, 2026-11-18).
 Prepare the Documents implementation, audit fixes and redesign for publication on
